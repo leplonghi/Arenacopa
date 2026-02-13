@@ -81,7 +81,7 @@
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
-    filter: blur(1px) brightness(0.3);
+    filter: brightness(0.3);
     -webkit-filter: blur(12px) brightness(0.35);
     transform: scale(1.05);
     z-index: -2;
