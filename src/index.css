@@ -6,22 +6,22 @@
 
 @layer base {
   :root {
-    --background: 155 52% 8%;
+    --background: 155 52% 5%;
     --foreground: 150 10% 92%;
 
-    --card: 155 42% 12%;
+    --card: 155 42% 9%;
     --card-foreground: 150 10% 92%;
 
-    --popover: 155 42% 10%;
+    --popover: 155 42% 7%;
     --popover-foreground: 150 10% 92%;
 
     --primary: 44 80% 46%;
     --primary-foreground: 155 52% 8%;
 
-    --secondary: 150 30% 18%;
+    --secondary: 150 30% 12%;
     --secondary-foreground: 150 10% 88%;
 
-    --muted: 150 20% 16%;
+    --muted: 150 20% 11%;
     --muted-foreground: 150 10% 55%;
 
     --accent: 145 36% 30%;
@@ -30,8 +30,8 @@
     --destructive: 0 72% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 150 20% 18%;
-    --input: 150 20% 18%;
+    --border: 150 20% 13%;
+    --input: 150 20% 13%;
     --ring: 44 80% 46%;
 
     --radius: 0.75rem;
@@ -52,7 +52,7 @@
     --copa-gold-light: 44 86% 59%;
     --copa-live: 0 72% 50%;
     --copa-success: 145 60% 40%;
-    --copa-surface: 155 35% 14%;
+    --copa-surface: 155 35% 9%;
   }
 }
 
@@ -63,7 +63,7 @@
 
   body {
     @apply text-foreground font-outfit;
-    background: linear-gradient(180deg, hsl(155 52% 10%) 0%, hsl(155 52% 6%) 40%, hsl(155 52% 8%) 100%);
+    background: linear-gradient(180deg, hsl(155 52% 7%) 0%, hsl(155 52% 4%) 40%, hsl(155 52% 5%) 100%);
     min-height: 100vh;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;

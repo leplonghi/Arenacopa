@@ -17,7 +17,7 @@ const Copa = () => {
   return (
     <div>
       {/* Sub-tabs - pill style */}
-      <div className="flex gap-2 px-4 py-3 scrollbar-hide sticky top-14 z-20 backdrop-blur-md" style={{ background: 'rgba(10, 31, 26, 0.85)' }}>
+      <div className="flex gap-2 px-4 py-3 scrollbar-hide sticky top-14 z-20 backdrop-blur-md" style={{ background: 'rgba(5, 20, 16, 0.9)' }}>
         {(["calendario", "grupos", "chaves", "mapa"] as CopaTab[]).map(t => (
           <button
             key={t}
