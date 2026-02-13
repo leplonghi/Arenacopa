@@ -1,21 +1,25 @@
 
 
-## Destaque da Logo no Header
+## Header Nota 10 - Escudo + Refinamentos
 
-A logo esta com filtros insuficientes para se destacar no fundo escuro. Vou aplicar ajustes mais agressivos:
+### Problema Atual
+O escudo/logo não está aparecendo no header. Apenas o texto "ARENACOPA" é visível. O container `w-10 h-10` pode estar muito pequeno ou a imagem não está carregando corretamente.
 
-### Mudancas em `src/components/Layout.tsx` (linha 41-42)
+### Melhorias Planejadas
 
-**Container da logo:**
-- Adicionar um fundo com leve gradiente verde para criar contraste
-- Aumentar o glow verde ao redor (`shadow-copa-green/30`)
-- Adicionar `ring` sutil verde para destaque extra
+**1. Escudo visivel e destacado**
+- Aumentar o container e a imagem para `h-12 w-12` para garantir visibilidade
+- Adicionar fundo circular branco semi-transparente (`bg-white/90`) para contraste do escudo no dark mode
+- Aplicar `rounded-full`, `p-1`, e `shadow-lg shadow-copa-green/20` para dar profundidade
 
-**Imagem da logo:**
-- Aumentar `brightness` de 110 para 125 para clarear a imagem
-- Aumentar intensidade do `drop-shadow` verde (de 6px/0.4 para 8px/0.6)
-- Adicionar `contrast-125` para tornar as cores mais vivas
-- Aumentar tamanho para `h-9 w-9`
+**2. Texto "ARENACOPA" refinado**
+- Aumentar para `text-xl` e adicionar leve `drop-shadow` no texto para brilho sutil
 
-Resultado: a logo fica visivelmente mais brilhante e contrastada contra o fundo escuro, com um halo verde sutil que reforça a identidade visual.
+**3. Botao de notificacao harmonizado**
+- Manter consistente com o novo tamanho do logo
 
+### Arquivo alterado
+- `src/components/Layout.tsx` (linhas 40-46): container da logo e estilos da imagem
+
+### Resultado esperado
+Escudo visivel com fundo claro circular, texto bold ao lado, tudo equilibrado e profissional no header escuro.
