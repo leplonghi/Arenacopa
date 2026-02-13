@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { cn } from "@/lib/utils";
 import { Flag } from "@/components/Flag";
 import { getTeam } from "@/data/mockData";
@@ -8,14 +8,30 @@ import { useSimulacao } from "@/contexts/SimulacaoContext";
 import { Trophy, LayoutGrid, GitBranch } from "lucide-react";
 import { BracketView } from "./BracketView";
 import { ShareBracket } from "./ShareBracket";
-import type { KnockoutData } from "@/utils/knockoutBracket";
+import { BracketScoreModal } from "./BracketScoreModal";
+import type { KnockoutData, KnockoutMatchFull, KnockoutRound, KnockoutScore } from "@/utils/knockoutBracket";
 
 type ViewMode = "bracket" | "list";
 
 export function ChavesTab() {
-  const { knockoutData, isGroupsComplete, filledCount } = useSimulacao();
+  const { knockoutData, isGroupsComplete, filledCount, updateKnockoutScore } = useSimulacao();
   const [viewMode, setViewMode] = useState<ViewMode>("bracket");
   const bracketRef = useRef<HTMLDivElement>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [selectedMatch, setSelectedMatch] = useState<{ match: KnockoutMatchFull; round: KnockoutRound; idx: number } | null>(null);
+
+  const handleMatchClick = useCallback((round: KnockoutRound, matchIdx: number, match: KnockoutMatchFull) => {
+    if (!match.home || !match.away) return;
+    setSelectedMatch({ match, round, idx: matchIdx });
+    setModalOpen(true);
+  }, []);
+
+  const handleSaveScore = useCallback((round: KnockoutRound, matchIdx: number, score: KnockoutScore) => {
+    updateKnockoutScore(round, matchIdx, "homeScore", score.homeScore);
+    updateKnockoutScore(round, matchIdx, "awayScore", score.awayScore);
+    updateKnockoutScore(round, matchIdx, "homePenalty", score.homePenalty);
+    updateKnockoutScore(round, matchIdx, "awayPenalty", score.awayPenalty);
+  }, [updateKnockoutScore]);
 
   if (!isGroupsComplete) {
     return (
@@ -78,11 +94,20 @@ export function ChavesTab() {
 
       {viewMode === "bracket" ? (
         <div ref={bracketRef}>
-          <BracketView data={knockoutData} />
+          <BracketView data={knockoutData} onMatchClick={handleMatchClick} />
         </div>
       ) : (
         <ListView data={knockoutData} />
       )}
+
+      <BracketScoreModal
+        open={modalOpen}
+        onOpenChange={setModalOpen}
+        match={selectedMatch?.match ?? null}
+        round={selectedMatch?.round ?? null}
+        matchIdx={selectedMatch?.idx ?? 0}
+        onSave={handleSaveScore}
+      />
     </div>
   );
 }
