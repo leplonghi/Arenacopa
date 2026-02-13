@@ -4,7 +4,7 @@ import { getTeam } from "@/data/mockData";
 import { Trophy, HelpCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import {
-  type KnockoutData, type KnockoutMatchFull,
+  type KnockoutData, type KnockoutMatchFull, type KnockoutRound,
   ROUND_LABELS, getMatchWinner,
 } from "@/utils/knockoutBracket";
 
@@ -54,15 +54,20 @@ function BracketTeam({
 }
 
 // ─── Single bracket match card ───
-function BracketMatch({ match, compact }: { match: KnockoutMatchFull; compact?: boolean }) {
+function BracketMatch({ match, compact, onClick }: { match: KnockoutMatchFull; compact?: boolean; onClick?: () => void }) {
   const winner = getMatchWinner(match);
+  const isClickable = !!(onClick && match.home && match.away);
 
   return (
-    <div className={cn(
-      "rounded-lg border border-border/40 bg-card/80 overflow-hidden backdrop-blur-sm",
-      compact ? "w-[140px]" : "w-[160px]",
-      winner && "ring-1 ring-copa-green/30"
-    )}>
+    <div
+      className={cn(
+        "rounded-lg border border-border/40 bg-card/80 overflow-hidden backdrop-blur-sm transition-all",
+        compact ? "w-[140px]" : "w-[160px]",
+        winner && "ring-1 ring-copa-green/30",
+        isClickable && "cursor-pointer hover:ring-2 hover:ring-primary/40 hover:shadow-md active:scale-[0.98]"
+      )}
+      onClick={isClickable ? onClick : undefined}
+    >
       <BracketTeam
         code={match.home}
         isWinner={winner === match.home}
@@ -140,11 +145,13 @@ function RoundColumn({
   matches,
   isFirst,
   compact,
+  onMatchClick,
 }: {
   label: string;
   matches: KnockoutMatchFull[];
   isFirst?: boolean;
   compact?: boolean;
+  onMatchClick?: (matchIdx: number, match: KnockoutMatchFull) => void;
 }) {
   return (
     <div className="flex flex-col shrink-0">
@@ -153,7 +160,12 @@ function RoundColumn({
       </div>
       <div className="flex flex-col justify-around flex-1 gap-2">
         {matches.map((m, i) => (
-          <BracketMatch key={i} match={m} compact={compact} />
+          <BracketMatch
+            key={i}
+            match={m}
+            compact={compact}
+            onClick={onMatchClick ? () => onMatchClick(i, m) : undefined}
+          />
         ))}
       </div>
     </div>
@@ -189,7 +201,8 @@ function ChampionBanner({ data }: { data: KnockoutData }) {
 }
 
 // ─── Main Bracket View ───
-export function BracketView({ data }: { data: KnockoutData }) {
+export function BracketView({ data, onMatchClick }: { data: KnockoutData; onMatchClick?: (round: KnockoutRound, matchIdx: number, match: KnockoutMatchFull) => void }) {
+  const ROUND_KEYS: KnockoutRound[] = ["r32", "r16", "quarter", "semi", "final"];
   // Build the bracket structure: left half → final ← right half
   // For 32 teams: R32(16) → R16(8) → QF(4) → SF(2) → Final(1)
   // We split into upper (first 8 R32) and lower (last 8 R32)
@@ -217,6 +230,7 @@ export function BracketView({ data }: { data: KnockoutData }) {
                 matches={round.matches}
                 isFirst={rIdx === 0}
                 compact={rIdx === 0}
+                onMatchClick={onMatchClick ? (idx, m) => onMatchClick(ROUND_KEYS[rIdx], idx, m) : undefined}
               />
               {rIdx < rounds.length - 1 && (
                 <Connector matchCount={round.matches.length} compact={rIdx === 0} />
@@ -233,7 +247,10 @@ export function BracketView({ data }: { data: KnockoutData }) {
             {ROUND_LABELS.third}
           </div>
           <div className="flex justify-center">
-            <BracketMatch match={data.third[0]} />
+            <BracketMatch
+              match={data.third[0]}
+              onClick={onMatchClick ? () => onMatchClick("third", 0, data.third[0]) : undefined}
+            />
           </div>
         </div>
       )}
