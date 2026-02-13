@@ -12,7 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion, AnimatePresence } from "framer-motion";
-import { matches, getTeam } from "@/data/mockData";
+import { matches, getTeam, type Match } from "@/data/mockData";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -346,15 +346,56 @@ function PalpitesTab({ bolaoId, palpites, setPalpites, userId }: {
   );
 }
 
+// ─── Scoring logic ───
+function calculatePoints(palpite: Palpite, match: Match | undefined): { points: number; label: string } {
+  if (!match || match.status !== "finished" || match.homeScore == null || match.awayScore == null) {
+    return { points: 0, label: "" };
+  }
+  const ph = palpite.home_score;
+  const pa = palpite.away_score;
+  const mh = match.homeScore;
+  const ma = match.awayScore;
+
+  // Exact score
+  if (ph === mh && pa === ma) return { points: 5, label: "exato" };
+
+  // Correct winner or correct draw
+  const palpiteResult = ph > pa ? "home" : ph < pa ? "away" : "draw";
+  const matchResult = mh > ma ? "home" : mh < ma ? "away" : "draw";
+
+  if (palpiteResult === matchResult) {
+    return matchResult === "draw"
+      ? { points: 2, label: "empate" }
+      : { points: 3, label: "vencedor" };
+  }
+
+  return { points: 0, label: "errou" };
+}
+
 // ─── Ranking Tab ───
 function RankingTab({ members, palpites }: { members: MemberData[]; palpites: Palpite[] }) {
-  // For now show palpite count per member as a proxy for ranking
+  const finishedMatches = useMemo(() => matches.filter(m => m.status === "finished"), []);
+
   const ranking = useMemo(() => {
     return members.map(m => {
       const memberPalpites = palpites.filter(p => p.user_id === m.user_id);
-      return { ...m, palpiteCount: memberPalpites.length, points: 0 };
-    }).sort((a, b) => b.palpiteCount - a.palpiteCount);
-  }, [members, palpites]);
+      let points = 0;
+      let exactCount = 0;
+      let winnerCount = 0;
+      let drawCount = 0;
+
+      memberPalpites.forEach(p => {
+        const match = finishedMatches.find(fm => fm.id === p.match_id);
+        const result = calculatePoints(p, match);
+        points += result.points;
+        if (result.label === "exato") exactCount++;
+        else if (result.label === "vencedor") winnerCount++;
+        else if (result.label === "empate") drawCount++;
+      });
+
+      return { ...m, palpiteCount: memberPalpites.length, points, exactCount, winnerCount, drawCount };
+    }).sort((a, b) => b.points - a.points || b.palpiteCount - a.palpiteCount);
+  }, [members, palpites, finishedMatches]);
 
   if (ranking.length === 0) {
     return <EmptyState icon="🏆" title="Sem participantes" description="Convide amigos para competir!" />;
@@ -406,7 +447,12 @@ function RankingTab({ members, palpites }: { members: MemberData[]; palpites: Pa
               </div>
               <div className="flex-1 min-w-0">
                 <span className="text-sm font-bold block truncate">{name}</span>
-                <span className="text-[10px] text-muted-foreground">{r.palpiteCount} palpites</span>
+                <span className="text-[10px] text-muted-foreground">
+                  {r.palpiteCount} palpites
+                  {(r.exactCount > 0 || r.winnerCount > 0 || r.drawCount > 0) && (
+                    <> · 🎯{r.exactCount} · ✓{r.winnerCount} · ={r.drawCount}</>
+                  )}
+                </span>
               </div>
               <span className="text-sm font-black text-primary">{r.points} pts</span>
             </div>
@@ -414,9 +460,18 @@ function RankingTab({ members, palpites }: { members: MemberData[]; palpites: Pa
         })}
       </div>
 
-      <p className="text-[10px] text-muted-foreground text-center mt-2">
-        A pontuação será calculada quando os jogos forem encerrados
-      </p>
+      {/* Scoring legend */}
+      <div className="glass-card p-3">
+        <p className="text-[10px] font-bold text-muted-foreground mb-1.5">Pontuação</p>
+        <div className="flex items-center gap-4 text-[10px] text-muted-foreground">
+          <span>🎯 Exato = <span className="font-black text-foreground">5 pts</span></span>
+          <span>✓ Vencedor = <span className="font-black text-foreground">3 pts</span></span>
+          <span>= Empate = <span className="font-black text-foreground">2 pts</span></span>
+        </div>
+        {finishedMatches.length === 0 && (
+          <p className="text-[10px] text-muted-foreground mt-1.5">Nenhum jogo encerrado ainda. A pontuação será atualizada automaticamente.</p>
+        )}
+      </div>
     </div>
   );
 }
