@@ -38,8 +38,8 @@ function Header() {
           </button>
         ) : (
           <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-full bg-secondary/60 border border-copa-green/30 flex items-center justify-center overflow-hidden shadow-lg shadow-copa-green/20">
-              <img src={logo} alt="ArenaCopa" className="h-8 w-8 drop-shadow-[0_0_6px_rgba(34,197,94,0.4)] brightness-110" />
+            <div className="w-11 h-11 rounded-full bg-gradient-to-br from-copa-green/20 to-secondary/60 border border-copa-green/30 ring-1 ring-copa-green/30 flex items-center justify-center overflow-hidden shadow-lg shadow-copa-green/30">
+              <img src={logo} alt="ArenaCopa" className="h-9 w-9 brightness-125 contrast-125 drop-shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
             </div>
             <span className="font-black text-lg tracking-tight">
               ARENA<span className="text-primary">COPA</span>
