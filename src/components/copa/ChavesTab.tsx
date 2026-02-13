@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { cn } from "@/lib/utils";
 import { Flag } from "@/components/Flag";
 import { getTeam } from "@/data/mockData";
@@ -7,6 +7,7 @@ import { staggerContainer, staggerItem } from "./animations";
 import { useSimulacao } from "@/contexts/SimulacaoContext";
 import { Trophy, LayoutGrid, GitBranch } from "lucide-react";
 import { BracketView } from "./BracketView";
+import { ShareBracket } from "./ShareBracket";
 import type { KnockoutData } from "@/utils/knockoutBracket";
 
 type ViewMode = "bracket" | "list";
@@ -14,6 +15,7 @@ type ViewMode = "bracket" | "list";
 export function ChavesTab() {
   const { knockoutData, isGroupsComplete, filledCount } = useSimulacao();
   const [viewMode, setViewMode] = useState<ViewMode>("bracket");
+  const bracketRef = useRef<HTMLDivElement>(null);
 
   if (!isGroupsComplete) {
     return (
@@ -47,7 +49,9 @@ export function ChavesTab() {
           <h2 className="text-lg font-black">Chaves</h2>
           <p className="text-[11px] text-muted-foreground">Baseado na sua simulação</p>
         </div>
-        <div className="flex gap-1 bg-secondary rounded-lg p-0.5">
+        <div className="flex items-center gap-2">
+          <ShareBracket bracketRef={bracketRef} />
+          <div className="flex gap-1 bg-secondary rounded-lg p-0.5">
           <button
             onClick={() => setViewMode("bracket")}
             className={cn(
@@ -68,11 +72,14 @@ export function ChavesTab() {
           >
             <LayoutGrid className="w-4 h-4" />
           </button>
+          </div>
         </div>
       </div>
 
       {viewMode === "bracket" ? (
-        <BracketView data={knockoutData} />
+        <div ref={bracketRef}>
+          <BracketView data={knockoutData} />
+        </div>
       ) : (
         <ListView data={knockoutData} />
       )}
