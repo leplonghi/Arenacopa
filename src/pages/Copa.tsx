@@ -9,8 +9,25 @@ import {
   formatMatchDate, type Match, type Stadium,
 } from "@/data/mockData";
 import { MapPin, Users, Globe, Thermometer } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 type CopaTab = "calendario" | "grupos" | "chaves" | "mapa";
+
+const tabContentVariants = {
+  enter: { opacity: 0, x: 20 },
+  center: { opacity: 1, x: 0 },
+  exit: { opacity: 0, x: -20 },
+};
+
+const staggerContainer = {
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.06 } },
+};
+
+const staggerItem = {
+  hidden: { opacity: 0, y: 12 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.25, 0.46, 0.45, 0.94] as [number, number, number, number] } },
+};
 
 const Copa = () => {
   const [tab, setTab] = useState<CopaTab>("calendario");
@@ -24,22 +41,42 @@ const Copa = () => {
             key={t}
             onClick={() => setTab(t)}
             className={cn(
-              "px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-colors shrink-0",
+              "px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-colors shrink-0 relative",
               tab === t
-                ? "bg-primary text-primary-foreground"
+                ? "text-primary-foreground"
                 : "bg-secondary text-secondary-foreground"
             )}
           >
-            {t === "calendario" ? "Calendário" : t.charAt(0).toUpperCase() + t.slice(1)}
+            {tab === t && (
+              <motion.div
+                layoutId="activeTab"
+                className="absolute inset-0 bg-primary rounded-full"
+                transition={{ type: "spring", stiffness: 400, damping: 30 }}
+              />
+            )}
+            <span className="relative z-10">
+              {t === "calendario" ? "Calendário" : t.charAt(0).toUpperCase() + t.slice(1)}
+            </span>
           </button>
         ))}
       </div>
 
       <div className="px-4 py-4">
-        {tab === "calendario" && <CalendarioTab />}
-        {tab === "grupos" && <GruposTab />}
-        {tab === "chaves" && <ChavesTab />}
-        {tab === "mapa" && <MapaTab />}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={tab}
+            variants={tabContentVariants}
+            initial="enter"
+            animate="center"
+            exit="exit"
+            transition={{ duration: 0.25, ease: "easeInOut" }}
+          >
+            {tab === "calendario" && <CalendarioTab />}
+            {tab === "grupos" && <GruposTab />}
+            {tab === "chaves" && <ChavesTab />}
+            {tab === "mapa" && <MapaTab />}
+          </motion.div>
+        </AnimatePresence>
       </div>
     </div>
   );
@@ -58,38 +95,47 @@ function CalendarioTab() {
     <div className="space-y-6">
       {/* Today */}
       <section>
-        <div className="flex items-center justify-between mb-3">
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex items-center justify-between mb-3"
+        >
           <h2 className="text-lg font-black">
             Hoje, {today.toLocaleDateString("pt-BR", { day: "numeric", month: "short" })}
           </h2>
           <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-secondary text-secondary-foreground">
             {todayMatches.length} Jogos
           </span>
-        </div>
+        </motion.div>
         {todayMatches.length === 0 ? (
           <EmptyState icon="📅" title="Sem jogos hoje" description="Nenhum jogo agendado para hoje." />
         ) : (
           <div className="space-y-3">
-            {todayMatches.map(m => <MatchCard key={m.id} match={m} />)}
+            {todayMatches.map((m, i) => <MatchCard key={m.id} match={m} index={i} />)}
           </div>
         )}
       </section>
 
       {/* Tomorrow */}
       <section>
-        <div className="flex items-center justify-between mb-3">
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="flex items-center justify-between mb-3"
+        >
           <h2 className="text-lg font-black">
             Amanhã, {tomorrow.toLocaleDateString("pt-BR", { day: "numeric", month: "short" })}
           </h2>
           <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-secondary text-secondary-foreground">
             {tomorrowMatches.length} Jogos
           </span>
-        </div>
+        </motion.div>
         {tomorrowMatches.length === 0 ? (
           <EmptyState icon="📅" title="Sem jogos amanhã" description="Nenhum jogo agendado." />
         ) : (
           <div className="space-y-3">
-            {tomorrowMatches.map(m => <MatchCard key={m.id} match={m} />)}
+            {tomorrowMatches.map((m, i) => <MatchCard key={m.id} match={m} index={i + todayMatches.length} />)}
           </div>
         )}
       </section>
@@ -110,22 +156,34 @@ function GruposTab() {
             key={m}
             onClick={() => setViewMode(m)}
             className={cn(
-              "flex-1 py-2 rounded-full text-xs font-bold transition-colors",
-              viewMode === m ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+              "flex-1 py-2 rounded-full text-xs font-bold transition-colors relative",
+              viewMode === m ? "text-primary-foreground" : "text-muted-foreground"
             )}
           >
-            {m === "real" ? "Real" : "Projeção"}
+            {viewMode === m && (
+              <motion.div
+                layoutId="gruposToggle"
+                className="absolute inset-0 bg-primary rounded-full"
+                transition={{ type: "spring", stiffness: 400, damping: 30 }}
+              />
+            )}
+            <span className="relative z-10">{m === "real" ? "Real" : "Projeção"}</span>
           </button>
         ))}
       </div>
 
-      <div className="space-y-5">
+      <motion.div
+        variants={staggerContainer}
+        initial="hidden"
+        animate="visible"
+        className="space-y-5"
+      >
         {groups.map(g => {
           const standings = groupStandings[g] || [];
           const status = standings.some(s => s.played > 0) ? "Em andamento" : "Seu Palpite";
 
           return (
-            <div key={g} className="glass-card overflow-hidden border-l-2 border-l-copa-green">
+            <motion.div key={g} variants={staggerItem} className="glass-card overflow-hidden border-l-2 border-l-copa-green">
               <div className="flex items-center justify-between p-4 pb-2">
                 <h3 className="text-base font-black">Grupo {g}</h3>
                 <span className={cn(
@@ -181,34 +239,37 @@ function GruposTab() {
                   </div>
                 );
               })}
-            </div>
+            </motion.div>
           );
         })}
-      </div>
+      </motion.div>
     </div>
   );
 }
 
 // ===== CHAVES TAB =====
 function ChavesTab() {
-  const rounds = [
-    { key: "Oitavas", label: "ROUND OF 16" },
-  ];
-
   const oitavas = bracketMatches.filter(m => m.round === "Oitavas");
 
   return (
     <div>
       <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground mb-4 text-center">Round of 16</h2>
-      <div className="space-y-3">
+      <motion.div
+        variants={staggerContainer}
+        initial="hidden"
+        animate="visible"
+        className="space-y-3"
+      >
         {oitavas.map(m => {
           const home = m.homeTeam ? getTeam(m.homeTeam) : null;
           const away = m.awayTeam ? getTeam(m.awayTeam) : null;
           const isFavorite = m.homeTeam === "BRA" || m.awayTeam === "BRA";
 
           return (
-            <div
+            <motion.div
               key={m.id}
+              variants={staggerItem}
+              whileTap={{ scale: 0.98 }}
               className={cn(
                 "glass-card overflow-hidden border-l-2",
                 isFavorite ? "border-l-primary" : "border-l-copa-green"
@@ -231,10 +292,10 @@ function ChavesTab() {
                   <span className="text-lg font-black">{m.awayScore}</span>
                 )}
               </div>
-            </div>
+            </motion.div>
           );
         })}
-      </div>
+      </motion.div>
     </div>
   );
 }
@@ -254,71 +315,90 @@ function MapaTab() {
         </div>
         {/* Stadium dots */}
         {stadiums.slice(0, 5).map((s, i) => (
-          <button
+          <motion.button
             key={s.id}
             onClick={() => setSelectedStadium(s)}
+            whileHover={{ scale: 1.2 }}
+            whileTap={{ scale: 0.9 }}
+            animate={selectedStadium?.id === s.id ? { scale: 1.25 } : { scale: 1 }}
             className={cn(
-              "absolute w-8 h-8 rounded-full flex items-center justify-center transition-all",
+              "absolute w-8 h-8 rounded-full flex items-center justify-center transition-colors",
               selectedStadium?.id === s.id
-                ? "bg-primary scale-125 shadow-lg shadow-primary/30"
+                ? "bg-primary shadow-lg shadow-primary/30"
                 : "bg-secondary/80"
             )}
             style={{ top: `${25 + i * 12}%`, left: `${20 + i * 14}%` }}
           >
             <MapPin className="w-4 h-4" />
-          </button>
+          </motion.button>
         ))}
       </div>
 
       {/* Stadium detail card */}
-      {selectedStadium ? (
-        <div className="glass-card overflow-hidden animate-slide-up">
-          <div className="bg-gradient-to-b from-copa-green/20 to-transparent p-6 text-center">
-            <h3 className="text-lg font-black">{selectedStadium.name}</h3>
-            <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground mt-1">
-              <MapPin className="w-3 h-3 text-copa-success" />
-              <span>{selectedStadium.city}, {selectedStadium.country}</span>
+      <AnimatePresence mode="wait">
+        {selectedStadium ? (
+          <motion.div
+            key={selectedStadium.id}
+            initial={{ opacity: 0, y: 20, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.96 }}
+            transition={{ duration: 0.3 }}
+            className="glass-card overflow-hidden"
+          >
+            <div className="bg-gradient-to-b from-copa-green/20 to-transparent p-6 text-center">
+              <h3 className="text-lg font-black">{selectedStadium.name}</h3>
+              <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground mt-1">
+                <MapPin className="w-3 h-3 text-copa-success" />
+                <span>{selectedStadium.city}, {selectedStadium.country}</span>
+              </div>
             </div>
-          </div>
 
-          <div className="grid grid-cols-3 gap-2 p-4">
-            <div className="glass-card p-3 text-center">
-              <Users className="w-4 h-4 mx-auto mb-1 text-copa-green-light" />
-              <span className="text-[9px] uppercase tracking-wider text-muted-foreground block">Capacidade</span>
-              <span className="text-sm font-black">{selectedStadium.capacity.toLocaleString("pt-BR")}</span>
-            </div>
-            <div className="glass-card p-3 text-center">
-              <Globe className="w-4 h-4 mx-auto mb-1 text-primary" />
-              <span className="text-[9px] uppercase tracking-wider text-muted-foreground block">Fuso</span>
-              <span className="text-sm font-black">{selectedStadium.timezone.split("/").pop()}</span>
-            </div>
-            <div className="glass-card p-3 text-center">
-              <Thermometer className="w-4 h-4 mx-auto mb-1 text-primary" />
-              <span className="text-[9px] uppercase tracking-wider text-muted-foreground block">Clima</span>
-              <span className="text-sm font-black">18°C</span>
-            </div>
-          </div>
-        </div>
-      ) : (
-        <div className="space-y-2">
-          {stadiums.map(s => (
-            <button
-              key={s.id}
-              onClick={() => setSelectedStadium(s)}
-              className="glass-card-hover w-full p-3 text-left flex items-center gap-3"
-            >
-              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                <MapPin className="w-5 h-5 text-primary" />
+            <div className="grid grid-cols-3 gap-2 p-4">
+              <div className="glass-card p-3 text-center">
+                <Users className="w-4 h-4 mx-auto mb-1 text-copa-green-light" />
+                <span className="text-[9px] uppercase tracking-wider text-muted-foreground block">Capacidade</span>
+                <span className="text-sm font-black">{selectedStadium.capacity.toLocaleString("pt-BR")}</span>
               </div>
-              <div className="flex-1 min-w-0">
-                <h4 className="text-sm font-bold truncate">{s.name}</h4>
-                <p className="text-[11px] text-muted-foreground">{s.city}, {s.country}</p>
+              <div className="glass-card p-3 text-center">
+                <Globe className="w-4 h-4 mx-auto mb-1 text-primary" />
+                <span className="text-[9px] uppercase tracking-wider text-muted-foreground block">Fuso</span>
+                <span className="text-sm font-black">{selectedStadium.timezone.split("/").pop()}</span>
               </div>
-              <span className="text-xs text-muted-foreground shrink-0">{s.capacity.toLocaleString("pt-BR")}</span>
-            </button>
-          ))}
-        </div>
-      )}
+              <div className="glass-card p-3 text-center">
+                <Thermometer className="w-4 h-4 mx-auto mb-1 text-primary" />
+                <span className="text-[9px] uppercase tracking-wider text-muted-foreground block">Clima</span>
+                <span className="text-sm font-black">18°C</span>
+              </div>
+            </div>
+          </motion.div>
+        ) : (
+          <motion.div
+            variants={staggerContainer}
+            initial="hidden"
+            animate="visible"
+            className="space-y-2"
+          >
+            {stadiums.map(s => (
+              <motion.button
+                key={s.id}
+                variants={staggerItem}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setSelectedStadium(s)}
+                className="glass-card-hover w-full p-3 text-left flex items-center gap-3"
+              >
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                  <MapPin className="w-5 h-5 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h4 className="text-sm font-bold truncate">{s.name}</h4>
+                  <p className="text-[11px] text-muted-foreground">{s.city}, {s.country}</p>
+                </div>
+                <span className="text-xs text-muted-foreground shrink-0">{s.capacity.toLocaleString("pt-BR")}</span>
+              </motion.button>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
