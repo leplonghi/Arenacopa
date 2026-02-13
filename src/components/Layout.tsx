@@ -30,7 +30,7 @@ function Header() {
   const title = getTitle();
 
   return (
-    <header className="sticky top-0 z-30 bg-background/90 backdrop-blur-md border-b border-border/50 safe-top">
+    <header className="sticky top-0 z-30 backdrop-blur-md border-b border-border/30 safe-top" style={{ background: 'rgba(10, 31, 26, 0.85)' }}>
       <div className="flex items-center justify-between px-4 h-14">
         {isSubpage ? (
           <button onClick={() => navigate(-1)} className="p-1.5 -ml-1.5 rounded-lg hover:bg-secondary">
@@ -62,7 +62,7 @@ function BottomTabs() {
   const navigate = useNavigate();
 
   return (
-    <nav className="fixed bottom-0 inset-x-0 z-30 bg-background/95 backdrop-blur-md border-t border-border/50 safe-bottom">
+    <nav className="fixed bottom-0 inset-x-0 z-30 backdrop-blur-md border-t border-border/30 safe-bottom" style={{ background: 'rgba(10, 31, 26, 0.9)' }}>
       <div className="flex items-center justify-around h-16 max-w-lg mx-auto relative">
         {tabs.map((tab) => {
           if (tab.path === "__fab__") {
@@ -104,7 +104,7 @@ function BottomTabs() {
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-background flex flex-col">
+    <div className="min-h-screen flex flex-col overflow-x-hidden">
       <Header />
       <main className="flex-1 pb-20 overflow-y-auto">
         {children}
