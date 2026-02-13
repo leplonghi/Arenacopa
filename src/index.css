@@ -62,11 +62,14 @@
   }
 
   body {
-    @apply bg-background text-foreground font-outfit;
+    @apply text-foreground font-outfit;
+    background: linear-gradient(180deg, hsl(155 52% 10%) 0%, hsl(155 52% 6%) 40%, hsl(155 52% 8%) 100%);
+    min-height: 100vh;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     overscroll-behavior: none;
     -webkit-tap-highlight-color: transparent;
+    overflow-x: hidden;
   }
 
   /* Safe area insets for native apps */

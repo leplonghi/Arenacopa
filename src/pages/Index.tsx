@@ -48,12 +48,12 @@ const Index = () => {
           <h2 className="text-base font-black">Meus Bolões</h2>
           <Link to="/boloes" className="text-xs text-primary font-semibold">Ranking</Link>
         </div>
-        <div className="flex gap-3 overflow-x-auto pb-1 -mx-4 px-4 scrollbar-hide">
+        <div className="grid grid-cols-2 gap-3">
           {myBoloes.map(bolao => (
             <Link
               key={bolao.id}
               to={`/boloes/${bolao.id}`}
-              className="glass-card p-4 min-w-[160px] shrink-0 border-l-2 border-l-copa-green relative"
+              className="glass-card p-4 border-l-2 border-l-copa-green relative"
             >
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-8 h-8 rounded-lg bg-copa-green/20 flex items-center justify-center">
