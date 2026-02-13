@@ -2,18 +2,30 @@ import { cn } from "@/lib/utils";
 
 // Map team codes to ISO 3166-1 alpha-2 codes for flagcdn.com
 const teamToISO: Record<string, string> = {
-  USA: "us", MEX: "mx", COL: "co", MAR: "ma",
-  BRA: "br", JPN: "jp", NGA: "ng", SUI: "ch",
-  ARG: "ar", GER: "de", KOR: "kr", AUS: "au",
-  FRA: "fr", ENG: "gb-eng", SEN: "sn", CAN: "ca",
-  ESP: "es", NED: "nl", URU: "uy", IRN: "ir",
-  POR: "pt", CRO: "hr", GHA: "gh", PAN: "pa",
-  BEL: "be", DEN: "dk", CHI: "cl", TUN: "tn",
-  ITA: "it", WAL: "gb-wls", ECU: "ec", CMR: "cm",
-  SRB: "rs", POL: "pl", PAR: "py", NZL: "nz",
-  AUT: "at", UKR: "ua", PER: "pe", ALG: "dz",
-  CZE: "cz", TUR: "tr", VEN: "ve", SAU: "sa",
-  SCO: "gb-sct", CRC: "cr", EGY: "eg", QAT: "qa",
+  // Group A
+  MEX: "mx", RSA: "za", KOR: "kr", EPD: "",
+  // Group B
+  CAN: "ca", EPA: "", QAT: "qa", SUI: "ch",
+  // Group C
+  BRA: "br", MAR: "ma", HAI: "ht", SCO: "gb-sct",
+  // Group D
+  USA: "us", PAR: "py", AUS: "au", EPC: "",
+  // Group E
+  GER: "de", CUR: "cw", CIV: "ci", ECU: "ec",
+  // Group F
+  NED: "nl", JPN: "jp", EPB: "", TUN: "tn",
+  // Group G
+  BEL: "be", EGY: "eg", IRN: "ir", NZL: "nz",
+  // Group H
+  ESP: "es", CPV: "cv", SAU: "sa", URU: "uy",
+  // Group I
+  FRA: "fr", SEN: "sn", FP2: "", NOR: "no",
+  // Group J
+  ARG: "ar", ALG: "dz", AUT: "at", JOR: "jo",
+  // Group K
+  POR: "pt", FP1: "", UZB: "uz", COL: "co",
+  // Group L
+  ENG: "gb-eng", CRO: "hr", GHA: "gh", PAN: "pa",
 };
 
 interface FlagProps {
@@ -35,7 +47,7 @@ export function Flag({ code, size = "md", className }: FlagProps) {
   if (!iso) {
     return (
       <div className={cn(sizeMap[size], "rounded-full bg-secondary flex items-center justify-center text-xs text-muted-foreground", className)}>
-        {code}
+        {code.length > 3 ? "?" : code}
       </div>
     );
   }
