@@ -130,7 +130,7 @@ const Perfil = () => {
         <div className="glass-card divide-y divide-border/30">
           {[
             { key: "goals" as const, icon: Goal, label: "Gols das Partidas", desc: "Alertas instantâneos de gol" },
-            { key: "news" as const, icon: Newspaper, label: "Notícias & Transfers", desc: "Resumo diário" },
+            { key: "news" as const, icon: Newspaper, label: "Notícias & Transferências", desc: "Resumo diário" },
             { key: "matchStart" as const, icon: Clock, label: "Início de Partida", desc: "15 min antes do jogo" },
           ].map(n => (
             <div key={n.key} className="flex items-center gap-3 p-3.5">
