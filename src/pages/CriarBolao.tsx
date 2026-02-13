@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { ChevronRight, ChevronLeft, Lock, Globe, Trophy, Camera, HelpCircle } from "lucide-react";
 
-const steps = ["Info", "Configurações", "Pontuação"];
+const steps = ["Informações", "Configurações", "Pontuação"];
 
 const CriarBolao = () => {
   const navigate = useNavigate();
@@ -42,7 +42,7 @@ const CriarBolao = () => {
                 <Camera className="w-4 h-4 text-primary-foreground" />
               </div>
             </div>
-            <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Upload Pool Cover</span>
+            <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Capa do Bolão</span>
           </div>
 
           {/* Pool Name */}
@@ -58,11 +58,11 @@ const CriarBolao = () => {
 
           {/* Description */}
           <div>
-            <label className="text-[10px] font-bold uppercase tracking-widest text-primary mb-2 block">Motto / Descrição</label>
+            <label className="text-[10px] font-bold uppercase tracking-widest text-primary mb-2 block">Descrição</label>
             <textarea
               value={description}
               onChange={e => setDescription(e.target.value)}
-              placeholder="May the best predictor win!"
+              placeholder="Que o melhor palpiteiro vença!"
               rows={3}
               className="w-full px-4 py-3 rounded-xl bg-card border border-border text-sm font-medium placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
             />
@@ -72,9 +72,9 @@ const CriarBolao = () => {
           <div>
             <label className="text-[10px] font-bold uppercase tracking-widest text-primary mb-2 block">Privacidade</label>
             <div className="grid grid-cols-2 gap-3">
-              {([
-                { id: "private" as const, icon: Lock, label: "Private", desc: "Invite only via code" },
-                { id: "public" as const, icon: Globe, label: "Public", desc: "Anyone can join" },
+               {([
+                 { id: "private" as const, icon: Lock, label: "Privado", desc: "Apenas com convite" },
+                 { id: "public" as const, icon: Globe, label: "Público", desc: "Qualquer um pode entrar" },
               ]).map(p => (
                 <button
                   key={p.id}
@@ -110,10 +110,10 @@ const CriarBolao = () => {
               </button>
             </div>
             <div className="space-y-2.5">
-              {[
-                { rank: 1, label: "Winner", pct: 60 },
-                { rank: 2, label: "Runner Up", pct: 30 },
-                { rank: 3, label: "Third Place", pct: 10 },
+               {[
+                 { rank: 1, label: "Campeão", pct: 60 },
+                 { rank: 2, label: "Vice", pct: 30 },
+                 { rank: 3, label: "Terceiro", pct: 10 },
               ].map(d => (
                 <div key={d.rank} className="flex items-center gap-3">
                   <div className={cn(
@@ -134,8 +134,8 @@ const CriarBolao = () => {
           {/* Entry Fee */}
           <div className="flex items-center justify-between">
             <div>
-              <span className="text-sm font-bold block">Entry Fee</span>
-              <span className="text-[11px] text-muted-foreground">Require payment to join pool</span>
+               <span className="text-sm font-bold block">Taxa de Entrada</span>
+               <span className="text-[11px] text-muted-foreground">Exigir pagamento para participar</span>
             </div>
             <button
               onClick={() => setHasEntryFee(!hasEntryFee)}
@@ -189,7 +189,7 @@ const CriarBolao = () => {
           <div className="glass-card p-4 space-y-3">
             <div className="flex justify-between"><span className="text-xs text-muted-foreground">Nome</span><span className="text-xs font-bold">{name || "—"}</span></div>
             <div className="flex justify-between"><span className="text-xs text-muted-foreground">Privacidade</span><span className="text-xs font-bold">{privacy === "private" ? "Privado" : "Público"}</span></div>
-            <div className="flex justify-between"><span className="text-xs text-muted-foreground">Entry Fee</span><span className="text-xs font-bold">{hasEntryFee ? "Sim" : "Não"}</span></div>
+            <div className="flex justify-between"><span className="text-xs text-muted-foreground">Taxa de Entrada</span><span className="text-xs font-bold">{hasEntryFee ? "Sim" : "Não"}</span></div>
           </div>
         </div>
       )}
