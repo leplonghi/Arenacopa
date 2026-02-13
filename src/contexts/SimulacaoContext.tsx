@@ -1,5 +1,8 @@
-import { createContext, useContext, useState, useCallback, useMemo, type ReactNode } from "react";
+import { createContext, useContext, useState, useCallback, useMemo, useEffect, type ReactNode } from "react";
 import { groups, getGroupTeams } from "@/data/mockData";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import type { Json } from "@/integrations/supabase/types";
 
 export interface SimMatch {
   home: string;
@@ -81,7 +84,52 @@ function initMatches() {
 }
 
 export function SimulacaoProvider({ children }: { children: ReactNode }) {
+  const { user } = useAuth();
   const [allMatches, setAllMatches] = useState<Record<string, SimMatch[]>>(initMatches);
+  const [loaded, setLoaded] = useState(false);
+
+  // Load from DB
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("simulations")
+      .select("data")
+      .eq("user_id", user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.data) {
+          const saved = data.data as unknown as Record<string, SimMatch[]>;
+          // Merge saved scores into generated matches structure
+          const merged = initMatches();
+          Object.keys(merged).forEach(g => {
+            const savedGroup = saved[g];
+            if (savedGroup) {
+              merged[g] = merged[g].map((m, i) => ({
+                ...m,
+                homeScore: savedGroup[i]?.homeScore ?? null,
+                awayScore: savedGroup[i]?.awayScore ?? null,
+              }));
+            }
+          });
+          setAllMatches(merged);
+        }
+        setLoaded(true);
+      });
+  }, [user]);
+
+  // Save to DB (debounced)
+  useEffect(() => {
+    if (!user || !loaded) return;
+    const timeout = setTimeout(() => {
+      supabase
+        .from("simulations")
+        .upsert({
+          user_id: user.id,
+          data: allMatches as unknown as Json,
+        }, { onConflict: "user_id" });
+    }, 1000);
+    return () => clearTimeout(timeout);
+  }, [allMatches, user, loaded]);
 
   const totalMatches = useMemo(() =>
     Object.values(allMatches).reduce((sum, ms) => sum + ms.length, 0),
