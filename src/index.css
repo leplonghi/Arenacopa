@@ -110,11 +110,11 @@
 
 @layer utilities {
   .glass-card {
-    @apply bg-card/80 backdrop-blur-md border border-border/50 rounded-xl;
+    @apply bg-card/40 backdrop-blur-sm border border-border/20 rounded-xl;
   }
 
   .glass-card-hover {
-    @apply glass-card transition-all duration-200 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5;
+    @apply glass-card transition-all duration-200 hover:border-primary/20 hover:shadow-lg hover:shadow-primary/5;
   }
 
   .text-gradient-gold {
