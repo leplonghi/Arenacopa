@@ -1,62 +1,78 @@
+import { useState, useMemo } from "react";
 import { MatchCard } from "@/components/MatchCard";
 import { EmptyState } from "@/components/EmptyState";
-import { getTodayMatches, getTomorrowMatches } from "@/data/mockData";
+import { matches, formatMatchDate } from "@/data/mockData";
 import { motion } from "framer-motion";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export function CalendarioTab() {
-  const todayMatches = getTodayMatches();
-  const tomorrowMatches = getTomorrowMatches();
+  // Group matches by date
+  const matchDays = useMemo(() => {
+    const grouped: Record<string, typeof matches> = {};
+    matches.forEach(m => {
+      const dateKey = m.date.split("T")[0];
+      if (!grouped[dateKey]) grouped[dateKey] = [];
+      grouped[dateKey].push(m);
+    });
+    // Sort by date
+    return Object.entries(grouped)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([date, dayMatches]) => ({ date, matches: dayMatches }));
+  }, []);
 
-  const today = new Date();
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
+  const [dayIndex, setDayIndex] = useState(0);
+
+  const currentDay = matchDays[dayIndex];
+  if (!currentDay) {
+    return <EmptyState icon="📅" title="Sem jogos" description="Nenhum jogo agendado." />;
+  }
+
+  const dateObj = new Date(currentDay.date + "T12:00:00");
+  const dateLabel = dateObj.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 
   return (
-    <div className="space-y-6">
-      <section>
-        <motion.div
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex items-center justify-between mb-3"
+    <div className="space-y-4">
+      {/* Date Navigation */}
+      <div className="flex items-center justify-between">
+        <button
+          onClick={() => setDayIndex(Math.max(0, dayIndex - 1))}
+          disabled={dayIndex === 0}
+          className="p-2 rounded-lg bg-secondary disabled:opacity-30 transition-opacity"
         >
-          <h2 className="text-lg font-black">
-            Hoje, {today.toLocaleDateString("pt-BR", { day: "numeric", month: "short" })}
-          </h2>
-          <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-secondary text-secondary-foreground">
-            {todayMatches.length} Jogos
+          <ChevronLeft className="w-4 h-4" />
+        </button>
+        <motion.div
+          key={dayIndex}
+          initial={{ opacity: 0, y: -4 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center"
+        >
+          <h2 className="text-base font-black capitalize">{dateLabel}</h2>
+          <span className="text-[10px] font-bold text-muted-foreground">
+            {currentDay.matches.length} {currentDay.matches.length === 1 ? "jogo" : "jogos"} • Dia {dayIndex + 1}/{matchDays.length}
           </span>
         </motion.div>
-        {todayMatches.length === 0 ? (
-          <EmptyState icon="📅" title="Sem jogos hoje" description="Nenhum jogo agendado para hoje." />
-        ) : (
-          <div className="space-y-3">
-            {todayMatches.map((m, i) => <MatchCard key={m.id} match={m} index={i} />)}
-          </div>
-        )}
-      </section>
+        <button
+          onClick={() => setDayIndex(Math.min(matchDays.length - 1, dayIndex + 1))}
+          disabled={dayIndex === matchDays.length - 1}
+          className="p-2 rounded-lg bg-secondary disabled:opacity-30 transition-opacity"
+        >
+          <ChevronRight className="w-4 h-4" />
+        </button>
+      </div>
 
-      <section>
-        <motion.div
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-          className="flex items-center justify-between mb-3"
-        >
-          <h2 className="text-lg font-black">
-            Amanhã, {tomorrow.toLocaleDateString("pt-BR", { day: "numeric", month: "short" })}
-          </h2>
-          <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-secondary text-secondary-foreground">
-            {tomorrowMatches.length} Jogos
-          </span>
-        </motion.div>
-        {tomorrowMatches.length === 0 ? (
-          <EmptyState icon="📅" title="Sem jogos amanhã" description="Nenhum jogo agendado." />
-        ) : (
-          <div className="space-y-3">
-            {tomorrowMatches.map((m, i) => <MatchCard key={m.id} match={m} index={i + todayMatches.length} />)}
-          </div>
-        )}
-      </section>
+      {/* Matches */}
+      <motion.div
+        key={dayIndex}
+        initial={{ opacity: 0, x: 20 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.2 }}
+        className="space-y-3"
+      >
+        {currentDay.matches.map((m, i) => (
+          <MatchCard key={m.id} match={m} index={i} />
+        ))}
+      </motion.div>
     </div>
   );
 }
