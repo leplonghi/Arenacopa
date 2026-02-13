@@ -30,7 +30,7 @@ function Header() {
   const title = getTitle();
 
   return (
-    <header className="sticky top-0 z-30 backdrop-blur-md border-b border-border/30 safe-top" style={{ background: 'rgba(10, 31, 26, 0.85)' }}>
+    <header className="sticky top-0 z-30 backdrop-blur-md border-b border-border/30 safe-top" style={{ background: 'rgba(5, 20, 16, 0.9)' }}>
       <div className="flex items-center justify-between px-4 h-14">
         {isSubpage ? (
           <button onClick={() => navigate(-1)} className="p-1.5 -ml-1.5 rounded-lg hover:bg-secondary">
@@ -62,7 +62,7 @@ function BottomTabs() {
   const navigate = useNavigate();
 
   return (
-    <nav className="fixed bottom-0 inset-x-0 z-30 backdrop-blur-md border-t border-border/30 safe-bottom" style={{ background: 'rgba(10, 31, 26, 0.9)' }}>
+    <nav className="fixed bottom-0 inset-x-0 z-30 backdrop-blur-md border-t border-border/30 safe-bottom" style={{ background: 'rgba(5, 20, 16, 0.92)' }}>
       <div className="flex items-center justify-around h-16 max-w-lg mx-auto relative">
         {tabs.map((tab) => {
           if (tab.path === "__fab__") {
