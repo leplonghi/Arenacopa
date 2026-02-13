@@ -9,6 +9,7 @@ import {
   Trash2, Share2, MessageCircle, Link2, X, Pencil, Check
 } from "lucide-react";
 import { useSimulacao, calcStandings } from "@/contexts/SimulacaoContext";
+import { KnockoutPhase } from "./KnockoutPhase";
 import { useAuth } from "@/contexts/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
@@ -324,12 +325,14 @@ function SimulationList() {
 function SimulationEditor() {
   const {
     currentSim, allMatches, standings, filledCount, totalMatches,
-    updateScore, resetAll, goBackToList, renameSimulation
+    updateScore, resetAll, goBackToList, renameSimulation,
+    isGroupsComplete,
   } = useSimulacao();
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
   const [shareOpen, setShareOpen] = useState(false);
   const [editing, setEditing] = useState(false);
   const [editName, setEditName] = useState("");
+  const [phase, setPhase] = useState<"groups" | "knockout">("groups");
 
   if (!currentSim) return null;
 
@@ -416,7 +419,37 @@ function SimulationEditor() {
         </div>
       </div>
 
+      {/* Phase Toggle (only when all 12 groups selected) */}
+      {currentSim.selectedGroups.length === 12 && (
+        <div className="flex gap-2">
+          <button
+            onClick={() => setPhase("groups")}
+            className={cn(
+              "flex-1 py-2.5 rounded-xl text-xs font-bold transition-colors",
+              phase === "groups" ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"
+            )}
+          >
+            Fase de Grupos
+          </button>
+          <button
+            onClick={() => setPhase("knockout")}
+            className={cn(
+              "flex-1 py-2.5 rounded-xl text-xs font-bold transition-colors relative",
+              phase === "knockout" ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground",
+              !isGroupsComplete && "opacity-50"
+            )}
+            disabled={!isGroupsComplete}
+          >
+            Eliminatórias
+            {isGroupsComplete && (
+              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-copa-success rounded-full" />
+            )}
+          </button>
+        </div>
+      )}
+
       {/* Groups */}
+      {phase === "groups" && (
       <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="space-y-3">
         {selectedGroups.map(g => {
           const groupMatches = allMatches[g];
@@ -507,6 +540,10 @@ function SimulationEditor() {
           );
         })}
       </motion.div>
+      )}
+
+      {/* Knockout Phase */}
+      {phase === "knockout" && <KnockoutPhase />}
 
       {/* Share Sheet */}
       <SimShareSheet

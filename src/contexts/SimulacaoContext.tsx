@@ -3,6 +3,10 @@ import { groups as allGroups, getGroupTeams } from "@/data/mockData";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import type { Json } from "@/integrations/supabase/types";
+import {
+  type KnockoutData, type KnockoutScore, type KnockoutRound,
+  getQualifiedTeams, buildKnockoutBracket, extractKnockoutScores,
+} from "@/utils/knockoutBracket";
 
 export interface SimMatch {
   home: string;
@@ -70,8 +74,7 @@ export function calcStandings(matches: SimMatch[], group: string): Standing[] {
 
 function initMatches(selectedGroups?: string[]) {
   const init: Record<string, SimMatch[]> = {};
-  const gs = selectedGroups || allGroups;
-  gs.forEach(g => { init[g] = generateGroupMatches(g); });
+  (selectedGroups || allGroups).forEach(g => { init[g] = generateGroupMatches(g); });
   return init;
 }
 
@@ -83,7 +86,6 @@ interface SimulacaoContextType {
   createSimulation: (name: string, selectedGroups: string[]) => Promise<string | null>;
   deleteSimulation: (id: string) => Promise<void>;
   renameSimulation: (id: string, name: string) => Promise<void>;
-  // Current sim operations
   allMatches: Record<string, SimMatch[]>;
   standings: Record<string, Standing[]>;
   filledCount: number;
@@ -91,6 +93,10 @@ interface SimulacaoContextType {
   updateScore: (group: string, matchIdx: number, side: "home" | "away", value: number | null) => void;
   resetAll: () => void;
   goBackToList: () => void;
+  // Knockout
+  knockoutData: KnockoutData | null;
+  isGroupsComplete: boolean;
+  updateKnockoutScore: (round: KnockoutRound, matchIdx: number, field: keyof KnockoutScore, value: number | null) => void;
 }
 
 const SimulacaoContext = createContext<SimulacaoContextType | null>(null);
@@ -106,6 +112,7 @@ export function SimulacaoProvider({ children }: { children: ReactNode }) {
   const [simulations, setSimulations] = useState<Simulation[]>([]);
   const [currentSimId, setCurrentSimId] = useState<string | null>(null);
   const [allMatches, setAllMatches] = useState<Record<string, SimMatch[]>>({});
+  const [knockoutScores, setKnockoutScores] = useState<Record<string, KnockoutScore[]>>({});
   const [loading, setLoading] = useState(true);
   const [loaded, setLoaded] = useState(false);
 
@@ -123,7 +130,7 @@ export function SimulacaoProvider({ children }: { children: ReactNode }) {
             id: s.id,
             name: s.name || "Minha Simulação",
             selectedGroups: s.selected_groups || allGroups,
-            matches: s.data as Record<string, SimMatch[]>,
+            matches: s.data as unknown as Record<string, SimMatch[]>,
             updatedAt: s.updated_at,
           })));
         }
@@ -137,14 +144,14 @@ export function SimulacaoProvider({ children }: { children: ReactNode }) {
     [simulations, currentSimId]
   );
 
-  // Load current sim matches
+  // Load current sim matches + knockout scores
   useEffect(() => {
-    if (!currentSim) { setAllMatches({}); return; }
+    if (!currentSim) { setAllMatches({}); setKnockoutScores({}); return; }
     const base = initMatches(currentSim.selectedGroups);
-    // Merge saved scores
+    const rawData = currentSim.matches as any;
     Object.keys(base).forEach(g => {
-      const saved = currentSim.matches?.[g];
-      if (saved) {
+      const saved = rawData?.[g];
+      if (saved && Array.isArray(saved)) {
         base[g] = base[g].map((m, i) => ({
           ...m,
           homeScore: saved[i]?.homeScore ?? null,
@@ -153,25 +160,34 @@ export function SimulacaoProvider({ children }: { children: ReactNode }) {
       }
     });
     setAllMatches(base);
+    // Load knockout scores
+    if (rawData?.__knockout) {
+      setKnockoutScores(rawData.__knockout);
+    } else {
+      setKnockoutScores({});
+    }
   }, [currentSimId, currentSim?.id]);
 
-  // Auto-save current sim (debounced)
+  // Auto-save (debounced)
   useEffect(() => {
     if (!user || !currentSimId || !loaded || Object.keys(allMatches).length === 0) return;
     const timeout = setTimeout(() => {
+      const dataToSave: any = { ...allMatches };
+      if (Object.keys(knockoutScores).length > 0) {
+        dataToSave.__knockout = knockoutScores;
+      }
       supabase
         .from("simulations")
-        .update({ data: allMatches as unknown as Json, updated_at: new Date().toISOString() })
+        .update({ data: dataToSave as unknown as Json, updated_at: new Date().toISOString() })
         .eq("id", currentSimId)
         .then(() => {
-          // Update local state
           setSimulations(prev => prev.map(s =>
-            s.id === currentSimId ? { ...s, matches: allMatches, updatedAt: new Date().toISOString() } : s
+            s.id === currentSimId ? { ...s, matches: dataToSave, updatedAt: new Date().toISOString() } : s
           ));
         });
     }, 1000);
     return () => clearTimeout(timeout);
-  }, [allMatches, user, currentSimId, loaded]);
+  }, [allMatches, knockoutScores, user, currentSimId, loaded]);
 
   const totalMatches = useMemo(() =>
     Object.values(allMatches).reduce((sum, ms) => sum + ms.length, 0),
@@ -188,6 +204,18 @@ export function SimulacaoProvider({ children }: { children: ReactNode }) {
     return { standings: result, filledCount: filled };
   }, [allMatches]);
 
+  const isGroupsComplete = useMemo(() => {
+    if (!currentSim || currentSim.selectedGroups.length !== 12) return false;
+    return filledCount === totalMatches && totalMatches > 0;
+  }, [currentSim, filledCount, totalMatches]);
+
+  const knockoutData = useMemo(() => {
+    if (!isGroupsComplete) return null;
+    const seeds = getQualifiedTeams(standings, currentSim?.selectedGroups || []);
+    if (!seeds) return null;
+    return buildKnockoutBracket(seeds, knockoutScores);
+  }, [isGroupsComplete, standings, knockoutScores, currentSim?.selectedGroups]);
+
   const updateScore = useCallback((group: string, matchIdx: number, side: "home" | "away", value: number | null) => {
     setAllMatches(prev => {
       const updated = { ...prev };
@@ -198,9 +226,21 @@ export function SimulacaoProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const updateKnockoutScore = useCallback((round: KnockoutRound, matchIdx: number, field: keyof KnockoutScore, value: number | null) => {
+    setKnockoutScores(prev => {
+      const updated = { ...prev };
+      const roundScores = [...(updated[round] || [])];
+      const current = roundScores[matchIdx] || { homeScore: null, awayScore: null, homePenalty: null, awayPenalty: null };
+      roundScores[matchIdx] = { ...current, [field]: value };
+      updated[round] = roundScores;
+      return updated;
+    });
+  }, []);
+
   const resetAll = useCallback(() => {
     if (!currentSim) return;
     setAllMatches(initMatches(currentSim.selectedGroups));
+    setKnockoutScores({});
   }, [currentSim]);
 
   const selectSimulation = useCallback((id: string) => setCurrentSimId(id), []);
@@ -251,6 +291,7 @@ export function SimulacaoProvider({ children }: { children: ReactNode }) {
       selectSimulation, createSimulation, deleteSimulation, renameSimulation,
       allMatches, standings, filledCount, totalMatches,
       updateScore, resetAll, goBackToList,
+      knockoutData, isGroupsComplete, updateKnockoutScore,
     }}>
       {children}
     </SimulacaoContext.Provider>
