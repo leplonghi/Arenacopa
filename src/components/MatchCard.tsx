@@ -1,5 +1,6 @@
 import { getTeam, formatMatchTime, getStadium, type Match } from "@/data/mockData";
 import { StatusBadge } from "./StatusBadge";
+import { Flag } from "./Flag";
 import { cn } from "@/lib/utils";
 import { MapPin } from "lucide-react";
 
@@ -18,7 +19,7 @@ export function MatchCard({ match, compact = false, className }: MatchCardProps)
     return (
       <div className={cn("glass-card p-3 flex items-center gap-3", className)}>
         <div className="flex items-center gap-2 flex-1 min-w-0">
-          <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-lg">{home.flag}</div>
+          <Flag code={home.code} size="sm" />
           <span className="text-xs font-bold truncate">{home.name}</span>
         </div>
         <div className="flex flex-col items-center shrink-0">
@@ -31,7 +32,7 @@ export function MatchCard({ match, compact = false, className }: MatchCardProps)
         </div>
         <div className="flex items-center gap-2 flex-1 min-w-0 justify-end">
           <span className="text-xs font-bold truncate">{away.name}</span>
-          <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-lg">{away.flag}</div>
+          <Flag code={away.code} size="sm" />
         </div>
       </div>
     );
@@ -59,9 +60,7 @@ export function MatchCard({ match, compact = false, className }: MatchCardProps)
       {/* Teams & Score */}
       <div className="flex items-center justify-between">
         <div className="flex flex-col items-center gap-1.5 flex-1">
-          <div className="w-12 h-12 rounded-full bg-secondary/80 flex items-center justify-center text-2xl border border-border/50">
-            {home.flag}
-          </div>
+          <Flag code={home.code} size="lg" className="border border-border/50" />
           <span className="text-xs font-black">{home.name}</span>
         </div>
 
@@ -84,9 +83,7 @@ export function MatchCard({ match, compact = false, className }: MatchCardProps)
         </div>
 
         <div className="flex flex-col items-center gap-1.5 flex-1">
-          <div className="w-12 h-12 rounded-full bg-secondary/80 flex items-center justify-center text-2xl border border-border/50">
-            {away.flag}
-          </div>
+          <Flag code={away.code} size="lg" className="border border-border/50" />
           <span className="text-xs font-black">{away.name}</span>
         </div>
       </div>
