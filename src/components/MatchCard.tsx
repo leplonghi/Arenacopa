@@ -19,7 +19,7 @@ export function MatchCard({ match, compact = false, className }: MatchCardProps)
       <div className={cn("glass-card p-3 flex items-center gap-3", className)}>
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-lg">{home.flag}</div>
-          <span className="text-xs font-bold">{home.code}</span>
+          <span className="text-xs font-bold truncate">{home.name}</span>
         </div>
         <div className="flex flex-col items-center shrink-0">
           {match.status === "finished" || match.status === "live" ? (
@@ -30,7 +30,7 @@ export function MatchCard({ match, compact = false, className }: MatchCardProps)
           <StatusBadge status={match.status} minute={match.minute} />
         </div>
         <div className="flex items-center gap-2 flex-1 min-w-0 justify-end">
-          <span className="text-xs font-bold">{away.code}</span>
+          <span className="text-xs font-bold truncate">{away.name}</span>
           <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-lg">{away.flag}</div>
         </div>
       </div>
@@ -62,7 +62,7 @@ export function MatchCard({ match, compact = false, className }: MatchCardProps)
           <div className="w-12 h-12 rounded-full bg-secondary/80 flex items-center justify-center text-2xl border border-border/50">
             {home.flag}
           </div>
-          <span className="text-xs font-black">{home.code}</span>
+          <span className="text-xs font-black">{home.name}</span>
         </div>
 
         <div className="flex flex-col items-center px-3">
@@ -87,7 +87,7 @@ export function MatchCard({ match, compact = false, className }: MatchCardProps)
           <div className="w-12 h-12 rounded-full bg-secondary/80 flex items-center justify-center text-2xl border border-border/50">
             {away.flag}
           </div>
-          <span className="text-xs font-black">{away.code}</span>
+          <span className="text-xs font-black">{away.name}</span>
         </div>
       </div>
 
