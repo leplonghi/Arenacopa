@@ -1,12 +1,12 @@
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { Home, Trophy, Users, User, Bell, ChevronLeft, Plus } from "lucide-react";
+import { Home, Trophy, Users, User, Bell, ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import logo from "@/assets/arenacopa_logo.png";
 
 const tabs = [
   { path: "/", icon: Home, label: "Início" },
   { path: "/copa", icon: Trophy, label: "Copa" },
-  { path: "__fab__", icon: Plus, label: "" },
+  { path: "__fab__", icon: null, label: "" },
   { path: "/boloes", icon: Users, label: "Bolões" },
   { path: "/perfil", icon: User, label: "Perfil" },
 ];
@@ -37,9 +37,11 @@ function Header() {
             <ChevronLeft className="w-5 h-5" />
           </button>
         ) : (
-          <div className="flex items-center gap-2">
-            <img src={logo} alt="ArenaCopa" className="h-7 w-7 rounded-lg" />
-            <span className="font-black text-base tracking-tight">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-full bg-secondary/80 border border-border/50 flex items-center justify-center overflow-hidden">
+              <img src={logo} alt="ArenaCopa" className="h-6 w-6" />
+            </div>
+            <span className="font-black text-lg tracking-tight">
               ARENA<span className="text-primary">COPA</span>
             </span>
           </div>
@@ -49,9 +51,9 @@ function Header() {
           <h1 className="text-base font-bold absolute left-1/2 -translate-x-1/2">{title}</h1>
         ) : null}
 
-        <button className="p-2 rounded-xl bg-secondary/60 relative">
+        <button className="w-10 h-10 rounded-full bg-secondary/60 border border-border/50 flex items-center justify-center relative">
           <Bell className="w-5 h-5" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-copa-live rounded-full" />
+          <span className="absolute top-2 right-2 w-2 h-2 bg-copa-live rounded-full" />
         </button>
       </div>
     </header>
@@ -70,9 +72,16 @@ function BottomTabs() {
               <button
                 key="fab"
                 onClick={() => navigate("/boloes/criar")}
-                className="flex items-center justify-center w-14 h-14 rounded-full bg-primary shadow-lg shadow-primary/30 -mt-6 border-4 border-background"
+                className="flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-b from-primary to-[hsl(var(--copa-gold))] shadow-lg shadow-primary/40 -mt-7 border-4 border-background"
               >
-                <Plus className="w-7 h-7 text-primary-foreground" strokeWidth={3} />
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" className="text-primary-foreground">
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2" />
+                  <path d="M12 2 L14.5 8 L12 6.5 L9.5 8 Z" fill="currentColor" opacity="0.4" />
+                  <path d="M12 22 L14.5 16 L12 17.5 L9.5 16 Z" fill="currentColor" opacity="0.4" />
+                  <path d="M2 12 L8 9.5 L6.5 12 L8 14.5 Z" fill="currentColor" opacity="0.4" />
+                  <path d="M22 12 L16 9.5 L17.5 12 L16 14.5 Z" fill="currentColor" opacity="0.4" />
+                  <circle cx="12" cy="12" r="3" fill="currentColor" opacity="0.6" />
+                </svg>
               </button>
             );
           }
@@ -90,7 +99,7 @@ function BottomTabs() {
             >
               {({ isActive }) => (
                 <>
-                  <tab.icon className="w-5 h-5" strokeWidth={isActive ? 2.5 : 1.8} />
+                  {tab.icon && <tab.icon className="w-5 h-5" strokeWidth={isActive ? 2.5 : 1.8} />}
                   <span className={cn("text-[10px]", isActive ? "font-bold" : "font-medium")}>{tab.label}</span>
                 </>
               )}
