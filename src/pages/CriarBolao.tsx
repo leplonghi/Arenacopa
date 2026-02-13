@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 
-const steps = ["Informações", "Configurações", "Pontuação"];
+const steps = ["Informações", "Revisar"];
 
 const CriarBolao = () => {
   const navigate = useNavigate();
@@ -34,6 +34,13 @@ const CriarBolao = () => {
 
       if (error) throw error;
 
+      // Auto-join as admin
+      await supabase.from("bolao_members").insert({
+        bolao_id: data.id,
+        user_id: user.id,
+        role: "admin",
+      });
+
       toast({ title: "Bolão criado! 🎉", description: "Compartilhe o código de convite com seus amigos." });
       navigate(`/boloes/${data.id}`);
     } catch (error: any) {
@@ -42,6 +49,8 @@ const CriarBolao = () => {
       setCreating(false);
     }
   };
+
+  const canProceed = name.trim().length >= 3;
 
   return (
     <div className="px-4 py-4">
@@ -61,7 +70,7 @@ const CriarBolao = () => {
         />
       </div>
 
-      {/* Step 1 */}
+      {/* Step 1: Info */}
       {step === 0 && (
         <div className="space-y-6">
           <div className="flex flex-col items-center">
@@ -75,13 +84,16 @@ const CriarBolao = () => {
           </div>
 
           <div>
-            <label className="text-[10px] font-bold uppercase tracking-widest text-primary mb-2 block">Nome do Bolão</label>
+            <label className="text-[10px] font-bold uppercase tracking-widest text-primary mb-2 block">Nome do Bolão *</label>
             <input
               value={name}
               onChange={e => setName(e.target.value)}
               placeholder="Ex: Copa dos Amigos 2026"
               className="w-full px-4 py-3.5 rounded-xl bg-card border border-border text-sm font-medium placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
             />
+            {name.length > 0 && name.trim().length < 3 && (
+              <span className="text-[10px] text-destructive mt-1 block">Mínimo de 3 caracteres</span>
+            )}
           </div>
 
           <div>
@@ -124,70 +136,41 @@ const CriarBolao = () => {
             </div>
           </div>
 
+          {/* Scoring info */}
           <div className="glass-card p-4">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <Trophy className="w-4 h-4 text-primary" />
-                <span className="text-xs font-black uppercase tracking-wider">Distribuição</span>
-              </div>
+            <div className="flex items-center gap-2 mb-3">
+              <Trophy className="w-4 h-4 text-primary" />
+              <span className="text-xs font-black uppercase tracking-wider">Pontuação</span>
             </div>
-            <div className="space-y-2.5">
+            <div className="space-y-2">
               {[
-                { rank: 1, label: "Campeão", pct: 60 },
-                { rank: 2, label: "Vice", pct: 30 },
-                { rank: 3, label: "Terceiro", pct: 10 },
-              ].map(d => (
-                <div key={d.rank} className="flex items-center gap-3">
-                  <div className={cn(
-                    "w-7 h-7 rounded-lg flex items-center justify-center text-xs font-black",
-                    d.rank === 1 ? "bg-copa-success text-background" :
-                    d.rank === 2 ? "bg-copa-success/70 text-background" :
-                    "bg-copa-success/40 text-background"
-                  )}>
-                    {d.rank}
+                { label: "Resultado Exato", pts: "5 pts", desc: "Acertar placar exato" },
+                { label: "Vencedor Correto", pts: "3 pts", desc: "Acertar quem ganha" },
+                { label: "Empate Correto", pts: "2 pts", desc: "Acertar empate" },
+                { label: "Campeão", pts: "20 pts", desc: "Acertar o campeão" },
+              ].map(r => (
+                <div key={r.label} className="flex items-center gap-3">
+                  <div className="flex-1">
+                    <span className="text-xs font-bold">{r.label}</span>
+                    <span className="text-[10px] text-muted-foreground ml-1.5">— {r.desc}</span>
                   </div>
-                  <span className="text-sm font-medium flex-1">{d.label}</span>
-                  <span className="text-sm font-black text-primary">{d.pct}%</span>
+                  <span className="text-xs font-black text-primary">{r.pts}</span>
                 </div>
               ))}
             </div>
           </div>
 
+          {/* Disclaimer */}
           <div className="glass-card p-3 border-dashed border-muted-foreground/20">
             <p className="text-[10px] text-muted-foreground leading-relaxed text-center">
-              ⚠️ O ArenaCopa <span className="font-bold">não realiza</span> processamento de pagamentos ou transações financeiras. Eventuais valores de entrada devem ser combinados e gerenciados diretamente entre os participantes, fora do aplicativo.
+              ⚠️ O ArenaCopa <span className="font-bold">não realiza</span> processamento de pagamentos ou transações financeiras. Eventuais valores devem ser combinados entre os participantes, fora do aplicativo.
             </p>
           </div>
         </div>
       )}
 
-      {/* Step 2 */}
+      {/* Step 2: Review */}
       {step === 1 && (
-        <div className="space-y-5">
-          <div className="glass-card p-6 text-center">
-            <span className="text-3xl mb-3 block">⚙️</span>
-            <h3 className="text-base font-black mb-1">Configurações de Pontuação</h3>
-            <p className="text-xs text-muted-foreground">Defina como os pontos serão calculados para cada palpite.</p>
-          </div>
-          {[
-            { label: "Resultado Exato", pts: "5 pts", desc: "Acertar placar exato" },
-            { label: "Vencedor Correto", pts: "3 pts", desc: "Acertar quem ganha" },
-            { label: "Empate Correto", pts: "2 pts", desc: "Acertar empate" },
-            { label: "Campeão", pts: "20 pts", desc: "Acertar o campeão" },
-          ].map(r => (
-            <div key={r.label} className="glass-card p-4 flex items-center gap-3">
-              <div className="flex-1">
-                <span className="text-sm font-bold block">{r.label}</span>
-                <span className="text-[11px] text-muted-foreground">{r.desc}</span>
-              </div>
-              <span className="text-sm font-black text-primary">{r.pts}</span>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Step 3 */}
-      {step === 2 && (
         <div className="space-y-5">
           <div className="glass-card p-6 text-center">
             <span className="text-3xl mb-3 block">🎯</span>
@@ -195,9 +178,41 @@ const CriarBolao = () => {
             <p className="text-xs text-muted-foreground">Confira as configurações do seu bolão.</p>
           </div>
           <div className="glass-card p-4 space-y-3">
-            <div className="flex justify-between"><span className="text-xs text-muted-foreground">Nome</span><span className="text-xs font-bold">{name || "—"}</span></div>
-            <div className="flex justify-between"><span className="text-xs text-muted-foreground">Privacidade</span><span className="text-xs font-bold">{privacy === "private" ? "Privado" : "Público"}</span></div>
-            <div className="flex justify-between"><span className="text-xs text-muted-foreground">Premiação</span><span className="text-xs font-bold">Definida entre participantes</span></div>
+            <div className="flex justify-between">
+              <span className="text-xs text-muted-foreground">Nome</span>
+              <span className="text-xs font-bold">{name || "—"}</span>
+            </div>
+            {description && (
+              <div className="flex justify-between">
+                <span className="text-xs text-muted-foreground">Descrição</span>
+                <span className="text-xs font-bold truncate max-w-[180px]">{description}</span>
+              </div>
+            )}
+            <div className="flex justify-between">
+              <span className="text-xs text-muted-foreground">Privacidade</span>
+              <span className="text-xs font-bold">{privacy === "private" ? "Privado" : "Público"}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-xs text-muted-foreground">Premiação</span>
+              <span className="text-xs font-bold">Definida entre participantes</span>
+            </div>
+          </div>
+
+          <div className="glass-card p-4">
+            <h4 className="text-xs font-black uppercase tracking-wider mb-2">O que acontece depois?</h4>
+            <div className="space-y-2">
+              {[
+                "Um código de convite será gerado automaticamente",
+                "Você será o administrador do bolão",
+                "Compartilhe o código com seus amigos para convidá-los",
+                "Cada participante faz seus palpites nos jogos da Copa",
+              ].map((text, i) => (
+                <div key={i} className="flex items-start gap-2">
+                  <span className="w-5 h-5 rounded-full bg-primary/20 text-primary text-[10px] font-black flex items-center justify-center shrink-0 mt-0.5">{i + 1}</span>
+                  <span className="text-xs text-muted-foreground">{text}</span>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       )}
@@ -214,18 +229,18 @@ const CriarBolao = () => {
         )}
         <button
           onClick={() => {
-            if (step < 2) setStep(step + 1);
+            if (step < 1) setStep(step + 1);
             else handleCreate();
           }}
-          disabled={creating || (step === 2 && !name.trim())}
+          disabled={!canProceed || creating}
           className="flex-1 py-3.5 rounded-xl bg-primary text-primary-foreground font-black text-sm flex items-center justify-center gap-1 uppercase tracking-wider disabled:opacity-50"
         >
-          {step < 2 ? (
-            <>Próximo Passo <ChevronRight className="w-4 h-4" /></>
+          {step < 1 ? (
+            <>Próximo <ChevronRight className="w-4 h-4" /></>
           ) : creating ? (
             "Criando..."
           ) : (
-            "Criar Bolão"
+            "Criar Bolão 🏆"
           )}
         </button>
       </div>
