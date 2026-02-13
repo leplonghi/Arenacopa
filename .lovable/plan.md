@@ -1,25 +1,42 @@
 
+## Interatividade no Bracket: Modal de Edicao de Placar
 
-## Header Nota 10 - Escudo + Refinamentos
+### Objetivo
+Permitir que o usuario clique em qualquer jogo no chaveamento visual (BracketView) e edite o placar diretamente em um modal/dialog, sem precisar sair da visualizacao de arvore.
 
-### Problema Atual
-O escudo/logo não está aparecendo no header. Apenas o texto "ARENACOPA" é visível. O container `w-10 h-10` pode estar muito pequeno ou a imagem não está carregando corretamente.
+### Mudancas Planejadas
 
-### Melhorias Planejadas
+**1. Novo componente: `src/components/copa/BracketScoreModal.tsx`**
+- Dialog (Radix) que recebe o match selecionado (round, index, dados do jogo)
+- Exibe bandeiras e nomes das duas selecoes
+- Inputs numericos (+/-) para gols de cada time (mesmo padrao do KnockoutPhase)
+- Se houver empate, exibe campos de penaltis automaticamente
+- Botao "Salvar" que chama `updateKnockoutScore` do SimulacaoContext
+- Jogos com times "TBD" (null) nao sao editaveis - o modal nao abre
 
-**1. Escudo visivel e destacado**
-- Aumentar o container e a imagem para `h-12 w-12` para garantir visibilidade
-- Adicionar fundo circular branco semi-transparente (`bg-white/90`) para contraste do escudo no dark mode
-- Aplicar `rounded-full`, `p-1`, e `shadow-lg shadow-copa-green/20` para dar profundidade
+**2. Alteracoes em `src/components/copa/BracketView.tsx`**
+- `BracketView` recebe `onMatchClick` como prop opcional (callback com round, index, match)
+- `BracketMatch` ganha `onClick` e cursor pointer quando ambos os times estao definidos
+- Efeito hover sutil para indicar que o card e clicavel
+- Estado local no `BracketView` para controlar qual match esta selecionado e abrir o modal
+- O mesmo tratamento para o jogo de 3o lugar
 
-**2. Texto "ARENACOPA" refinado**
-- Aumentar para `text-xl` e adicionar leve `drop-shadow` no texto para brilho sutil
+**3. Alteracoes em `src/components/copa/ChavesTab.tsx`**
+- Passa as props necessarias para o BracketView conectar o modal ao contexto
+- O `updateKnockoutScore` ja existe no SimulacaoContext e sera reutilizado
 
-**3. Botao de notificacao harmonizado**
-- Manter consistente com o novo tamanho do logo
+### Detalhes Tecnicos
 
-### Arquivo alterado
-- `src/components/Layout.tsx` (linhas 40-46): container da logo e estilos da imagem
+- Reutiliza o componente `Dialog` de `@/components/ui/dialog` ja existente
+- O modal usa inputs com botoes +/- (0 a 20) para cada time
+- Logica de penaltis: se `homeScore === awayScore` e ambos preenchidos, exibe campos de penalti
+- Ao salvar, chama `updateKnockoutScore` para cada campo alterado (homeScore, awayScore, homePenalty, awayPenalty)
+- O round e identificado pelo indice da coluna no bracket (r32=0, r16=1, quarter=2, semi=3, final=4) mapeado para o KnockoutRound type
+- Nenhuma mudanca no banco de dados - a persistencia ja funciona via auto-save do contexto
 
-### Resultado esperado
-Escudo visivel com fundo claro circular, texto bold ao lado, tudo equilibrado e profissional no header escuro.
+### Arquivos Afetados
+| Arquivo | Acao |
+|---|---|
+| `src/components/copa/BracketScoreModal.tsx` | Criar |
+| `src/components/copa/BracketView.tsx` | Editar |
+| `src/components/copa/ChavesTab.tsx` | Editar |
