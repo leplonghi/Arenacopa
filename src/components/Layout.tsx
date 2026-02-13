@@ -30,7 +30,7 @@ function Header() {
   const title = getTitle();
 
   return (
-    <header className="sticky top-0 z-30 backdrop-blur-md safe-top" style={{ background: 'linear-gradient(to bottom, rgba(5, 20, 16, 0.85) 0%, rgba(5, 20, 16, 0.4) 100%)' }}>
+    <header className="sticky top-0 z-30 backdrop-blur-xl safe-top" style={{ background: 'rgba(5, 20, 16, 0.9)' }}>
       <div className="flex items-center justify-between px-4 h-14">
         {isSubpage ? (
           <button onClick={() => navigate(-1)} className="p-1.5 -ml-1.5 rounded-lg hover:bg-secondary">

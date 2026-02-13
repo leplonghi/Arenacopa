@@ -17,7 +17,7 @@ const Copa = () => {
   return (
     <SimulacaoProvider>
       <div>
-        <div className="flex gap-2 px-4 py-3 scrollbar-hide sticky top-14 z-20 backdrop-blur-xl shadow-[0_4px_20px_rgba(0,0,0,0.3)]" style={{ background: 'rgba(5, 20, 16, 0.55)' }}>
+        <div className="flex gap-2 px-4 py-3 scrollbar-hide sticky top-0 z-20 backdrop-blur-xl" style={{ background: 'rgba(5, 20, 16, 0.95)' }}>
           {(["calendario", "grupos", "chaves", "simulacao", "mapa"] as CopaTab[]).map(t => (
             <button
               key={t}
@@ -43,7 +43,7 @@ const Copa = () => {
           ))}
         </div>
 
-        <div className="px-4 py-4">
+        <div className="px-4 pt-2 pb-4">
           <AnimatePresence mode="wait">
             <motion.div
               key={tab}
