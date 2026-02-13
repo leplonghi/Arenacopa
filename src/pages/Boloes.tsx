@@ -25,7 +25,7 @@ const Boloes = () => {
           className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-primary text-primary-foreground text-xs font-bold"
         >
           <Plus className="w-4 h-4" />
-          Create
+          Criar
         </Link>
       </div>
 
@@ -84,13 +84,13 @@ function BolaoCard({ bolao }: { bolao: Bolao }) {
             <>
               {bolao.myDelta > 0 ? <TrendingUp className="w-4 h-4 text-copa-success" /> : <TrendingDown className="w-4 h-4 text-copa-live" />}
               <span className={cn("text-[10px] font-bold", deltaColor.split(" ")[0])}>
-                {Math.abs(bolao.myDelta)} POS
+                {Math.abs(bolao.myDelta)} POS.
               </span>
             </>
           ) : (
             <>
               <Minus className="w-4 h-4 text-muted-foreground" />
-              <span className="text-[10px] font-bold text-muted-foreground">0 POS</span>
+              <span className="text-[10px] font-bold text-muted-foreground">0 POS.</span>
             </>
           )}
         </div>
@@ -110,7 +110,7 @@ function BolaoCard({ bolao }: { bolao: Bolao }) {
             </div>
           </div>
           <div className="ml-auto text-right">
-            <span className="text-[9px] uppercase tracking-wider text-muted-foreground block">Total Pot</span>
+            <span className="text-[9px] uppercase tracking-wider text-muted-foreground block">Prêmio Total</span>
             <span className="text-sm font-black text-primary">R$ {bolao.totalContribution.toFixed(2)}</span>
           </div>
         </div>
@@ -131,7 +131,7 @@ function BolaoCard({ bolao }: { bolao: Bolao }) {
 
       {/* Progress */}
       <div className="flex items-center justify-between text-[10px] text-muted-foreground mb-1">
-        <span>Progress</span>
+        <span>Progresso</span>
         <span>{bolao.progress}%</span>
       </div>
       <div className="w-full h-1.5 bg-secondary rounded-full overflow-hidden">

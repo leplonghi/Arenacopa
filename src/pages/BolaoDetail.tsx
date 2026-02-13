@@ -34,7 +34,7 @@ const BolaoDetail = () => {
       <div className="grid grid-cols-3 gap-2">
         {bolao.totalContribution > 0 && (
           <div className="glass-card p-3 text-center">
-            <span className="text-[9px] uppercase tracking-wider text-muted-foreground block mb-1">Pot</span>
+            <span className="text-[9px] uppercase tracking-wider text-muted-foreground block mb-1">Prêmio</span>
             <span className="text-base font-black text-primary">R${bolao.totalContribution}</span>
           </div>
         )}
@@ -138,7 +138,7 @@ const BolaoDetail = () => {
             onClick={() => setShowAll(true)}
             className="w-full mt-3 py-2.5 flex items-center justify-center gap-1 text-xs font-bold text-muted-foreground"
           >
-            View Full Table <ChevronDown className="w-4 h-4" />
+            Ver Tabela Completa <ChevronDown className="w-4 h-4" />
           </button>
         )}
       </section>
