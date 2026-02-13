@@ -253,7 +253,7 @@ function ChavesTab() {
 
   return (
     <div>
-      <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground mb-4 text-center">Round of 16</h2>
+      <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground mb-4 text-center">Oitavas de Final</h2>
       <motion.div
         variants={staggerContainer}
         initial="hidden"
@@ -280,14 +280,14 @@ function ChavesTab() {
                 isFavorite && "bg-primary/5"
               )}>
                 <Flag code={home?.code || ""} size="sm" />
-                <span className="text-sm font-bold flex-1">{home?.name || "TBD"}</span>
+                <span className="text-sm font-bold flex-1">{home?.name || "A definir"}</span>
                 {m.homeScore !== undefined && (
                   <span className="text-lg font-black text-primary">{m.homeScore}</span>
                 )}
               </div>
               <div className="flex items-center gap-3 px-4 py-3 border-t border-border/30">
                 <Flag code={away?.code || ""} size="sm" />
-                <span className="text-sm font-bold flex-1">{away?.name || "TBD"}</span>
+                <span className="text-sm font-bold flex-1">{away?.name || "A definir"}</span>
                 {m.awayScore !== undefined && (
                   <span className="text-lg font-black">{m.awayScore}</span>
                 )}
@@ -311,7 +311,7 @@ function MapaTab() {
         <div className="absolute inset-0 bg-gradient-to-b from-copa-green/10 to-background/80" />
         <div className="text-center z-10">
           <Globe className="w-10 h-10 text-muted-foreground mx-auto mb-2" />
-          <span className="text-xs text-muted-foreground">Copa 2026 Map</span>
+          <span className="text-xs text-muted-foreground">Mapa Copa 2026</span>
         </div>
         {/* Stadium dots */}
         {stadiums.slice(0, 5).map((s, i) => (
