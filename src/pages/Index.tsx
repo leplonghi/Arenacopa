@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { MatchCard } from "@/components/MatchCard";
 import { Flag } from "@/components/Flag";
 import { getTodayMatches, getTeam, boloes, userProfile, matches, formatMatchTime } from "@/data/mockData";
-import { ChevronRight, TrendingUp, TrendingDown, Minus, Users } from "lucide-react";
+import { Users, Trophy as TrophyIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 
@@ -43,12 +43,14 @@ const Index = () => {
         </div>
         <motion.div
           whileTap={{ scale: 0.98 }}
-          className="glass-card p-4 border-l-2 border-l-copa-green"
+          className="glass-card p-4 border border-copa-green/30"
         >
-          <div className="flex items-center gap-3">
-            <Flag code={favoriteTeam.code} size="xl" className="border-2 border-copa-green/30" />
+          <div className="flex items-center gap-4">
+            <div className="w-16 h-16 rounded-full bg-secondary/80 border-2 border-copa-green/40 flex items-center justify-center overflow-hidden shrink-0">
+              <Flag code={favoriteTeam.code} size="xl" className="w-14 h-14" />
+            </div>
             <div className="flex-1">
-              <h3 className="font-black text-lg">{favoriteTeam.name}</h3>
+              <h3 className="font-black text-xl">{favoriteTeam.name}</h3>
               {nextFavMatch && (
                 <span className="text-xs text-muted-foreground">
                   Próximo Jogo: <span className="text-primary font-semibold">Hoje, {formatMatchTime(nextFavMatch.date)}</span>
@@ -56,8 +58,8 @@ const Index = () => {
               )}
             </div>
             <div className="text-right">
-              <span className="text-[10px] uppercase tracking-wider text-muted-foreground block">Grupo {favoriteTeam.group}</span>
-              <span className="text-2xl font-black">1º</span>
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground block font-bold">Grupo {favoriteTeam.group}</span>
+              <span className="text-3xl font-black">1º</span>
             </div>
           </div>
         </motion.div>
@@ -70,35 +72,48 @@ const Index = () => {
           <Link to="/boloes" className="text-xs text-primary font-semibold">Ranking</Link>
         </div>
         <div className="grid grid-cols-2 gap-3">
-          {myBoloes.map((bolao, i) => (
-            <motion.div key={bolao.id} variants={cardVariants} initial="hidden" animate="visible" custom={i} whileTap={{ scale: 0.97 }}>
-              <Link
-                to={`/boloes/${bolao.id}`}
-                className="glass-card p-4 border-l-2 border-l-copa-green relative block"
-              >
-                <div className="flex items-center gap-2 mb-3">
-                  <div className="w-8 h-8 rounded-lg bg-copa-green/20 flex items-center justify-center">
-                    <Users className="w-4 h-4 text-copa-green-light" />
+          {myBoloes.map((bolao, i) => {
+            const isLeader = bolao.myRank === 1;
+            return (
+              <motion.div key={bolao.id} variants={cardVariants} initial="hidden" animate="visible" custom={i} whileTap={{ scale: 0.97 }}>
+                <Link
+                  to={`/boloes/${bolao.id}`}
+                  className={cn(
+                    "glass-card p-4 relative block",
+                    isLeader ? "border border-primary/30" : "border border-copa-green/20"
+                  )}
+                >
+                  <div className="flex items-start justify-between mb-3">
+                    <div className={cn(
+                      "w-10 h-10 rounded-xl flex items-center justify-center",
+                      isLeader ? "bg-primary/15" : "bg-copa-green/15"
+                    )}>
+                      {isLeader ? (
+                        <TrophyIcon className="w-5 h-5 text-primary" />
+                      ) : (
+                        <Users className="w-5 h-5 text-copa-green-light" />
+                      )}
+                    </div>
+                    {bolao.myDelta > 0 && (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-copa-success/20 text-copa-success">
+                        +{bolao.myDelta * 3}pts
+                      </span>
+                    )}
+                    {isLeader && (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/20 text-primary">
+                        Líder
+                      </span>
+                    )}
                   </div>
-                  {bolao.myDelta > 0 && (
-                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-copa-success/20 text-copa-success ml-auto">
-                      +{bolao.myDelta > 0 ? `${bolao.myDelta * 3}pts` : ""}
-                    </span>
-                  )}
-                  {bolao.myRank === 1 && (
-                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-primary/20 text-primary ml-auto">
-                      Líder
-                    </span>
-                  )}
-                </div>
-                <span className="text-xs font-bold block truncate mb-1">{bolao.name}</span>
-                <div className="flex items-baseline gap-1">
-                  <span className="text-2xl font-black">{bolao.myRank}º</span>
-                  <span className="text-xs text-muted-foreground">/ {bolao.participants.length}</span>
-                </div>
-              </Link>
-            </motion.div>
-          ))}
+                  <span className="text-xs font-bold block truncate mb-2">{bolao.name}</span>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-2xl font-black">{bolao.myRank}º</span>
+                    <span className="text-xs text-muted-foreground">/ {bolao.participants.length}</span>
+                  </div>
+                </Link>
+              </motion.div>
+            );
+          })}
         </div>
       </motion.section>
 
@@ -106,7 +121,7 @@ const Index = () => {
       <motion.section variants={sectionVariants} initial="hidden" animate="visible" custom={2}>
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-base font-black">Jogos de Hoje</h2>
-          <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-secondary text-secondary-foreground uppercase tracking-wider">
+          <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-secondary border border-border/50 text-secondary-foreground uppercase tracking-wider">
             {new Date().toLocaleDateString("pt-BR", { day: "numeric", month: "short" }).toUpperCase()}
           </span>
         </div>
