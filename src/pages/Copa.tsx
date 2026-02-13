@@ -218,14 +218,14 @@ function ChavesTab() {
                 isFavorite && "bg-primary/5"
               )}>
                 <span className="text-lg">{home?.flag || "🏳️"}</span>
-                <span className="text-sm font-bold flex-1">{home?.code || "TBD"}</span>
+                <span className="text-sm font-bold flex-1">{home?.name || "TBD"}</span>
                 {m.homeScore !== undefined && (
                   <span className="text-lg font-black text-primary">{m.homeScore}</span>
                 )}
               </div>
               <div className="flex items-center gap-3 px-4 py-3 border-t border-border/30">
                 <span className="text-lg">{away?.flag || "🏳️"}</span>
-                <span className="text-sm font-bold flex-1">{away?.code || "TBD"}</span>
+                <span className="text-sm font-bold flex-1">{away?.name || "TBD"}</span>
                 {m.awayScore !== undefined && (
                   <span className="text-lg font-black">{m.awayScore}</span>
                 )}
