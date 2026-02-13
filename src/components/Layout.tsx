@@ -1,7 +1,7 @@
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { Home, Trophy, Users, User, Bell, ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
-import logo from "@/assets/arenacopa_logo.png";
+import logo from "@/assets/escudo_arenacopa_logo.png";
 
 const tabs = [
   { path: "/", icon: Home, label: "Início" },
@@ -30,7 +30,7 @@ function Header() {
   const title = getTitle();
 
   return (
-    <header className="sticky top-0 z-30 backdrop-blur-xl safe-top" style={{ background: 'rgba(5, 20, 16, 0.9)' }}>
+    <header className="sticky top-0 z-30 backdrop-blur-xl border-b border-white/[0.06] safe-top shadow-[0_4px_30px_rgba(0,0,0,0.4)]" style={{ background: 'rgba(5, 20, 16, 0.6)' }}>
       <div className="flex items-center justify-between px-4 h-14">
         {isSubpage ? (
           <button onClick={() => navigate(-1)} className="p-1.5 -ml-1.5 rounded-lg hover:bg-secondary">
