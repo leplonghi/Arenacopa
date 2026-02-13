@@ -1,15 +1,13 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { MatchCard } from "@/components/MatchCard";
-import { FilterSheet, FilterChips } from "@/components/FilterSheet";
 import { EmptyState } from "@/components/EmptyState";
 import {
   matches, groups, groupStandings, getGroupTeams, getTeam,
   bracketMatches, stadiums, getTodayMatches, getTomorrowMatches,
   formatMatchDate, type Match, type Stadium,
 } from "@/data/mockData";
-import { Filter, MapPin } from "lucide-react";
-import { Link } from "react-router-dom";
+import { MapPin, Users, Globe, Thermometer } from "lucide-react";
 
 type CopaTab = "calendario" | "grupos" | "chaves" | "mapa";
 
@@ -18,19 +16,20 @@ const Copa = () => {
 
   return (
     <div>
-      {/* Sub-tabs */}
-      <div className="flex border-b border-border px-1 sticky top-14 z-20 bg-background/95 backdrop-blur-md">
+      {/* Sub-tabs - pill style */}
+      <div className="flex gap-2 px-4 py-3 overflow-x-auto scrollbar-hide sticky top-14 z-20 bg-background/95 backdrop-blur-md">
         {(["calendario", "grupos", "chaves", "mapa"] as CopaTab[]).map(t => (
           <button
             key={t}
             onClick={() => setTab(t)}
             className={cn(
-              "flex-1 py-3 text-xs font-bold uppercase tracking-wider transition-colors relative",
-              tab === t ? "text-primary" : "text-muted-foreground"
+              "px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-colors shrink-0",
+              tab === t
+                ? "bg-primary text-primary-foreground"
+                : "bg-secondary text-secondary-foreground"
             )}
           >
             {t === "calendario" ? "Calendário" : t.charAt(0).toUpperCase() + t.slice(1)}
-            {tab === t && <span className="absolute bottom-0 inset-x-2 h-0.5 bg-primary rounded-full" />}
           </button>
         ))}
       </div>
@@ -47,179 +46,143 @@ const Copa = () => {
 
 // ===== CALENDARIO TAB =====
 function CalendarioTab() {
-  const [filterOpen, setFilterOpen] = useState(false);
-  const [dayFilter, setDayFilter] = useState<string[]>(["today"]);
+  const todayMatches = getTodayMatches();
+  const tomorrowMatches = getTomorrowMatches();
 
-  const getFilteredMatches = (): Match[] => {
-    if (dayFilter.includes("today")) return getTodayMatches();
-    if (dayFilter.includes("tomorrow")) return getTomorrowMatches();
-    return matches;
-  };
-
-  const filtered = getFilteredMatches();
+  const today = new Date();
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
 
   return (
-    <>
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex gap-2">
-          {["today", "tomorrow", "all"].map(d => (
-            <button
-              key={d}
-              onClick={() => setDayFilter([d])}
-              className={cn(
-                "px-3 py-1.5 rounded-full text-xs font-medium transition-colors",
-                dayFilter.includes(d) ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
-              )}
-            >
-              {d === "today" ? "Hoje" : d === "tomorrow" ? "Amanhã" : "Todos"}
-            </button>
-          ))}
+    <div className="space-y-6">
+      {/* Today */}
+      <section>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-lg font-black">
+            Hoje, {today.toLocaleDateString("pt-BR", { day: "numeric", month: "short" })}
+          </h2>
+          <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-secondary text-secondary-foreground">
+            {todayMatches.length} Jogos
+          </span>
         </div>
-        <button onClick={() => setFilterOpen(true)} className="p-2 rounded-lg bg-secondary">
-          <Filter className="w-4 h-4" />
-        </button>
-      </div>
+        {todayMatches.length === 0 ? (
+          <EmptyState icon="📅" title="Sem jogos hoje" description="Nenhum jogo agendado para hoje." />
+        ) : (
+          <div className="space-y-3">
+            {todayMatches.map(m => <MatchCard key={m.id} match={m} />)}
+          </div>
+        )}
+      </section>
 
-      {filtered.length === 0 ? (
-        <EmptyState icon="📅" title="Sem jogos" description="Nenhum jogo encontrado para este período." />
-      ) : (
-        <div className="space-y-3">
-          {filtered.map(m => (
-            <MatchCard key={m.id} match={m} />
-          ))}
+      {/* Tomorrow */}
+      <section>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-lg font-black">
+            Amanhã, {tomorrow.toLocaleDateString("pt-BR", { day: "numeric", month: "short" })}
+          </h2>
+          <span className="text-[10px] font-bold px-2.5 py-1 rounded-full bg-secondary text-secondary-foreground">
+            {tomorrowMatches.length} Jogos
+          </span>
         </div>
-      )}
-
-      <FilterSheet
-        open={filterOpen}
-        onClose={() => setFilterOpen(false)}
-        title="Filtrar Jogos"
-        filters={[
-          {
-            label: "Fase",
-            options: [
-              { id: "groups", label: "Fase de Grupos" },
-              { id: "round-of-16", label: "Oitavas" },
-              { id: "quarter", label: "Quartas" },
-              { id: "semi", label: "Semifinal" },
-              { id: "final", label: "Final" },
-            ],
-            selected: [],
-            onSelect: () => {},
-          },
-          {
-            label: "Status",
-            options: [
-              { id: "live", label: "Ao Vivo" },
-              { id: "scheduled", label: "Agendado" },
-              { id: "finished", label: "Encerrado" },
-            ],
-            selected: [],
-            onSelect: () => {},
-          },
-        ]}
-      />
-    </>
+        {tomorrowMatches.length === 0 ? (
+          <EmptyState icon="📅" title="Sem jogos amanhã" description="Nenhum jogo agendado." />
+        ) : (
+          <div className="space-y-3">
+            {tomorrowMatches.map(m => <MatchCard key={m.id} match={m} />)}
+          </div>
+        )}
+      </section>
+    </div>
   );
 }
 
 // ===== GRUPOS TAB =====
 function GruposTab() {
-  const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
-
-  if (selectedGroup) {
-    return <GroupDetail group={selectedGroup} onBack={() => setSelectedGroup(null)} />;
-  }
-
-  return (
-    <div className="grid grid-cols-3 gap-2">
-      {groups.map(g => {
-        const teamsList = getGroupTeams(g);
-        return (
-          <button
-            key={g}
-            onClick={() => setSelectedGroup(g)}
-            className="glass-card-hover p-3 text-center"
-          >
-            <span className="text-xs font-bold text-primary mb-2 block">Grupo {g}</span>
-            <div className="flex justify-center gap-1">
-              {teamsList.map(t => (
-                <span key={t.code} className="text-base" title={t.name}>{t.flag}</span>
-              ))}
-            </div>
-          </button>
-        );
-      })}
-    </div>
-  );
-}
-
-function GroupDetail({ group, onBack }: { group: string; onBack: () => void }) {
-  const standings = groupStandings[group] || [];
-  const groupMatches = matches.filter(m => m.group === group);
+  const [viewMode, setViewMode] = useState<"real" | "projecao">("real");
 
   return (
     <div>
-      <button onClick={onBack} className="text-xs text-primary font-medium mb-3 block">← Voltar aos Grupos</button>
-      <h2 className="text-lg font-black mb-4">Grupo {group}</h2>
-
-      {/* Standings table */}
-      <div className="glass-card overflow-hidden mb-4">
-        <table className="w-full text-xs">
-          <thead>
-            <tr className="border-b border-border text-muted-foreground">
-              <th className="p-2 text-left">#</th>
-              <th className="p-2 text-left">Seleção</th>
-              <th className="p-2 text-center">J</th>
-              <th className="p-2 text-center">V</th>
-              <th className="p-2 text-center">E</th>
-              <th className="p-2 text-center">D</th>
-              <th className="p-2 text-center">SG</th>
-              <th className="p-2 text-center font-bold">Pts</th>
-              <th className="p-2 text-right">%</th>
-            </tr>
-          </thead>
-          <tbody>
-            {standings.map((s, i) => {
-              const team = getTeam(s.teamCode);
-              return (
-                <tr key={s.teamCode} className={cn("border-b border-border/50", i < 2 && "bg-copa-success/5")}>
-                  <td className="p-2 font-bold">{i + 1}</td>
-                  <td className="p-2">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-sm">{team.flag}</span>
-                      <span className="font-semibold">{team.code}</span>
-                    </div>
-                  </td>
-                  <td className="p-2 text-center text-muted-foreground">{s.played}</td>
-                  <td className="p-2 text-center">{s.won}</td>
-                  <td className="p-2 text-center">{s.drawn}</td>
-                  <td className="p-2 text-center">{s.lost}</td>
-                  <td className="p-2 text-center">{s.goalsFor - s.goalsAgainst}</td>
-                  <td className="p-2 text-center font-black">{s.points}</td>
-                  <td className="p-2 text-right">
-                    <div className="flex items-center gap-1 justify-end">
-                      <div className="w-10 h-1.5 bg-secondary rounded-full overflow-hidden">
-                        <div className="h-full bg-copa-success rounded-full" style={{ width: `${s.probability}%` }} />
-                      </div>
-                      <span className="text-[10px] text-muted-foreground w-7 text-right">{s.probability}%</span>
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+      {/* Toggle */}
+      <div className="flex rounded-full bg-secondary p-1 mb-5">
+        {(["real", "projecao"] as const).map(m => (
+          <button
+            key={m}
+            onClick={() => setViewMode(m)}
+            className={cn(
+              "flex-1 py-2 rounded-full text-xs font-bold transition-colors",
+              viewMode === m ? "bg-primary text-primary-foreground" : "text-muted-foreground"
+            )}
+          >
+            {m === "real" ? "Real" : "Projeção"}
+          </button>
+        ))}
       </div>
 
-      {/* Group matches */}
-      <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-2">Jogos do Grupo</h3>
-      <div className="space-y-2">
-        {groupMatches.length === 0 ? (
-          <p className="text-xs text-muted-foreground">Jogos ainda não definidos.</p>
-        ) : (
-          groupMatches.map(m => <MatchCard key={m.id} match={m} compact />)
-        )}
+      <div className="space-y-5">
+        {groups.map(g => {
+          const standings = groupStandings[g] || [];
+          const status = standings.some(s => s.played > 0) ? "Em andamento" : "Seu Palpite";
+
+          return (
+            <div key={g} className="glass-card overflow-hidden border-l-2 border-l-copa-green">
+              <div className="flex items-center justify-between p-4 pb-2">
+                <h3 className="text-base font-black">Grupo {g}</h3>
+                <span className={cn(
+                  "text-[10px] font-bold px-2.5 py-1 rounded-full",
+                  standings.some(s => s.played > 0)
+                    ? "bg-copa-success/20 text-copa-success"
+                    : "bg-secondary text-secondary-foreground"
+                )}>
+                  {status}
+                </span>
+              </div>
+
+              {/* Table header */}
+              <div className="grid grid-cols-[auto_1fr_32px_32px_auto] gap-x-2 px-4 py-1 text-[10px] font-bold uppercase tracking-wider text-primary">
+                <span></span>
+                <span>País</span>
+                <span className="text-center">P</span>
+                <span className="text-center">SG</span>
+                <span className="text-right">Prob.</span>
+              </div>
+
+              {/* Rows */}
+              {standings.map((s, i) => {
+                const team = getTeam(s.teamCode);
+                const gd = s.goalsFor - s.goalsAgainst;
+                const qualifies = i < 2;
+                return (
+                  <div
+                    key={s.teamCode}
+                    className={cn(
+                      "grid grid-cols-[auto_1fr_32px_32px_auto] gap-x-2 items-center px-4 py-2.5",
+                      qualifies ? "text-foreground" : "text-muted-foreground"
+                    )}
+                  >
+                    <span className="text-xs font-medium w-4">{i + 1}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-base">{team.flag}</span>
+                      <span className={cn("text-sm", qualifies ? "font-bold" : "font-medium")}>{team.name}</span>
+                    </div>
+                    <span className={cn("text-center text-sm", qualifies && "font-black")}>{s.points}</span>
+                    <span className="text-center text-sm">{gd >= 0 ? `+${gd}` : gd}</span>
+                    <div className="flex items-center gap-1.5 justify-end min-w-[60px]">
+                      <div className="w-12 h-1.5 bg-secondary rounded-full overflow-hidden">
+                        <div
+                          className={cn("h-full rounded-full", 
+                            s.probability >= 60 ? "bg-copa-success" : 
+                            s.probability >= 30 ? "bg-primary" : "bg-copa-live"
+                          )}
+                          style={{ width: `${s.probability}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
@@ -227,42 +190,45 @@ function GroupDetail({ group, onBack }: { group: string; onBack: () => void }) {
 
 // ===== CHAVES TAB =====
 function ChavesTab() {
-  const rounds = ["Oitavas", "Quartas", "Semi", "Final"];
+  const rounds = [
+    { key: "Oitavas", label: "ROUND OF 16" },
+  ];
+
+  const oitavas = bracketMatches.filter(m => m.round === "Oitavas");
 
   return (
-    <div className="overflow-x-auto -mx-4 px-4">
-      <div className="flex gap-6 min-w-[600px] py-2">
-        {rounds.map(round => {
-          const roundMatches = bracketMatches.filter(m => m.round === round);
+    <div>
+      <h2 className="text-sm font-black uppercase tracking-widest text-muted-foreground mb-4 text-center">Round of 16</h2>
+      <div className="space-y-3">
+        {oitavas.map(m => {
+          const home = m.homeTeam ? getTeam(m.homeTeam) : null;
+          const away = m.awayTeam ? getTeam(m.awayTeam) : null;
+          const isFavorite = m.homeTeam === "BRA" || m.awayTeam === "BRA";
+
           return (
-            <div key={round} className="flex-1">
-              <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3 text-center">{round}</h3>
-              <div className="space-y-3 flex flex-col justify-around h-full">
-                {roundMatches.map(m => {
-                  const home = m.homeTeam ? getTeam(m.homeTeam) : null;
-                  const away = m.awayTeam ? getTeam(m.awayTeam) : null;
-                  const isFavorite = m.homeTeam === "BRA" || m.awayTeam === "BRA";
-                  return (
-                    <div
-                      key={m.id}
-                      className={cn(
-                        "glass-card p-2 text-xs",
-                        isFavorite && "ring-1 ring-primary/50"
-                      )}
-                    >
-                      <div className="flex items-center gap-1.5 mb-1">
-                        <span className="text-sm">{home?.flag || "🏳️"}</span>
-                        <span className="font-semibold flex-1">{home?.code || "TBD"}</span>
-                        {m.homeScore !== undefined && <span className="font-black">{m.homeScore}</span>}
-                      </div>
-                      <div className="flex items-center gap-1.5">
-                        <span className="text-sm">{away?.flag || "🏳️"}</span>
-                        <span className="font-semibold flex-1">{away?.code || "TBD"}</span>
-                        {m.awayScore !== undefined && <span className="font-black">{m.awayScore}</span>}
-                      </div>
-                    </div>
-                  );
-                })}
+            <div
+              key={m.id}
+              className={cn(
+                "glass-card overflow-hidden border-l-2",
+                isFavorite ? "border-l-primary" : "border-l-copa-green"
+              )}
+            >
+              <div className={cn(
+                "flex items-center gap-3 px-4 py-3",
+                isFavorite && "bg-primary/5"
+              )}>
+                <span className="text-lg">{home?.flag || "🏳️"}</span>
+                <span className="text-sm font-bold flex-1">{home?.code || "TBD"}</span>
+                {m.homeScore !== undefined && (
+                  <span className="text-lg font-black text-primary">{m.homeScore}</span>
+                )}
+              </div>
+              <div className="flex items-center gap-3 px-4 py-3 border-t border-border/30">
+                <span className="text-lg">{away?.flag || "🏳️"}</span>
+                <span className="text-sm font-bold flex-1">{away?.code || "TBD"}</span>
+                {m.awayScore !== undefined && (
+                  <span className="text-lg font-black">{m.awayScore}</span>
+                )}
               </div>
             </div>
           );
@@ -278,37 +244,80 @@ function MapaTab() {
 
   return (
     <div>
-      <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-3">Estádios da Copa 2026</h3>
-      <div className="space-y-2">
-        {stadiums.map(s => (
+      {/* Map placeholder */}
+      <div className="glass-card h-64 mb-4 flex items-center justify-center relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-copa-green/10 to-background/80" />
+        <div className="text-center z-10">
+          <Globe className="w-10 h-10 text-muted-foreground mx-auto mb-2" />
+          <span className="text-xs text-muted-foreground">Copa 2026 Map</span>
+        </div>
+        {/* Stadium dots */}
+        {stadiums.slice(0, 5).map((s, i) => (
           <button
             key={s.id}
-            onClick={() => setSelectedStadium(selectedStadium?.id === s.id ? null : s)}
+            onClick={() => setSelectedStadium(s)}
             className={cn(
-              "glass-card-hover w-full p-3 text-left transition-all",
-              selectedStadium?.id === s.id && "ring-1 ring-primary"
+              "absolute w-8 h-8 rounded-full flex items-center justify-center transition-all",
+              selectedStadium?.id === s.id
+                ? "bg-primary scale-125 shadow-lg shadow-primary/30"
+                : "bg-secondary/80"
             )}
+            style={{ top: `${25 + i * 12}%`, left: `${20 + i * 14}%` }}
           >
-            <div className="flex items-start gap-3">
-              <div className="p-2 rounded-lg bg-primary/10 shrink-0">
-                <MapPin className="w-4 h-4 text-primary" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <h4 className="text-sm font-bold truncate">{s.name}</h4>
-                <p className="text-xs text-muted-foreground">{s.city}, {s.country}</p>
-                {selectedStadium?.id === s.id && (
-                  <div className="mt-2 pt-2 border-t border-border/50 space-y-1">
-                    <p className="text-xs"><span className="text-muted-foreground">Capacidade:</span> <span className="font-semibold">{s.capacity.toLocaleString("pt-BR")}</span></p>
-                    <p className="text-xs"><span className="text-muted-foreground">Fuso:</span> <span className="font-semibold">{s.timezone}</span></p>
-                    <p className="text-xs"><span className="text-muted-foreground">Clima:</span> <span className="font-semibold">{s.climaHint}</span></p>
-                  </div>
-                )}
-              </div>
-              <span className="text-xs text-muted-foreground shrink-0">{s.capacity.toLocaleString("pt-BR")}</span>
-            </div>
+            <MapPin className="w-4 h-4" />
           </button>
         ))}
       </div>
+
+      {/* Stadium detail card */}
+      {selectedStadium ? (
+        <div className="glass-card overflow-hidden animate-slide-up">
+          <div className="bg-gradient-to-b from-copa-green/20 to-transparent p-6 text-center">
+            <h3 className="text-lg font-black">{selectedStadium.name}</h3>
+            <div className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground mt-1">
+              <MapPin className="w-3 h-3 text-copa-success" />
+              <span>{selectedStadium.city}, {selectedStadium.country}</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2 p-4">
+            <div className="glass-card p-3 text-center">
+              <Users className="w-4 h-4 mx-auto mb-1 text-copa-green-light" />
+              <span className="text-[9px] uppercase tracking-wider text-muted-foreground block">Capacidade</span>
+              <span className="text-sm font-black">{selectedStadium.capacity.toLocaleString("pt-BR")}</span>
+            </div>
+            <div className="glass-card p-3 text-center">
+              <Globe className="w-4 h-4 mx-auto mb-1 text-primary" />
+              <span className="text-[9px] uppercase tracking-wider text-muted-foreground block">Fuso</span>
+              <span className="text-sm font-black">{selectedStadium.timezone.split("/").pop()}</span>
+            </div>
+            <div className="glass-card p-3 text-center">
+              <Thermometer className="w-4 h-4 mx-auto mb-1 text-primary" />
+              <span className="text-[9px] uppercase tracking-wider text-muted-foreground block">Clima</span>
+              <span className="text-sm font-black">18°C</span>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {stadiums.map(s => (
+            <button
+              key={s.id}
+              onClick={() => setSelectedStadium(s)}
+              className="glass-card-hover w-full p-3 text-left flex items-center gap-3"
+            >
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                <MapPin className="w-5 h-5 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className="text-sm font-bold truncate">{s.name}</h4>
+                <p className="text-[11px] text-muted-foreground">{s.city}, {s.country}</p>
+              </div>
+              <span className="text-xs text-muted-foreground shrink-0">{s.capacity.toLocaleString("pt-BR")}</span>
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
