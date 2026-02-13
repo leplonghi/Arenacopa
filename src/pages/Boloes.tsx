@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Plus, Users, Loader2, Search, UserPlus } from "lucide-react";
+import { Plus, Users, Search, UserPlus, Trophy, ChevronRight, X } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface BolaoRow {
   id: string;
@@ -27,6 +28,7 @@ const Boloes = () => {
   const [joinCode, setJoinCode] = useState("");
   const [joining, setJoining] = useState(false);
   const [showJoin, setShowJoin] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     if (!user) return;
@@ -54,7 +56,6 @@ const Boloes = () => {
     if (!user || !joinCode.trim()) return;
     setJoining(true);
     try {
-      // Find bolão by invite code
       const { data: bolao, error: findError } = await supabase
         .from("boloes")
         .select("id, name")
@@ -63,7 +64,6 @@ const Boloes = () => {
 
       if (findError || !bolao) throw new Error("Código de convite inválido");
 
-      // Check if already member
       const { data: existing } = await supabase
         .from("bolao_members")
         .select("id")
@@ -78,9 +78,6 @@ const Boloes = () => {
         return;
       }
 
-      // The RLS policy requires that the inserter is an existing member and user_id != auth.uid()
-      // For join via invite code, we need the creator to add or we need a different approach.
-      // Let's use direct insert since the user is joining themselves
       const { error: joinError } = await supabase
         .from("bolao_members")
         .insert({ bolao_id: bolao.id, user_id: user.id, role: "member" });
@@ -98,10 +95,17 @@ const Boloes = () => {
     }
   };
 
+  const filtered = boloes.filter(b =>
+    !searchQuery || b.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
+  const myBoloes = filtered.filter(b => b.isCreator);
+  const joinedBoloes = filtered.filter(b => !b.isCreator);
+
   return (
     <div className="px-4 py-4">
       {/* Header */}
-      <div className="flex items-center justify-between mb-5">
+      <div className="flex items-center justify-between mb-4">
         <div>
           <span className="text-[10px] uppercase tracking-widest text-primary font-bold block">Minhas Ligas</span>
           <h1 className="text-2xl font-black">Bolões</h1>
@@ -109,7 +113,10 @@ const Boloes = () => {
         <div className="flex gap-2">
           <button
             onClick={() => setShowJoin(!showJoin)}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-full bg-secondary text-secondary-foreground text-xs font-bold"
+            className={cn(
+              "flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-bold transition-colors",
+              showJoin ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
+            )}
           >
             <UserPlus className="w-4 h-4" />
           </button>
@@ -117,82 +124,139 @@ const Boloes = () => {
             to="/boloes/criar"
             className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-primary text-primary-foreground text-xs font-bold"
           >
-            <Plus className="w-4 h-4" />
-            Criar
+            <Plus className="w-4 h-4" /> Criar
           </Link>
         </div>
       </div>
 
       {/* Join by code */}
-      {showJoin && (
-        <div className="glass-card p-4 mb-5 space-y-3">
-          <span className="text-[10px] font-bold uppercase tracking-widest text-primary">Entrar com Código</span>
-          <div className="flex gap-2">
-            <input
-              value={joinCode}
-              onChange={e => setJoinCode(e.target.value)}
-              placeholder="Cole o código de convite"
-              className="flex-1 px-4 py-2.5 rounded-xl bg-secondary border border-border text-sm font-medium placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-            />
-            <button
-              onClick={handleJoin}
-              disabled={joining || !joinCode.trim()}
-              className="px-4 py-2.5 rounded-xl bg-primary text-primary-foreground text-xs font-bold disabled:opacity-50"
-            >
-              {joining ? "..." : "Entrar"}
-            </button>
-          </div>
+      <AnimatePresence>
+        {showJoin && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: "auto" }}
+            exit={{ opacity: 0, height: 0 }}
+            className="overflow-hidden mb-4"
+          >
+            <div className="glass-card p-4 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-primary">Entrar com Código</span>
+                <button onClick={() => setShowJoin(false)} className="p-1 rounded-md bg-secondary"><X className="w-3.5 h-3.5" /></button>
+              </div>
+              <div className="flex gap-2">
+                <input
+                  value={joinCode}
+                  onChange={e => setJoinCode(e.target.value)}
+                  placeholder="Cole o código de convite"
+                  className="flex-1 px-4 py-2.5 rounded-xl bg-secondary border border-border text-sm font-medium placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+                />
+                <button
+                  onClick={handleJoin}
+                  disabled={joining || !joinCode.trim()}
+                  className="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-xs font-bold disabled:opacity-50"
+                >
+                  {joining ? "..." : "Entrar"}
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Search (when has bolões) */}
+      {!loading && boloes.length > 0 && (
+        <div className="relative mb-4">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <input
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            placeholder="Buscar bolão..."
+            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-secondary/60 border border-border/50 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+          />
         </div>
       )}
 
-      {/* Loading skeleton */}
+      {/* Loading */}
       {loading ? (
-        <div className="space-y-4">
+        <div className="space-y-3">
           {[1, 2, 3].map(i => (
-            <div key={i} className="glass-card p-4 space-y-3">
-              <div className="flex items-center gap-3">
-                <Skeleton className="w-12 h-12 rounded-xl" />
-                <div className="flex-1 space-y-2">
-                  <Skeleton className="h-4 w-3/4" />
-                  <Skeleton className="h-3 w-1/2" />
-                </div>
-              </div>
-            </div>
+            <Skeleton key={i} className="h-24 rounded-xl" />
           ))}
         </div>
       ) : boloes.length === 0 ? (
-        <EmptyState icon="🏆" title="Nenhum bolão" description="Crie seu primeiro bolão ou entre com um código de convite!" />
+        <div className="mt-8">
+          <EmptyState icon="🏆" title="Nenhum bolão" description="Crie seu primeiro bolão ou entre com um código de convite!" />
+        </div>
       ) : (
-        <div className="space-y-4">
-          {boloes.map(b => (
-            <Link key={b.id} to={`/boloes/${b.id}`} className="glass-card p-4 block border-l-2 border-l-copa-green">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-12 h-12 rounded-xl bg-copa-green/20 flex items-center justify-center text-2xl">
-                  ⚽
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="text-sm font-black truncate">{b.name}</h3>
-                  <span className={cn(
-                    "text-[9px] px-2 py-0.5 rounded-full font-bold uppercase inline-block mt-0.5",
-                    b.isCreator ? "bg-primary/20 text-primary" : "bg-secondary text-muted-foreground"
-                  )}>
-                    {b.isCreator ? "Criador" : "Membro"}
-                  </span>
-                </div>
-                <div className="flex items-center gap-1.5 text-muted-foreground">
-                  <Users className="w-4 h-4" />
-                  <span className="text-xs font-bold">{b.memberCount}</span>
-                </div>
+        <div className="space-y-5">
+          {/* Created by me */}
+          {myBoloes.length > 0 && (
+            <section>
+              <h3 className="text-[10px] font-bold uppercase tracking-widest text-primary mb-2 flex items-center gap-1.5">
+                <Trophy className="w-3.5 h-3.5" /> Meus Bolões
+              </h3>
+              <div className="space-y-2">
+                {myBoloes.map(b => (
+                  <BolaoCard key={b.id} bolao={b} />
+                ))}
               </div>
-              {b.description && (
-                <p className="text-[11px] text-muted-foreground truncate">{b.description}</p>
-              )}
-            </Link>
-          ))}
+            </section>
+          )}
+
+          {/* Joined */}
+          {joinedBoloes.length > 0 && (
+            <section>
+              <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2 flex items-center gap-1.5">
+                <Users className="w-3.5 h-3.5" /> Participando
+              </h3>
+              <div className="space-y-2">
+                {joinedBoloes.map(b => (
+                  <BolaoCard key={b.id} bolao={b} />
+                ))}
+              </div>
+            </section>
+          )}
+
+          {filtered.length === 0 && searchQuery && (
+            <EmptyState icon="🔍" title="Nenhum resultado" description={`Nenhum bolão encontrado para "${searchQuery}"`} />
+          )}
         </div>
       )}
     </div>
   );
 };
+
+function BolaoCard({ bolao }: { bolao: BolaoRow }) {
+  return (
+    <Link to={`/boloes/${bolao.id}`} className="glass-card-hover p-4 block">
+      <div className="flex items-center gap-3">
+        <div className={cn(
+          "w-12 h-12 rounded-xl flex items-center justify-center text-2xl shrink-0",
+          bolao.isCreator ? "bg-primary/20" : "bg-secondary"
+        )}>
+          ⚽
+        </div>
+        <div className="flex-1 min-w-0">
+          <h3 className="text-sm font-black truncate">{bolao.name}</h3>
+          <div className="flex items-center gap-2 mt-0.5">
+            <span className={cn(
+              "text-[9px] px-2 py-0.5 rounded-full font-bold uppercase",
+              bolao.isCreator ? "bg-primary/20 text-primary" : "bg-secondary text-muted-foreground"
+            )}>
+              {bolao.isCreator ? "Admin" : "Membro"}
+            </span>
+            <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+              <Users className="w-3 h-3" /> {bolao.memberCount}
+            </span>
+          </div>
+          {bolao.description && (
+            <p className="text-[10px] text-muted-foreground truncate mt-1">{bolao.description}</p>
+          )}
+        </div>
+        <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+      </div>
+    </Link>
+  );
+}
 
 export default Boloes;
