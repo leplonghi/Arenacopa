@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { MatchCard } from "@/components/MatchCard";
+import { Flag } from "@/components/Flag";
 import { getTodayMatches, getTeam, boloes, userProfile, matches, formatMatchTime } from "@/data/mockData";
 import { ChevronRight, TrendingUp, TrendingDown, Minus, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -23,9 +24,7 @@ const Index = () => {
         </div>
         <div className="glass-card p-4 border-l-2 border-l-copa-green">
           <div className="flex items-center gap-3">
-            <div className="w-14 h-14 rounded-full bg-secondary/80 flex items-center justify-center text-3xl border-2 border-copa-green/30">
-              {favoriteTeam.flag}
-            </div>
+            <Flag code={favoriteTeam.code} size="xl" className="border-2 border-copa-green/30" />
             <div className="flex-1">
               <h3 className="font-black text-lg">{favoriteTeam.name}</h3>
               {nextFavMatch && (

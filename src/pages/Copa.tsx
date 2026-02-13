@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import { MatchCard } from "@/components/MatchCard";
+import { Flag } from "@/components/Flag";
 import { EmptyState } from "@/components/EmptyState";
 import {
   matches, groups, groupStandings, getGroupTeams, getTeam,
@@ -161,7 +162,7 @@ function GruposTab() {
                   >
                     <span className="text-xs font-medium w-4">{i + 1}</span>
                     <div className="flex items-center gap-2">
-                      <span className="text-base">{team.flag}</span>
+                      <Flag code={team.code} size="sm" />
                       <span className={cn("text-sm", qualifies ? "font-bold" : "font-medium")}>{team.name}</span>
                     </div>
                     <span className={cn("text-center text-sm", qualifies && "font-black")}>{s.points}</span>
@@ -217,14 +218,14 @@ function ChavesTab() {
                 "flex items-center gap-3 px-4 py-3",
                 isFavorite && "bg-primary/5"
               )}>
-                <span className="text-lg">{home?.flag || "🏳️"}</span>
+                <Flag code={home?.code || ""} size="sm" />
                 <span className="text-sm font-bold flex-1">{home?.name || "TBD"}</span>
                 {m.homeScore !== undefined && (
                   <span className="text-lg font-black text-primary">{m.homeScore}</span>
                 )}
               </div>
               <div className="flex items-center gap-3 px-4 py-3 border-t border-border/30">
-                <span className="text-lg">{away?.flag || "🏳️"}</span>
+                <Flag code={away?.code || ""} size="sm" />
                 <span className="text-sm font-bold flex-1">{away?.name || "TBD"}</span>
                 {m.awayScore !== undefined && (
                   <span className="text-lg font-black">{m.awayScore}</span>
