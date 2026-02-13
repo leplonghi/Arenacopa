@@ -16,7 +16,6 @@ const CriarBolao = () => {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [privacy, setPrivacy] = useState<"private" | "public">("private");
-  const [hasEntryFee, setHasEntryFee] = useState(false);
   const [creating, setCreating] = useState(false);
 
   const handleCreate = async () => {
@@ -154,23 +153,10 @@ const CriarBolao = () => {
             </div>
           </div>
 
-          <div className="flex items-center justify-between">
-            <div>
-              <span className="text-sm font-bold block">Taxa de Entrada</span>
-              <span className="text-[11px] text-muted-foreground">Exigir pagamento para participar</span>
-            </div>
-            <button
-              onClick={() => setHasEntryFee(!hasEntryFee)}
-              className={cn(
-                "w-12 h-7 rounded-full transition-colors relative",
-                hasEntryFee ? "bg-primary" : "bg-secondary"
-              )}
-            >
-              <span className={cn(
-                "absolute top-1 w-5 h-5 rounded-full bg-foreground shadow transition-transform",
-                hasEntryFee ? "left-6" : "left-1"
-              )} />
-            </button>
+          <div className="glass-card p-3 border-dashed border-muted-foreground/20">
+            <p className="text-[10px] text-muted-foreground leading-relaxed text-center">
+              ⚠️ O ArenaCopa <span className="font-bold">não realiza</span> processamento de pagamentos ou transações financeiras. Eventuais valores de entrada devem ser combinados e gerenciados diretamente entre os participantes, fora do aplicativo.
+            </p>
           </div>
         </div>
       )}
@@ -211,7 +197,7 @@ const CriarBolao = () => {
           <div className="glass-card p-4 space-y-3">
             <div className="flex justify-between"><span className="text-xs text-muted-foreground">Nome</span><span className="text-xs font-bold">{name || "—"}</span></div>
             <div className="flex justify-between"><span className="text-xs text-muted-foreground">Privacidade</span><span className="text-xs font-bold">{privacy === "private" ? "Privado" : "Público"}</span></div>
-            <div className="flex justify-between"><span className="text-xs text-muted-foreground">Taxa de Entrada</span><span className="text-xs font-bold">{hasEntryFee ? "Sim" : "Não"}</span></div>
+            <div className="flex justify-between"><span className="text-xs text-muted-foreground">Premiação</span><span className="text-xs font-bold">Definida entre participantes</span></div>
           </div>
         </div>
       )}
