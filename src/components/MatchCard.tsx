@@ -3,21 +3,44 @@ import { StatusBadge } from "./StatusBadge";
 import { Flag } from "./Flag";
 import { cn } from "@/lib/utils";
 import { MapPin } from "lucide-react";
+import { motion } from "framer-motion";
 
 interface MatchCardProps {
   match: Match;
   compact?: boolean;
   className?: string;
+  index?: number;
 }
 
-export function MatchCard({ match, compact = false, className }: MatchCardProps) {
+const cardVariants = {
+  hidden: { opacity: 0, y: 16, scale: 0.97 },
+  visible: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    scale: 1,
+    transition: {
+      delay: i * 0.08,
+      duration: 0.4,
+      ease: [0.25, 0.46, 0.45, 0.94] as [number, number, number, number],
+    },
+  }),
+};
+
+export function MatchCard({ match, compact = false, className, index = 0 }: MatchCardProps) {
   const home = getTeam(match.homeTeam);
   const away = getTeam(match.awayTeam);
   const stadium = getStadium(match.stadium);
 
   if (compact) {
     return (
-      <div className={cn("glass-card p-3 flex items-center gap-3", className)}>
+      <motion.div
+        variants={cardVariants}
+        initial="hidden"
+        animate="visible"
+        custom={index}
+        whileTap={{ scale: 0.98 }}
+        className={cn("glass-card p-3 flex items-center gap-3", className)}
+      >
         <div className="flex items-center gap-2 flex-1 min-w-0">
           <Flag code={home.code} size="sm" />
           <span className="text-xs font-bold truncate">{home.name}</span>
@@ -34,16 +57,23 @@ export function MatchCard({ match, compact = false, className }: MatchCardProps)
           <span className="text-xs font-bold truncate">{away.name}</span>
           <Flag code={away.code} size="sm" />
         </div>
-      </div>
+      </motion.div>
     );
   }
 
   return (
-    <div className={cn(
-      "glass-card p-4 border-l-2",
-      match.status === "live" ? "border-l-copa-live" : "border-l-copa-green",
-      className
-    )}>
+    <motion.div
+      variants={cardVariants}
+      initial="hidden"
+      animate="visible"
+      custom={index}
+      whileTap={{ scale: 0.98 }}
+      className={cn(
+        "glass-card p-4 border-l-2",
+        match.status === "live" ? "border-l-copa-live" : "border-l-copa-green",
+        className
+      )}
+    >
       {/* Top bar */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
@@ -51,9 +81,13 @@ export function MatchCard({ match, compact = false, className }: MatchCardProps)
           <span>• {match.group ? `Grupo ${match.group}` : match.phase}</span>
         </div>
         {match.status === "live" && match.minute && (
-          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/20 text-primary">
+          <motion.span
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/20 text-primary"
+          >
             {match.minute}' 1º Tempo
-          </span>
+          </motion.span>
         )}
       </div>
 
@@ -95,6 +129,6 @@ export function MatchCard({ match, compact = false, className }: MatchCardProps)
           <span className="text-[10px] text-muted-foreground">{stadium.name}</span>
         </div>
       )}
-    </div>
+    </motion.div>
   );
 }
