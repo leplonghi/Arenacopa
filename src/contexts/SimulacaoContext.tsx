@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useCallback, useMemo, useEffect, type ReactNode } from "react";
-import { groups, getGroupTeams } from "@/data/mockData";
+import { groups as allGroups, getGroupTeams } from "@/data/mockData";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import type { Json } from "@/integrations/supabase/types";
@@ -22,6 +22,14 @@ export interface Standing {
   points: number;
 }
 
+export interface Simulation {
+  id: string;
+  name: string;
+  selectedGroups: string[];
+  matches: Record<string, SimMatch[]>;
+  updatedAt: string;
+}
+
 function generateGroupMatches(group: string): SimMatch[] {
   const teamCodes = getGroupTeams(group).map(t => t.code);
   const matches: SimMatch[] = [];
@@ -33,7 +41,7 @@ function generateGroupMatches(group: string): SimMatch[] {
   return matches;
 }
 
-function calcStandings(matches: SimMatch[], group: string): Standing[] {
+export function calcStandings(matches: SimMatch[], group: string): Standing[] {
   const teamCodes = getGroupTeams(group).map(t => t.code);
   const map: Record<string, Standing> = {};
   teamCodes.forEach(code => {
@@ -60,13 +68,29 @@ function calcStandings(matches: SimMatch[], group: string): Standing[] {
   });
 }
 
+function initMatches(selectedGroups?: string[]) {
+  const init: Record<string, SimMatch[]> = {};
+  const gs = selectedGroups || allGroups;
+  gs.forEach(g => { init[g] = generateGroupMatches(g); });
+  return init;
+}
+
 interface SimulacaoContextType {
+  simulations: Simulation[];
+  currentSim: Simulation | null;
+  loading: boolean;
+  selectSimulation: (id: string) => void;
+  createSimulation: (name: string, selectedGroups: string[]) => Promise<string | null>;
+  deleteSimulation: (id: string) => Promise<void>;
+  renameSimulation: (id: string, name: string) => Promise<void>;
+  // Current sim operations
   allMatches: Record<string, SimMatch[]>;
   standings: Record<string, Standing[]>;
   filledCount: number;
   totalMatches: number;
   updateScore: (group: string, matchIdx: number, side: "home" | "away", value: number | null) => void;
   resetAll: () => void;
+  goBackToList: () => void;
 }
 
 const SimulacaoContext = createContext<SimulacaoContextType | null>(null);
@@ -77,59 +101,77 @@ export function useSimulacao() {
   return ctx;
 }
 
-function initMatches() {
-  const init: Record<string, SimMatch[]> = {};
-  groups.forEach(g => { init[g] = generateGroupMatches(g); });
-  return init;
-}
-
 export function SimulacaoProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
-  const [allMatches, setAllMatches] = useState<Record<string, SimMatch[]>>(initMatches);
+  const [simulations, setSimulations] = useState<Simulation[]>([]);
+  const [currentSimId, setCurrentSimId] = useState<string | null>(null);
+  const [allMatches, setAllMatches] = useState<Record<string, SimMatch[]>>({});
+  const [loading, setLoading] = useState(true);
   const [loaded, setLoaded] = useState(false);
 
-  // Load from DB
+  // Load all simulations
   useEffect(() => {
-    if (!user) return;
+    if (!user) { setLoading(false); return; }
     supabase
       .from("simulations")
-      .select("data")
+      .select("id, name, selected_groups, data, updated_at")
       .eq("user_id", user.id)
-      .maybeSingle()
+      .order("updated_at", { ascending: false })
       .then(({ data }) => {
-        if (data?.data) {
-          const saved = data.data as unknown as Record<string, SimMatch[]>;
-          // Merge saved scores into generated matches structure
-          const merged = initMatches();
-          Object.keys(merged).forEach(g => {
-            const savedGroup = saved[g];
-            if (savedGroup) {
-              merged[g] = merged[g].map((m, i) => ({
-                ...m,
-                homeScore: savedGroup[i]?.homeScore ?? null,
-                awayScore: savedGroup[i]?.awayScore ?? null,
-              }));
-            }
-          });
-          setAllMatches(merged);
+        if (data) {
+          setSimulations(data.map((s: any) => ({
+            id: s.id,
+            name: s.name || "Minha Simulação",
+            selectedGroups: s.selected_groups || allGroups,
+            matches: s.data as Record<string, SimMatch[]>,
+            updatedAt: s.updated_at,
+          })));
         }
+        setLoading(false);
         setLoaded(true);
       });
   }, [user]);
 
-  // Save to DB (debounced)
+  const currentSim = useMemo(() =>
+    simulations.find(s => s.id === currentSimId) || null,
+    [simulations, currentSimId]
+  );
+
+  // Load current sim matches
   useEffect(() => {
-    if (!user || !loaded) return;
+    if (!currentSim) { setAllMatches({}); return; }
+    const base = initMatches(currentSim.selectedGroups);
+    // Merge saved scores
+    Object.keys(base).forEach(g => {
+      const saved = currentSim.matches?.[g];
+      if (saved) {
+        base[g] = base[g].map((m, i) => ({
+          ...m,
+          homeScore: saved[i]?.homeScore ?? null,
+          awayScore: saved[i]?.awayScore ?? null,
+        }));
+      }
+    });
+    setAllMatches(base);
+  }, [currentSimId, currentSim?.id]);
+
+  // Auto-save current sim (debounced)
+  useEffect(() => {
+    if (!user || !currentSimId || !loaded || Object.keys(allMatches).length === 0) return;
     const timeout = setTimeout(() => {
       supabase
         .from("simulations")
-        .upsert({
-          user_id: user.id,
-          data: allMatches as unknown as Json,
-        }, { onConflict: "user_id" });
+        .update({ data: allMatches as unknown as Json, updated_at: new Date().toISOString() })
+        .eq("id", currentSimId)
+        .then(() => {
+          // Update local state
+          setSimulations(prev => prev.map(s =>
+            s.id === currentSimId ? { ...s, matches: allMatches, updatedAt: new Date().toISOString() } : s
+          ));
+        });
     }, 1000);
     return () => clearTimeout(timeout);
-  }, [allMatches, user, loaded]);
+  }, [allMatches, user, currentSimId, loaded]);
 
   const totalMatches = useMemo(() =>
     Object.values(allMatches).reduce((sum, ms) => sum + ms.length, 0),
@@ -139,7 +181,7 @@ export function SimulacaoProvider({ children }: { children: ReactNode }) {
   const { standings, filledCount } = useMemo(() => {
     const result: Record<string, Standing[]> = {};
     let filled = 0;
-    groups.forEach(g => {
+    Object.keys(allMatches).forEach(g => {
       result[g] = calcStandings(allMatches[g], g);
       filled += allMatches[g].filter(m => m.homeScore !== null && m.awayScore !== null).length;
     });
@@ -156,10 +198,60 @@ export function SimulacaoProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const resetAll = useCallback(() => setAllMatches(initMatches()), []);
+  const resetAll = useCallback(() => {
+    if (!currentSim) return;
+    setAllMatches(initMatches(currentSim.selectedGroups));
+  }, [currentSim]);
+
+  const selectSimulation = useCallback((id: string) => setCurrentSimId(id), []);
+  const goBackToList = useCallback(() => setCurrentSimId(null), []);
+
+  const createSimulation = useCallback(async (name: string, selectedGroups: string[]) => {
+    if (!user) return null;
+    const matchData = initMatches(selectedGroups);
+    const { data, error } = await supabase
+      .from("simulations")
+      .insert({
+        user_id: user.id,
+        name,
+        selected_groups: selectedGroups,
+        data: matchData as unknown as Json,
+      })
+      .select("id, name, selected_groups, data, updated_at")
+      .single();
+
+    if (error || !data) return null;
+
+    const newSim: Simulation = {
+      id: data.id,
+      name: data.name,
+      selectedGroups: data.selected_groups as string[],
+      matches: data.data as unknown as Record<string, SimMatch[]>,
+      updatedAt: data.updated_at,
+    };
+    setSimulations(prev => [newSim, ...prev]);
+    setCurrentSimId(data.id);
+    return data.id;
+  }, [user]);
+
+  const deleteSimulation = useCallback(async (id: string) => {
+    await supabase.from("simulations").delete().eq("id", id);
+    setSimulations(prev => prev.filter(s => s.id !== id));
+    if (currentSimId === id) setCurrentSimId(null);
+  }, [currentSimId]);
+
+  const renameSimulation = useCallback(async (id: string, name: string) => {
+    await supabase.from("simulations").update({ name }).eq("id", id);
+    setSimulations(prev => prev.map(s => s.id === id ? { ...s, name } : s));
+  }, []);
 
   return (
-    <SimulacaoContext.Provider value={{ allMatches, standings, filledCount, totalMatches, updateScore, resetAll }}>
+    <SimulacaoContext.Provider value={{
+      simulations, currentSim, loading,
+      selectSimulation, createSimulation, deleteSimulation, renameSimulation,
+      allMatches, standings, filledCount, totalMatches,
+      updateScore, resetAll, goBackToList,
+    }}>
       {children}
     </SimulacaoContext.Provider>
   );

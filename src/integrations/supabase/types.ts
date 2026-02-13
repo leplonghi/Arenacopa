@@ -152,6 +152,8 @@ export type Database = {
           created_at: string
           data: Json
           id: string
+          name: string
+          selected_groups: string[]
           updated_at: string
           user_id: string
         }
@@ -159,6 +161,8 @@ export type Database = {
           created_at?: string
           data?: Json
           id?: string
+          name?: string
+          selected_groups?: string[]
           updated_at?: string
           user_id: string
         }
@@ -166,6 +170,8 @@ export type Database = {
           created_at?: string
           data?: Json
           id?: string
+          name?: string
+          selected_groups?: string[]
           updated_at?: string
           user_id?: string
         }
