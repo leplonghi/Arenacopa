@@ -37,11 +37,11 @@ function Header() {
             <ChevronLeft className="w-5 h-5" />
           </button>
         ) : (
-          <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 flex items-center justify-center">
-              <img src={logo} alt="ArenaCopa" className="h-10 w-10 object-contain drop-shadow-[0_0_6px_rgba(34,197,94,0.4)]" />
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 flex items-center justify-center rounded-full bg-white/90 p-1 shadow-lg shadow-primary/20">
+              <img src={logo} alt="ArenaCopa" className="h-10 w-10 object-contain" />
             </div>
-            <span className="font-black text-lg tracking-tight">
+            <span className="font-black text-xl tracking-tight drop-shadow-[0_0_8px_rgba(34,197,94,0.3)]">
               ARENA<span className="text-primary">COPA</span>
             </span>
           </div>
