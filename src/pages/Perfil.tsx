@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { teams, userProfile, getTeam } from "@/data/mockData";
+import { Flag } from "@/components/Flag";
 import { cn } from "@/lib/utils";
 import { LogOut, Settings, Bell, Sparkles, Goal, Newspaper, Clock } from "lucide-react";
 
@@ -20,7 +21,7 @@ const Perfil = () => {
         </div>
         <h2 className="text-xl font-black">{userProfile.name}</h2>
         <span className="text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full bg-primary/20 text-primary mt-1">
-          Pro Member
+          Membro Pro
         </span>
       </div>
 
@@ -38,29 +39,27 @@ const Perfil = () => {
 
         <div className="glass-card p-4">
           <div className="flex items-center gap-3 pb-3 border-b border-border/30">
-            <div className="w-14 h-14 rounded-full bg-secondary/80 flex items-center justify-center text-3xl border-2 border-copa-green/30">
-              {team.flag}
-            </div>
+            <Flag code={team.code} size="xl" className="border-2 border-copa-green/30" />
             <div>
               <h4 className="text-base font-black">{team.name}</h4>
-              <span className="text-xs text-muted-foreground">Current Rank: #1</span>
+              <span className="text-xs text-muted-foreground">Ranking Atual: #1</span>
             </div>
           </div>
 
           {/* Quick switch */}
           <div className="pt-3">
-            <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground block mb-2">Quick Switch</span>
+            <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground block mb-2">Troca Rápida</span>
             <div className="flex gap-2">
               {teams.slice(0, 4).map(t => (
                 <button
                   key={t.code}
                   onClick={() => setFavoriteTeam(t.code)}
                   className={cn(
-                    "w-11 h-11 rounded-full bg-secondary flex items-center justify-center text-lg transition-all",
+                    "w-11 h-11 rounded-full overflow-hidden transition-all",
                     favoriteTeam === t.code && "ring-2 ring-primary"
                   )}
                 >
-                  {t.flag}
+                  <Flag code={t.code} size="md" className="w-11 h-11" />
                 </button>
               ))}
               <button
@@ -88,7 +87,7 @@ const Perfil = () => {
                     favoriteTeam === t.code ? "bg-primary/20 ring-1 ring-primary" : "hover:bg-secondary"
                   )}
                 >
-                  <span className="text-lg">{t.flag}</span>
+                  <Flag code={t.code} size="sm" />
                   <span className="text-[8px] font-bold">{t.code}</span>
                 </button>
               ))}
@@ -102,10 +101,10 @@ const Perfil = () => {
         <div className="flex-1">
           <div className="flex items-center gap-1.5 mb-1">
             <Sparkles className="w-4 h-4" />
-            <span className="text-sm font-black">Fun Mode</span>
+            <span className="text-sm font-black">Modo Festa</span>
           </div>
           <p className="text-[11px] text-primary-foreground/80 leading-relaxed">
-            Enable party animations, confetti on goals, and funny commentary.
+            Ative animações de festa, confetes nos gols e comentários engraçados.
           </p>
         </div>
         <button
@@ -130,9 +129,9 @@ const Perfil = () => {
         </div>
         <div className="glass-card divide-y divide-border/30">
           {[
-            { key: "goals" as const, icon: Goal, label: "Match Goals", desc: "Instant goal alerts" },
-            { key: "news" as const, icon: Newspaper, label: "News & Transfers", desc: "Daily digest" },
-            { key: "matchStart" as const, icon: Clock, label: "Match Start", desc: "15 mins before kickoff" },
+            { key: "goals" as const, icon: Goal, label: "Gols das Partidas", desc: "Alertas instantâneos de gol" },
+            { key: "news" as const, icon: Newspaper, label: "Notícias & Transfers", desc: "Resumo diário" },
+            { key: "matchStart" as const, icon: Clock, label: "Início de Partida", desc: "15 min antes do jogo" },
           ].map(n => (
             <div key={n.key} className="flex items-center gap-3 p-3.5">
               <div className="w-9 h-9 rounded-xl bg-secondary flex items-center justify-center shrink-0">
@@ -162,10 +161,10 @@ const Perfil = () => {
       {/* Logout */}
       <button className="w-full glass-card p-3.5 flex items-center justify-center gap-2 text-sm font-black text-copa-live uppercase tracking-wider">
         <LogOut className="w-4 h-4" />
-        Log Out
+        Sair
       </button>
 
-      <p className="text-center text-[10px] text-muted-foreground">ArenaCopa Version 2.4.0</p>
+      <p className="text-center text-[10px] text-muted-foreground">ArenaCopa Versão 2.4.0</p>
     </div>
   );
 };
