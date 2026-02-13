@@ -6,8 +6,9 @@ import { CalendarioTab } from "@/components/copa/CalendarioTab";
 import { GruposTab } from "@/components/copa/GruposTab";
 import { ChavesTab } from "@/components/copa/ChavesTab";
 import { MapaTab } from "@/components/copa/MapaTab";
+import { SimulacaoTab } from "@/components/copa/SimulacaoTab";
 
-type CopaTab = "calendario" | "grupos" | "chaves" | "mapa";
+type CopaTab = "calendario" | "grupos" | "chaves" | "simulacao" | "mapa";
 
 const Copa = () => {
   const [tab, setTab] = useState<CopaTab>("calendario");
@@ -15,7 +16,7 @@ const Copa = () => {
   return (
     <div>
       <div className="flex gap-2 px-4 py-3 scrollbar-hide sticky top-14 z-20 backdrop-blur-md" style={{ background: 'rgba(5, 20, 16, 0.9)' }}>
-        {(["calendario", "grupos", "chaves", "mapa"] as CopaTab[]).map(t => (
+        {(["calendario", "grupos", "chaves", "simulacao", "mapa"] as CopaTab[]).map(t => (
           <button
             key={t}
             onClick={() => setTab(t)}
@@ -34,7 +35,7 @@ const Copa = () => {
               />
             )}
             <span className="relative z-10">
-              {t === "calendario" ? "Calendário" : t.charAt(0).toUpperCase() + t.slice(1)}
+              {t === "calendario" ? "Calendário" : t === "simulacao" ? "Simulação" : t.charAt(0).toUpperCase() + t.slice(1)}
             </span>
           </button>
         ))}
@@ -53,6 +54,8 @@ const Copa = () => {
             {tab === "calendario" && <CalendarioTab />}
             {tab === "grupos" && <GruposTab />}
             {tab === "chaves" && <ChavesTab />}
+            {tab === "simulacao" && <SimulacaoTab />}
+            {tab === "mapa" && <MapaTab />}
             {tab === "mapa" && <MapaTab />}
           </motion.div>
         </AnimatePresence>
