@@ -1,205 +1,205 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Check, ChevronRight, ChevronLeft, AlertTriangle } from "lucide-react";
+import { ChevronRight, ChevronLeft, Lock, Globe, Trophy, Camera, HelpCircle } from "lucide-react";
 
-const steps = ["Info", "Pontuação", "Contribuição"];
-
-const modules = [
-  { id: "resultado", label: "Resultado", desc: "Acertar vencedor ou empate" },
-  { id: "placar", label: "Placar Exato", desc: "Acertar o placar exato do jogo" },
-  { id: "campeao", label: "Campeão", desc: "Acertar o campeão da Copa" },
-  { id: "classificacao", label: "Classificação Grupo", desc: "Acertar a ordem final do grupo" },
-];
-
-const scoringTemplates = [
-  { id: "classico", label: "Clássico", rules: "Resultado: 3pts, Placar: 5pts, Campeão: 20pts" },
-  { id: "arrojado", label: "Arrojado", rules: "Resultado: 2pts, Placar: 7pts, Campeão: 30pts" },
-  { id: "custom", label: "Personalizado", rules: "Defina suas próprias regras" },
-];
-
-const distributions = [
-  { id: "top3", label: "Top 3", splits: "50% / 30% / 20%" },
-  { id: "top5", label: "Top 5", splits: "35% / 25% / 20% / 12% / 8%" },
-  { id: "custom", label: "Personalizado", splits: "Defina seus %" },
-];
+const steps = ["Info", "Configurações", "Pontuação"];
 
 const CriarBolao = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
   const [privacy, setPrivacy] = useState<"private" | "public">("private");
-  const [selectedModules, setSelectedModules] = useState<string[]>(["resultado"]);
-  const [scoring, setScoring] = useState("classico");
-  const [hasContribution, setHasContribution] = useState(false);
-  const [distribution, setDistribution] = useState("top3");
-
-  const toggleModule = (id: string) => {
-    setSelectedModules(prev =>
-      prev.includes(id) ? prev.filter(m => m !== id) : [...prev, id]
-    );
-  };
+  const [hasEntryFee, setHasEntryFee] = useState(false);
 
   return (
     <div className="px-4 py-4">
-      {/* Progress */}
-      <div className="flex items-center gap-2 mb-6">
-        {steps.map((s, i) => (
-          <div key={s} className="flex items-center flex-1">
-            <div className={cn(
-              "flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold shrink-0",
-              i <= step ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"
-            )}>
-              {i < step ? <Check className="w-3.5 h-3.5" /> : i + 1}
-            </div>
-            <span className={cn("text-xs ml-1.5 font-medium hidden sm:block", i <= step ? "text-foreground" : "text-muted-foreground")}>{s}</span>
-            {i < steps.length - 1 && <div className={cn("flex-1 h-0.5 mx-2 rounded", i < step ? "bg-primary" : "bg-secondary")} />}
-          </div>
-        ))}
+      {/* Progress bar */}
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-[10px] font-bold uppercase tracking-widest text-primary">
+          Passo {step + 1} de {steps.length}
+        </span>
+        <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+          {steps[step]}
+        </span>
+      </div>
+      <div className="w-full h-1 bg-secondary rounded-full mb-6 overflow-hidden">
+        <div
+          className="h-full bg-primary rounded-full transition-all duration-300"
+          style={{ width: `${((step + 1) / steps.length) * 100}%` }}
+        />
       </div>
 
-      {/* Step 1: Info */}
+      {/* Step 1: Settings */}
       {step === 0 && (
-        <div className="space-y-5">
+        <div className="space-y-6">
+          {/* Upload cover */}
+          <div className="flex flex-col items-center">
+            <div className="w-24 h-24 rounded-full bg-secondary border-2 border-dashed border-muted-foreground/30 flex items-center justify-center mb-2 relative">
+              <Trophy className="w-8 h-8 text-muted-foreground" />
+              <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-primary flex items-center justify-center">
+                <Camera className="w-4 h-4 text-primary-foreground" />
+              </div>
+            </div>
+            <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Upload Pool Cover</span>
+          </div>
+
+          {/* Pool Name */}
           <div>
-            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2 block">Nome do Bolão</label>
+            <label className="text-[10px] font-bold uppercase tracking-widest text-primary mb-2 block">Nome do Bolão</label>
             <input
               value={name}
               onChange={e => setName(e.target.value)}
-              placeholder="Ex: Copa dos Amigos"
-              className="w-full px-4 py-3 rounded-xl bg-secondary border border-border text-sm font-medium placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
+              placeholder="Ex: Copa dos Amigos 2026"
+              className="w-full px-4 py-3.5 rounded-xl bg-card border border-border text-sm font-medium placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
             />
           </div>
 
+          {/* Description */}
           <div>
-            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2 block">Privacidade</label>
-            <div className="grid grid-cols-2 gap-2">
-              {(["private", "public"] as const).map(p => (
+            <label className="text-[10px] font-bold uppercase tracking-widest text-primary mb-2 block">Motto / Descrição</label>
+            <textarea
+              value={description}
+              onChange={e => setDescription(e.target.value)}
+              placeholder="May the best predictor win!"
+              rows={3}
+              className="w-full px-4 py-3 rounded-xl bg-card border border-border text-sm font-medium placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
+            />
+          </div>
+
+          {/* Privacy */}
+          <div>
+            <label className="text-[10px] font-bold uppercase tracking-widest text-primary mb-2 block">Privacidade</label>
+            <div className="grid grid-cols-2 gap-3">
+              {([
+                { id: "private" as const, icon: Lock, label: "Private", desc: "Invite only via code" },
+                { id: "public" as const, icon: Globe, label: "Public", desc: "Anyone can join" },
+              ]).map(p => (
                 <button
-                  key={p}
-                  onClick={() => setPrivacy(p)}
+                  key={p.id}
+                  onClick={() => setPrivacy(p.id)}
                   className={cn(
-                    "glass-card p-3 text-center transition-all",
-                    privacy === p && "ring-2 ring-primary"
+                    "glass-card p-4 text-left transition-all relative",
+                    privacy === p.id && "ring-2 ring-primary bg-primary/5"
                   )}
                 >
-                  <span className="text-lg block mb-1">{p === "private" ? "🔒" : "🌍"}</span>
-                  <span className="text-xs font-bold">{p === "private" ? "Privado" : "Público"}</span>
+                  <div className="flex items-center justify-between mb-2">
+                    <p.icon className="w-5 h-5 text-muted-foreground" />
+                    <div className={cn(
+                      "w-5 h-5 rounded-full border-2 transition-colors",
+                      privacy === p.id ? "bg-primary border-primary" : "border-muted-foreground"
+                    )} />
+                  </div>
+                  <span className="text-sm font-bold block">{p.label}</span>
+                  <span className="text-[10px] text-muted-foreground">{p.desc}</span>
                 </button>
               ))}
             </div>
           </div>
 
-          <div>
-            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2 block">Módulos de Palpite</label>
-            <div className="space-y-2">
-              {modules.map(m => (
-                <button
-                  key={m.id}
-                  onClick={() => toggleModule(m.id)}
-                  className={cn(
-                    "glass-card w-full p-3 flex items-center gap-3 text-left transition-all",
-                    selectedModules.includes(m.id) && "ring-1 ring-primary bg-primary/5"
-                  )}
-                >
-                  <div className={cn(
-                    "w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 transition-colors",
-                    selectedModules.includes(m.id) ? "bg-primary border-primary" : "border-muted-foreground"
-                  )}>
-                    {selectedModules.includes(m.id) && <Check className="w-3 h-3 text-primary-foreground" />}
-                  </div>
-                  <div>
-                    <span className="text-sm font-bold block">{m.label}</span>
-                    <span className="text-xs text-muted-foreground">{m.desc}</span>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Step 2: Scoring */}
-      {step === 1 && (
-        <div className="space-y-4">
-          <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2 block">Template de Pontuação</label>
-          <div className="space-y-2">
-            {scoringTemplates.map(t => (
-              <button
-                key={t.id}
-                onClick={() => setScoring(t.id)}
-                className={cn(
-                  "glass-card w-full p-4 text-left transition-all",
-                  scoring === t.id && "ring-2 ring-primary"
-                )}
-              >
-                <span className="text-sm font-bold block mb-0.5">{t.label}</span>
-                <span className="text-xs text-muted-foreground">{t.rules}</span>
+          {/* Prize Distribution */}
+          <div className="glass-card p-4">
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <Trophy className="w-4 h-4 text-primary" />
+                <span className="text-xs font-black uppercase tracking-wider">Distribuição</span>
+              </div>
+              <button className="text-[10px] font-bold px-3 py-1 rounded-full border border-border text-muted-foreground">
+                Editar
               </button>
-            ))}
+            </div>
+            <div className="space-y-2.5">
+              {[
+                { rank: 1, label: "Winner", pct: 60 },
+                { rank: 2, label: "Runner Up", pct: 30 },
+                { rank: 3, label: "Third Place", pct: 10 },
+              ].map(d => (
+                <div key={d.rank} className="flex items-center gap-3">
+                  <div className={cn(
+                    "w-7 h-7 rounded-lg flex items-center justify-center text-xs font-black",
+                    d.rank === 1 ? "bg-copa-success text-background" :
+                    d.rank === 2 ? "bg-copa-success/70 text-background" :
+                    "bg-copa-success/40 text-background"
+                  )}>
+                    {d.rank}
+                  </div>
+                  <span className="text-sm font-medium flex-1">{d.label}</span>
+                  <span className="text-sm font-black text-primary">{d.pct}%</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Entry Fee */}
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="text-sm font-bold block">Entry Fee</span>
+              <span className="text-[11px] text-muted-foreground">Require payment to join pool</span>
+            </div>
+            <button
+              onClick={() => setHasEntryFee(!hasEntryFee)}
+              className={cn(
+                "w-12 h-7 rounded-full transition-colors relative",
+                hasEntryFee ? "bg-primary" : "bg-secondary"
+              )}
+            >
+              <span className={cn(
+                "absolute top-1 w-5 h-5 rounded-full bg-foreground shadow transition-transform",
+                hasEntryFee ? "left-6" : "left-1"
+              )} />
+            </button>
           </div>
         </div>
       )}
 
-      {/* Step 3: Contribution */}
+      {/* Step 2 */}
+      {step === 1 && (
+        <div className="space-y-5">
+          <div className="glass-card p-6 text-center">
+            <span className="text-3xl mb-3 block">⚙️</span>
+            <h3 className="text-base font-black mb-1">Configurações de Pontuação</h3>
+            <p className="text-xs text-muted-foreground">Defina como os pontos serão calculados para cada palpite.</p>
+          </div>
+          {[
+            { label: "Resultado Exato", pts: "5 pts", desc: "Acertar placar exato" },
+            { label: "Vencedor Correto", pts: "3 pts", desc: "Acertar quem ganha" },
+            { label: "Empate Correto", pts: "2 pts", desc: "Acertar empate" },
+            { label: "Campeão", pts: "20 pts", desc: "Acertar o campeão" },
+          ].map(r => (
+            <div key={r.label} className="glass-card p-4 flex items-center gap-3">
+              <div className="flex-1">
+                <span className="text-sm font-bold block">{r.label}</span>
+                <span className="text-[11px] text-muted-foreground">{r.desc}</span>
+              </div>
+              <span className="text-sm font-black text-primary">{r.pts}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Step 3 */}
       {step === 2 && (
         <div className="space-y-5">
-          <div>
-            <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2 block">Contribuição Externa</label>
-            <div className="grid grid-cols-2 gap-2 mb-3">
-              <button
-                onClick={() => setHasContribution(false)}
-                className={cn("glass-card p-3 text-center", !hasContribution && "ring-2 ring-primary")}
-              >
-                <span className="text-lg block mb-1">🤝</span>
-                <span className="text-xs font-bold">Social (sem grana)</span>
-              </button>
-              <button
-                onClick={() => setHasContribution(true)}
-                className={cn("glass-card p-3 text-center", hasContribution && "ring-2 ring-primary")}
-              >
-                <span className="text-lg block mb-1">💰</span>
-                <span className="text-xs font-bold">Com contribuição</span>
-              </button>
-            </div>
+          <div className="glass-card p-6 text-center">
+            <span className="text-3xl mb-3 block">🎯</span>
+            <h3 className="text-base font-black mb-1">Revisar e Criar</h3>
+            <p className="text-xs text-muted-foreground">Confira as configurações do seu bolão.</p>
           </div>
-
-          {hasContribution && (
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-2 block">Distribuição da Premiação</label>
-              <div className="space-y-2 mb-4">
-                {distributions.map(d => (
-                  <button
-                    key={d.id}
-                    onClick={() => setDistribution(d.id)}
-                    className={cn(
-                      "glass-card w-full p-3 text-left transition-all",
-                      distribution === d.id && "ring-2 ring-primary"
-                    )}
-                  >
-                    <span className="text-sm font-bold">{d.label}</span>
-                    <span className="text-xs text-muted-foreground ml-2">{d.splits}</span>
-                  </button>
-                ))}
-              </div>
-
-              <div className="glass-card p-3 flex items-start gap-2 border-primary/30">
-                <AlertTriangle className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                <p className="text-[11px] text-muted-foreground leading-relaxed">
-                  <span className="font-bold text-foreground">ArenaCopa não processa dinheiro.</span> A contribuição é registrada apenas para controle entre os participantes. Toda movimentação financeira é de responsabilidade dos organizadores.
-                </p>
-              </div>
-            </div>
-          )}
+          <div className="glass-card p-4 space-y-3">
+            <div className="flex justify-between"><span className="text-xs text-muted-foreground">Nome</span><span className="text-xs font-bold">{name || "—"}</span></div>
+            <div className="flex justify-between"><span className="text-xs text-muted-foreground">Privacidade</span><span className="text-xs font-bold">{privacy === "private" ? "Privado" : "Público"}</span></div>
+            <div className="flex justify-between"><span className="text-xs text-muted-foreground">Entry Fee</span><span className="text-xs font-bold">{hasEntryFee ? "Sim" : "Não"}</span></div>
+          </div>
         </div>
       )}
 
-      {/* Navigation buttons */}
+      {/* Navigation */}
       <div className="flex items-center gap-3 mt-8">
         {step > 0 && (
           <button
             onClick={() => setStep(step - 1)}
-            className="flex-1 py-3 rounded-xl bg-secondary text-secondary-foreground font-bold text-sm flex items-center justify-center gap-1"
+            className="flex-1 py-3.5 rounded-xl bg-secondary text-secondary-foreground font-bold text-sm flex items-center justify-center gap-1"
           >
             <ChevronLeft className="w-4 h-4" /> Voltar
           </button>
@@ -209,10 +209,10 @@ const CriarBolao = () => {
             if (step < 2) setStep(step + 1);
             else navigate("/boloes");
           }}
-          className="flex-1 py-3 rounded-xl bg-primary text-primary-foreground font-bold text-sm flex items-center justify-center gap-1"
+          className="flex-1 py-3.5 rounded-xl bg-primary text-primary-foreground font-black text-sm flex items-center justify-center gap-1 uppercase tracking-wider"
         >
           {step < 2 ? (
-            <>Próximo <ChevronRight className="w-4 h-4" /></>
+            <>Próximo Passo <ChevronRight className="w-4 h-4" /></>
           ) : (
             "Criar Bolão"
           )}

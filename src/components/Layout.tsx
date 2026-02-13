@@ -1,13 +1,12 @@
-import { NavLink, useLocation } from "react-router-dom";
-import { Home, Trophy, Users, User } from "lucide-react";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
+import { Home, Trophy, Users, User, Bell, ChevronLeft, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import logo from "@/assets/arenacopa_logo.png";
-import { ChevronLeft, Bell } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 
 const tabs = [
   { path: "/", icon: Home, label: "Início" },
   { path: "/copa", icon: Trophy, label: "Copa" },
+  { path: "__fab__", icon: Plus, label: "" },
   { path: "/boloes", icon: Users, label: "Bolões" },
   { path: "/perfil", icon: User, label: "Perfil" },
 ];
@@ -17,12 +16,10 @@ function Header() {
   const navigate = useNavigate();
   const isSubpage = location.pathname.split("/").filter(Boolean).length > 1;
 
-  // Get page title
   const getTitle = () => {
     const path = location.pathname;
-    if (path === "/") return null; // show logo
-    if (path === "/copa") return "Copa";
-    if (path.startsWith("/copa/")) return "Copa";
+    if (path === "/") return null;
+    if (path.startsWith("/copa")) return null;
     if (path === "/boloes") return "Bolões";
     if (path === "/boloes/criar") return "Criar Bolão";
     if (path.startsWith("/boloes/")) return "Bolão";
@@ -40,18 +37,21 @@ function Header() {
             <ChevronLeft className="w-5 h-5" />
           </button>
         ) : (
-          <div className="w-8" />
+          <div className="flex items-center gap-2">
+            <img src={logo} alt="ArenaCopa" className="h-7 w-7 rounded-lg" />
+            <span className="font-black text-base tracking-tight">
+              ARENA<span className="text-primary">COPA</span>
+            </span>
+          </div>
         )}
 
-        {title ? (
-          <h1 className="text-base font-bold">{title}</h1>
-        ) : (
-          <img src={logo} alt="ArenaCopa" className="h-8" />
-        )}
+        {title && isSubpage ? (
+          <h1 className="text-base font-bold absolute left-1/2 -translate-x-1/2">{title}</h1>
+        ) : null}
 
-        <button className="p-1.5 -mr-1.5 rounded-lg hover:bg-secondary relative">
+        <button className="p-2 rounded-xl bg-secondary/60 relative">
           <Bell className="w-5 h-5" />
-          <span className="absolute top-1 right-1 w-2 h-2 bg-copa-live rounded-full" />
+          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-copa-live rounded-full" />
         </button>
       </div>
     </header>
@@ -59,31 +59,44 @@ function Header() {
 }
 
 function BottomTabs() {
+  const navigate = useNavigate();
+
   return (
     <nav className="fixed bottom-0 inset-x-0 z-30 bg-background/95 backdrop-blur-md border-t border-border/50 safe-bottom">
-      <div className="flex items-center justify-around h-16 max-w-lg mx-auto">
-        {tabs.map(tab => (
-          <NavLink
-            key={tab.path}
-            to={tab.path}
-            end={tab.path === "/"}
-            className={({ isActive }) =>
-              cn(
-                "flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-colors min-w-[60px]",
-                isActive ? "text-primary" : "text-muted-foreground hover:text-foreground"
-              )
-            }
-          >
-            {({ isActive }) => (
-              <>
-                <div className={cn("p-1.5 rounded-xl transition-colors", isActive && "bg-primary/15")}>
-                  <tab.icon className="w-5 h-5" strokeWidth={isActive ? 2.5 : 2} />
-                </div>
-                <span className="text-[10px] font-semibold">{tab.label}</span>
-              </>
-            )}
-          </NavLink>
-        ))}
+      <div className="flex items-center justify-around h-16 max-w-lg mx-auto relative">
+        {tabs.map((tab) => {
+          if (tab.path === "__fab__") {
+            return (
+              <button
+                key="fab"
+                onClick={() => navigate("/boloes/criar")}
+                className="flex items-center justify-center w-14 h-14 rounded-full bg-primary shadow-lg shadow-primary/30 -mt-6 border-4 border-background"
+              >
+                <Plus className="w-7 h-7 text-primary-foreground" strokeWidth={3} />
+              </button>
+            );
+          }
+          return (
+            <NavLink
+              key={tab.path}
+              to={tab.path}
+              end={tab.path === "/"}
+              className={({ isActive }) =>
+                cn(
+                  "flex flex-col items-center gap-0.5 px-3 py-1.5 transition-colors min-w-[56px]",
+                  isActive ? "text-primary" : "text-muted-foreground"
+                )
+              }
+            >
+              {({ isActive }) => (
+                <>
+                  <tab.icon className="w-5 h-5" strokeWidth={isActive ? 2.5 : 1.8} />
+                  <span className={cn("text-[10px]", isActive ? "font-bold" : "font-medium")}>{tab.label}</span>
+                </>
+              )}
+            </NavLink>
+          );
+        })}
       </div>
     </nav>
   );
