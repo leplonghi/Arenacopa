@@ -1,39 +1,71 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { stadiums, type Stadium } from "@/data/mockData";
 import { MapPin, Users, Globe, Thermometer } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { staggerContainer, staggerItem } from "./animations";
+import { MapContainer, TileLayer, Marker, Popup } from "react-leaflet";
+import L from "leaflet";
+import "leaflet/dist/leaflet.css";
+
+// Fix default marker icon
+const defaultIcon = L.icon({
+  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41],
+});
+
+const selectedIcon = L.icon({
+  iconUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png",
+  iconRetinaUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png",
+  shadowUrl: "https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png",
+  iconSize: [30, 49],
+  iconAnchor: [15, 49],
+  popupAnchor: [1, -40],
+  shadowSize: [49, 49],
+  className: "selected-marker",
+});
 
 export function MapaTab() {
   const [selectedStadium, setSelectedStadium] = useState<Stadium | null>(null);
 
   return (
     <div>
-      <div className="glass-card h-64 mb-4 flex items-center justify-center relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-b from-copa-green/10 to-background/80" />
-        <div className="text-center z-10">
-          <Globe className="w-10 h-10 text-muted-foreground mx-auto mb-2" />
-          <span className="text-xs text-muted-foreground">Mapa Copa 2026</span>
-        </div>
-        {stadiums.slice(0, 5).map((s, i) => (
-          <motion.button
-            key={s.id}
-            onClick={() => setSelectedStadium(s)}
-            whileHover={{ scale: 1.2 }}
-            whileTap={{ scale: 0.9 }}
-            animate={selectedStadium?.id === s.id ? { scale: 1.25 } : { scale: 1 }}
-            className={cn(
-              "absolute w-8 h-8 rounded-full flex items-center justify-center transition-colors",
-              selectedStadium?.id === s.id
-                ? "bg-primary shadow-lg shadow-primary/30"
-                : "bg-secondary/80"
-            )}
-            style={{ top: `${25 + i * 12}%`, left: `${20 + i * 14}%` }}
-          >
-            <MapPin className="w-4 h-4" />
-          </motion.button>
-        ))}
+      {/* Real Leaflet Map */}
+      <div className="glass-card h-72 mb-4 overflow-hidden rounded-xl">
+        <MapContainer
+          center={[30, -95]}
+          zoom={3}
+          style={{ height: "100%", width: "100%" }}
+          zoomControl={false}
+          attributionControl={false}
+        >
+          <TileLayer
+            url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png"
+          />
+          {stadiums.map(s => (
+            <Marker
+              key={s.id}
+              position={[s.lat, s.lng]}
+              icon={selectedStadium?.id === s.id ? selectedIcon : defaultIcon}
+              eventHandlers={{
+                click: () => setSelectedStadium(s),
+              }}
+            >
+              <Popup>
+                <div className="text-center">
+                  <strong>{s.name}</strong>
+                  <br />
+                  <span>{s.city}, {s.country}</span>
+                </div>
+              </Popup>
+            </Marker>
+          ))}
+        </MapContainer>
       </div>
 
       <AnimatePresence mode="wait">
@@ -68,9 +100,16 @@ export function MapaTab() {
               <div className="glass-card p-3 text-center">
                 <Thermometer className="w-4 h-4 mx-auto mb-1 text-primary" />
                 <span className="text-[9px] uppercase tracking-wider text-muted-foreground block">Clima</span>
-                <span className="text-sm font-black">18°C</span>
+                <span className="text-xs font-bold">{selectedStadium.climaHint.split(",")[0]}</span>
               </div>
             </div>
+
+            <button
+              onClick={() => setSelectedStadium(null)}
+              className="w-full py-3 text-xs font-bold text-muted-foreground border-t border-border/30"
+            >
+              Ver todos os estádios
+            </button>
           </motion.div>
         ) : (
           <motion.div

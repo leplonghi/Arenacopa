@@ -1,10 +1,14 @@
 import { Link } from "react-router-dom";
 import { MatchCard } from "@/components/MatchCard";
 import { Flag } from "@/components/Flag";
-import { getTodayMatches, getTeam, boloes, userProfile, matches, formatMatchTime } from "@/data/mockData";
-import { Users, Trophy as TrophyIcon } from "lucide-react";
+import { getTodayMatches, getTeam, matches, formatMatchTime } from "@/data/mockData";
+import { Users, Trophy as TrophyIcon, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useState } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const sectionVariants = {
   hidden: { opacity: 0, y: 16 },
@@ -24,19 +28,54 @@ const cardVariants = {
   }),
 };
 
+interface MyBolao {
+  id: string;
+  name: string;
+  memberCount: number;
+}
+
 const Index = () => {
+  const { user } = useAuth();
   const todayMatches = getTodayMatches();
-  const favoriteTeam = getTeam(userProfile.favoriteTeam);
-  const myBoloes = boloes.filter(b => b.status === "active").slice(0, 3);
+  const favoriteTeam = getTeam("BRA");
+  const [myBoloes, setMyBoloes] = useState<MyBolao[]>([]);
+  const [boloesLoading, setBoloesLoading] = useState(true);
+  const [profile, setProfile] = useState<{ name: string } | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    Promise.all([
+      supabase.from("boloes").select("id, name, bolao_members(count)").limit(3),
+      supabase.from("profiles").select("name").eq("user_id", user.id).single(),
+    ]).then(([boloesRes, profileRes]) => {
+      if (boloesRes.data) {
+        setMyBoloes(boloesRes.data.map((b: any) => ({
+          id: b.id,
+          name: b.name,
+          memberCount: b.bolao_members?.[0]?.count || 0,
+        })));
+      }
+      if (profileRes.data) setProfile(profileRes.data);
+      setBoloesLoading(false);
+    });
+  }, [user]);
 
   const nextFavMatch = matches.find(
-    m => (m.homeTeam === userProfile.favoriteTeam || m.awayTeam === userProfile.favoriteTeam) && m.status !== "finished"
+    m => (m.homeTeam === "BRA" || m.awayTeam === "BRA") && m.status !== "finished"
   );
+
+  const displayName = profile?.name || user?.email?.split("@")[0] || "Jogador";
 
   return (
     <div className="px-4 py-4 space-y-6">
+      {/* Welcome */}
+      <motion.div variants={sectionVariants} initial="hidden" animate="visible" custom={0}>
+        <p className="text-xs text-muted-foreground">Olá,</p>
+        <h1 className="text-xl font-black">{displayName} 👋</h1>
+      </motion.div>
+
       {/* Meu Time */}
-      <motion.section variants={sectionVariants} initial="hidden" animate="visible" custom={0}>
+      <motion.section variants={sectionVariants} initial="hidden" animate="visible" custom={0.5}>
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-base font-black">Meu Time</h2>
           <Link to="/copa/grupos" className="text-xs text-primary font-semibold">Detalhes</Link>
@@ -59,7 +98,6 @@ const Index = () => {
             </div>
             <div className="text-right">
               <span className="text-[10px] uppercase tracking-wider text-muted-foreground block font-bold">Grupo {favoriteTeam.group}</span>
-              <span className="text-3xl font-black">1º</span>
             </div>
           </div>
         </motion.div>
@@ -69,52 +107,40 @@ const Index = () => {
       <motion.section variants={sectionVariants} initial="hidden" animate="visible" custom={1}>
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-base font-black">Meus Bolões</h2>
-          <Link to="/boloes" className="text-xs text-primary font-semibold">Ranking</Link>
+          <Link to="/boloes" className="text-xs text-primary font-semibold">Ver todos</Link>
         </div>
-        <div className="grid grid-cols-2 gap-3">
-          {myBoloes.map((bolao, i) => {
-            const isLeader = bolao.myRank === 1;
-            return (
+        {boloesLoading ? (
+          <div className="grid grid-cols-2 gap-3">
+            <Skeleton className="h-28 rounded-xl" />
+            <Skeleton className="h-28 rounded-xl" />
+          </div>
+        ) : myBoloes.length === 0 ? (
+          <Link to="/boloes/criar" className="glass-card p-6 text-center block">
+            <span className="text-2xl mb-2 block">🏆</span>
+            <p className="text-sm font-bold">Crie seu primeiro bolão</p>
+            <p className="text-[11px] text-muted-foreground">Convide amigos e faça seus palpites</p>
+          </Link>
+        ) : (
+          <div className="grid grid-cols-2 gap-3">
+            {myBoloes.map((bolao, i) => (
               <motion.div key={bolao.id} variants={cardVariants} initial="hidden" animate="visible" custom={i} whileTap={{ scale: 0.97 }}>
                 <Link
                   to={`/boloes/${bolao.id}`}
-                  className={cn(
-                    "glass-card p-4 relative block",
-                    isLeader ? "border border-primary/30" : "border border-copa-green/20"
-                  )}
+                  className="glass-card p-4 relative block border border-copa-green/20"
                 >
-                  <div className="flex items-start justify-between mb-3">
-                    <div className={cn(
-                      "w-10 h-10 rounded-xl flex items-center justify-center",
-                      isLeader ? "bg-primary/15" : "bg-copa-green/15"
-                    )}>
-                      {isLeader ? (
-                        <TrophyIcon className="w-5 h-5 text-primary" />
-                      ) : (
-                        <Users className="w-5 h-5 text-copa-green-light" />
-                      )}
-                    </div>
-                    {bolao.myDelta > 0 && (
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-copa-success/20 text-copa-success">
-                        +{bolao.myDelta * 3}pts
-                      </span>
-                    )}
-                    {isLeader && (
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary/20 text-primary">
-                        Líder
-                      </span>
-                    )}
+                  <div className="w-10 h-10 rounded-xl bg-copa-green/15 flex items-center justify-center mb-3">
+                    <Users className="w-5 h-5 text-copa-green-light" />
                   </div>
-                  <span className="text-xs font-bold block truncate mb-2">{bolao.name}</span>
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-2xl font-black">{bolao.myRank}º</span>
-                    <span className="text-xs text-muted-foreground">/ {bolao.participants.length}</span>
+                  <span className="text-xs font-bold block truncate mb-1">{bolao.name}</span>
+                  <div className="flex items-center gap-1.5 text-muted-foreground">
+                    <Users className="w-3 h-3" />
+                    <span className="text-[10px]">{bolao.memberCount} membros</span>
                   </div>
                 </Link>
               </motion.div>
-            );
-          })}
-        </div>
+            ))}
+          </div>
+        )}
       </motion.section>
 
       {/* Jogos de Hoje */}

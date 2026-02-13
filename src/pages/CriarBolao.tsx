@@ -1,17 +1,48 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { ChevronRight, ChevronLeft, Lock, Globe, Trophy, Camera, HelpCircle } from "lucide-react";
+import { ChevronRight, ChevronLeft, Lock, Globe, Trophy, Camera } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
+import { useToast } from "@/hooks/use-toast";
 
 const steps = ["Informações", "Configurações", "Pontuação"];
 
 const CriarBolao = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { toast } = useToast();
   const [step, setStep] = useState(0);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [privacy, setPrivacy] = useState<"private" | "public">("private");
   const [hasEntryFee, setHasEntryFee] = useState(false);
+  const [creating, setCreating] = useState(false);
+
+  const handleCreate = async () => {
+    if (!user || !name.trim()) return;
+    setCreating(true);
+    try {
+      const { data, error } = await supabase
+        .from("boloes")
+        .insert({
+          name: name.trim(),
+          description: description.trim(),
+          creator_id: user.id,
+        })
+        .select("id")
+        .single();
+
+      if (error) throw error;
+
+      toast({ title: "Bolão criado! 🎉", description: "Compartilhe o código de convite com seus amigos." });
+      navigate(`/boloes/${data.id}`);
+    } catch (error: any) {
+      toast({ title: "Erro", description: error.message, variant: "destructive" });
+    } finally {
+      setCreating(false);
+    }
+  };
 
   return (
     <div className="px-4 py-4">
@@ -31,10 +62,9 @@ const CriarBolao = () => {
         />
       </div>
 
-      {/* Step 1: Settings */}
+      {/* Step 1 */}
       {step === 0 && (
         <div className="space-y-6">
-          {/* Upload cover */}
           <div className="flex flex-col items-center">
             <div className="w-24 h-24 rounded-full bg-secondary border-2 border-dashed border-muted-foreground/30 flex items-center justify-center mb-2 relative">
               <Trophy className="w-8 h-8 text-muted-foreground" />
@@ -45,7 +75,6 @@ const CriarBolao = () => {
             <span className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">Capa do Bolão</span>
           </div>
 
-          {/* Pool Name */}
           <div>
             <label className="text-[10px] font-bold uppercase tracking-widest text-primary mb-2 block">Nome do Bolão</label>
             <input
@@ -56,7 +85,6 @@ const CriarBolao = () => {
             />
           </div>
 
-          {/* Description */}
           <div>
             <label className="text-[10px] font-bold uppercase tracking-widest text-primary mb-2 block">Descrição</label>
             <textarea
@@ -68,13 +96,12 @@ const CriarBolao = () => {
             />
           </div>
 
-          {/* Privacy */}
           <div>
             <label className="text-[10px] font-bold uppercase tracking-widest text-primary mb-2 block">Privacidade</label>
             <div className="grid grid-cols-2 gap-3">
-               {([
-                 { id: "private" as const, icon: Lock, label: "Privado", desc: "Apenas com convite" },
-                 { id: "public" as const, icon: Globe, label: "Público", desc: "Qualquer um pode entrar" },
+              {([
+                { id: "private" as const, icon: Lock, label: "Privado", desc: "Apenas com convite" },
+                { id: "public" as const, icon: Globe, label: "Público", desc: "Qualquer um pode entrar" },
               ]).map(p => (
                 <button
                   key={p.id}
@@ -98,22 +125,18 @@ const CriarBolao = () => {
             </div>
           </div>
 
-          {/* Prize Distribution */}
           <div className="glass-card p-4">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">
                 <Trophy className="w-4 h-4 text-primary" />
                 <span className="text-xs font-black uppercase tracking-wider">Distribuição</span>
               </div>
-              <button className="text-[10px] font-bold px-3 py-1 rounded-full border border-border text-muted-foreground">
-                Editar
-              </button>
             </div>
             <div className="space-y-2.5">
-               {[
-                 { rank: 1, label: "Campeão", pct: 60 },
-                 { rank: 2, label: "Vice", pct: 30 },
-                 { rank: 3, label: "Terceiro", pct: 10 },
+              {[
+                { rank: 1, label: "Campeão", pct: 60 },
+                { rank: 2, label: "Vice", pct: 30 },
+                { rank: 3, label: "Terceiro", pct: 10 },
               ].map(d => (
                 <div key={d.rank} className="flex items-center gap-3">
                   <div className={cn(
@@ -131,11 +154,10 @@ const CriarBolao = () => {
             </div>
           </div>
 
-          {/* Entry Fee */}
           <div className="flex items-center justify-between">
             <div>
-               <span className="text-sm font-bold block">Taxa de Entrada</span>
-               <span className="text-[11px] text-muted-foreground">Exigir pagamento para participar</span>
+              <span className="text-sm font-bold block">Taxa de Entrada</span>
+              <span className="text-[11px] text-muted-foreground">Exigir pagamento para participar</span>
             </div>
             <button
               onClick={() => setHasEntryFee(!hasEntryFee)}
@@ -207,12 +229,15 @@ const CriarBolao = () => {
         <button
           onClick={() => {
             if (step < 2) setStep(step + 1);
-            else navigate("/boloes");
+            else handleCreate();
           }}
-          className="flex-1 py-3.5 rounded-xl bg-primary text-primary-foreground font-black text-sm flex items-center justify-center gap-1 uppercase tracking-wider"
+          disabled={creating || (step === 2 && !name.trim())}
+          className="flex-1 py-3.5 rounded-xl bg-primary text-primary-foreground font-black text-sm flex items-center justify-center gap-1 uppercase tracking-wider disabled:opacity-50"
         >
           {step < 2 ? (
             <>Próximo Passo <ChevronRight className="w-4 h-4" /></>
+          ) : creating ? (
+            "Criando..."
           ) : (
             "Criar Bolão"
           )}
