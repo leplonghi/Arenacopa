@@ -6,6 +6,7 @@ import { staggerContainer, staggerItem } from "./animations";
 import { Trophy, HelpCircle } from "lucide-react";
 import { useSimulacao } from "@/contexts/SimulacaoContext";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   type KnockoutRound, type KnockoutMatchFull, type KnockoutScore,
   KNOCKOUT_ROUNDS, ROUND_LABELS, ROUND_FULL_LABELS,
@@ -30,6 +31,7 @@ function KOScoreInput({ value, onChange }: { value: number | null; onChange: (v:
 }
 
 function TeamSlot({ code, side }: { code: string | null; side: "home" | "away" }) {
+  const navigate = useNavigate();
   if (!code) {
     return (
       <div className={cn("flex items-center gap-1.5", side === "home" ? "flex-1 justify-end" : "flex-1")}>
@@ -45,10 +47,13 @@ function TeamSlot({ code, side }: { code: string | null; side: "home" | "away" }
 
   const team = getTeam(code);
   return (
-    <div className={cn(
-      "flex items-center gap-1.5",
-      side === "home" ? "flex-1 justify-end" : "flex-1"
-    )}>
+    <div
+      className={cn(
+        "flex items-center gap-1.5 cursor-pointer hover:underline",
+        side === "home" ? "flex-1 justify-end" : "flex-1"
+      )}
+      onClick={() => navigate(`/team/${team.code}`)}
+    >
       {side === "home" && <span className="text-xs font-bold truncate max-w-[60px]">{team.name}</span>}
       <Flag code={team.code} size="sm" />
       {side === "away" && <span className="text-xs font-bold truncate max-w-[60px]">{team.name}</span>}
@@ -205,7 +210,7 @@ export function KnockoutPhase() {
         variants={staggerContainer}
         initial="hidden"
         animate="visible"
-        className="space-y-3"
+        className="space-y-3 md:space-y-0 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-4"
       >
         {roundMatches.map((match, i) => (
           <KnockoutMatchCard

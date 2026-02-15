@@ -1,0 +1,248 @@
+{
+  "MEX": {
+    "capital": "Mexico City",
+    "population": "130.6 milhões",
+    "currency": "Mexican peso",
+    "language": "Spanish"
+  },
+  "RSA": {
+    "capital": "Pretoria",
+    "population": "63.1 milhões",
+    "currency": "South African rand",
+    "language": "Afrikaans, English, Southern Ndebele, Northern Sotho, Southern Sotho, Swazi, Tswana, Tsonga, Venda, Xhosa, Zulu"
+  },
+  "KOR": {
+    "capital": "Seoul",
+    "population": "51.2 milhões",
+    "currency": "South Korean won",
+    "language": "Korean"
+  },
+  "CAN": {
+    "capital": "Ottawa",
+    "population": "41.7 milhões",
+    "currency": "Canadian dollar",
+    "language": "English, French"
+  },
+  "QAT": {
+    "capital": "Doha",
+    "population": "3.2 milhões",
+    "currency": "Qatari riyal",
+    "language": "Arabic"
+  },
+  "SUI": {
+    "capital": "Bern",
+    "population": "9.1 milhões",
+    "currency": "Swiss franc",
+    "language": "French, Swiss German, Italian, Romansh"
+  },
+  "BRA": {
+    "capital": "Brasília",
+    "population": "213.4 milhões",
+    "currency": "Brazilian real",
+    "language": "Portuguese"
+  },
+  "MAR": {
+    "capital": "Rabat",
+    "population": "36.8 milhões",
+    "currency": "Moroccan dirham",
+    "language": "Arabic, Berber"
+  },
+  "HAI": {
+    "capital": "Port-au-Prince",
+    "population": "11.9 milhões",
+    "currency": "Haitian gourde",
+    "language": "French, Haitian Creole"
+  },
+  "SCO": {
+    "capital": "London",
+    "population": "69.3 milhões",
+    "currency": "British pound",
+    "language": "English"
+  },
+  "USA": {
+    "capital": "Washington, D.C.",
+    "population": "340.1 milhões",
+    "currency": "United States dollar",
+    "language": "English"
+  },
+  "PAR": {
+    "capital": "Asunción",
+    "population": "6.1 milhões",
+    "currency": "Paraguayan guaraní",
+    "language": "Guaraní, Spanish"
+  },
+  "AUS": {
+    "capital": "Canberra",
+    "population": "27.5 milhões",
+    "currency": "Australian dollar",
+    "language": "English"
+  },
+  "GER": {
+    "capital": "Berlin",
+    "population": "83.5 milhões",
+    "currency": "euro",
+    "language": "German"
+  },
+  "CIV": {
+    "capital": "Yamoussoukro",
+    "population": "31.7 milhões",
+    "currency": "West African CFA franc",
+    "language": "French"
+  },
+  "ECU": {
+    "capital": "Quito",
+    "population": "18.1 milhões",
+    "currency": "United States dollar",
+    "language": "Spanish"
+  },
+  "NED": {
+    "capital": "Amsterdam",
+    "population": "18.1 milhões",
+    "currency": "euro",
+    "language": "Dutch"
+  },
+  "JPN": {
+    "capital": "Tokyo",
+    "population": "123.2 milhões",
+    "currency": "Japanese yen",
+    "language": "Japanese"
+  },
+  "TUN": {
+    "capital": "Tunis",
+    "population": "12.0 milhões",
+    "currency": "Tunisian dinar",
+    "language": "Arabic"
+  },
+  "BEL": {
+    "capital": "Brussels",
+    "population": "11.8 milhões",
+    "currency": "euro",
+    "language": "German, French, Dutch"
+  },
+  "EGY": {
+    "capital": "Cairo",
+    "population": "107.3 milhões",
+    "currency": "Egyptian pound",
+    "language": "Arabic"
+  },
+  "IRN": {
+    "capital": "Tehran",
+    "population": "86.0 milhões",
+    "currency": "Iranian rial",
+    "language": "Persian (Farsi)"
+  },
+  "NZL": {
+    "capital": "Wellington",
+    "population": "5.3 milhões",
+    "currency": "New Zealand dollar",
+    "language": "English, Māori, New Zealand Sign Language"
+  },
+  "ESP": {
+    "capital": "Madrid",
+    "population": "49.3 milhões",
+    "currency": "euro",
+    "language": "Spanish, Catalan, Basque, Galician"
+  },
+  "CPV": {
+    "capital": "Praia",
+    "population": "491,233",
+    "currency": "Cape Verdean escudo",
+    "language": "Portuguese"
+  },
+  "SAU": {
+    "capital": "Riyadh",
+    "population": "35.3 milhões",
+    "currency": "Saudi riyal",
+    "language": "Arabic"
+  },
+  "URU": {
+    "capital": "Montevideo",
+    "population": "3.5 milhões",
+    "currency": "Uruguayan peso",
+    "language": "Spanish"
+  },
+  "FRA": {
+    "capital": "Paris",
+    "population": "66.4 milhões",
+    "currency": "euro",
+    "language": "French"
+  },
+  "SEN": {
+    "capital": "Dakar",
+    "population": "18.6 milhões",
+    "currency": "West African CFA franc",
+    "language": "French"
+  },
+  "NOR": {
+    "capital": "Oslo",
+    "population": "5.6 milhões",
+    "currency": "Norwegian krone",
+    "language": "Norwegian Nynorsk, Norwegian Bokmål, Sami"
+  },
+  "ARG": {
+    "capital": "Buenos Aires",
+    "population": "46.7 milhões",
+    "currency": "Argentine peso",
+    "language": "Guaraní, Spanish"
+  },
+  "ALG": {
+    "capital": "Algiers",
+    "population": "47.4 milhões",
+    "currency": "Algerian dinar",
+    "language": "Arabic"
+  },
+  "AUT": {
+    "capital": "Vienna",
+    "population": "9.2 milhões",
+    "currency": "euro",
+    "language": "German"
+  },
+  "JOR": {
+    "capital": "Amman",
+    "population": "11.7 milhões",
+    "currency": "Jordanian dinar",
+    "language": "Arabic"
+  },
+  "POR": {
+    "capital": "Lisbon",
+    "population": "10.7 milhões",
+    "currency": "euro",
+    "language": "Portuguese"
+  },
+  "UZB": {
+    "capital": "Tashkent",
+    "population": "37.9 milhões",
+    "currency": "Uzbekistani soʻm",
+    "language": "Russian, Uzbek"
+  },
+  "COL": {
+    "capital": "Bogotá",
+    "population": "53.1 milhões",
+    "currency": "Colombian peso",
+    "language": "Spanish"
+  },
+  "ENG": {
+    "capital": "London",
+    "population": "69.3 milhões",
+    "currency": "British pound",
+    "language": "English"
+  },
+  "CRO": {
+    "capital": "Zagreb",
+    "population": "3.9 milhões",
+    "currency": "euro",
+    "language": "Croatian"
+  },
+  "GHA": {
+    "capital": "Accra",
+    "population": "33.7 milhões",
+    "currency": "Ghanaian cedi",
+    "language": "English"
+  },
+  "PAN": {
+    "capital": "Panama City",
+    "population": "4.1 milhões",
+    "currency": "Panamanian balboa, United States dollar",
+    "language": "Spanish"
+  }
+}

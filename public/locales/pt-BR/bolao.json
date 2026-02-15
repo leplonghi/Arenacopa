@@ -1,0 +1,220 @@
+{
+    "overview": {
+        "your_palpites": "Seus Palpites",
+        "games": "jogos",
+        "remaining_palpites": "Faltam {{count}} palpites para completar a fase de grupos",
+        "next_matches": "Próximos Jogos",
+        "invite_friends": "Convide mais amigos",
+        "share_code": "Compartilhe o código:",
+        "btn_share": "Compartilhar",
+        "disclaimer": "⚠️ O ArenaCopa **não realiza** processamento de pagamentos ou transações financeiras. Eventuais valores devem ser combinados entre os participantes, fora do aplicativo.",
+        "members_stat": "Membros",
+        "palpites_stat": "Palpites",
+        "progress_stat": "Progresso"
+    },
+    "palpites": {
+        "fill_score": "Preencha o placar!",
+        "saved": "Palpite salvo! ✅",
+        "btn_save": "Salvar Palpite",
+        "btn_saving": "Salvando...",
+        "btn_update": "Atualizar Palpite",
+        "locked": "ENCERRADO",
+        "power_play_title": "Power Play (x2 Pontos)",
+        "power_play_active": "⚡ Power Play Ativo",
+        "saved_label": "✓ Palpite salvo",
+        "error_save": "Erro ao salvar"
+    },
+    "members": {
+        "participants": "Participantes",
+        "leave_bolao": "Sair do Bolão",
+        "financial_status": "Status Financeiro",
+        "paid_exempt": "pagos/isentos",
+        "pendings": "pendentes",
+        "status_hint": "Toque no status de um membro para alterá-lo.",
+        "status": {
+            "pending": "Pendente",
+            "paid": "Pago",
+            "exempt": "Isento"
+        },
+        "role": {
+            "admin": "Administrador",
+            "member": "Apostador"
+        },
+        "you": "(Você)",
+        "remove_member": "Remover membro",
+        "remove_confirm": "Remover este membro do bolão?",
+        "leave_confirm": "Tem certeza que deseja sair do bolão?",
+        "left_success": "Você saiu do bolão",
+        "removed_success": "Membro removido",
+        "error_update": "Não foi possível atualizar o status.",
+        "default_user": "Usuário",
+        "click_to_change_status": "Clique para alterar status",
+        "payment_status": "Status de pagamento",
+        "participants_count": "Participantes ({{count}})"
+    },
+    "extras": {
+        "title": "Palpites Extras",
+        "subtitle": "Acerte o campeão e o artilheiro para ganhar pontos extras decisivos!",
+        "top_scorer_title": "Artilheiro da Copa",
+        "top_scorer_placeholder": "Nome do jogador (ex: Mbappé)",
+        "top_scorer_hint": "Digite o nome do jogador que você acha que fará mais gols.",
+        "champion_title": "Seleção Campeã",
+        "your_guess": "Seu Palpite",
+        "saved_success": "Palpite salvo! 🏆"
+    },
+    "common": {
+        "attention": "Atenção",
+        "error_title": "Erro",
+        "user": "Usuário",
+        "points_abbr": "Pts"
+    },
+    "create_bolao": {
+        "title": "Novo Bolão",
+        "attention": "Atenção",
+        "disclaimer_required": "Você deve aceitar o termo de responsabilidade.",
+        "notification": {
+            "created_title": "Novo bolão criado",
+            "created_desc": "Você criou o bolão '{{name}}' com sucesso."
+        },
+        "financial": {
+            "warning": "Lembre-se: O ArenaCopa é apenas uma planilha inteligente. Você é responsável por cobrar e pagar os participantes.",
+            "fee_label": "Valor da Cota (R$)",
+            "fee_placeholder": "0,00",
+            "payment_label": "Dados de Pagamento",
+            "payment_placeholder": "Ex: Chave Pix (celular): 1199999-9999 / PicPay: @usuario",
+            "prizes_label": "Distribuição dos Prêmios",
+            "prizes_placeholder": "Ex: 1º Lugar leva 70%, 2º Lugar leva 30%..."
+        },
+        "subtitle": "Personalize sua competição",
+        "steps": {
+            "details": "Detalhes",
+            "category": "Modalidade",
+            "rules": "Regras",
+            "financial": "Financeiro",
+            "review": "Revisão"
+        },
+        "details": {
+            "name_label": "Nome do Bolão",
+            "name_placeholder": "Ex: Bolão da Firma",
+            "desc_label": "Descrição (Opcional)",
+            "desc_placeholder": "Regras, brincadeiras ou slogan..."
+        },
+        "category": {
+            "private": {
+                "title": "Privado",
+                "desc": "Acesso via convite. Ideal para amigos."
+            },
+            "public": {
+                "title": "Público",
+                "desc": "Aberto a todos. Apenas diversão."
+            },
+            "paid_question": "Valendo Dinheiro?",
+            "paid_desc": "Ao ativar, você poderá definir valor de entrada e dados de pagamento. O app ajuda a organizar quem pagou."
+        },
+        "rules": {
+            "title": "Sistema de Pontuação",
+            "presets": {
+                "standard": "Padrão (Recomendado)",
+                "risky": "Arriscado (Alto Risco)",
+                "conservative": "Conservador"
+            },
+            "exact": "Placar Exato",
+            "exact_desc": "Acertar o placar em cheio (ex: Apostou 2x1 e foi 2x1).",
+            "winner": "Vencedor ou Saldo",
+            "winner_desc": "Acertar quem ganhou e a diferença de gols (ex: Apostou 3x1 e foi 2x0).",
+            "draw": "Apenas Vencedor/Empate",
+            "draw_desc": "Acertar o resultado simples (1x2) sem acertar placar ou saldo.",
+            "participation": "Participação",
+            "participation_desc": "Pontos garantidos por cada palpite realizado."
+        },
+        "review": {
+            "title": "Tudo pronto!",
+            "subtitle": "Revise os dados antes de criar.",
+            "bolao": "Bolão",
+            "type": "Tipo",
+            "entry": "Entrada",
+            "scoring": "Pontuação (E/V/E/P)",
+            "disclaimer": "Eu declaro que sou o único responsável pela arrecadação e pagamento dos prêmios deste bolão. Isento o ArenaCopa de qualquer responsabilidade financeira.",
+            "success_title": "Bolão criado! 🎉",
+            "success_desc": "Configurações salvas com sucesso.",
+            "error_title": "Erro",
+            "error_desc": "Não foi possível criar o bolão."
+        },
+        "actions": {
+            "continue": "Continuar",
+            "confirm": "Confirmar e Criar",
+            "creating": "Criando..."
+        },
+        "paid_label": "Valendo R$",
+        "free_label": "Grátis"
+    },
+    "share": {
+        "invite_msg": "🏆 Entre no meu bolão \"{{name}}\" da Copa do Mundo 2026!\n\n📋 Código de convite: {{code}}\n\n⚽ Participe aqui: {{url}}",
+        "whatsapp": "WhatsApp",
+        "whatsapp_desc": "Enviar convite via mensagem",
+        "instagram": "Instagram / Stories",
+        "instagram_desc": "Gerar imagem para postar",
+        "copy_link": "Copiar Link",
+        "copy_desc": "Copiar link de convite",
+        "copied": "Copiado para área de transferência!",
+        "image_downloaded": "Imagem baixada!",
+        "image_download_desc": "Compartilhe manualmente nas redes sociais.",
+        "error_image": "Erro ao gerar imagem",
+        "title": "Convidar Amigos",
+        "subtitle": "Chame a galera para \"{{name}}\"",
+        "code_label": "Seu Código de Convite",
+        "image_title": "Entre no meu bolão",
+        "image_cta": "Baixe o App Agora"
+    },
+    "list": {
+        "my_leagues": "Minhas Ligas",
+        "title": "Seus Bolões",
+        "create": "Criar Bolão",
+        "join_code_title": "Entrar com Código",
+        "join_code_placeholder": "Digite o código...",
+        "btn_join": "Entrar",
+        "search_placeholder": "Buscar seus bolões...",
+        "empty_title": "Nenhum bolão encontrado",
+        "empty_desc": "Você ainda não participa de nenhum bolão.",
+        "section_mine": "Criados por mim",
+        "section_participating": "Participando",
+        "card_admin": "Admin",
+        "card_member": "Membro",
+        "card_pending": "Pendentes",
+        "card_bet_now": "Palpitar Agora",
+        "demo_1_name": "Bolão da Copa Demo",
+        "demo_1_desc": "Bolão oficial de demonstração",
+        "demo_2_name": "Bolão da Firma",
+        "demo_2_desc": "Valendo uma caixa de bombom",
+        "btn_cancel": "Cancelar",
+        "btn_confirm": "Confirmar Entrada",
+        "error_join": "Erro ao entrar",
+        "success_join": "Entrou no bolão! 🎉",
+        "already_joined": "Você já participa deste bolão!"
+    },
+    "detail": {
+        "not_found": "Bolão não encontrado",
+        "paid_badge": "Pago",
+        "info_title": "Informações do Bolão",
+        "rules_title": "Regras de Pontuação",
+        "financial_title": "Financeiro",
+        "entry_fee": "Taxa de Entrada",
+        "payment_data": "Dados para Pagamento",
+        "prize_dist": "Premiação",
+        "disclaimer_payment": "O pagamento é combinado externamente entre os participantes.",
+        "tabs": {
+            "overview": "Visão Geral",
+            "palpites": "Palpites",
+            "extras": "Extras",
+            "ranking": "Ranking",
+            "members": "Membros"
+        }
+    },
+    "join_modal": {
+        "title": "Participar de Bolão Pago",
+        "desc": "Este bolão possui taxa de entrada.",
+        "fee_label": "Valor da Entrada",
+        "terms": "Estou ciente que o pagamento deve ser tratado diretamente com o administrador. O app não processa pagamentos."
+    },
+    "currency_symbol": "R$"
+}

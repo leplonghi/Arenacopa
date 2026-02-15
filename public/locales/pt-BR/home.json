@@ -1,0 +1,35 @@
+{
+    "welcome": "Bem-vindo,",
+    "pending": {
+        "title_one": "Você tem {{count}} palpite pendente",
+        "title_other": "Você tem {{count}} palpites pendentes",
+        "subtitle": "Toque para apostar antes dos jogos"
+    },
+    "stats": {
+        "rank": "Rank",
+        "points": "Pontos",
+        "pools": "Bolões"
+    },
+    "my_team": {
+        "title": "Meu Time",
+        "view_group": "Ver grupo",
+        "group": "Grupo {{group}}",
+        "next_match": "Próximo",
+        "no_matches": "Sem jogos"
+    },
+    "my_pools": {
+        "title": "Meus Bolões",
+        "manage": "Gerenciar",
+        "join_title": "Participe de um Bolão",
+        "join_desc": "Crie sua liga ou entre em uma existente.",
+        "start_now": "Começar agora",
+        "rank_place": "{{rank}}º Lugar",
+        "pts": "pts"
+    },
+    "highlights": {
+        "title": "Destaques",
+        "view_all": "Ver tudo",
+        "general": "Geral"
+    },
+    "cta_predict": "Fazer Palpites"
+}

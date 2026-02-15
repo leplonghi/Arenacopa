@@ -1,8 +1,9 @@
 import { createContext, useContext, useState, useCallback, useMemo, useEffect, type ReactNode } from "react";
-import { groups as allGroups, getGroupTeams } from "@/data/mockData";
+import { groups as allGroups } from "@/data/mockData";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import type { Json } from "@/integrations/supabase/types";
+import { initMatches, calcStandings } from "@/utils/simulacaoUtils";
 import {
   type KnockoutData, type KnockoutScore, type KnockoutRound,
   getQualifiedTeams, buildKnockoutBracket, extractKnockoutScores,
@@ -34,49 +35,7 @@ export interface Simulation {
   updatedAt: string;
 }
 
-function generateGroupMatches(group: string): SimMatch[] {
-  const teamCodes = getGroupTeams(group).map(t => t.code);
-  const matches: SimMatch[] = [];
-  for (let i = 0; i < teamCodes.length; i++) {
-    for (let j = i + 1; j < teamCodes.length; j++) {
-      matches.push({ home: teamCodes[i], away: teamCodes[j], homeScore: null, awayScore: null });
-    }
-  }
-  return matches;
-}
 
-export function calcStandings(matches: SimMatch[], group: string): Standing[] {
-  const teamCodes = getGroupTeams(group).map(t => t.code);
-  const map: Record<string, Standing> = {};
-  teamCodes.forEach(code => {
-    map[code] = { teamCode: code, played: 0, won: 0, drawn: 0, lost: 0, gf: 0, ga: 0, points: 0 };
-  });
-
-  matches.forEach(m => {
-    if (m.homeScore === null || m.awayScore === null) return;
-    const h = map[m.home];
-    const a = map[m.away];
-    h.played++; a.played++;
-    h.gf += m.homeScore; h.ga += m.awayScore;
-    a.gf += m.awayScore; a.ga += m.homeScore;
-    if (m.homeScore > m.awayScore) { h.won++; h.points += 3; a.lost++; }
-    else if (m.homeScore < m.awayScore) { a.won++; a.points += 3; h.lost++; }
-    else { h.drawn++; a.drawn++; h.points++; a.points++; }
-  });
-
-  return Object.values(map).sort((a, b) => {
-    if (b.points !== a.points) return b.points - a.points;
-    const gdA = a.gf - a.ga, gdB = b.gf - b.ga;
-    if (gdB !== gdA) return gdB - gdA;
-    return b.gf - a.gf;
-  });
-}
-
-function initMatches(selectedGroups?: string[]) {
-  const init: Record<string, SimMatch[]> = {};
-  (selectedGroups || allGroups).forEach(g => { init[g] = generateGroupMatches(g); });
-  return init;
-}
 
 interface SimulacaoContextType {
   simulations: Simulation[];
@@ -126,7 +85,7 @@ export function SimulacaoProvider({ children }: { children: ReactNode }) {
       .order("updated_at", { ascending: false })
       .then(({ data }) => {
         if (data) {
-          setSimulations(data.map((s: any) => ({
+          setSimulations(data.map((s) => ({
             id: s.id,
             name: s.name || "Minha Simulação",
             selectedGroups: s.selected_groups || allGroups,
@@ -148,6 +107,7 @@ export function SimulacaoProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!currentSim) { setAllMatches({}); setKnockoutScores({}); return; }
     const base = initMatches(currentSim.selectedGroups);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const rawData = currentSim.matches as any;
     Object.keys(base).forEach(g => {
       const saved = rawData?.[g];
@@ -166,12 +126,14 @@ export function SimulacaoProvider({ children }: { children: ReactNode }) {
     } else {
       setKnockoutScores({});
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentSimId, currentSim?.id]);
 
   // Auto-save (debounced)
   useEffect(() => {
     if (!user || !currentSimId || !loaded || Object.keys(allMatches).length === 0) return;
     const timeout = setTimeout(() => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const dataToSave: any = { ...allMatches };
       if (Object.keys(knockoutScores).length > 0) {
         dataToSave.__knockout = knockoutScores;
@@ -247,8 +209,9 @@ export function SimulacaoProvider({ children }: { children: ReactNode }) {
   const goBackToList = useCallback(() => setCurrentSimId(null), []);
 
   const createSimulation = useCallback(async (name: string, selectedGroups: string[]) => {
-    if (!user) return null;
+    if (!user) { console.error("[Simulação] No user found"); return null; }
     const matchData = initMatches(selectedGroups);
+    console.log("[Simulação] Creating simulation:", { name, selectedGroups: selectedGroups.length, userId: user.id });
     const { data, error } = await supabase
       .from("simulations")
       .insert({
@@ -260,7 +223,14 @@ export function SimulacaoProvider({ children }: { children: ReactNode }) {
       .select("id, name, selected_groups, data, updated_at")
       .single();
 
-    if (error || !data) return null;
+    if (error) {
+      console.error("[Simulação] Supabase insert error:", error);
+      return null;
+    }
+    if (!data) {
+      console.error("[Simulação] No data returned from insert");
+      return null;
+    }
 
     const newSim: Simulation = {
       id: data.id,

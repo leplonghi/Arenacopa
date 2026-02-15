@@ -1,0 +1,35 @@
+{
+    "welcome": "Welcome,",
+    "pending": {
+        "title_one": "You have {{count}} pending prediction",
+        "title_other": "You have {{count}} pending predictions",
+        "subtitle": "Tap to bet before the matches"
+    },
+    "stats": {
+        "rank": "Rank",
+        "points": "Points",
+        "pools": "Pools"
+    },
+    "my_team": {
+        "title": "My Team",
+        "view_group": "View group",
+        "group": "Group {{group}}",
+        "next_match": "Next",
+        "no_matches": "No matches"
+    },
+    "my_pools": {
+        "title": "My Pools",
+        "manage": "Manage",
+        "join_title": "Join a Pool",
+        "join_desc": "Create your league or join an existing one.",
+        "start_now": "Start now",
+        "rank_place": "#{{rank}}",
+        "pts": "pts"
+    },
+    "highlights": {
+        "title": "Highlights",
+        "view_all": "View all",
+        "general": "General"
+    },
+    "cta_predict": "Make Predictions"
+}

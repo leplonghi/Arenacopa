@@ -1,0 +1,35 @@
+{
+    "welcome": "Bienvenido,",
+    "pending": {
+        "title_one": "Tienes {{count}} pronóstico pendiente",
+        "title_other": "Tienes {{count}} pronósticos pendientes",
+        "subtitle": "Toca para apostar antes de los partidos"
+    },
+    "stats": {
+        "rank": "Rango",
+        "points": "Puntos",
+        "pools": "Quinielas"
+    },
+    "my_team": {
+        "title": "Mi Equipo",
+        "view_group": "Ver grupo",
+        "group": "Grupo {{group}}",
+        "next_match": "Próximo",
+        "no_matches": "Sin partidos"
+    },
+    "my_pools": {
+        "title": "Mis Quinielas",
+        "manage": "Gestionar",
+        "join_title": "Únete a una Quiniela",
+        "join_desc": "Crea tu liga o únete a una existente.",
+        "start_now": "Empezar ahora",
+        "rank_place": "{{rank}}º Lugar",
+        "pts": "pts"
+    },
+    "highlights": {
+        "title": "Destacados",
+        "view_all": "Ver todo",
+        "general": "General"
+    },
+    "cta_predict": "Hacer Pronósticos"
+}

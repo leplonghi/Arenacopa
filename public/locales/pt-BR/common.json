@@ -1,0 +1,50 @@
+{
+    "nav": {
+        "home": "Início",
+        "copa": "Copa",
+        "bolao": "Bolão",
+        "guia": "Guia",
+        "ranking": "Ranking",
+        "profile": "Perfil",
+        "menu": "Menu"
+    },
+    "header": {
+        "titles": {
+            "boloes": "Bolões",
+            "create_bolao": "Criar Bolão",
+            "bolao_detail": "Bolão",
+            "profile": "Perfil",
+            "menu": "Menu"
+        }
+    },
+    "common": {
+        "loading": "Carregando...",
+        "error": "Ocorreu um erro",
+        "save": "Salvar",
+        "cancel": "Cancelar",
+        "back": "Voltar",
+        "next": "Próximo",
+        "confirm": "Confirmar",
+        "search": "Buscar",
+        "filter": "Filtrar",
+        "close": "Fechar",
+        "error_title": "Ops! Algo deu errado",
+        "error_desc": "Não foi possível carregar os dados. Tente novamente.",
+        "retry": "Tentar novamente"
+    },
+    "notifications": {
+        "title": "Notificações",
+        "mark_all_read": "Marcar todas como lidas",
+        "description": "Confira as últimas novidades e atualizações.",
+        "empty": "Nenhuma notificação",
+        "new": "Nova",
+        "new_count_one": "{{count}} nova",
+        "new_count_other": "{{count}} novas"
+    },
+    "status": {
+        "active": "Ativo",
+        "finished": "Finalizado",
+        "live": "Ao Vivo",
+        "scheduled": "Agendado"
+    }
+}

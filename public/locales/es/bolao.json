@@ -1,0 +1,171 @@
+{
+    "overview": {
+        "your_palpites": "Tus Pronósticos",
+        "games": "juegos",
+        "remaining_palpites": "Faltan {{count}} pronósticos para completar la fase de grupos",
+        "next_matches": "Próximos Partidos",
+        "invite_friends": "Invita a más amigos",
+        "share_code": "Comparte el código:",
+        "btn_share": "Compartir",
+        "disclaimer": "⚠️ ArenaCopa **no realiza** procesamiento de pagos o transacciones financieras. Cualquier monto debe ser acordado entre los participantes fuera de la aplicación.",
+        "members_stat": "Miembros",
+        "palpites_stat": "Pronósticos",
+        "progress_stat": "Progreso"
+    },
+    "palpites": {
+        "fill_score": "¡Completa el marcador!",
+        "saved": "¡Pronóstico guardado! ✅",
+        "btn_save": "Guardar Pronóstico",
+        "btn_saving": "Guardando...",
+        "btn_update": "Actualizar Pronóstico",
+        "locked": "CERRADO",
+        "power_play_title": "Power Play (x2 Puntos)",
+        "power_play_active": "⚡ Power Play Activo",
+        "saved_label": "✓ Pronóstico guardado",
+        "error_save": "Error al guardar"
+    },
+    "members": {
+        "participants": "Participantes",
+        "leave_bolao": "Salir de la Quiniela",
+        "financial_status": "Estado Financiero",
+        "paid_exempt": "pagados/exentos",
+        "pendings": "pendientes",
+        "status_hint": "Toca el estado de un miembro para cambiarlo.",
+        "status": {
+            "pending": "Pendiente",
+            "paid": "Pagado",
+            "exempt": "Exento"
+        },
+        "role": {
+            "admin": "Administrador",
+            "member": "Apostador"
+        },
+        "you": "(Tú)",
+        "remove_confirm": "¿Eliminar a este miembro de la quiniela?",
+        "leave_confirm": "¿Estás seguro de que quieres salir de la quiniela?",
+        "left_success": "Saliste de la quiniela",
+        "removed_success": "Miembro eliminado",
+        "error_update": "No se pudo actualizar el estado."
+    },
+    "extras": {
+        "title": "Apuestas Extras",
+        "subtitle": "¡Acierta el campeón y el goleador para ganar puntos extras decisivos!",
+        "top_scorer_title": "Goleador de la Copa",
+        "top_scorer_placeholder": "Nombre del jugador (ej: Mbappé)",
+        "top_scorer_hint": "Escribe el nombre del jugador que crees que marcará más goles.",
+        "champion_title": "Selección Campeona",
+        "your_guess": "Tu Pronóstico",
+        "saved_success": "¡Pronóstico guardado! 🏆"
+    },
+    "common": {
+        "attention": "Atención",
+        "error_title": "Error",
+        "user": "Usuario",
+        "points_abbr": "Pts"
+    },
+    "create_bolao": {
+        "title": "Nueva Quiniela",
+        "attention": "Atención",
+        "disclaimer_required": "Debes aceptar el descargo de responsabilidad.",
+        "notification": {
+            "created_title": "Quiniela Creada",
+            "created_desc": "Has creado la quiniela '{{name}}' con éxito."
+        },
+        "financial": {
+            "warning": "Recuerda: ArenaCopa es solo una hoja de cálculo inteligente. Eres responsable de cobrar y pagar a los participantes.",
+            "fee_label": "Cuota de Entrada ($)",
+            "fee_placeholder": "0,00",
+            "payment_label": "Detalles de Pago",
+            "payment_placeholder": "Ej: PayPal: usuario@email.com / Transferencia: 12345",
+            "prizes_label": "Distribución de Premios",
+            "prizes_placeholder": "Ej: 1er Lugar 70%, 2do Lugar 30%..."
+        },
+        "subtitle": "Personaliza tu competición",
+        "steps": {
+            "details": "Detalles",
+            "category": "Modalidad",
+            "rules": "Reglas",
+            "financial": "Financiero",
+            "review": "Revisión"
+        },
+        "details": {
+            "name_label": "Nombre de la Quiniela",
+            "name_placeholder": "Ej: Quiniela de la Oficina",
+            "desc_label": "Descripción (Opcional)",
+            "desc_placeholder": "Reglas, lemas o bromas..."
+        },
+        "category": {
+            "private": {
+                "title": "Privada",
+                "desc": "Solo por invitación. Ideal para amigos."
+            },
+            "public": {
+                "title": "Pública",
+                "desc": "Abierta a todos. Solo diversión."
+            },
+            "paid_question": "¿Quiniela Pagada?",
+            "paid_desc": "Si está activo, puedes definir una cuota de entrada y detalles de pago. La app ayuda a organizar quién pagó."
+        },
+        "rules": {
+            "title": "Sistema de Puntuación",
+            "presets": {
+                "standard": "Estándar (Recomendado)",
+                "risky": "Arriesgado (Alto Riesgo)",
+                "conservative": "Conservador"
+            },
+            "exact": "Marcador Exacto",
+            "exact_desc": "Acertar el marcador exacto (ej. Apostó 2x1, Resultado 2x1).",
+            "winner": "Ganador o Diferencia",
+            "winner_desc": "Acertar ganador y diferencia de goles (ej. Apostó 3x1, Resultado 2x0).",
+            "draw": "Solo Ganador/Empate",
+            "draw_desc": "Acertar resultado simple (1x2) sin marcador exacto.",
+            "participation": "Participación",
+            "participation_desc": "Puntos garantizados por cada predicción realizada."
+        },
+        "review": {
+            "title": "¡Todo listo!",
+            "subtitle": "Revisa los datos antes de crear.",
+            "bolao": "Quiniela",
+            "type": "Tipo",
+            "entry": "Entrada",
+            "scoring": "Puntuación (E/G/E/P)",
+            "disclaimer": "Declaro que soy el único responsable de recaudar y pagar los premios de esta quiniela. Eximo a ArenaCopa de cualquier responsabilidad financiera.",
+            "success_title": "¡Quiniela creada! 🎉",
+            "success_desc": "Configuración guardada con éxito.",
+            "error_title": "Error",
+            "error_desc": "No se pudo crear la quiniela."
+        },
+        "actions": {
+            "continue": "Continuar",
+            "confirm": "Confirmar y Crear",
+            "creating": "Creando..."
+        },
+        "paid_label": "Pagada",
+        "free_label": "Gratis"
+    },
+    "members": {
+        "participants": "Participantes",
+        "leave_bolao": "Salir de la Quiniela",
+        "financial_status": "Estado Financiero",
+        "paid_exempt": "pagados/exentos",
+        "pendings": "pendientes",
+        "status_hint": "Toca el estado de un miembro para cambiarlo.",
+        "status": {
+            "pending": "Pendiente",
+            "paid": "Pagado",
+            "exempt": "Exento"
+        },
+        "role": {
+            "admin": "Administrador",
+            "member": "Apostador"
+        },
+        "you": "(Tú)",
+        "remove_confirm": "¿Eliminar a este miembro de la quiniela?",
+        "leave_confirm": "¿Estás seguro de que quieres salir de la quiniela?",
+        "left_success": "Saliste de la quiniela",
+        "removed_success": "Miembro eliminado",
+        "error_update": "No se pudo actualizar el estado.",
+        "default_user": "Usuario",
+        "click_to_change_status": "Clic para cambiar estado",
+        "payment_status": "Estado de pago",
+        "p

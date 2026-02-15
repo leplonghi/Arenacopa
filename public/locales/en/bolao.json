@@ -1,0 +1,170 @@
+{
+    "overview": {
+        "your_palpites": "Your Predictions",
+        "games": "games",
+        "remaining_palpites": "{{count}} predictions left to complete group stage",
+        "next_matches": "Upcoming Matches",
+        "invite_friends": "Invite more friends",
+        "share_code": "Share code:",
+        "btn_share": "Share",
+        "disclaimer": "⚠️ ArenaCopa **does not** process payments or financial transactions. Any amounts must be agreed upon between participants outside the app.",
+        "members_stat": "Members",
+        "palpites_stat": "Predictions",
+        "progress_stat": "Progress"
+    },
+    "palpites": {
+        "fill_score": "Fill in the score!",
+        "saved": "Prediction saved! ✅",
+        "btn_save": "Save Prediction",
+        "btn_saving": "Saving...",
+        "btn_update": "Update Prediction",
+        "locked": "LOCKED",
+        "power_play_title": "Power Play (x2 Points)",
+        "power_play_active": "⚡ Power Play Active",
+        "saved_label": "✓ Prediction saved",
+        "error_save": "Error saving"
+    },
+    "members": {
+        "participants": "Participants",
+        "leave_bolao": "Leave Pool",
+        "financial_status": "Financial Status",
+        "paid_exempt": "paid/exempt",
+        "pendings": "pending",
+        "status_hint": "Tap a member's status to change it.",
+        "status": {
+            "pending": "Pending",
+            "paid": "Paid",
+            "exempt": "Exempt"
+        },
+        "role": {
+            "admin": "Administrator",
+            "member": "Punter"
+        },
+        "you": "(You)",
+        "remove_confirm": "Remove this member from the pool?",
+        "leave_confirm": "Are you sure you want to leave the pool?",
+        "left_success": "You left the pool",
+        "removed_success": "Member removed",
+        "error_update": "Could not update status."
+    },
+    "extras": {
+        "title": "Extra Bets",
+        "subtitle": "Predict the champion and top scorer to earn decisive extra points!",
+        "top_scorer_title": "Top Scorer",
+        "top_scorer_placeholder": "Player name (e.g. Mbappé)",
+        "top_scorer_hint": "Type the name of the player you think will score the most goals.",
+        "champion_title": "Champion Team",
+        "your_guess": "Your Pick",
+        "saved_success": "Prediction saved! 🏆"
+    },
+    "common": {
+        "attention": "Attention",
+        "error_title": "Error",
+        "user": "User",
+        "points_abbr": "Pts"
+    },
+    "create_bolao": {
+        "title": "New Pool",
+        "attention": "Attention",
+        "disclaimer_required": "You must accept the disclaimer.",
+        "notification": {
+            "created_title": "Pool Created",
+            "created_desc": "You have successfully created the pool '{{name}}'."
+        },
+        "financial": {
+            "warning": "Remember: ArenaCopa is just a smart spreadsheet. You are responsible for collecting and paying participants.",
+            "fee_label": "Entry Fee ($)",
+            "fee_placeholder": "0.00",
+            "payment_label": "Payment Details",
+            "payment_placeholder": "Ex: PayPal: user@email.com / Venmo: @user",
+            "prizes_label": "Prize Distribution",
+            "prizes_placeholder": "Ex: 1st Place takes 70%, 2nd Place takes 30%..."
+        },
+        "subtitle": "Customize your competition",
+        "steps": {
+            "details": "Details",
+            "category": "Mode",
+            "rules": "Rules",
+            "financial": "Financial",
+            "review": "Review"
+        },
+        "details": {
+            "name_label": "Pool Name",
+            "name_placeholder": "Ex: Office Pool",
+            "desc_label": "Description (Optional)",
+            "desc_placeholder": "Rules, banter, or slogan..."
+        },
+        "category": {
+            "private": {
+                "title": "Private",
+                "desc": "Invite only. Ideal for friends."
+            },
+            "public": {
+                "title": "Public",
+                "desc": "Open to everyone. Just for fun."
+            },
+            "paid_question": "Paid Pool?",
+            "paid_desc": "If active, you can define entry fee and payment details. The app helps track payments."
+        },
+        "rules": {
+            "title": "Scoring System",
+            "presets": {
+                "standard": "Standard (Recommended)",
+                "risky": "Risky (High Risk)",
+                "conservative": "Conservative"
+            },
+            "exact": "Exact Score",
+            "exact_desc": "Exact match score (e.g. Bet 2x1, Result 2x1).",
+            "winner": "Winner or Diff",
+            "winner_desc": "Correct winner and goal difference (e.g. Bet 3x1, Result 2x0).",
+            "draw": "Winner/Draw Only",
+            "draw_desc": "Correct result (1x2) without exact score or diff.",
+            "participation": "Participation",
+            "participation_desc": "Guaranteed points for each prediction made."
+        },
+        "review": {
+            "title": "All set!",
+            "subtitle": "Review data before creating.",
+            "bolao": "Pool",
+            "type": "Type",
+            "entry": "Entry",
+            "scoring": "Scoring (E/W/D/P)",
+            "disclaimer": "I declare that I am solely responsible for collecting and paying the prizes for this pool. I exempt ArenaCopa from any financial responsibility.",
+            "success_title": "Pool created! 🎉",
+            "success_desc": "Settings saved successfully.",
+            "error_title": "Error",
+            "error_desc": "Could not create pool."
+        },
+        "actions": {
+            "continue": "Continue",
+            "confirm": "Confirm and Create",
+            "creating": "Creating..."
+        },
+        "paid_label": "Paid",
+        "free_label": "Free"
+    },
+    "share": {
+        "invite_msg": "🏆 Join my pool \"{{name}}\" for World Cup 2026!\n\n📋 Invite Code: {{code}}\n\n⚽ Join here: {{url}}",
+        "whatsapp": "WhatsApp",
+        "whatsapp_desc": "Send invite via message",
+        "instagram": "Instagram / Stories",
+        "instagram_desc": "Generate image to post",
+        "copy_link": "Copy Link",
+        "copy_desc": "Copy invite link",
+        "copied": "Copied to clipboard!",
+        "image_downloaded": "Image downloaded!",
+        "image_download_desc": "Share manually on social media.",
+        "error_image": "Error generating image",
+        "title": "Invite Friends",
+        "subtitle": "Invite everyone to \"{{name}}\"",
+        "code_label": "Your Invite Code",
+        "image_title": "Join my pool",
+        "image_cta": "Download App Now"
+    },
+    "join_modal": {
+        "title": "Paid Pool",
+        "desc": "This pool has an entry fee.",
+        "fee_label": "Entry Fee",
+        "terms": "I am aware that payment must be handled directly with the administrator. The app does not process payments."
+    }
+}

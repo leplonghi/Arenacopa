@@ -57,8 +57,8 @@ export function ShareBracket({ bracketRef }: ShareBracketProps) {
           files: [file],
         });
         setIsOpen(false);
-      } catch (e: any) {
-        if (e.name !== "AbortError") toast.error("Erro ao compartilhar");
+      } catch (e: unknown) {
+        if (e instanceof Error && e.name !== "AbortError") toast.error("Erro ao compartilhar");
       }
     } else {
       toast.error("Compartilhamento não suportado neste navegador");

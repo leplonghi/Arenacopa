@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
@@ -50,6 +51,7 @@ function ScoreInput({ value, onChange, label }: { value: number; onChange: (v: n
 
 export function BracketScoreModal({ open, onOpenChange, match, round, matchIdx, onSave }: BracketScoreModalProps) {
   const [homeScore, setHomeScore] = useState(0);
+  const navigate = useNavigate();
   const [awayScore, setAwayScore] = useState(0);
   const [homePenalty, setHomePenalty] = useState(0);
   const [awayPenalty, setAwayPenalty] = useState(0);
@@ -93,8 +95,13 @@ export function BracketScoreModal({ open, onOpenChange, match, round, matchIdx, 
           <div className="flex items-center justify-between gap-2">
             {/* Home */}
             <div className="flex flex-col items-center gap-2 flex-1">
-              <Flag code={homeTeam.code} size="lg" />
-              <span className="text-xs font-bold text-center leading-tight">{homeTeam.name}</span>
+              <div
+                className="flex flex-col items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+                onClick={() => navigate(`/team/${homeTeam.code}`)}
+              >
+                <Flag code={homeTeam.code} size="lg" />
+                <span className="text-xs font-bold text-center leading-tight hover:underline">{homeTeam.name}</span>
+              </div>
               <ScoreInput value={homeScore} onChange={setHomeScore} label="Gols" />
             </div>
 
@@ -102,8 +109,13 @@ export function BracketScoreModal({ open, onOpenChange, match, round, matchIdx, 
 
             {/* Away */}
             <div className="flex flex-col items-center gap-2 flex-1">
-              <Flag code={awayTeam.code} size="lg" />
-              <span className="text-xs font-bold text-center leading-tight">{awayTeam.name}</span>
+              <div
+                className="flex flex-col items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+                onClick={() => navigate(`/team/${awayTeam.code}`)}
+              >
+                <Flag code={awayTeam.code} size="lg" />
+                <span className="text-xs font-bold text-center leading-tight hover:underline">{awayTeam.name}</span>
+              </div>
               <ScoreInput value={awayScore} onChange={setAwayScore} label="Gols" />
             </div>
           </div>

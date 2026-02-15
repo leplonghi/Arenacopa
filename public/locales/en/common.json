@@ -1,0 +1,50 @@
+{
+    "nav": {
+        "home": "Home",
+        "copa": "Cup",
+        "bolao": "Pool",
+        "guia": "Guide",
+        "ranking": "Ranking",
+        "profile": "Profile",
+        "menu": "Menu"
+    },
+    "header": {
+        "titles": {
+            "boloes": "Pools",
+            "create_bolao": "Create Pool",
+            "bolao_detail": "Pool",
+            "profile": "Profile",
+            "menu": "Menu"
+        }
+    },
+    "common": {
+        "loading": "Loading...",
+        "error": "An error occurred",
+        "save": "Save",
+        "cancel": "Cancel",
+        "back": "Back",
+        "next": "Next",
+        "confirm": "Confirm",
+        "search": "Search",
+        "filter": "Filter",
+        "close": "Close",
+        "error_title": "Oops! Something went wrong",
+        "error_desc": "Could not load data. Please try again.",
+        "retry": "Try again"
+    },
+    "notifications": {
+        "title": "Notifications",
+        "mark_all_read": "Mark all as read",
+        "description": "Check the latest news and updates.",
+        "empty": "No notifications",
+        "new": "New",
+        "new_count_one": "{{count}} new",
+        "new_count_other": "{{count}} new"
+    },
+    "status": {
+        "active": "Active",
+        "finished": "Finished",
+        "live": "Live",
+        "scheduled": "Scheduled"
+    }
+}

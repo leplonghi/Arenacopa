@@ -1,11 +1,12 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
-import { cn } from "@/lib/utils";
-import { Mail, Lock, User, Eye, EyeOff, Loader2 } from "lucide-react";
+import { Mail, Lock, User, Eye, EyeOff, Loader2, Play } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import logo from "@/assets/arenacopa_logo.png";
+import { useAuth } from "@/contexts/AuthContext";
+import { cn } from "@/lib/utils";
+import logo from "@/assets/escudo_arenacopa_logo.png";
+import { useTranslation } from "react-i18next";
 
 const Auth = () => {
   const [mode, setMode] = useState<"login" | "signup">("login");
@@ -16,6 +17,8 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { loginAsDemo } = useAuth();
+  const { t } = useTranslation('auth');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,18 +36,19 @@ const Auth = () => {
         });
         if (error) throw error;
         toast({
-          title: "Conta criada!",
-          description: "Verifique seu email para confirmar o cadastro.",
+          title: t('login.success_create'),
+          description: t('login.success_create_desc'),
         });
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         navigate("/");
       }
-    } catch (error: any) {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Algo deu errado";
       toast({
-        title: "Erro",
-        description: error.message || "Algo deu errado",
+        title: t('login.error'),
+        description: message,
         variant: "destructive",
       });
     } finally {
@@ -55,14 +59,43 @@ const Auth = () => {
   const handleGoogleSignIn = async () => {
     setLoading(true);
     try {
-      const result = await lovable.auth.signInWithOAuth("google");
-      if (result.error) throw result.error;
-    } catch (error: any) {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: window.location.origin,
+        },
+      });
+      if (error) throw error;
+      // Não precisamos fazer nada aqui, o redirecionamento acontecerá automaticamente
+    } catch (error) {
+      console.error("Erro no login com Google:", error);
+      const message = error instanceof Error ? error.message : t('login.error_google');
       toast({
-        title: "Erro",
-        description: error.message || "Erro ao entrar com Google",
+        title: t('login.error'),
+        description: message,
         variant: "destructive",
       });
+      setLoading(false);
+    }
+  };
+
+  const handleDemoLogin = async () => {
+    setLoading(true);
+    try {
+      await loginAsDemo();
+      toast({
+        title: "Modo Demo Ativado",
+        description: "Você entrou no modo de demonstração.",
+      });
+      navigate("/");
+    } catch (error) {
+      console.error("Erro no login demo:", error);
+      toast({
+        title: "Erro Demo",
+        description: t('login.error_demo'),
+        variant: "destructive",
+      });
+    } finally {
       setLoading(false);
     }
   };
@@ -77,7 +110,7 @@ const Auth = () => {
         <h1 className="font-black text-2xl tracking-tight">
           ARENA<span className="text-primary">COPA</span>
         </h1>
-        <p className="text-xs text-muted-foreground mt-1">Copa do Mundo 2026</p>
+        <p className="text-xs text-muted-foreground mt-1">{t('login.subtitle')}</p>
       </div>
 
       {/* Tab switcher */}
@@ -91,7 +124,7 @@ const Auth = () => {
               mode === m ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
             )}
           >
-            {m === "login" ? "Entrar" : "Criar Conta"}
+            {m === "login" ? t('login.title') : t('login.create_account')}
           </button>
         ))}
       </div>
@@ -105,7 +138,7 @@ const Auth = () => {
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Seu nome"
+              placeholder={t('login.name')}
               required
               className="w-full pl-11 pr-4 py-3.5 rounded-xl bg-card border border-border text-sm font-medium placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
             />
@@ -118,7 +151,7 @@ const Auth = () => {
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="Email"
+            placeholder={t('login.email')}
             required
             className="w-full pl-11 pr-4 py-3.5 rounded-xl bg-card border border-border text-sm font-medium placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
           />
@@ -130,7 +163,7 @@ const Auth = () => {
             type={showPassword ? "text" : "password"}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Senha"
+            placeholder={t('login.password')}
             required
             minLength={6}
             className="w-full pl-11 pr-11 py-3.5 rounded-xl bg-card border border-border text-sm font-medium placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
@@ -150,14 +183,24 @@ const Auth = () => {
           className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-black text-sm uppercase tracking-wider flex items-center justify-center gap-2 disabled:opacity-50"
         >
           {loading && <Loader2 className="w-4 h-4 animate-spin" />}
-          {mode === "login" ? "Entrar" : "Criar Conta"}
+          {mode === "login" ? t('login.submit_login') : t('login.submit_signup')}
         </button>
       </form>
+
+      <button
+        type="button"
+        onClick={handleDemoLogin}
+        disabled={loading}
+        className="w-full max-w-sm mt-4 py-3.5 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-bold text-sm uppercase tracking-wider flex items-center justify-center gap-2 hover:bg-indigo-500/20 transition-all disabled:opacity-50"
+      >
+        <Play className="w-4 h-4 fill-current" />
+        {t('login.demo')}
+      </button>
 
       {/* Divider */}
       <div className="flex items-center gap-4 my-6 w-full max-w-sm">
         <div className="flex-1 h-px bg-border" />
-        <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">ou</span>
+        <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{t('login.or')}</span>
         <div className="flex-1 h-px bg-border" />
       </div>
 
@@ -173,9 +216,10 @@ const Auth = () => {
           <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
           <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
         </svg>
-        Entrar com Google
+
+        {t('login.google')}
       </button>
-    </div>
+    </div >
   );
 };
 

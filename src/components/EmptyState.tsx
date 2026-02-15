@@ -19,16 +19,19 @@ export function EmptyState({ icon, title, description, action, className }: Empt
   );
 }
 
+import { useTranslation } from "react-i18next";
+
 export function ErrorState({ onRetry, className }: { onRetry?: () => void; className?: string }) {
+  const { t } = useTranslation('common');
   return (
     <EmptyState
       icon="⚠️"
-      title="Ops! Algo deu errado"
-      description="Não foi possível carregar os dados. Tente novamente."
+      title={t('common.error_title')}
+      description={t('common.error_desc')}
       action={
         onRetry && (
           <button onClick={onRetry} className="px-4 py-2 bg-primary text-primary-foreground rounded-lg font-semibold text-sm">
-            Tentar novamente
+            {t('common.retry', { defaultValue: 'Tentar novamente' })}
           </button>
         )
       }

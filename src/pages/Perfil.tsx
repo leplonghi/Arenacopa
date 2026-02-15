@@ -7,13 +7,43 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { User, Calendar as CalendarIcon, Flag as FlagIcon } from "lucide-react";
 
 const Perfil = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [profile, setProfile] = useState<{ name: string; bio: string; avatar_url: string | null } | null>(null);
-  const [favoriteTeam, setFavoriteTeam] = useState("BRA");
+  const [profile, setProfile] = useState<{
+    name: string;
+    nickname: string | null;
+    bio: string | null;
+    avatar_url: string | null;
+    birth_date: string | null;
+    gender: string | null;
+    nationality: string | null;
+  } | null>(null);
+
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState({
+    name: "",
+    nickname: "",
+    bio: "",
+    birth_date: "",
+    gender: "",
+    nationality: ""
+  });
+  const [favoriteTeam, setFavoriteTeamState] = useState(() => localStorage.getItem("favorite_team") || "BRA");
+
+  const setFavoriteTeam = (code: string) => {
+    setFavoriteTeamState(code);
+    localStorage.setItem("favorite_team", code);
+  };
   const [funMode, setFunMode] = useState(true);
   const [notifications, setNotifications] = useState({ goals: true, news: false, matchStart: true });
   const [showTeamPicker, setShowTeamPicker] = useState(false);
@@ -23,11 +53,21 @@ const Perfil = () => {
     if (!user) return;
     supabase
       .from("profiles")
-      .select("name, bio, avatar_url")
+      .select("name, nickname, bio, avatar_url, birth_date, gender, nationality")
       .eq("user_id", user.id)
       .single()
       .then(({ data }) => {
-        if (data) setProfile(data);
+        if (data) {
+          setProfile(data as any);
+          setEditForm({
+            name: data.name || "",
+            nickname: data.nickname || "",
+            bio: data.bio || "",
+            birth_date: data.birth_date || "",
+            gender: data.gender || "",
+            nationality: data.nationality || ""
+          });
+        }
         setLoading(false);
       });
   }, [user]);
@@ -37,7 +77,8 @@ const Perfil = () => {
     navigate("/auth");
   };
 
-  const team = getTeam(favoriteTeam);
+  /* Safe access to team with fallback */
+  const team = getTeam(favoriteTeam) || getTeam("BRA") || teams[0];
   const displayName = profile?.name || user?.email?.split("@")[0] || "Usuário";
   const initials = displayName.slice(0, 2).toUpperCase();
 
@@ -53,15 +94,210 @@ const Perfil = () => {
     <div className="px-4 py-4 space-y-5">
       {/* Profile header */}
       <div className="flex flex-col items-center pt-4 pb-2">
-        <div className="w-24 h-24 rounded-full bg-gradient-to-br from-copa-green to-copa-green-light flex items-center justify-center text-3xl font-black mb-3 border-4 border-primary/20">
+        <div className="w-24 h-24 rounded-full bg-gradient-to-br from-copa-green to-copa-green-light flex items-center justify-center text-3xl font-black mb-3 border-4 border-primary/20 relative group cursor-pointer overflow-hidden">
           {profile?.avatar_url ? (
             <img src={profile.avatar_url} alt="" className="w-full h-full rounded-full object-cover" />
           ) : (
             initials
           )}
+
+          <label className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+            <span className="text-[10px] font-bold text-white uppercase">Alterar</span>
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={async (e) => {
+                const file = e.target.files?.[0];
+                if (!file || !user) return;
+
+                try {
+                  toast({ title: "Enviando...", description: "Atualizando sua foto de perfil." });
+
+                  const fileExt = file.name.split('.').pop();
+                  const filePath = `${user.id}/${crypto.randomUUID()}.${fileExt}`;
+
+                  const { error: uploadError } = await supabase.storage
+                    .from('avatars')
+                    .upload(filePath, file);
+
+                  if (uploadError) throw uploadError;
+
+                  const { data: { publicUrl } } = supabase.storage
+                    .from('avatars')
+                    .getPublicUrl(filePath);
+
+                  const { error: updateError } = await supabase
+                    .from('profiles')
+                    .update({ avatar_url: publicUrl })
+                    .eq('user_id', user.id);
+
+                  if (updateError) throw updateError;
+
+                  setProfile(prev => prev ? { ...prev, avatar_url: publicUrl } : null);
+                  toast({ title: "Sucesso!", description: "Foto de perfil atualizada." });
+                } catch (error) {
+                  console.error('Error uploading avatar:', error);
+                  toast({ title: "Erro", description: "Falha ao atualizar foto. Tente novamente.", variant: "destructive" });
+                }
+              }}
+            />
+          </label>
         </div>
         <h2 className="text-xl font-black">{displayName}</h2>
         <span className="text-xs text-muted-foreground">{user?.email}</span>
+
+        <Dialog open={isEditing} onOpenChange={setIsEditing}>
+          <DialogTrigger asChild>
+            <Button variant="outline" size="sm" className="mt-3 h-7 text-xs gap-1.5">
+              <Settings className="w-3 h-3" />
+              Editar Perfil
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-md w-[95%] rounded-xl">
+            <DialogHeader>
+              <DialogTitle>Editar Perfil</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <div className="space-y-2">
+                <Label htmlFor="name">Nome Completo</Label>
+                <Input
+                  id="name"
+                  value={editForm.name}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="nickname">Apelido</Label>
+                  <Input
+                    id="nickname"
+                    value={editForm.nickname}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, nickname: e.target.value }))}
+                    placeholder="Como quer ser chamado"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="birth_date">Data de Nascimento</Label>
+                  <Input
+                    id="birth_date"
+                    type="date"
+                    value={editForm.birth_date}
+                    onChange={(e) => setEditForm(prev => ({ ...prev, birth_date: e.target.value }))}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Gênero</Label>
+                  <Select
+                    value={editForm.gender}
+                    onValueChange={(value) => setEditForm(prev => ({ ...prev, gender: value }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="masculino">Masculino</SelectItem>
+                      <SelectItem value="feminino">Feminino</SelectItem>
+                      <SelectItem value="outro">Outro</SelectItem>
+                      <SelectItem value="prefiro_nao_dizer">Prefiro não dizer</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="nationality">Nacionalidade</Label>
+                  <div className="relative">
+                    <FlagIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      id="nationality"
+                      className="pl-9"
+                      value={editForm.nationality}
+                      onChange={(e) => setEditForm(prev => ({ ...prev, nationality: e.target.value }))}
+                      placeholder="Ex: Brasileiro"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="bio">Bio</Label>
+                <Textarea
+                  id="bio"
+                  value={editForm.bio}
+                  onChange={(e) => setEditForm(prev => ({ ...prev, bio: e.target.value }))}
+                  placeholder="Conte um pouco sobre você..."
+                  className="resize-none h-20"
+                />
+              </div>
+
+              <Button
+                className="w-full font-bold"
+                onClick={async () => {
+                  try {
+                    setLoading(true);
+                    const { error } = await supabase
+                      .from('profiles')
+                      .update({
+                        name: editForm.name,
+                        nickname: editForm.nickname,
+                        bio: editForm.bio,
+                        birth_date: editForm.birth_date || null,
+                        gender: editForm.gender,
+                        nationality: editForm.nationality
+                      })
+                      .eq('user_id', user?.id);
+
+                    if (error) throw error;
+
+                    setProfile(prev => prev ? {
+                      ...prev,
+                      name: editForm.name,
+                      nickname: editForm.nickname,
+                      bio: editForm.bio,
+                      birth_date: editForm.birth_date || null,
+                      gender: editForm.gender,
+                      nationality: editForm.nationality
+                    } : null);
+
+                    toast({ title: "Perfil atualizado!" });
+                    setIsEditing(false);
+                  } catch (error) {
+                    console.error("Error updating profile:", error);
+                    toast({
+                      title: "Erro ao atualizar",
+                      description: "Tente novamente mais tarde.",
+                      variant: "destructive"
+                    });
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+              >
+                Salvar Alterações
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Info Cards */}
+        <div className="grid grid-cols-2 gap-2 w-full mt-4">
+          <div className="glass-card p-3 flex flex-col gap-1 items-center justify-center text-center">
+            <span className="text-[10px] uppercase font-bold text-muted-foreground">Apelido</span>
+            <span className="text-sm font-bold">{profile?.nickname || "-"}</span>
+          </div>
+          <div className="glass-card p-3 flex flex-col gap-1 items-center justify-center text-center">
+            <span className="text-[10px] uppercase font-bold text-muted-foreground">Nacionalidade</span>
+            <div className="flex items-center gap-1.5">
+              {profile?.nationality && <FlagIcon className="w-3 h-3 text-primary" />}
+              <span className="text-sm font-bold">{profile?.nationality || "-"}</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* My Team */}

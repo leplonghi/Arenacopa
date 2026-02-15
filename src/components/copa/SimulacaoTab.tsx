@@ -1,4 +1,6 @@
 import { useState, useMemo } from "react";
+import { createPortal } from "react-dom";
+import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { Flag } from "@/components/Flag";
 import { groups as allGroupsList, getTeam } from "@/data/mockData";
@@ -8,11 +10,13 @@ import {
   RotateCcw, Trophy, ChevronDown, ChevronUp, Plus, ArrowLeft,
   Trash2, Share2, MessageCircle, Link2, X, Pencil, Check
 } from "lucide-react";
-import { useSimulacao, calcStandings } from "@/contexts/SimulacaoContext";
+import { useSimulacao } from "@/contexts/SimulacaoContext";
+import { calcStandings } from "@/utils/simulacaoUtils";
 import { KnockoutPhase } from "./KnockoutPhase";
 import { useAuth } from "@/contexts/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
 function ScoreInput({ value, onChange }: { value: number | null; onChange: (v: number | null) => void }) {
   return (
@@ -38,18 +42,19 @@ function SimShareSheet({ open, onClose, sim }: {
   sim: { name: string; standings: Record<string, { teamCode: string; points: number; gf: number; ga: number }[]> };
 }) {
   const { toast } = useToast();
+  const { t } = useTranslation('copa');
 
   const buildShareText = () => {
-    let text = `⚽ Minha simulação "${sim.name}" - Copa 2026\n\n`;
+    let text = t('simulator.share.text_intro', { name: sim.name });
     Object.entries(sim.standings).forEach(([g, teams]) => {
-      text += `📊 Grupo ${g}:\n`;
-      teams.slice(0, 2).forEach((t, i) => {
-        const team = getTeam(t.teamCode);
-        text += `  ${i + 1}. ${team.name} (${t.points}pts)\n`;
+      text += t('simulator.share.text_group', { group: g });
+      teams.slice(0, 2).forEach((tData, i) => {
+        const team = getTeam(tData.teamCode);
+        text += `  ${i + 1}. ${team.name} (${tData.points}pts)\n`;
       });
       text += "\n";
     });
-    text += "🏆 Feito no ArenaCopa!";
+    text += t('simulator.share.text_footer');
     return text;
   };
 
@@ -59,53 +64,54 @@ function SimShareSheet({ open, onClose, sim }: {
   const shareWhatsApp = () => { window.open(`https://wa.me/?text=${encoded}`, "_blank"); onClose(); };
   const copyText = () => {
     navigator.clipboard.writeText(shareText);
-    toast({ title: "Copiado!", description: "Simulação copiada para a área de transferência" });
+    toast({ title: t('simulator.share.copied'), description: t('simulator.share.copied_desc') });
     onClose();
   };
   const nativeShare = async () => {
     if (navigator.share) {
-      try { await navigator.share({ title: `Simulação: ${sim.name}`, text: shareText }); onClose(); } catch {}
+      try { await navigator.share({ title: `Simulação: ${sim.name}`, text: shareText }); onClose(); } catch { /* user cancelled */ }
     }
   };
 
-  return (
+  return createPortal(
     <AnimatePresence>
       {open && (
         <>
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 z-50" onClick={onClose} />
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 z-[100]" onClick={onClose} />
           <motion.div
             initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 30, stiffness: 400 }}
-            className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl bg-card border-t border-border/50 safe-bottom"
+            className="fixed bottom-0 left-0 right-0 z-[101] rounded-t-2xl bg-card border-t border-border/50 safe-bottom"
           >
             <div className="flex justify-center pt-3 pb-1"><div className="w-10 h-1 rounded-full bg-muted-foreground/30" /></div>
             <div className="px-5 pb-2">
               <div className="flex items-center justify-between mb-1">
-                <h3 className="text-base font-black">Compartilhar Simulação</h3>
+                <h3 className="text-base font-black">{t('simulator.share.title')}</h3>
                 <button onClick={onClose} className="p-1.5 rounded-lg bg-secondary"><X className="w-4 h-4" /></button>
               </div>
-              <p className="text-xs text-muted-foreground mb-4">Envie sua simulação para amigos</p>
+              <p className="text-xs text-muted-foreground mb-4">{t('simulator.share.desc')}</p>
             </div>
             <div className="px-5 pb-6 space-y-2">
               <button onClick={shareWhatsApp} className="w-full flex items-center gap-3 p-3.5 rounded-xl bg-[#25D366]/10 border border-[#25D366]/20 hover:bg-[#25D366]/20 transition-colors">
                 <div className="w-10 h-10 rounded-full bg-[#25D366] flex items-center justify-center shrink-0"><MessageCircle className="w-5 h-5 text-white" /></div>
-                <div className="text-left"><span className="text-sm font-bold block">WhatsApp</span><span className="text-[10px] text-muted-foreground">Enviar via mensagem</span></div>
+                <div className="text-left"><span className="text-sm font-bold block">{t('simulator.share.whatsapp')}</span><span className="text-[10px] text-muted-foreground">{t('simulator.share.whatsapp_desc')}</span></div>
               </button>
               <button onClick={copyText} className="w-full flex items-center gap-3 p-3.5 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors border border-border/30">
                 <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center shrink-0"><Link2 className="w-5 h-5 text-accent-foreground" /></div>
-                <div className="text-left"><span className="text-sm font-bold block">Copiar Texto</span><span className="text-[10px] text-muted-foreground">Copiar simulação</span></div>
+                <div className="text-left"><span className="text-sm font-bold block">{t('simulator.share.copy')}</span><span className="text-[10px] text-muted-foreground">{t('simulator.share.copy_desc')}</span></div>
               </button>
               {typeof navigator !== "undefined" && "share" in navigator && (
                 <button onClick={nativeShare} className="w-full flex items-center gap-3 p-3.5 rounded-xl bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-colors">
                   <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center shrink-0"><Share2 className="w-5 h-5 text-primary-foreground" /></div>
-                  <div className="text-left"><span className="text-sm font-bold block">Mais opções</span><span className="text-[10px] text-muted-foreground">Compartilhar via outros apps</span></div>
+                  <div className="text-left"><span className="text-sm font-bold block">{t('simulator.share.more')}</span><span className="text-[10px] text-muted-foreground">{t('simulator.share.more_desc')}</span></div>
                 </button>
               )}
             </div>
           </motion.div>
         </>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }
 
@@ -117,6 +123,7 @@ function CreateSimModal({ open, onClose, onCreate }: {
 }) {
   const [name, setName] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set(allGroupsList));
+  const { t } = useTranslation('copa');
 
   const toggleGroup = (g: string) => {
     setSelected(prev => {
@@ -135,30 +142,30 @@ function CreateSimModal({ open, onClose, onCreate }: {
     onClose();
   };
 
-  return (
+  return createPortal(
     <AnimatePresence>
       {open && (
         <>
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 z-50" onClick={onClose} />
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 z-[100]" onClick={onClose} />
           <motion.div
             initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 30, stiffness: 400 }}
-            className="fixed bottom-0 left-0 right-0 z-50 rounded-t-2xl bg-card border-t border-border/50 safe-bottom max-h-[85vh] overflow-y-auto"
+            className="fixed bottom-0 left-0 right-0 z-[101] rounded-t-2xl bg-card border-t border-border/50 safe-bottom max-h-[85vh] overflow-y-auto"
           >
             <div className="flex justify-center pt-3 pb-1"><div className="w-10 h-1 rounded-full bg-muted-foreground/30" /></div>
             <div className="px-5 pb-6 space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-base font-black">Nova Simulação</h3>
+                <h3 className="text-base font-black">{t('simulator.create.title')}</h3>
                 <button onClick={onClose} className="p-1.5 rounded-lg bg-secondary"><X className="w-4 h-4" /></button>
               </div>
 
               {/* Name */}
               <div>
-                <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground block mb-1.5">Nome</label>
+                <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground block mb-1.5">{t('simulator.create.name_label')}</label>
                 <input
                   value={name}
                   onChange={e => setName(e.target.value)}
-                  placeholder="Ex: Brasil campeão"
+                  placeholder={t('simulator.create.name_placeholder')}
                   className="w-full px-3 py-2.5 rounded-lg bg-secondary border border-border text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/50"
                   maxLength={50}
                 />
@@ -167,8 +174,8 @@ function CreateSimModal({ open, onClose, onCreate }: {
               {/* Group selection */}
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Grupos</label>
-                  <button onClick={selectAll} className="text-[10px] font-bold text-primary">Selecionar todos</button>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{t('simulator.create.groups_label')}</label>
+                  <button onClick={selectAll} className="text-[10px] font-bold text-primary">{t('simulator.create.select_all')}</button>
                 </div>
                 <div className="grid grid-cols-6 gap-2">
                   {allGroupsList.map(g => (
@@ -193,13 +200,14 @@ function CreateSimModal({ open, onClose, onCreate }: {
                 disabled={!name.trim()}
                 className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-bold text-sm disabled:opacity-40 transition-opacity"
               >
-                Criar Simulação
+                {t('simulator.create.button')}
               </button>
             </div>
           </motion.div>
         </>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 }
 
@@ -209,16 +217,17 @@ function SimulationList() {
   const { user } = useAuth();
   const [createOpen, setCreateOpen] = useState(false);
   const { toast } = useToast();
+  const { t } = useTranslation('copa');
 
   const handleCreate = async (name: string, groups: string[]) => {
     const id = await createSimulation(name, groups);
-    if (id) toast({ title: "Simulação criada!" });
+    if (id) toast({ title: t('simulator.list.created') });
   };
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     await deleteSimulation(id);
-    toast({ title: "Simulação excluída" });
+    toast({ title: t('simulator.list.deleted') });
   };
 
   if (loading) {
@@ -235,8 +244,8 @@ function SimulationList() {
     return (
       <div className="glass-card p-6 text-center">
         <span className="text-2xl mb-2 block">🔒</span>
-        <p className="text-sm font-bold">Faça login para simular</p>
-        <p className="text-[11px] text-muted-foreground">Crie simulações e compartilhe com amigos</p>
+        <p className="text-sm font-bold">{t('simulator.list.login_title')}</p>
+        <p className="text-[11px] text-muted-foreground">{t('simulator.list.login_desc')}</p>
       </div>
     );
   }
@@ -245,15 +254,15 @@ function SimulationList() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-black">Simulações</h2>
-          <p className="text-[11px] text-muted-foreground">Crie e gerencie suas simulações</p>
+          <h2 className="text-lg font-black">{t('simulator.list.title')}</h2>
+          <p className="text-[11px] text-muted-foreground">{t('simulator.list.subtitle')}</p>
         </div>
         <button
           onClick={() => setCreateOpen(true)}
           className="flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-lg bg-primary text-primary-foreground"
         >
           <Plus className="w-3.5 h-3.5" />
-          Nova
+          {t('simulator.list.new')}
         </button>
       </div>
 
@@ -264,17 +273,17 @@ function SimulationList() {
           className="glass-card p-6 text-center"
         >
           <span className="text-3xl mb-2 block">⚽</span>
-          <p className="text-sm font-bold">Nenhuma simulação ainda</p>
-          <p className="text-[11px] text-muted-foreground mb-4">Simule os resultados da Copa e compartilhe!</p>
+          <p className="text-sm font-bold">{t('simulator.list.empty_title')}</p>
+          <p className="text-[11px] text-muted-foreground mb-4">{t('simulator.list.empty_desc')}</p>
           <button
             onClick={() => setCreateOpen(true)}
             className="text-xs font-bold px-4 py-2 rounded-lg bg-primary text-primary-foreground"
           >
-            Criar primeira simulação
+            {t('simulator.list.create_first')}
           </button>
         </motion.div>
       ) : (
-        <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="space-y-3">
+        <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="space-y-3 md:space-y-0 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-4">
           {simulations.map(sim => {
             const groupCount = sim.selectedGroups.length;
             const totalM = Object.values(sim.matches || {}).reduce((s, ms) => s + (ms?.length || 0), 0);
@@ -301,9 +310,9 @@ function SimulationList() {
                   </button>
                 </div>
                 <div className="flex items-center gap-3 text-[10px] text-muted-foreground mb-2">
-                  <span>{groupCount} grupo{groupCount > 1 ? "s" : ""}</span>
+                  <span>{t('simulator.list.groups_count', { count: groupCount })}</span>
                   <span>•</span>
-                  <span>{filled}/{totalM} jogos</span>
+                  <span>{t('simulator.list.games_count', { filled, total: totalM })}</span>
                   <span>•</span>
                   <span>{new Date(sim.updatedAt).toLocaleDateString("pt-BR")}</span>
                 </div>
@@ -333,6 +342,8 @@ function SimulationEditor() {
   const [editing, setEditing] = useState(false);
   const [editName, setEditName] = useState("");
   const [phase, setPhase] = useState<"groups" | "knockout">("groups");
+  const navigate = useNavigate();
+  const { t } = useTranslation('copa');
 
   if (!currentSim) return null;
 
@@ -384,7 +395,7 @@ function SimulationEditor() {
             </div>
           )}
           <p className="text-[11px] text-muted-foreground">
-            {selectedGroups.length} grupo{selectedGroups.length > 1 ? "s" : ""} selecionado{selectedGroups.length > 1 ? "s" : ""}
+            {t('simulator.editor.selected_groups', { count: selectedGroups.length })}
           </p>
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
@@ -406,8 +417,8 @@ function SimulationEditor() {
       {/* Progress bar */}
       <div className="glass-card p-3">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Progresso</span>
-          <span className="text-xs font-black text-primary">{filledCount}/{totalMatches} jogos</span>
+          <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{t('simulator.editor.progress')}</span>
+          <span className="text-xs font-black text-primary">{t('simulator.editor.games_count', { filled: filledCount, total: totalMatches })}</span>
         </div>
         <div className="w-full h-2 bg-secondary rounded-full overflow-hidden">
           <motion.div
@@ -429,7 +440,7 @@ function SimulationEditor() {
               phase === "groups" ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"
             )}
           >
-            Fase de Grupos
+            {t('simulator.editor.phase_groups')}
           </button>
           <button
             onClick={() => setPhase("knockout")}
@@ -440,7 +451,7 @@ function SimulationEditor() {
             )}
             disabled={!isGroupsComplete}
           >
-            Eliminatórias
+            {t('simulator.editor.phase_knockout')}
             {isGroupsComplete && (
               <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-copa-success rounded-full" />
             )}
@@ -450,96 +461,105 @@ function SimulationEditor() {
 
       {/* Groups */}
       {phase === "groups" && (
-      <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="space-y-3">
-        {selectedGroups.map(g => {
-          const groupMatches = allMatches[g];
-          if (!groupMatches) return null;
-          const expanded = expandedGroups.has(g);
-          const groupStandings = standings[g] || [];
-          const groupFilled = groupMatches.filter(m => m.homeScore !== null && m.awayScore !== null).length;
-          const groupComplete = groupFilled === groupMatches.length;
+        <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="space-y-3 md:space-y-0 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-4">
+          {selectedGroups.map(g => {
+            const groupMatches = allMatches[g];
+            if (!groupMatches) return null;
+            const expanded = expandedGroups.has(g);
+            const groupStandings = standings[g] || [];
+            const groupFilled = groupMatches.filter(m => m.homeScore !== null && m.awayScore !== null).length;
+            const groupComplete = groupFilled === groupMatches.length;
 
-          return (
-            <motion.div key={g} variants={staggerItem} className="glass-card overflow-hidden">
-              <button onClick={() => toggleGroup(g)} className="w-full flex items-center justify-between p-4">
-                <div className="flex items-center gap-3">
-                  <h3 className="text-base font-black">Grupo {g}</h3>
-                  <span className={cn(
-                    "text-[10px] font-bold px-2 py-0.5 rounded-full",
-                    groupComplete ? "bg-copa-success/20 text-copa-success" :
-                    groupFilled > 0 ? "bg-primary/20 text-primary" :
-                    "bg-secondary text-muted-foreground"
-                  )}>
-                    {groupComplete ? "Completo" : `${groupFilled}/${groupMatches.length}`}
-                  </span>
-                </div>
-                {expanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
-              </button>
-
-              {expanded && (
-                <div className="px-4 pb-4 space-y-4">
-                  <div className="space-y-2">
-                    {groupMatches.map((m, idx) => {
-                      const home = getTeam(m.home);
-                      const away = getTeam(m.away);
-                      return (
-                        <div key={`${m.home}-${m.away}`} className="flex items-center gap-2 py-2">
-                          <div className="flex items-center gap-1.5 flex-1 justify-end">
-                            <span className="text-xs font-bold truncate max-w-[60px]">{home.name}</span>
-                            <Flag code={home.code} size="sm" />
-                          </div>
-                          <ScoreInput value={m.homeScore} onChange={v => updateScore(g, idx, "home", v)} />
-                          <span className="text-xs font-bold text-muted-foreground">×</span>
-                          <ScoreInput value={m.awayScore} onChange={v => updateScore(g, idx, "away", v)} />
-                          <div className="flex items-center gap-1.5 flex-1">
-                            <Flag code={away.code} size="sm" />
-                            <span className="text-xs font-bold truncate max-w-[60px]">{away.name}</span>
-                          </div>
-                        </div>
-                      );
-                    })}
+            return (
+              <motion.div key={g} variants={staggerItem} className="glass-card overflow-hidden">
+                <button onClick={() => toggleGroup(g)} className="w-full flex items-center justify-between p-4">
+                  <div className="flex items-center gap-3">
+                    <h3 className="text-base font-black">{t('match_details.group_label', { group: g })}</h3>
+                    <span className={cn(
+                      "text-[10px] font-bold px-2 py-0.5 rounded-full",
+                      groupComplete ? "bg-copa-success/20 text-copa-success" :
+                        groupFilled > 0 ? "bg-primary/20 text-primary" :
+                          "bg-secondary text-muted-foreground"
+                    )}>
+                      {groupComplete ? t('simulator.editor.group_complete') : `${groupFilled}/${groupMatches.length}`}
+                    </span>
                   </div>
+                  {expanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+                </button>
 
-                  {groupFilled > 0 && (
-                    <div className="border-t border-border/30 pt-3">
-                      <span className="text-[10px] font-bold uppercase tracking-wider text-primary mb-2 block">Classificação</span>
-                      <div className="grid grid-cols-[16px_1fr_24px_24px_24px_24px] gap-x-1.5 px-1 py-1 text-[9px] font-bold uppercase tracking-wider text-muted-foreground">
-                        <span>#</span><span>País</span>
-                        <span className="text-center">J</span><span className="text-center">V</span>
-                        <span className="text-center">SG</span><span className="text-center">P</span>
-                      </div>
-                      {groupStandings.map((s, i) => {
-                        const team = getTeam(s.teamCode);
-                        const qualifies = i < 2;
-                        const gd = s.gf - s.ga;
+                {expanded && (
+                  <div className="px-4 pb-4 space-y-4">
+                    <div className="space-y-2">
+                      {groupMatches.map((m, idx) => {
+                        const home = getTeam(m.home);
+                        const away = getTeam(m.away);
                         return (
-                          <div key={s.teamCode} className={cn(
-                            "grid grid-cols-[16px_1fr_24px_24px_24px_24px] gap-x-1.5 items-center px-1 py-2 rounded-md",
-                            qualifies && "bg-copa-success/10"
-                          )}>
-                            <span className={cn("text-xs font-bold", qualifies ? "text-copa-success" : "text-muted-foreground")}>
-                              {qualifies && <Trophy className="w-3 h-3 inline" />}
-                              {!qualifies && (i + 1)}
-                            </span>
-                            <div className="flex items-center gap-1.5">
-                              <Flag code={team.code} size="sm" />
-                              <span className={cn("text-xs", qualifies ? "font-black" : "font-medium")}>{team.name}</span>
+                          <div key={`${m.home}-${m.away}`} className="flex items-center gap-2 py-2">
+                            <div
+                              className="flex items-center gap-1.5 flex-1 justify-end cursor-pointer hover:underline"
+                              onClick={() => navigate(`/team/${home.code}`)}
+                            >
+                              <span className="text-xs font-bold truncate max-w-[60px]">{home.name}</span>
+                              <Flag code={home.code} size="sm" />
                             </div>
-                            <span className="text-center text-xs">{s.played}</span>
-                            <span className="text-center text-xs">{s.won}</span>
-                            <span className="text-center text-xs">{gd >= 0 ? `+${gd}` : gd}</span>
-                            <span className={cn("text-center text-xs", qualifies && "font-black text-copa-success")}>{s.points}</span>
+                            <ScoreInput value={m.homeScore} onChange={v => updateScore(g, idx, "home", v)} />
+                            <span className="text-xs font-bold text-muted-foreground">×</span>
+                            <ScoreInput value={m.awayScore} onChange={v => updateScore(g, idx, "away", v)} />
+                            <div
+                              className="flex items-center gap-1.5 flex-1 cursor-pointer hover:underline"
+                              onClick={() => navigate(`/team/${away.code}`)}
+                            >
+                              <Flag code={away.code} size="sm" />
+                              <span className="text-xs font-bold truncate max-w-[60px]">{away.name}</span>
+                            </div>
                           </div>
                         );
                       })}
                     </div>
-                  )}
-                </div>
-              )}
-            </motion.div>
-          );
-        })}
-      </motion.div>
+
+                    {groupFilled > 0 && (
+                      <div className="border-t border-border/30 pt-3">
+                        <span className="text-[10px] font-bold uppercase tracking-wider text-primary mb-2 block">{t('simulator.editor.standings')}</span>
+                        <div className="grid grid-cols-[16px_1fr_24px_24px_24px_24px] gap-x-1.5 px-1 py-1 text-[9px] font-bold uppercase tracking-wider text-muted-foreground">
+                          <span>#</span><span>{t('groups.table.country')}</span>
+                          <span className="text-center">{t('groups.table.j')}</span><span className="text-center">{t('groups.table.w')}</span>
+                          <span className="text-center">{t('groups.table.gd')}</span><span className="text-center">{t('groups.table.p')}</span>
+                        </div>
+                        {groupStandings.map((s, i) => {
+                          const team = getTeam(s.teamCode);
+                          const qualifies = i < 2;
+                          const gd = s.gf - s.ga;
+                          return (
+                            <div key={s.teamCode} className={cn(
+                              "grid grid-cols-[16px_1fr_24px_24px_24px_24px] gap-x-1.5 items-center px-1 py-2 rounded-md",
+                              qualifies && "bg-copa-success/10"
+                            )}>
+                              <span className={cn("text-xs font-bold", qualifies ? "text-copa-success" : "text-muted-foreground")}>
+                                {qualifies && <Trophy className="w-3 h-3 inline" />}
+                                {!qualifies && (i + 1)}
+                              </span>
+                              <div
+                                className="flex items-center gap-1.5 cursor-pointer hover:underline"
+                                onClick={() => navigate(`/team/${team.code}`)}
+                              >
+                                <Flag code={team.code} size="sm" />
+                                <span className={cn("text-xs", qualifies ? "font-black" : "font-medium")}>{team.name}</span>
+                              </div>
+                              <span className="text-center text-xs">{s.played}</span>
+                              <span className="text-center text-xs">{s.won}</span>
+                              <span className="text-center text-xs">{gd >= 0 ? `+${gd}` : gd}</span>
+                              <span className={cn("text-center text-xs", qualifies && "font-black text-copa-success")}>{s.points}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </motion.div>
+            );
+          })}
+        </motion.div>
       )}
 
       {/* Knockout Phase */}

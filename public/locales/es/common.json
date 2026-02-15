@@ -1,0 +1,50 @@
+{
+    "nav": {
+        "home": "Inicio",
+        "copa": "Copa",
+        "bolao": "Quiniela",
+        "guia": "Guía",
+        "ranking": "Ranking",
+        "profile": "Perfil",
+        "menu": "Menú"
+    },
+    "header": {
+        "titles": {
+            "boloes": "Quinielas",
+            "create_bolao": "Crear Quiniela",
+            "bolao_detail": "Quiniela",
+            "profile": "Perfil",
+            "menu": "Menú"
+        }
+    },
+    "common": {
+        "loading": "Cargando...",
+        "error": "Ocurrió un error",
+        "save": "Guardar",
+        "cancel": "Cancelar",
+        "back": "Volver",
+        "next": "Siguiente",
+        "confirm": "Confirmar",
+        "search": "Buscar",
+        "filter": "Filtrar",
+        "close": "Cerrar",
+        "error_title": "¡Ups! Algo salió mal",
+        "error_desc": "No se pudieron cargar los datos. Inténtalo de nuevo.",
+        "retry": "Intentar de nuevo"
+    },
+    "notifications": {
+        "title": "Notificaciones",
+        "mark_all_read": "Marcar todas como leídas",
+        "description": "Consulta las últimas novedades y actualizaciones.",
+        "empty": "Sin notificaciones",
+        "new": "Nueva",
+        "new_count_one": "{{count}} nueva",
+        "new_count_other": "{{count}} nuevas"
+    },
+    "status": {
+        "active": "Activo",
+        "finished": "Finalizado",
+        "live": "En Vivo",
+        "scheduled": "Programado"
+    }
+}

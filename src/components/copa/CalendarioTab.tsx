@@ -1,9 +1,10 @@
 import { useState, useMemo } from "react";
 import { MatchCard } from "@/components/MatchCard";
 import { EmptyState } from "@/components/EmptyState";
-import { matches, formatMatchDate } from "@/data/mockData";
+import { matches, formatMatchDate, type Match } from "@/data/mockData";
 import { motion } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { MatchDetailsModal } from "./MatchDetailsModal";
 
 export function CalendarioTab() {
   // Group matches by date
@@ -21,6 +22,7 @@ export function CalendarioTab() {
   }, []);
 
   const [dayIndex, setDayIndex] = useState(0);
+  const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
 
   const currentDay = matchDays[dayIndex];
   if (!currentDay) {
@@ -67,12 +69,23 @@ export function CalendarioTab() {
         initial={{ opacity: 0, x: 20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.2 }}
-        className="space-y-3"
+        className="space-y-3 md:space-y-0 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-4"
       >
         {currentDay.matches.map((m, i) => (
-          <MatchCard key={m.id} match={m} index={i} />
+          <MatchCard
+            key={m.id}
+            match={m}
+            index={i}
+            onClick={() => setSelectedMatch(m)}
+          />
         ))}
       </motion.div>
+
+      <MatchDetailsModal
+        match={selectedMatch}
+        isOpen={!!selectedMatch}
+        onClose={() => setSelectedMatch(null)}
+      />
     </div>
   );
 }
