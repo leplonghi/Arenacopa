@@ -180,10 +180,13 @@ export function SimulacaoProvider({ children }: { children: ReactNode }) {
         .from("simulations")
         .update({ data: dataToSave as unknown as Json, updated_at: new Date().toISOString() })
         .eq("id", currentSimId)
-        .then(() => {
-          setSimulations(prev => prev.map(s =>
-            s.id === currentSimId ? { ...s, matches: dataToSave, updatedAt: new Date().toISOString() } : s
-          ));
+        .then(({ error }) => {
+          if (!error) {
+            setSimulations(prev => prev.map(s =>
+              s.id === currentSimId ? { ...s, matches: dataToSave, updatedAt: new Date().toISOString() } : s
+            ));
+          }
+          // Silent failure: data will be retried on next score change
         });
     }, 1000);
     return () => clearTimeout(timeout);

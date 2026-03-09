@@ -80,6 +80,7 @@ const Ranking = () => {
   const [profile, setProfile] = useState<{ name: string; favorite_team: string | null } | null>(null);
   const [loading, setLoading] = useState(true);
   const [totalBoloes, setTotalBoloes] = useState(0);
+  const [palpitesCount, setPalpitesCount] = useState<number | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -113,6 +114,15 @@ const Ranking = () => {
           }));
           setMyBoloes(entries);
         }
+
+        // Load count of palpites submitted by user (excluding champion_pick placeholder)
+        const { count: pCount } = await supabase
+          .from("bolao_palpites")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", user!.id)
+          .neq("match_id", "champion_pick");
+
+        setPalpitesCount(pCount ?? 0);
 
         // Load top public bolões by member count
         const { data: topData } = await supabase
@@ -176,7 +186,7 @@ const Ranking = () => {
           <div className="grid grid-cols-3 gap-3 mt-5">
             {[
               { label: "Bolões", value: loading ? "…" : String(totalBoloes), icon: "🏆" },
-              { label: "Palpites", value: "—", icon: "🎯" },
+              { label: "Palpites", value: loading ? "…" : palpitesCount !== null ? String(palpitesCount) : "—", icon: "🎯" },
               { label: "Pontos", value: "—", icon: "⭐" },
             ].map((stat) => (
               <div key={stat.label} className="bg-background/40 rounded-xl p-3 text-center">

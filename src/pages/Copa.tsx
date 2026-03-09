@@ -1,4 +1,5 @@
-import { useState, lazy, Suspense } from "react";
+import { useState, lazy, Suspense, useEffect } from "react";
+import { useParams } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { tabContentVariants } from "@/components/copa/animations";
@@ -37,7 +38,19 @@ function MapaFallback() {
 }
 
 const Copa = () => {
-  const [tab, setTab] = useState<CopaTab>("calendario");
+  const { subtab } = useParams<{ subtab?: string }>();
+  const [tab, setTab] = useState<CopaTab>(() => {
+    const valid: CopaTab[] = ["calendario", "grupos", "chaves", "simulacao", "mapa"];
+    return valid.includes(subtab as CopaTab) ? (subtab as CopaTab) : "calendario";
+  });
+
+  // Sync tab if user navigates directly via URL
+  useEffect(() => {
+    const valid: CopaTab[] = ["calendario", "grupos", "chaves", "simulacao", "mapa"];
+    if (subtab && valid.includes(subtab as CopaTab)) {
+      setTab(subtab as CopaTab);
+    }
+  }, [subtab]);
 
   return (
     <SimulacaoProvider>
