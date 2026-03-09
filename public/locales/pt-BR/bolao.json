@@ -7,7 +7,7 @@
         "invite_friends": "Convide mais amigos",
         "share_code": "Compartilhe o código:",
         "btn_share": "Compartilhar",
-        "disclaimer": "⚠️ O ArenaCopa **não realiza** processamento de pagamentos ou transações financeiras. Eventuais valores devem ser combinados entre os participantes, fora do aplicativo.",
+        "disclaimer": "⚠️ O ArenaCup **não realiza** processamento de pagamentos ou transações financeiras. Eventuais valores devem ser combinados entre os participantes, fora do aplicativo.",
         "members_stat": "Membros",
         "palpites_stat": "Palpites",
         "progress_stat": "Progresso"
@@ -62,11 +62,18 @@
         "your_guess": "Seu Palpite",
         "saved_success": "Palpite salvo! 🏆"
     },
+    "ranking": {
+        "default_user": "Usuário",
+        "guesses": "palpites",
+        "points_abbr": "Pts",
+        "legend_rules": "Regras de Pontuação"
+    },
     "common": {
         "attention": "Atenção",
         "error_title": "Erro",
         "user": "Usuário",
-        "points_abbr": "Pts"
+        "points_abbr": "Pts",
+        "group": "Grupo"
     },
     "create_bolao": {
         "title": "Novo Bolão",
@@ -77,7 +84,7 @@
             "created_desc": "Você criou o bolão '{{name}}' com sucesso."
         },
         "financial": {
-            "warning": "Lembre-se: O ArenaCopa é apenas uma planilha inteligente. Você é responsável por cobrar e pagar os participantes.",
+            "warning": "Lembre-se: O ArenaCup é apenas uma planilha inteligente. Você é responsável por cobrar e pagar os participantes.",
             "fee_label": "Valor da Cota (R$)",
             "fee_placeholder": "0,00",
             "payment_label": "Dados de Pagamento",
@@ -134,7 +141,7 @@
             "type": "Tipo",
             "entry": "Entrada",
             "scoring": "Pontuação (E/V/E/P)",
-            "disclaimer": "Eu declaro que sou o único responsável pela arrecadação e pagamento dos prêmios deste bolão. Isento o ArenaCopa de qualquer responsabilidade financeira.",
+            "disclaimer": "Eu declaro que sou o único responsável pela arrecadação e pagamento dos prêmios deste bolão. Isento o ArenaCup de qualquer responsabilidade financeira.",
             "success_title": "Bolão criado! 🎉",
             "success_desc": "Configurações salvas com sucesso.",
             "error_title": "Erro",
@@ -190,7 +197,8 @@
         "btn_confirm": "Confirmar Entrada",
         "error_join": "Erro ao entrar",
         "success_join": "Entrou no bolão! 🎉",
-        "already_joined": "Você já participa deste bolão!"
+        "already_joined": "Você já participa deste bolão!",
+        "no_results": "Nenhum bolão encontrado com este nome."
     },
     "detail": {
         "not_found": "Bolão não encontrado",

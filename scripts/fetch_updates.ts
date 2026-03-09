@@ -152,7 +152,7 @@ async function updateStadiumStatus() {
 // --- MAIN EXECUTION ---
 
 async function main() {
-    console.log("🚀 Starting Daily Update Script for ArenaCopa...");
+    console.log("🚀 Starting Daily Update Script for ArenaCup...");
 
     // 1. Update News
     const news = await fetchLatestNews();

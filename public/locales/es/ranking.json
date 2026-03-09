@@ -1,0 +1,43 @@
+{
+    "title": "Ranking General",
+    "subtitle": "Los mejores predictores de la Copa del Mundo 2026. Sube en la clasificación y conquista la gloria eterna.",
+    "hall_of_fame": "HALL OF FAME",
+    "tabs": {
+        "global": "Global",
+        "boloes": "Quinielas",
+        "historico": "Histórico",
+        "stats": "Stats"
+    },
+    "user_section": {
+        "podium_desc": "Elite Global",
+        "my_performance": "Tu Rendimiento",
+        "status_protective": "Estado Protectivo",
+        "climbing": "SUBIENDO",
+        "points": "PUNTOS",
+        "accuracy": "PRECISIÓN",
+        "rank_sync": "Sincronizado hace {{time}}",
+        "top_50": "Clasificación Top 50"
+    },
+    "boloes_section": {
+        "elite": "Elite de Quinielas",
+        "members": "MIEMBROS",
+        "accuracy": "ACC",
+        "total_prize": "PREMIO TOTAL"
+    },
+    "history_section": {
+        "legendary_winners": "CAMPEONES LEGENDARIOS",
+        "panorama": "PANORAMA HISTÓRICO",
+        "titles": "TÍTULOS",
+        "participations": "PARTICIPACIONES",
+        "goals": "GOLES"
+    },
+    "stats_section": {
+        "top_scorers": "GOLEADORES HISTÓRICOS",
+        "records": {
+            "most_titles": "Selección con más títulos",
+            "most_wins": "Mayor número de victorias",
+            "goals_record": "Récord de goles marcados",
+            "biggest_rout": "Mayor goleada histórica"
+        }
+    }
+}

@@ -1,0 +1,1058 @@
+[
+    {
+        "id": "mex-cdmx",
+        "name": "Cidade do México",
+        "countryCode": "MEX",
+        "population": "22 milhões",
+        "description": "A metrópole que pulsa futebol. Única cidade a receber três aberturas de Copa.",
+        "highlights": [
+            "Estádio Azteca",
+            "História Asteca",
+            "Gastronomia"
+        ],
+        "stadium": {
+            "name": "Estádio Azteca",
+            "id": "azteca",
+            "capacity": 83264,
+            "yearBuilt": 1966,
+            "cost": "US$ 260M (ajustado)",
+            "historicFact": "Palco dos gols de Pelé em 70 e da 'Mão de Deus' de Maradona em 86.",
+            "image": "https://images.unsplash.com/photo-1512813195386-6cf811ad3542"
+        },
+        "travel": {
+            "airport": "Benito Juárez (MEX)",
+            "transport": "Metrô e Metrobús eficientes e econômicos.",
+            "dishes": [
+                {
+                    "name": "Tacos al Pastor",
+                    "description": "Carne de porco marinada com abacaxi."
+                },
+                {
+                    "name": "Chiles en Nogada",
+                    "description": "Pimentas recheadas com molho de nozes e romã."
+                },
+                {
+                    "name": "Mole Poblano",
+                    "description": "Molho complexo de pimenta e chocolate."
+                }
+            ],
+            "attractions": [
+                {
+                    "name": "Zócalo",
+                    "description": "O coração histórico da cidade."
+                },
+                {
+                    "name": "Teotihuacán",
+                    "description": "Pirâmides antigas a 30 milhas do centro."
+                },
+                {
+                    "name": "Bosque de Chapultepec",
+                    "description": "Um dos maiores parques urbanos do mundo."
+                }
+            ]
+        },
+        "trivia": [
+            "O Estádio Azteca será o primeiro a sediar três jogos de abertura.",
+            "A cidade afunda cerca de 10-30cm por ano.",
+            "Possui a maior quantidade de museus das Américas."
+        ],
+        "economics": "Principal hub financeiro e cultural da América Latina. PIB est. $500B.",
+        "coordinates": [
+            19.3029,
+            -99.1505
+        ],
+        "climate": "Junho/Julho: Médias de 24°C / 14°C. Estação chuvosa suave.",
+        "wcMatches": 5,
+        "wcRole": "Abertura"
+    },
+    {
+        "id": "usa-ny",
+        "name": "Nova York / Nova Jersey",
+        "countryCode": "USA",
+        "population": "20.1 milhões",
+        "description": "A capital do mundo e sede da Grande Final em 19 de julho de 2026.",
+        "highlights": [
+            "Sede da Final",
+            "Empire State",
+            "Multiculturalismo"
+        ],
+        "stadium": {
+            "name": "MetLife Stadium",
+            "id": "metlife",
+            "capacity": 82500,
+            "yearBuilt": 2010,
+            "cost": "US$ 1.6 Bi",
+            "historicFact": "Sede de dois times da NFL e local da final da Copa América Centenário.",
+            "image": "https://images.unsplash.com/photo-1534438327276-14e5300c3a48"
+        },
+        "travel": {
+            "airport": "Newark (EWR) / JFK / LaGuardia",
+            "transport": "Rede de metrô 24h em NY e trens NJ Transit.",
+            "dishes": [
+                {
+                    "name": "NY Pizza",
+                    "description": "Fatia fina e crocante clássica."
+                },
+                {
+                    "name": "Bagels com Lox",
+                    "description": "Salmão defumado e cream cheese no bagel."
+                },
+                {
+                    "name": "Cheesesteak (NJ Style)",
+                    "description": "Carne com queijo provolone no pão hoagie."
+                }
+            ],
+            "attractions": [
+                {
+                    "name": "Times Square",
+                    "description": "O cruzamento mais brilhante do mundo."
+                },
+                {
+                    "name": "Estátua da Liberdade",
+                    "description": "Símbolo universal de liberdade."
+                },
+                {
+                    "name": "Central Park",
+                    "description": "Oásis verde no meio da selva de pedra."
+                }
+            ]
+        },
+        "trivia": [
+            "O MetLife Stadium será rebatizado para a final devido às regras da FIFA.",
+            "Mais de 800 línguas são faladas na Grande NY.",
+            "NY tem mais arranha-céus que qualquer outra cidade global."
+        ],
+        "economics": "Centro financeiro global (Wall Street). PIB est. $2.3 Trilhões.",
+        "coordinates": [
+            40.8128,
+            -74.0742
+        ],
+        "climate": "Junho/Julho: Médias de 29°C / 20°C. Quente e úmido.",
+        "wcMatches": 8,
+        "wcRole": "Final"
+    },
+    {
+        "id": "usa-la",
+        "name": "Los Angeles",
+        "countryCode": "USA",
+        "population": "12.9 milhões",
+        "description": "Cinema, praias e inovação. A capital do entretenimento.",
+        "highlights": [
+            "Hollywood",
+            "SoFi Stadium",
+            "Pacific Coast"
+        ],
+        "stadium": {
+            "name": "SoFi Stadium",
+            "id": "sofi",
+            "capacity": 70240,
+            "yearBuilt": 2020,
+            "cost": "US$ 5.5 Bi",
+            "historicFact": "O estádio mais caro do mundo, com uma tela de 360 graus épica.",
+            "image": "https://images.unsplash.com/photo-1580655653885-65763b2597d0"
+        },
+        "travel": {
+            "airport": "LAX",
+            "transport": "Uber/Lyft recomendados. Metrô em expansão.",
+            "dishes": [
+                {
+                    "name": "Fish Tacos",
+                    "description": "Influência do sul da Califórnia."
+                },
+                {
+                    "name": "In-N-Out Burger",
+                    "description": "Hambúrguer cult com estilo animal style."
+                },
+                {
+                    "name": "Kogi BBQ Tacos",
+                    "description": "Fusão Coreano-Mexicana famosa."
+                }
+            ],
+            "attractions": [
+                {
+                    "name": "Letreiro de Hollywood",
+                    "description": "Ícone cinematográfico nas colinas."
+                },
+                {
+                    "name": "Observatório Griffith",
+                    "description": "Vista panorâmica do letreiro e da cidade."
+                },
+                {
+                    "name": "Santa Monica Pier",
+                    "description": "Parque de diversões clássico à beira-mar."
+                }
+            ]
+        },
+        "trivia": [
+            "O teto do SoFi Stadium é translúcido para entrada de luz natural.",
+            "LA sediará as Olimpíadas em 2028 pela terceira vez.",
+            "O letreiro de Hollywood dizia originalmente 'Hollywoodland'."
+        ],
+        "economics": "Hub de entretenimento e tecnologia (Silicon Beach). PIB est. $1.1 Trilhões.",
+        "coordinates": [
+            33.9534,
+            -118.3392
+        ],
+        "climate": "Junho/Julho: Médias de 29°C / 17°C. Ensolarado e seco.",
+        "wcMatches": 8,
+        "wcRole": "Quartas de Final"
+    },
+    {
+        "id": "usa-dal",
+        "name": "Dallas",
+        "countryCode": "USA",
+        "population": "8 milhões",
+        "description": "Metrópole texana que receberá o maior número de jogos da Copa (9 jogos).",
+        "highlights": [
+            "AT&T Stadium",
+            "Churrasco Texano",
+            "Texas Size"
+        ],
+        "stadium": {
+            "name": "AT&T Stadium",
+            "id": "att-stadium",
+            "capacity": 80000,
+            "yearBuilt": 2009,
+            "cost": "US$ 1.3 Bi",
+            "historicFact": "Conhecido como o 'Jerry World', possui um dos maiores telões do planeta.",
+            "image": "https://images.unsplash.com/photo-1544274431-7e8c3df1b80c"
+        },
+        "travel": {
+            "airport": "DFW Intl",
+            "transport": "Necessário alugar carro. DART leve para o centro.",
+            "dishes": [
+                {
+                    "name": "Texas BBQ",
+                    "description": "Peito de boi (brisket) defumado por horas."
+                },
+                {
+                    "name": "Fajitas Tex-Mex",
+                    "description": "Carne grelhada com pimentões e tortilhas."
+                },
+                {
+                    "name": "Pecan Pie",
+                    "description": "Torta de nozes típica do sul."
+                }
+            ],
+            "attractions": [
+                {
+                    "name": "Dealey Plaza",
+                    "description": "Local histórico do assassinato de JFK."
+                },
+                {
+                    "name": "Reunion Tower",
+                    "description": "Torre com vista 360 da cidade."
+                },
+                {
+                    "name": "Dallas Arboretum",
+                    "description": "66 acres de jardins botânicos."
+                }
+            ]
+        },
+        "trivia": [
+            "O telão do estádio é tão grande que teve que ser considerado no design.",
+            "Dallas terá o maior hub de transporte para torcedores.",
+            "Muitos jogos serão em teto fechado devido ao calor texano."
+        ],
+        "economics": "Hub de logística, telecomunicações e energia. PIB est. $600B.",
+        "coordinates": [
+            32.7473,
+            -97.0945
+        ],
+        "climate": "Junho/Julho: Médias de 35°C / 24°C. Muito quente.",
+        "wcMatches": 9,
+        "wcRole": "Semi-final"
+    },
+    {
+        "id": "usa-atl",
+        "name": "Atlanta",
+        "countryCode": "USA",
+        "population": "6.3 milhões",
+        "description": "A joia do sul, berço da Coca-Cola e dos direitos civis.",
+        "highlights": [
+            "Centro da CNN",
+            "Aquário Gigante",
+            "Arquitetura Moderna"
+        ],
+        "stadium": {
+            "name": "Mercedes-Benz Stadium",
+            "id": "mercedes-benz",
+            "capacity": 71000,
+            "yearBuilt": 2017,
+            "cost": "US$ 1.6 Bi",
+            "historicFact": "Teto retrátil inovador que abre como uma lente de câmera.",
+            "image": "https://images.unsplash.com/photo-1522778119026-d647f0565c6a"
+        },
+        "travel": {
+            "airport": "Hartsfield-Jackson (ATL)",
+            "transport": "MARTA liga aeroporto ao centro de forma simples.",
+            "dishes": [
+                {
+                    "name": "Frango Frito Sulista",
+                    "description": "Clássico crocante com waffles."
+                },
+                {
+                    "name": "Peach Cobbler",
+                    "description": "Sobremesa de pêssego, símbolo da Geórgia."
+                },
+                {
+                    "name": "Pimento Cheese",
+                    "description": "Sanduíche de queijo cremoso apimentado."
+                }
+            ],
+            "attractions": [
+                {
+                    "name": "Aquário da Geórgia",
+                    "description": "Um dos maiores do mundo com tubarões-baleia."
+                },
+                {
+                    "name": "World of Coca-Cola",
+                    "description": "Museu da bebida com degustação global."
+                },
+                {
+                    "name": "Parque Martin Luther King Jr.",
+                    "description": "História dos direitos civis."
+                }
+            ]
+        },
+        "trivia": [
+            "O teto retrátil abre em apenas 8 minutos.",
+            "O aeroporto de Atlanta é o mais movimentado do mundo.",
+            "Sede dos Jogos Olímpicos de 1996."
+        ],
+        "economics": "Hub global de transporte e mídia (Delta, CNN). PIB est. $450B.",
+        "coordinates": [
+            33.7553,
+            -84.4006
+        ],
+        "climate": "Junho/Julho: Médias de 32°C / 21°C. Úmido com tempestades.",
+        "wcMatches": 8,
+        "wcRole": "Semi-final"
+    },
+    {
+        "id": "usa-mia",
+        "name": "Miami",
+        "countryCode": "USA",
+        "population": "6.2 milhões",
+        "description": "Porta de entrada latina, festa, sol e o efeito Messi.",
+        "highlights": [
+            "South Beach",
+            "Wynwood Walls",
+            "Influência Latina"
+        ],
+        "stadium": {
+            "name": "Hard Rock Stadium",
+            "id": "hard-rock",
+            "capacity": 64767,
+            "yearBuilt": 1987,
+            "cost": "US$ 550M (renovação)",
+            "historicFact": "Tradicional palco de Super Bowls e agora sede da Copa 2026.",
+            "image": "https://images.unsplash.com/photo-1506729623306-b5a934d88b53"
+        },
+        "travel": {
+            "airport": "Miami Intl (MIA) / FLL",
+            "transport": "Metromover grátis no centro. Alugar carro é bom.",
+            "dishes": [
+                {
+                    "name": "Cuban Sandwich",
+                    "description": "Presunto, porco, queijo e picles."
+                },
+                {
+                    "name": "Stone Crab Claws",
+                    "description": "Patas de caranguejo gigantes e frescas."
+                },
+                {
+                    "name": "Key Lime Pie",
+                    "description": "Torta ácida de limão típica da Flórida."
+                }
+            ],
+            "attractions": [
+                {
+                    "name": "Distrito Art Déco",
+                    "description": "Arquitetura icônica e cores pastéis."
+                },
+                {
+                    "name": "Vizcaya Museum",
+                    "description": "Vila histórica com jardins europeus."
+                },
+                {
+                    "name": "Everglades",
+                    "description": "Safári aquático em pântanos tropicais."
+                }
+            ]
+        },
+        "trivia": [
+            "Miami tem a maior coleção mundial de arquitetura Art Déco.",
+            "É a única grande cidade dos EUA fundada por uma mulher.",
+            "Conhecida como a capital mundial dos cruzeiros."
+        ],
+        "economics": "Hub de turismo internacional e finanças. PIB est. $350B.",
+        "coordinates": [
+            25.958,
+            -80.2389
+        ],
+        "climate": "Junho/Julho: Médias de 33°C / 26°C. Tropical e úmido.",
+        "wcMatches": 7,
+        "wcRole": "Terceiro Lugar"
+    },
+    {
+        "id": "can-tor",
+        "name": "Toronto",
+        "countryCode": "CAN",
+        "population": "6.7 milhões",
+        "description": "A metrópole mais diversa do mundo e motor econômico do Canadá.",
+        "highlights": [
+            "CN Tower",
+            "Multiculturalismo",
+            "BMO Field"
+        ],
+        "stadium": {
+            "name": "BMO Field",
+            "id": "bmo-field",
+            "capacity": 45736,
+            "yearBuilt": 2007,
+            "cost": "CAD 150M+",
+            "historicFact": "Casa da seleção canadense e está sendo expandido para a Copa.",
+            "image": "https://images.unsplash.com/photo-1502016222102-47b82eaa4a3c"
+        },
+        "travel": {
+            "airport": "Toronto Pearson (YYZ)",
+            "transport": "TTC (Metrô/Bondes) é excelente. UP Express do aeroporto.",
+            "dishes": [
+                {
+                    "name": "Poutine",
+                    "description": "Batatas fritas com queijo coalho e gravy."
+                },
+                {
+                    "name": "Peameal Bacon",
+                    "description": "Sanduíche de lombo curado com milho."
+                },
+                {
+                    "name": "Butter Tarts",
+                    "description": "Pastelaria doce e amanteigada clássica."
+                }
+            ],
+            "attractions": [
+                {
+                    "name": "CN Tower",
+                    "description": "Estrutura icônica com piso de vidro."
+                },
+                {
+                    "name": "Distillery District",
+                    "description": "Vila vitoriana com arte e gastronomia."
+                },
+                {
+                    "name": "Royal Ontario Museum",
+                    "description": "Museu de história natural e cultura mundial."
+                }
+            ]
+        },
+        "trivia": [
+            "Mais de 180 línguas e dialetos são falados em Toronto.",
+            "A rede PATH é a maior galeria subterrânea do mundo.",
+            "Mais de 50% dos residentes nasceram fora do Canadá."
+        ],
+        "economics": "Centro financeiro do Canadá (TSX). PIB est. $400B.",
+        "coordinates": [
+            43.6332,
+            -79.4186
+        ],
+        "climate": "Junho/Julho: Médias de 27°C / 17°C. Agradável e ensolarado.",
+        "wcMatches": 6,
+        "wcRole": "Fase de Grupos"
+    },
+    {
+        "id": "can-van",
+        "name": "Vancouver",
+        "countryCode": "CAN",
+        "population": "2.7 milhões",
+        "description": "Onde as montanhas encontram o Oceano Pacífico. Clima moderado.",
+        "highlights": [
+            "Stanley Park",
+            "Cenários de Cinema",
+            "Natureza"
+        ],
+        "stadium": {
+            "name": "BC Place",
+            "id": "bc-place",
+            "capacity": 54500,
+            "yearBuilt": 1983,
+            "cost": "CAD 563M (renovação)",
+            "historicFact": "Sediou a final da Copa Feminina 2015 e Olimpíadas de Inverno 2010.",
+            "image": "https://images.unsplash.com/photo-1559511260-66a654ae982a"
+        },
+        "travel": {
+            "airport": "Vancouver Intl (YVR)",
+            "transport": "SkyTrain liga aeroporto ao centro de forma automática.",
+            "dishes": [
+                {
+                    "name": "Salmão do Pacífico",
+                    "description": "Grelhado em tábuas de cedro."
+                },
+                {
+                    "name": "Butter Chicken",
+                    "description": "Reflexo da forte comunidade sul-asiática."
+                },
+                {
+                    "name": "Nanaimo Bars",
+                    "description": "Doce em camadas sem cozimento."
+                }
+            ],
+            "attractions": [
+                {
+                    "name": "Stanley Park",
+                    "description": "O pulmão verde cercado pelo mar."
+                },
+                {
+                    "name": "Capilano Bridge",
+                    "description": "Ponte suspensa épica sobre um cânion."
+                },
+                {
+                    "name": "Granville Island",
+                    "description": "Mercado público com arte local."
+                }
+            ]
+        },
+        "trivia": [
+            "O Stanley Park é maior que o Central Park de NY.",
+            "Conhecida como 'Hollywood North' pela indústria de cinema.",
+            "Raramente neva pesado no centro da cidade."
+        ],
+        "economics": "Hub de tecnologia, cinema e comércio marítimo. PIB est. $150B.",
+        "coordinates": [
+            49.2768,
+            -123.112
+        ],
+        "climate": "Junho/Julho: Médias de 22°C / 13°C. Verão fresco.",
+        "wcMatches": 7,
+        "wcRole": "Oitavas de Final"
+    },
+    {
+        "id": "mex-mty",
+        "name": "Monterrey",
+        "countryCode": "MEX",
+        "population": "5.3 milhões",
+        "description": "O motor industrial do México cercado por montanhas surreais.",
+        "highlights": [
+            "Cerro de la Silla",
+            "Parque Fundidora",
+            "Modernidade"
+        ],
+        "stadium": {
+            "name": "Estádio BBVA",
+            "id": "bbva",
+            "capacity": 53500,
+            "yearBuilt": 2015,
+            "cost": "US$ 200M",
+            "historicFact": "Conhecido como o 'Gigante de Aço' com vista para as montanhas.",
+            "image": "https://images.unsplash.com/photo-1541445763567-c25965b9319b"
+        },
+        "travel": {
+            "airport": "Monterrey Intl (MTY)",
+            "transport": "Taxis e Uber são comuns. Metrorrey disponível.",
+            "dishes": [
+                {
+                    "name": "Cabrito",
+                    "description": "Cordeiro jovem assado lentamente."
+                },
+                {
+                    "name": "Machaca",
+                    "description": "Carne seca desfiada com ovos."
+                },
+                {
+                    "name": "Gloria",
+                    "description": "Doce de leite e nozes típico."
+                }
+            ],
+            "attractions": [
+                {
+                    "name": "Macroplaza",
+                    "description": "Uma das maiores praças urbanas do mundo."
+                },
+                {
+                    "name": "Parque Chipinque",
+                    "description": "Trilhas na Sierra Madre com vista da cidade."
+                },
+                {
+                    "name": "Grutas de García",
+                    "description": "Sistema de cavernas antigas."
+                }
+            ]
+        },
+        "trivia": [
+            "O estádio BBVA é considerado um dos mais belos do mundo.",
+            "Monterrey tem o maior PIB per capita do México.",
+            "O Cerro de la Silla é um monumento natural icônico."
+        ],
+        "economics": "Capital industrial do México (aço, vidro). PIB est. $140B.",
+        "coordinates": [
+            25.6686,
+            -100.2449
+        ],
+        "climate": "Junho/Julho: Médias de 35°C / 23°C. Quente e semiárido.",
+        "wcMatches": 4,
+        "wcRole": "Fase de Grupos"
+    },
+    {
+        "id": "mex-gdl",
+        "name": "Guadalajara",
+        "countryCode": "MEX",
+        "population": "5.3 milhões",
+        "description": "A alma do México: Terra do Mariachi e da Tequila.",
+        "highlights": [
+            "Cultura Mariachi",
+            "Hospício Cabañas",
+            "Tlaquepaque"
+        ],
+        "stadium": {
+            "name": "Estádio Akron",
+            "id": "akron",
+            "capacity": 48071,
+            "yearBuilt": 2010,
+            "cost": "US$ 200M",
+            "historicFact": "Sua arquitetura parece um vulcão coroado por uma nuvem.",
+            "image": "https://images.unsplash.com/photo-1563294340-9a40536d5e08"
+        },
+        "travel": {
+            "airport": "Miguel Hidalgo (GDL)",
+            "transport": "Trens leves e táxis de ponto são as melhores opções.",
+            "dishes": [
+                {
+                    "name": "Tortas Ahogadas",
+                    "description": "Sanduíche 'afogado' em molho de pimenta."
+                },
+                {
+                    "name": "Birria",
+                    "description": "Ensopado rico em especiarias."
+                },
+                {
+                    "name": "Jericalla",
+                    "description": "Sobremesa tipo flan caramelizado."
+                }
+            ],
+            "attractions": [
+                {
+                    "name": "Catedral de Guadalajara",
+                    "description": "Ícone arquitetônico colonial."
+                },
+                {
+                    "name": "Tlaquepaque",
+                    "description": "Vila de artesãos e mariachis."
+                },
+                {
+                    "name": "Hospício Cabañas",
+                    "description": "Murais históricos tombados pela UNESCO."
+                }
+            ]
+        },
+        "trivia": [
+            "O mariachi e a tequila nasceram nesta região.",
+            "O estádio é movido a energia solar.",
+            "Sediou jogos das Copas de 1970 e 1986."
+        ],
+        "economics": "Hub cultural, tecnológico e agroindustrial. PIB est. $100B.",
+        "coordinates": [
+            20.682,
+            -103.4624
+        ],
+        "climate": "Junho/Julho: Médias de 31°C / 18°C. Quente com chuvas.",
+        "wcMatches": 4,
+        "wcRole": "Fase de Grupos"
+    },
+    {
+        "id": "usa-hou",
+        "name": "Houston",
+        "countryCode": "USA",
+        "population": "7.5 milhões",
+        "description": "Espaço, energia e diversidade. A 'Space City'.",
+        "highlights": [
+            "NASA Space Center",
+            "Culinária Étnica",
+            "Energia"
+        ],
+        "stadium": {
+            "name": "NRG Stadium",
+            "id": "nrg",
+            "capacity": 72220,
+            "yearBuilt": 2002,
+            "cost": "US$ 449M",
+            "historicFact": "Primeiro estádio da NFL com teto retrátil funcional.",
+            "image": "https://images.unsplash.com/photo-1522083165195-3424ed129620"
+        },
+        "travel": {
+            "airport": "George Bush (IAH) / Hobby",
+            "transport": "Carro é essencial. METRORail serve o centro.",
+            "dishes": [
+                {
+                    "name": "Tex-Mex Breakfast Tacos",
+                    "description": "Tortilhas com chouriço e ovo."
+                },
+                {
+                    "name": "Crawfish Boil",
+                    "description": "Lagostins cozidos com milho e batatas."
+                },
+                {
+                    "name": "Kolaches",
+                    "description": "Pastéis com salsicha de influência tcheca."
+                }
+            ],
+            "attractions": [
+                {
+                    "name": "NASA Space Center",
+                    "description": "Centro oficial de visitantes e controle de missão."
+                },
+                {
+                    "name": "Museum District",
+                    "description": "Complexo com 19 museus de arte e ciência."
+                },
+                {
+                    "name": "Buffalo Bayou Park",
+                    "description": "Trilhas urbanas e arte moderna."
+                }
+            ]
+        },
+        "trivia": [
+            "Houston é a cidade com maior diversidade étnica dos EUA.",
+            "Centro das famosas missões Apollo da NASA.",
+            "Possui o maior centro médico do mundo."
+        ],
+        "economics": "Capital mundial da energia (óleo e gás). PIB est. $500B.",
+        "coordinates": [
+            29.6847,
+            -95.4107
+        ],
+        "climate": "Junho/Julho: Médias de 34°C / 24°C. Muito calor e umidade.",
+        "wcMatches": 7,
+        "wcRole": "Oitavas de Final"
+    },
+    {
+        "id": "usa-kc",
+        "name": "Kansas City",
+        "countryCode": "USA",
+        "population": "2.4 milhões",
+        "description": "O coração apaixonado dos EUA e capital mundial do BBQ.",
+        "highlights": [
+            "Kansas City BBQ",
+            "Jazz",
+            "Estádio Barulhento"
+        ],
+        "stadium": {
+            "name": "Arrowhead Stadium",
+            "id": "arrowhead",
+            "capacity": 76416,
+            "yearBuilt": 1972,
+            "cost": "US$ 43M (Original)",
+            "historicFact": "Recorde mundial de barulho em estádio (142.2 dB).",
+            "image": "https://images.unsplash.com/photo-1541445763567-c25965b9319b"
+        },
+        "travel": {
+            "airport": "MCI Intl",
+            "transport": "Carro recomendado. Ônibus ligam pontos-chave.",
+            "dishes": [
+                {
+                    "name": "Burnt Ends",
+                    "description": "Ponta de brisket defumada e crocante."
+                },
+                {
+                    "name": "Sanduíche de Carne Moída",
+                    "description": "Clássico temperado no pão."
+                },
+                {
+                    "name": "KC Strip Steak",
+                    "description": "Corte de carne grelhado à perfeição."
+                }
+            ],
+            "attractions": [
+                {
+                    "name": "Museu da 1ª Guerra Mundial",
+                    "description": "Memorial e trincheiras replicadas."
+                },
+                {
+                    "name": "Museu Nelson-Atkins",
+                    "description": "Arte e esculturas icônicas ao ar livre."
+                },
+                {
+                    "name": "Distrito de Jazz 18th & Vine",
+                    "description": "Berço do jazz e museu do beisebol negro."
+                }
+            ]
+        },
+        "trivia": [
+            "Conhecida como 'Cidade das Fontes' (mais que Roma).",
+            "A cidade se estende por dois estados (MO e KS).",
+            "Invenção dos 'Burnt Ends' aconteceu aqui."
+        ],
+        "economics": "Hub agroindustrial e de tecnologia em saúde. PIB est. $150B.",
+        "coordinates": [
+            39.0489,
+            -94.4839
+        ],
+        "climate": "Junho/Julho: Médias de 32°C / 21°C. Quente e úmido.",
+        "wcMatches": 6,
+        "wcRole": "Quartas de Final"
+    },
+    {
+        "id": "usa-phi",
+        "name": "Filadélfia",
+        "countryCode": "USA",
+        "population": "6.3 milhões",
+        "description": "Berço da democracia americana e história da independência.",
+        "highlights": [
+            "Liberty Bell",
+            "Rocky Steps",
+            "História"
+        ],
+        "stadium": {
+            "name": "Lincoln Financial Field",
+            "id": "linc",
+            "capacity": 69176,
+            "yearBuilt": 2003,
+            "cost": "US$ 512M",
+            "historicFact": "Energia 100% verde gerada por painéis solares locais.",
+            "image": "https://images.unsplash.com/photo-1524143890288-726915e61df6"
+        },
+        "travel": {
+            "airport": "Philadelphia Intl (PHL)",
+            "transport": "SEPTA (Trens e metrô) é muito funcional.",
+            "dishes": [
+                {
+                    "name": "Philly Cheesesteak",
+                    "description": "Carne, queijo e cebola no pão italiano."
+                },
+                {
+                    "name": "Soft Pretzel",
+                    "description": "Lanche de rua salgado com mostarda."
+                },
+                {
+                    "name": "Water Ice",
+                    "description": "Refresco tipo raspadinha de frutas."
+                }
+            ],
+            "attractions": [
+                {
+                    "name": "Liberty Bell",
+                    "description": "Símbolo histórico da liberdade."
+                },
+                {
+                    "name": "Independence Hall",
+                    "description": "Onde foi assinada a independência dos EUA."
+                },
+                {
+                    "name": "Reading Terminal Market",
+                    "description": "Mercado gastronômico gigante."
+                }
+            ]
+        },
+        "trivia": [
+            "Primeira capital oficial dos Estados Unidos.",
+            "A escadaria do filme Rocky é um ponto viral de fotos.",
+            "Possui a maior quantidade de murais urbanos do país."
+        ],
+        "economics": "Hub farmacêutico, de saúde e educação (UPenn). PIB est. $500B.",
+        "coordinates": [
+            39.9008,
+            -75.1675
+        ],
+        "climate": "Junho/Julho: Médias de 30°C / 20°C. Quente e umidade.",
+        "wcMatches": 6,
+        "wcRole": "Oitavas de Final"
+    },
+    {
+        "id": "usa-sea",
+        "name": "Seattle",
+        "countryCode": "USA",
+        "population": "4.1 milhões",
+        "description": "Natureza exuberante, café e tecnologia. Berço do Grunge.",
+        "highlights": [
+            "Space Needle",
+            "Amazon/Microsoft",
+            "Sounders FC"
+        ],
+        "stadium": {
+            "name": "Lumen Field",
+            "id": "lumen",
+            "capacity": 69000,
+            "yearBuilt": 2002,
+            "cost": "US$ 430M",
+            "historicFact": "Atmosfera única com uma das torcidas mais barulhentas da MLS.",
+            "image": "https://images.unsplash.com/photo-1542125387-c712848890cb"
+        },
+        "travel": {
+            "airport": "Sea-Tac (SEA)",
+            "transport": "Link Light Rail excelente do aeroporto ao centro.",
+            "dishes": [
+                {
+                    "name": "Salmon Chowder",
+                    "description": "Ensopado de salmão fresco do Pacífico."
+                },
+                {
+                    "name": "Caranguejo Dungeness",
+                    "description": "Especialidade marinha local."
+                },
+                {
+                    "name": "Seattle-style Teriyaki",
+                    "description": "Prato de fusão asiática local."
+                }
+            ],
+            "attractions": [
+                {
+                    "name": "Space Needle",
+                    "description": "Torre futurista com vista 360°."
+                },
+                {
+                    "name": "Pike Place Market",
+                    "description": "Mercado de peixes e flores histórico."
+                },
+                {
+                    "name": "Chihuly Garden",
+                    "description": "Exposição de esculturas em vidro únicas."
+                }
+            ]
+        },
+        "trivia": [
+            "Primeira loja da Starbucks abriu aqui em 1971.",
+            "Sede da Amazon e da Microsoft.",
+            "O grunge (Nirvana, Pearl Jam) nasceu nos clubes de Seattle."
+        ],
+        "economics": "Hub de inovação tecnológica e aeroespacial. PIB est. $500B.",
+        "coordinates": [
+            47.5952,
+            -122.3316
+        ],
+        "climate": "Junho/Julho: Médias de 23°C / 13°C. Verão ameno com chuvas leves.",
+        "wcMatches": 6,
+        "wcRole": "Oitavas de Final"
+    },
+    {
+        "id": "usa-sf",
+        "name": "San Francisco Bay Area",
+        "countryCode": "USA",
+        "population": "7.8 milhões",
+        "description": "O coração da inovação e do Vale do Silício.",
+        "highlights": [
+            "Golden Gate",
+            "Silicon Valley",
+            "Tecnologia"
+        ],
+        "stadium": {
+            "name": "Levi's Stadium",
+            "id": "levis",
+            "capacity": 68500,
+            "yearBuilt": 2014,
+            "cost": "US$ 1.3 Bi",
+            "historicFact": "Um dos estádios mais sustentáveis com certificação LEED Gold.",
+            "image": "https://images.unsplash.com/photo-1501594907352-04cda38ebc29"
+        },
+        "travel": {
+            "airport": "SFO / SJC / OAK",
+            "transport": "Caltrain e BART ligam as cidades da baía.",
+            "dishes": [
+                {
+                    "name": "Cioppino",
+                    "description": "Ensopado de frutos do mar clássico de SF."
+                },
+                {
+                    "name": "Sourdough Bread",
+                    "description": "Pão de fermentação natural famoso."
+                },
+                {
+                    "name": "Clam Chowder no Pão",
+                    "description": "Servido dentro do sourdough."
+                }
+            ],
+            "attractions": [
+                {
+                    "name": "Ponte Golden Gate",
+                    "description": "Símbolo icônico dos Estados Unidos."
+                },
+                {
+                    "name": "Ilha de Alcatraz",
+                    "description": "Antiga prisão de segurança máxima."
+                },
+                {
+                    "name": "Fisherman's Wharf",
+                    "description": "Leões-marinhos e gastronomia costeira."
+                }
+            ]
+        },
+        "trivia": [
+            "Levi's Stadium é totalmente movido por painéis solares.",
+            "O Vale do Silício é a sede global da Apple e Google.",
+            "A neblina matinal é tão comum que tem nome: Karl."
+        ],
+        "economics": "Capital mundial da tecnologia e inovação. PIB est. $600B+",
+        "coordinates": [
+            37.4033,
+            -121.9694
+        ],
+        "climate": "Junho/Julho: Médias de 22°C / 13°C. Verão fresco e nublado.",
+        "wcMatches": 6,
+        "wcRole": "Fase de Grupos"
+    },
+    {
+        "id": "usa-bos",
+        "name": "Boston",
+        "countryCode": "USA",
+        "population": "4.9 milhões",
+        "description": "História colonial, elite acadêmica e o charme da Nova Inglaterra.",
+        "highlights": [
+            "Freedom Trail",
+            "Harvard",
+            "Clam Chowder"
+        ],
+        "stadium": {
+            "name": "Gillette Stadium",
+            "id": "gillette",
+            "capacity": 65878,
+            "yearBuilt": 2002,
+            "cost": "US$ 325M",
+            "historicFact": "Coração do New England Patriots durante sua era de ouro.",
+            "image": "https://images.unsplash.com/photo-1490237014491-8aa29811ea56"
+        },
+        "travel": {
+            "airport": "Logan Intl (BOS)",
+            "transport": "Metrô 'T' é histórico e as distâncias são curtas.",
+            "dishes": [
+                {
+                    "name": "Clam Chowder",
+                    "description": "Versão cremosa da Nova Inglaterra."
+                },
+                {
+                    "name": "Lobster Roll",
+                    "description": "Sanduíche de lagosta manteigada no pão tostado."
+                },
+                {
+                    "name": "Boston Cream Pie",
+                    "description": "Bolo com creme e cobertura de chocolate."
+                }
+            ],
+            "attractions": [
+                {
+                    "name": "Freedom Trail",
+                    "description": "Caminhada por 16 locais históricos da Revolução."
+                },
+                {
+                    "name": "Fenway Park",
+                    "description": "Estádio mais antigo da MLB (Beisebol)."
+                },
+                {
+                    "name": "Universidade Harvard",
+                    "description": "Tour pelo campus da universidade mais prestigiada."
+                }
+            ]
+        },
+        "trivia": [
+            "A revolta do chá em Boston desencadeou a Revolução Americana.",
+            "Possui o primeiro metrô construído nos EUA.",
+            "Harvard é a universidade mais antiga do país (1636)."
+        ],
+        "economics": "Hub global de biotecnologia e educação. PIB est. $500B.",
+        "coordinates": [
+            42.0909,
+            -71.2643
+        ],
+        "climate": "Junho/Julho: Médias de 28°C / 18°C. Verão ameno e agradável.",
+        "wcMatches": 7,
+        "wcRole": "Quartas de Final"
+    }
+]

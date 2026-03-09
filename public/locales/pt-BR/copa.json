@@ -41,7 +41,7 @@
             "copied_desc": "Simulação copiada para a área de transferência",
             "text_intro": "⚽ Minha simulação \"{{name}}\" - Copa 2026\n\n",
             "text_group": "📊 Grupo {{group}}:\n",
-            "text_footer": "🏆 Feito no ArenaCopa!"
+            "text_footer": "🏆 Feito no ArenaCup!"
         },
         "create": {
             "title": "Nova Simulação",

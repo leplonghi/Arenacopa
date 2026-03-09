@@ -1,0 +1,43 @@
+{
+    "title": "Global Ranking",
+    "subtitle": "The top predictors for the 2026 World Cup. Rise through the ranks and achieve eternal glory.",
+    "hall_of_fame": "HALL OF FAME",
+    "tabs": {
+        "global": "Global",
+        "boloes": "Pools",
+        "historico": "History",
+        "stats": "Stats"
+    },
+    "user_section": {
+        "podium_desc": "Global Elite",
+        "my_performance": "Your Performance",
+        "status_protective": "Protective Status",
+        "climbing": "CLIMBING",
+        "points": "POINTS",
+        "accuracy": "ACCURACY",
+        "rank_sync": "Synced {{time}} ago",
+        "top_50": "Top 50 Ranking"
+    },
+    "boloes_section": {
+        "elite": "Pools Elite",
+        "members": "MEMBERS",
+        "accuracy": "ACC",
+        "total_prize": "TOTAL PRIZE"
+    },
+    "history_section": {
+        "legendary_winners": "LEGENDARY CHAMPIONS",
+        "panorama": "HISTORICAL OVERVIEW",
+        "titles": "TITLES",
+        "participations": "APPEARANCES",
+        "goals": "GOALS"
+    },
+    "stats_section": {
+        "top_scorers": "ALL-TIME TOP SCORERS",
+        "records": {
+            "most_titles": "Team with most titles",
+            "most_wins": "Highest number of wins",
+            "goals_record": "Scoring record",
+            "biggest_rout": "Biggest historical rout"
+        }
+    }
+}

@@ -20,7 +20,7 @@
         "share": {
             "text_intro": "Check out my simulation for World Cup {{name}}!",
             "text_group": "Group {{group}}:",
-            "text_footer": "\\nSimulate yours at: https://arenacopa.app/copa/simulacao",
+            "text_footer": "\\nSimulate yours at: https://arenacup.app/copa/simulacao",
             "copied": "Copied!",
             "copied_desc": "Simulation text copied to clipboard.",
             "title": "Share Simulation",

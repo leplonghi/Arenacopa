@@ -1,0 +1,7 @@
+{
+    "general": "An unexpected error occurred.",
+    "not_found": "Resource not found.",
+    "unauthorized": "You must be logged in.",
+    "network": "Connection error.",
+    "validation": "Check the provided data."
+}

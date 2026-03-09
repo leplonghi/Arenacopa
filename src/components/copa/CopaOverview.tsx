@@ -3,12 +3,9 @@ import { motion } from "framer-motion";
 import { MatchCard } from "@/components/MatchCard";
 import { Flag } from "@/components/Flag";
 import {
-    matches,
     groupStandings,
     getTeam,
     groups,
-    getTodayMatches,
-    getTomorrowMatches,
     type Match
 } from "@/data/mockData";
 import { MatchDetailsModal } from "./MatchDetailsModal";
@@ -22,8 +19,9 @@ import { Crown } from "lucide-react";
 import { useMonetization } from "@/contexts/MonetizationContext";
 import { useTranslation } from "react-i18next";
 import { InterstitialAd } from "@/components/InterstitialAd";
+import { useMatches } from "@/hooks/useMatches";
 
-const getQualificationScenario = (teamCode: string) => {
+const getQualificationScenario = (teamCode: string, matches: Match[]) => {
     const group = groups.find(g => groupStandings[g]?.some(t => t.teamCode === teamCode));
     if (!group) return null;
 
@@ -79,12 +77,31 @@ const getQualificationScenario = (teamCode: string) => {
 
 export function CopaOverview() {
     const { t } = useTranslation('copa');
-    const todayMatches = getTodayMatches();
-    const nextMatches = getTomorrowMatches();
-    const upcomingMatches = matches.filter(m => m.status === "scheduled").sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    const { data: matches = [], isLoading } = useMatches();
 
-    const featureMatch = todayMatches.length > 0 ? todayMatches[0] : (nextMatches.length > 0 ? nextMatches[0] : upcomingMatches[0]);
-    const otherMatches = [...todayMatches, ...nextMatches, ...upcomingMatches].filter(m => m.id !== featureMatch?.id).slice(0, 3);
+    const todayMatches = useMemo(() => {
+        const today = new Date().toISOString().split('T')[0];
+        return matches.filter(m => m.date.startsWith(today));
+    }, [matches]);
+
+    const nextMatches = useMemo(() => {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const tomorrowStr = tomorrow.toISOString().split('T')[0];
+        return matches.filter(m => m.date.startsWith(tomorrowStr));
+    }, [matches]);
+
+    const upcomingMatches = useMemo(() => {
+        return matches.filter(m => m.status === "scheduled").sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    }, [matches]);
+
+    const featureMatch = useMemo(() => {
+        return todayMatches.length > 0 ? todayMatches[0] : (nextMatches.length > 0 ? nextMatches[0] : upcomingMatches[0]);
+    }, [todayMatches, nextMatches, upcomingMatches]);
+
+    const otherMatches = useMemo(() => {
+        return [...todayMatches, ...nextMatches, ...upcomingMatches].filter(m => m.id !== featureMatch?.id).slice(0, 3);
+    }, [todayMatches, nextMatches, upcomingMatches, featureMatch]);
 
     const [selectedTeam, setSelectedTeam] = useState<string>("BRA");
     const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
@@ -104,7 +121,15 @@ export function CopaOverview() {
         }
     };
 
-    const scenario = useMemo(() => getQualificationScenario(selectedTeam), [selectedTeam]);
+    const scenario = useMemo(() => getQualificationScenario(selectedTeam, matches), [selectedTeam, matches]);
+
+    if (isLoading) {
+        return (
+            <div className="flex justify-center py-20">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+        );
+    }
 
     return (
         <motion.div

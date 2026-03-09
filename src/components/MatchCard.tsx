@@ -161,7 +161,7 @@ export function MatchCard({ match, compact = false, variant = "default", classNa
         whileTap={{ scale: 0.98 }}
         onClick={onClick}
         className={cn(
-          "glass-card-premium overflow-hidden border border-copa-gold/30 shadow-[0_0_30px_-5px_theme(colors.copa.live)/0.2]",
+          "glass-card-premium overflow-hidden border border-copa-gold/30 animate-glow-live",
           onClick && "cursor-pointer hover:bg-secondary/10 transition-colors",
           className
         )}

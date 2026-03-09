@@ -1,0 +1,47 @@
+{
+    "title": "World Cup Guide",
+    "description": "Everything about the tournament",
+    "calendar": "Calendar",
+    "teams": "Teams",
+    "stadiums": "Stadiums",
+    "history": "History",
+    "historia": {
+        "saga": "The Saga",
+        "mundial": "Global",
+        "subtitle": "22 editions • 80+ years • Eternal Memories",
+        "period": "1930 — 2022",
+        "championsCount": "8 Champions",
+        "tabs": {
+            "editions": "Editions",
+            "titles": "Titles",
+            "scorers": "Top Scorers",
+            "participations": "Participations",
+            "goals": "Goals",
+            "records": "Records"
+        },
+        "sections": {
+            "allEditions": "All Editions",
+            "allEditionsSub": "1930 to 2022 — Complete timeline",
+            "hallOfChampions": "Hall of Champions",
+            "hallOfChampionsSub": "The greatest powers in the world",
+            "goldScorers": "Golden Scorers",
+            "goldScorersSub": "The greatest goalscorers of the World Cups",
+            "globalPresences": "Global Presences",
+            "globalPresencesSub": "Who played the most in the competition",
+            "goalMachines": "Goal Machines",
+            "goalMachinesSub": "The deadliest attacks in history",
+            "historicRecords": "Historic Records",
+            "historicRecordsSub": "The numbers that marked history"
+        },
+        "labels": {
+            "champion": "Champion",
+            "vice": "Runner-up",
+            "third": "3rd Place",
+            "fourth": "4th Place",
+            "host": "Host",
+            "goals": "Goals",
+            "matches": "Matches",
+            "avg": "Avg"
+        }
+    }
+}

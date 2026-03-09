@@ -1,15 +1,18 @@
-
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { db } from "@/integrations/firebase/client";
+import { collection, getDocs } from "firebase/firestore";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-    MapPin, Users, Trophy, Globe, TrendingUp, Info, ArrowRight, X,
-    Maximize2, Thermometer, Mountain, DollarSign, Navigation, Plane, Star, Hash, Building2,
-    Utensils, Camera, Bus, AlertTriangle, CloudRain, Clock, Train
+    MapPin, Users, Trophy, Globe, TrendingUp, X,
+    Thermometer, DollarSign, Plane, Star, Building2,
+    Camera, Bus, AlertTriangle, Cloud, Zap
 } from "lucide-react";
-import { hostCountries, generalCuriosities, type HostCity, type HostCountry } from "@/data/guiaData";
+import { useTranslation } from "react-i18next";
+import { hostCountries, generalCuriosities, type HostCity } from "@/data/guiaData";
+import { Flag } from "@/components/Flag";
 import { cn } from "@/lib/utils";
-import { staggerContainer, staggerItem, heroEnter, titleReveal } from "./animations";
+import { staggerContainer, staggerItem } from "./animations";
+import { Share } from "@capacitor/share";
 
 interface CityStatusData {
     city_id: string;
@@ -18,19 +21,26 @@ interface CityStatusData {
 }
 
 export function GuiaTab() {
+    const { t } = useTranslation('sedes');
     const [selectedCountryCode, setSelectedCountryCode] = useState<"USA" | "MEX" | "CAN">("USA");
     const [selectedCity, setSelectedCity] = useState<HostCity | null>(null);
     const [cityStatus, setCityStatus] = useState<Record<string, CityStatusData>>({});
 
     useEffect(() => {
         const fetchCityStatus = async () => {
-            const { data } = await supabase.from('city_status').select('*');
-            if (data) {
-                const statusMap: Record<string, CityStatusData> = {};
-                (data as unknown as CityStatusData[]).forEach((item) => {
-                    statusMap[item.city_id] = item;
-                });
-                setCityStatus(statusMap);
+            try {
+                const statusRef = collection(db, 'city_status');
+                const statusSnapshot = await getDocs(statusRef);
+                if (!statusSnapshot.empty) {
+                    const statusMap: Record<string, CityStatusData> = {};
+                    statusSnapshot.docs.forEach((docSnap) => {
+                        const item = docSnap.data() as CityStatusData;
+                        statusMap[item.city_id] = item;
+                    });
+                    setCityStatus(statusMap);
+                }
+            } catch (err) {
+                console.error("Error fetching city status", err);
             }
         };
         fetchCityStatus();
@@ -43,43 +53,37 @@ export function GuiaTab() {
             variants={staggerContainer}
             initial="hidden"
             animate="visible"
-            className="space-y-8 pb-24"
+            className="space-y-8 pb-32"
         >
-            {/* Hero Section */}
-            <section className="relative overflow-hidden rounded-3xl bg-black p-8 text-center shadow-2xl border border-white/10 group">
-                <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=1200&q=80')] opacity-30 bg-cover bg-center group-hover:scale-105 transition-transform duration-700" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent" />
-
-                <motion.div variants={heroEnter} className="relative z-10">
-                    <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-white to-emerald-400 mb-3 drop-shadow-sm tracking-tight">
-                        O Mundo Unido 2026
-                    </h1>
-                    <p className="text-white/80 max-w-lg mx-auto text-base leading-relaxed font-medium mb-6">
-                        Explore os 3 países e as 16 cidades-sede que receberão o maior espetáculo da Terra.
-                    </p>
-
-                    <div className="inline-flex justify-center gap-6 px-6 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-md">
-                        <div className="flex flex-col items-center">
-                            <span className="text-lg font-black text-white">16</span>
-                            <span className="text-[9px] uppercase tracking-widest text-white/50 font-bold">Estádios</span>
+            {/* Header Redesigned: Sleek UI sem peso visual forte */}
+            <section className="px-4 pt-4">
+                <div className="bg-gradient-to-br from-zinc-900 to-black rounded-2xl p-5 border border-white/5 relative overflow-hidden">
+                    <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                        <div>
+                            <h1 className="text-2xl font-display font-bold text-white tracking-tight mb-1">
+                                {t('ui.title')}
+                            </h1>
+                            <p className="text-sm text-gray-400 font-medium">
+                                {t('ui.subtitle')}
+                            </p>
                         </div>
-                        <div className="w-px h-8 bg-white/10" />
-                        <div className="flex flex-col items-center">
-                            <span className="text-lg font-black text-primary">104</span>
-                            <span className="text-[9px] uppercase tracking-widest text-primary/50 font-bold">Jogos</span>
-                        </div>
-                        <div className="w-px h-8 bg-white/10" />
-                        <div className="flex flex-col items-center">
-                            <span className="text-lg font-black text-white">48</span>
-                            <span className="text-[9px] uppercase tracking-widest text-white/50 font-bold">Seleções</span>
+                        <div className="flex bg-white/5 rounded-xl border border-white/5 divide-x divide-white/5">
+                            <div className="px-4 py-2 flex items-center gap-2">
+                                <Building2 className="w-3.5 h-3.5 text-emerald-400" />
+                                <span className="text-xs font-bold text-white tracking-wider">16</span>
+                            </div>
+                            <div className="px-4 py-2 flex items-center gap-2">
+                                <Trophy className="w-3.5 h-3.5 text-yellow-400" />
+                                <span className="text-xs font-bold text-white tracking-wider">48</span>
+                            </div>
                         </div>
                     </div>
-                </motion.div>
+                </div>
             </section>
 
-            {/* Country Selector */}
-            <section className="px-1">
-                <div className="flex justify-center gap-3 mb-8 overflow-x-auto py-2 scrollbar-hide">
+            {/* Country Tabs: Mobile-first Approach */}
+            <section className="px-4">
+                <div className="bg-zinc-900/50 p-1 rounded-xl border border-white/5 flex">
                     {hostCountries.map((country) => (
                         <button
                             key={country.code}
@@ -88,84 +92,89 @@ export function GuiaTab() {
                                 setSelectedCity(null);
                             }}
                             className={cn(
-                                "flex flex-col items-center gap-2 px-6 py-3 rounded-2xl transition-all duration-300 border min-w-[100px]",
+                                "flex-1 flex flex-col items-center justify-center gap-1.5 py-3 rounded-lg transition-all duration-300 relative",
                                 selectedCountryCode === country.code
-                                    ? "bg-gradient-to-br from-secondary to-secondary/50 border-primary text-white shadow-lg shadow-primary/10 scale-105"
-                                    : "bg-secondary/20 text-muted-foreground border-transparent hover:bg-secondary/40 hover:text-white"
+                                    ? "bg-zinc-800 text-white shadow-sm"
+                                    : "text-gray-500 hover:text-gray-300"
                             )}
                         >
-                            <span className="text-3xl drop-shadow-md transform transition-transform group-hover:scale-110">{country.flag}</span>
-                            <span className="font-bold text-xs tracking-wide">{country.name}</span>
+                            <Flag
+                                code={country.code}
+                                size="md"
+                                className={cn(
+                                    "transition-all duration-300",
+                                    selectedCountryCode === country.code ? "scale-110 shadow-lg" : "scale-90 opacity-70"
+                                )}
+                            />
+                            <span className={cn(
+                                "text-[10px] font-black tracking-widest uppercase transition-colors",
+                                selectedCountryCode === country.code ? "text-emerald-400" : ""
+                            )}>
+                                {country.code}
+                            </span>
                         </button>
                     ))}
                 </div>
-
-                <AnimatePresence mode="wait">
-                    <motion.div
-                        key={selectedCountryCode}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{ duration: 0.3 }}
-                        className="space-y-8"
-                    >
-                        {/* Cities Grid - Visual Cards */}
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                            {activeCountry.cities.map((city, idx) => (
-                                <CityCard
-                                    key={city.id}
-                                    city={city}
-                                    idx={idx}
-                                    onClick={() => setSelectedCity(city)}
-                                    status={cityStatus[city.id]}
-                                />
-                            ))}
-                        </div>
-
-                        {/* Country Highlights */}
-                        <div className="bg-gradient-to-br from-secondary/30 to-black rounded-2xl p-6 border border-white/5 relative overflow-hidden">
-                            <Globe className="absolute -right-4 -bottom-4 w-32 h-32 text-white/5 rotate-12" />
-                            <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                                <Info className="w-5 h-5 text-primary" />
-                                Sobre {activeCountry.name}
-                            </h3>
-                            <p className="text-sm text-gray-400 leading-relaxed mb-4 relative z-10 max-w-2xl">
-                                {activeCountry.description}
-                            </p>
-
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 relative z-10">
-                                <InfoBadge icon={<Users className="w-4 h-4 text-blue-400" />} label="População" value={activeCountry.population} />
-                                <InfoBadge icon={<DollarSign className="w-4 h-4 text-green-400" />} label="Moeda" value={activeCountry.currency} />
-                                {activeCountry.gdp && <InfoBadge icon={<TrendingUp className="w-4 h-4 text-emerald-400" />} label="PIB" value={activeCountry.gdp} />}
-                                {activeCountry.wcParticipations && <InfoBadge icon={<Trophy className="w-4 h-4 text-yellow-400" />} label="Participações" value={`${activeCountry.wcParticipations} Copas`} />}
-                            </div>
-                        </div>
-                    </motion.div>
-                </AnimatePresence>
             </section>
 
-            {/* Did You Know */}
-            <section className="px-1">
-                <motion.div variants={titleReveal} className="flex items-center gap-2 mb-4 px-1">
-                    <Star className="w-5 h-5 text-yellow-400" />
-                    <h2 className="text-lg font-black text-white">Curiosidade do Dia</h2>
-                </motion.div>
+            {/* Content area: Sem animate presence bloqueante para ser mais leve e imediato */}
+            <motion.div
+                key={selectedCountryCode}
+                initial="hidden"
+                animate="visible"
+                variants={staggerContainer}
+                className="px-4 space-y-8"
+            >
+                {/* Cities Grid: Cards limpos e diretos para o mobile */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {activeCountry.cities.map((city, idx) => (
+                        <CityCard
+                            key={`${selectedCountryCode}-${city.id}`}
+                            city={city}
+                            idx={idx}
+                            onClick={() => setSelectedCity(city)}
+                            status={cityStatus[city.id]}
+                        />
+                    ))}
+                </div>
 
-                <div className="bg-gradient-to-r from-amber-500/10 to-transparent border-l-4 border-amber-500 rounded-r-xl p-5 relative overflow-hidden">
-                    <div className="absolute top-0 right-0 p-4 opacity-10">
-                        <Trophy className="w-20 h-20 text-amber-500 -rotate-12" />
+                {/* Country Stats Mini-Card */}
+                <div className="bg-zinc-900/80 rounded-2xl p-5 border border-white/5">
+                    <div className="flex items-center gap-3 mb-4">
+                        <Flag code={activeCountry.code} size="lg" className="shrink-0" />
+                        <div>
+                            <h3 className="font-display font-bold text-white leading-tight">{activeCountry.name}</h3>
+                            <p className="text-[11px] text-gray-400 uppercase tracking-widest">{t('ui.exploring')}</p>
+                        </div>
                     </div>
-                    <p className="text-sm font-medium text-amber-100/90 italic leading-relaxed max-w-2xl relative z-10">
-                        "{generalCuriosities[0].description}"
+
+                    <p className="text-xs text-gray-300 leading-relaxed mb-5">
+                        {activeCountry.description}
                     </p>
-                    <div className="mt-3 flex items-center gap-2 text-[10px] font-bold text-amber-500 uppercase tracking-wider relative z-10">
-                        <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-                        Fato Histórico
+
+                    <div className="grid grid-cols-2 gap-2">
+                        <InfoBadge icon={<Users className="w-3 h-3 text-blue-400" />} title={t('ui.population')} value={activeCountry.population} />
+                        <InfoBadge icon={<DollarSign className="w-3 h-3 text-emerald-400" />} title={t('ui.currency')} value={activeCountry.currency} />
+                    </div>
+                </div>
+            </motion.div>
+
+            {/* Curiosities */}
+            <section className="px-4">
+                <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 flex gap-4 items-start">
+                    <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center shrink-0">
+                        <Star className="w-4 h-4 text-amber-400" />
+                    </div>
+                    <div>
+                        <h4 className="text-xs font-black text-amber-400 uppercase tracking-widest mb-1">{t('ui.curiosity')}</h4>
+                        <p className="text-sm font-medium text-amber-100/80 leading-relaxed">
+                            "{generalCuriosities[0].description}"
+                        </p>
                     </div>
                 </div>
             </section>
 
-            {/* City Details Modal */}
+            {/* City Details Bottom Sheet Modal */}
             <AnimatePresence>
                 {selectedCity && (
                     <CityDetailsModal
@@ -180,57 +189,49 @@ export function GuiaTab() {
 }
 
 function CityCard({ city, idx, onClick, status }: { city: HostCity, idx: number, onClick: () => void, status?: CityStatusData }) {
-    // Fallback image if none provided in data
+    const { t } = useTranslation('sedes');
     const bgImage = city.image || "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?auto=format&fit=crop&w=800&q=80";
 
     return (
         <motion.div
             variants={staggerItem}
             custom={idx}
-            layoutId={`city-card-${city.id}`}
             onClick={onClick}
-            className="group relative h-48 rounded-2xl overflow-hidden cursor-pointer shadow-lg border border-white/5 active:scale-[0.98] transition-all"
+            className="group relative h-[180px] rounded-2xl overflow-hidden cursor-pointer bg-zinc-900 border border-white/5 active:scale-[0.98] transition-transform"
         >
-            {/* Background Image with Zoom Effect */}
             <div
-                className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
+                className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-105"
                 style={{ backgroundImage: `url('${bgImage}')` }}
             />
-            {/* Gradient Overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-80 group-hover:opacity-70 transition-opacity" />
+            {/* Gradient for legibility - always visible on mobile */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent opacity-100" />
 
-            {/* Content */}
-            <div className="absolute inset-0 p-5 flex flex-col justify-end">
-                <div className="transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
-                    <div className="flex items-center justify-between mb-1">
-                        <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-bold text-primary">
-                            <MapPin className="w-3 h-3" />
-                            {city.countryCode}
-                        </div>
-                        {status && (
-                            <div className="flex items-center gap-1 text-[10px] font-bold text-white/80 bg-black/40 px-2 py-0.5 rounded-full backdrop-blur-sm">
-                                <Thermometer className="w-3 h-3" />
-                                {status.temperature}°C
-                            </div>
-                        )}
+            <div className="absolute inset-0 p-4 flex flex-col justify-between">
+                <div className="flex justify-between items-start">
+                    <div className="bg-black/40 backdrop-blur-sm px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest text-white border border-white/10">
+                        {city.countryCode} Sede
                     </div>
 
-                    <h3 className="text-2xl font-black text-white leading-none mb-1 drop-shadow-lg">{city.name}</h3>
-
-                    <div className="h-0 group-hover:h-auto overflow-hidden transition-all duration-300 opacity-0 group-hover:opacity-100">
-                        <p className="text-xs text-gray-200 line-clamp-2 mt-2 font-medium leading-relaxed">
-                            {city.description}
-                        </p>
-                        <div className="flex items-center gap-2 mt-3 text-[10px] font-bold text-white/70">
-                            <span className="flex items-center gap-1 bg-white/10 px-2 py-1 rounded-md">
-                                <Building2 className="w-3 h-3" /> {city.stadiumName}
-                            </span>
-                            {city.wcMatches && (
-                                <span className="flex items-center gap-1 bg-primary/20 text-primary px-2 py-1 rounded-md">
-                                    <Hash className="w-3 h-3" /> {city.wcMatches} Jogos
-                                </span>
-                            )}
+                    {status && (
+                        <div className="bg-black/40 backdrop-blur-sm px-2 py-1 rounded text-[10px] font-bold text-white border border-white/10 flex items-center gap-1">
+                            <Thermometer className="w-3 h-3 text-emerald-400" />
+                            {status.temperature}°C
                         </div>
+                    )}
+                </div>
+
+                <div>
+                    <h3 className="text-xl font-display font-bold text-white leading-tight mb-2 drop-shadow-md">
+                        {t(`cities.${city.id}.name`, { defaultValue: city.name })}
+                    </h3>
+
+                    <div className="flex items-center gap-4">
+                        <span className="flex items-center gap-1 text-[10px] font-bold text-gray-300">
+                            <Users className="w-3 h-3" /> {city.population}
+                        </span>
+                        <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-400">
+                            <Building2 className="w-3 h-3" /> {Math.round(city.stadiumCapacity / 1000)}k
+                        </span>
                     </div>
                 </div>
             </div>
@@ -238,144 +239,155 @@ function CityCard({ city, idx, onClick, status }: { city: HostCity, idx: number,
     );
 }
 
-function InfoBadge({ icon, label, value }: { icon: React.ReactNode, label: string, value: string }) {
+function InfoBadge({ icon, title, value }: { icon: React.ReactNode, title: string, value: string }) {
     return (
-        <div className="bg-black/20 rounded-xl p-3 border border-white/5 backdrop-blur-sm">
-            <div className="flex items-center gap-2 text-[10px] font-bold text-white/50 uppercase tracking-wider mb-1">
-                {icon}
-                {label}
+        <div className="bg-black/30 p-3 rounded-xl border border-white/5">
+            <div className="flex items-center gap-2 text-[10px] uppercase font-bold text-gray-500 tracking-wider mb-1">
+                {icon} {title}
             </div>
-            <div className="text-xs font-bold text-white truncate">{value}</div>
+            <div className="text-sm font-black text-white">{value}</div>
         </div>
     );
 }
 
+// Interfaces e Helpers Modal
+interface TranslatedCityData {
+    name?: string;
+    description?: string;
+    highlights?: string[];
+    stadium?: { name: string; historicFact: string; };
+    travel?: {
+        airport: string;
+        transport: string;
+        dishes: { name: string; description: string; priceLevel?: string }[];
+        attractions: { name: string; description: string }[];
+    };
+    trivia?: string[];
+    weather?: string;
+}
+
 export function CityDetailsModal({ city, dynamicStatus, onClose }: { city: HostCity, dynamicStatus?: CityStatusData, onClose: () => void }) {
+    const { t } = useTranslation('sedes');
     const [activeTab, setActiveTab] = useState<"geral" | "turismo" | "gastronomia">("geral");
+
+    const cityData = t(`cities.${city.id}`, { returnObjects: true }) as TranslatedCityData;
+    const translatedCity = { ...city, ...cityData };
 
     return (
         <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-md"
+            className="fixed inset-0 z-50 flex flex-col justify-end sm:justify-center sm:p-4 bg-black/60 backdrop-blur-sm"
             onClick={onClose}
         >
             <motion.div
-                layoutId={`city-card-${city.id}`}
-                className="w-full h-full sm:h-auto sm:max-w-2xl bg-[#0a0a0a] sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh] border border-white/10"
+                initial={{ y: "100%" }}
+                animate={{ y: 0 }}
+                exit={{ y: "100%" }}
+                transition={{ type: "spring", damping: 25, stiffness: 200 }}
+                className="w-full sm:max-w-2xl bg-zinc-950 sm:rounded-2xl rounded-t-3xl shadow-2xl overflow-hidden flex flex-col h-[90vh] sm:h-[85vh] border-t sm:border border-white/10"
                 onClick={(e) => e.stopPropagation()}
             >
-                {/* Hero Header */}
-                <div className="h-56 relative shrink-0">
+                {/* Drag handle for mobile feel */}
+                <div className="w-full flex justify-center pt-3 pb-1 shrink-0 bg-zinc-950/80 backdrop-blur-sm absolute top-0 z-30 sm:hidden">
+                    <div className="w-12 h-1.5 bg-white/20 rounded-full" />
+                </div>
+
+                <div className="relative h-64 shrink-0 overflow-hidden">
                     <div
                         className="absolute inset-0 bg-cover bg-center"
                         style={{ backgroundImage: `url('${city.travelGuide?.heroImage || city.image}')` }}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/50 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-transparent" />
 
                     <button
                         onClick={onClose}
-                        className="absolute top-4 right-4 w-8 h-8 bg-black/50 hover:bg-black/80 rounded-full text-white flex items-center justify-center transition-all backdrop-blur-md z-20 border border-white/10"
+                        className="absolute top-4 right-4 z-20 w-8 h-8 rounded-full bg-black/50 border border-white/10 flex items-center justify-center text-white"
                     >
                         <X className="w-4 h-4" />
                     </button>
 
-                    <div className="absolute bottom-0 left-0 right-0 p-6">
-                        <div className="flex items-center gap-2 text-primary text-xs font-bold uppercase tracking-wider mb-1">
-                            <MapPin className="w-3 h-3" />
-                            {city.countryCode} • Sede Oficial
+                    <div className="absolute bottom-4 left-4 right-4">
+                        <div className="inline-flex bg-white/10 backdrop-blur-md px-2 py-1 rounded border border-white/10 items-center gap-1.5 text-[9px] font-black uppercase text-white tracking-widest mb-2">
+                            <Flag code={city.countryCode as any} size="sm" />
+                            {city.countryCode} Sede
                         </div>
-                        <h2 className="text-4xl font-black text-white leading-none mb-2 drop-shadow-xl">{city.name}</h2>
+                        <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight leading-none mb-3">
+                            {t(`cities.${city.id}.name`, { defaultValue: city.name })}
+                        </h2>
 
-                        {/* Quick Stats Tags */}
                         <div className="flex flex-wrap gap-2">
-                            <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/10 backdrop-blur-md text-[10px] font-bold text-white border border-white/10">
-                                <Users className="w-3 h-3" /> {city.population}
+                            <span className="bg-black/40 px-2 py-1 rounded border border-white/10 text-[10px] text-white flex gap-1 font-bold items-center">
+                                <Building2 className="w-3 h-3 text-emerald-400" />
+                                {city.stadiumCapacity / 1000}k
                             </span>
-                            <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-white/10 backdrop-blur-md text-[10px] font-bold text-white border border-white/10">
-                                <Building2 className="w-3 h-3" /> {city.stadiumCapacity / 1000}k Lugares
+                            <span className="bg-black/40 px-2 py-1 rounded border border-white/10 text-[10px] text-white flex gap-1 font-bold items-center">
+                                <Cloud className="w-3 h-3 text-amber-400" />
+                                {translatedCity.weather || city.weather}
                             </span>
                         </div>
                     </div>
                 </div>
 
-                {/* Internal Tabs */}
                 {city.travelGuide && (
-                    <div className="flex border-b border-white/5 px-6 shrink-0 bg-[#0a0a0a]">
-                        <button
-                            onClick={() => setActiveTab("geral")}
-                            className={cn(
-                                "px-4 py-3 text-sm font-bold border-b-2 transition-colors",
-                                activeTab === "geral" ? "border-primary text-white" : "border-transparent text-muted-foreground hover:text-white"
-                            )}
-                        >
-                            Geral
-                        </button>
-                        <button
-                            onClick={() => setActiveTab("turismo")}
-                            className={cn(
-                                "px-4 py-3 text-sm font-bold border-b-2 transition-colors",
-                                activeTab === "turismo" ? "border-primary text-white" : "border-transparent text-muted-foreground hover:text-white"
-                            )}
-                        >
-                            Turismo & Lazer
-                        </button>
-                        <button
-                            onClick={() => setActiveTab("gastronomia")}
-                            className={cn(
-                                "px-4 py-3 text-sm font-bold border-b-2 transition-colors",
-                                activeTab === "gastronomia" ? "border-primary text-white" : "border-transparent text-muted-foreground hover:text-white"
-                            )}
-                        >
-                            Gastronomia
-                        </button>
+                    <div className="flex border-b border-white/5 bg-zinc-950 shrink-0 sticky top-0 z-20">
+                        {(["geral", "turismo", "gastronomia"] as const).map((tab) => (
+                            <button
+                                key={tab}
+                                onClick={() => setActiveTab(tab)}
+                                className={cn(
+                                    "flex-1 py-4 text-[10px] font-black uppercase tracking-widest transition-colors border-b-2",
+                                    activeTab === tab
+                                        ? "text-emerald-400 border-emerald-400"
+                                        : "text-gray-500 border-transparent hover:text-gray-300"
+                                )}
+                            >
+                                {t(`ui.tabs.${tab === 'geral' ? 'general' : tab === 'turismo' ? 'tourism' : 'gastronomy'}`)}
+                            </button>
+                        ))}
                     </div>
                 )}
 
-                {/* Content Area */}
-                <div className="flex-1 overflow-y-auto custom-scrollbar p-6 bg-[#0a0a0a]">
+                <div className="flex-1 overflow-y-auto px-4 py-6 bg-zinc-950 space-y-8">
                     {activeTab === "geral" && (
                         <div className="space-y-6">
-                            <p className="text-sm font-medium text-gray-300 leading-relaxed">
-                                {city.description}
+                            <p className="text-sm text-gray-300 leading-relaxed font-medium">
+                                {translatedCity.description}
                             </p>
 
-                            {/* Stadium Card Highlight */}
-                            <div className="bg-secondary/20 rounded-xl p-4 border border-white/5 flex gap-4 items-center">
-                                <div className="w-16 h-16 rounded-lg bg-black/40 flex items-center justify-center shrink-0">
-                                    <Trophy className="w-8 h-8 text-yellow-500" />
-                                </div>
-                                <div>
-                                    <h4 className="text-sm font-black text-white">{city.stadiumName}</h4>
-                                    <p className="text-xs text-muted-foreground mb-1">Capacidade: {city.stadiumCapacity.toLocaleString()}</p>
-                                    {city.wcMatches && (
-                                        <span className="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded">
-                                            {city.wcMatches} Jogos Confirmados
-                                        </span>
-                                    )}
+                            <div className="bg-black rounded-2xl p-4 border border-white/5">
+                                <div className="flex gap-4 items-center">
+                                    <div className="w-12 h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center shrink-0 border border-emerald-500/20">
+                                        <Trophy className="w-6 h-6 text-emerald-400" />
+                                    </div>
+                                    <div>
+                                        <h4 className="font-black text-white mb-0.5">{city.stadiumName}</h4>
+                                        <p className="text-xs text-emerald-400/80 font-bold tracking-widest uppercase">
+                                            {city.stadiumCapacity.toLocaleString()} Lugares
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
 
-                            {/* Important Info Grid */}
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 {city.travelGuide?.safety && (
-                                    <div className="bg-red-500/5 rounded-xl p-3 border border-red-500/10">
-                                        <div className="flex items-center gap-2 text-[10px] font-bold text-red-400 uppercase tracking-wider mb-1">
-                                            <AlertTriangle className="w-3 h-3" /> Segurança
+                                    <div className="p-4 bg-zinc-900 rounded-xl border border-white/5">
+                                        <div className="flex gap-2 items-center text-[10px] font-black uppercase text-red-500 mb-2">
+                                            <AlertTriangle className="w-3.5 h-3.5" /> Dicas de Segurança
                                         </div>
-                                        <ul className="list-disc list-inside text-[10px] text-gray-400 space-y-1">
-                                            {city.travelGuide.safety.tips.slice(0, 2).map((t, i) => <li key={i}>{t}</li>)}
-                                        </ul>
+                                        {city.travelGuide.safety.tips.slice(0, 2).map((tip, i) => (
+                                            <p key={i} className="text-xs text-gray-400 mb-1 leading-relaxed">• {tip}</p>
+                                        ))}
                                     </div>
                                 )}
-                                {city.travelGuide?.transport && (
-                                    <div className="bg-blue-500/5 rounded-xl p-3 border border-blue-500/10">
-                                        <div className="flex items-center gap-2 text-[10px] font-bold text-blue-400 uppercase tracking-wider mb-1">
-                                            <Bus className="w-3 h-3" /> Transporte
+                                {translatedCity.travel?.transport && (
+                                    <div className="p-4 bg-zinc-900 rounded-xl border border-white/5">
+                                        <div className="flex gap-2 items-center text-[10px] font-black uppercase text-blue-400 mb-2">
+                                            <Bus className="w-3.5 h-3.5" /> Transporte Expresso
                                         </div>
-                                        <p className="text-[10px] text-gray-400 leading-snug">
-                                            {city.travelGuide.transport.publicTransport.split('.')[0]}.
+                                        <p className="text-xs text-gray-400 leading-relaxed">
+                                            {translatedCity.travel.transport}
                                         </p>
                                     </div>
                                 )}
@@ -383,93 +395,79 @@ export function CityDetailsModal({ city, dynamicStatus, onClose }: { city: HostC
                         </div>
                     )}
 
-                    {activeTab === "turismo" && city.travelGuide && (
+                    {activeTab === "turismo" && (
                         <div className="space-y-6">
-                            <section>
-                                <h3 className="text-xs font-bold text-white/50 uppercase tracking-wider mb-3">Atrações Principais</h3>
+                            <div>
+                                <h3 className="text-xs font-black uppercase tracking-widest text-emerald-400 mb-4 inline-flex items-center gap-2">
+                                    <Camera className="w-4 h-4" /> Atrações Principais
+                                </h3>
                                 <div className="space-y-3">
-                                    {city.travelGuide.tourism.topAttractions.map((attraction, i) => (
-                                        <div key={i} className="flex gap-3 bg-secondary/10 p-3 rounded-xl border border-white/5">
-                                            <div className="h-12 w-12 rounded-lg bg-emerald-500/10 flex items-center justify-center shrink-0 text-emerald-500">
-                                                <Camera className="w-5 h-5" />
-                                            </div>
-                                            <div>
-                                                <h4 className="text-sm font-bold text-white">{attraction.name}</h4>
-                                                <p className="text-xs text-gray-400 leading-snug">{attraction.description}</p>
-                                            </div>
+                                    {(translatedCity.travel?.attractions || city.travelGuide?.tourism.topAttractions || []).map((attr, i) => (
+                                        <div key={i} className="bg-zinc-900 p-4 rounded-xl border border-white/5">
+                                            <h4 className="text-sm font-black text-white mb-1">{attr.name}</h4>
+                                            <p className="text-xs text-gray-400 leading-relaxed">{attr.description}</p>
                                         </div>
                                     ))}
                                 </div>
-                            </section>
+                            </div>
 
-                            <section>
-                                <h3 className="text-xs font-bold text-white/50 uppercase tracking-wider mb-3">Joias Escondidas</h3>
+                            <div>
+                                <h3 className="text-xs font-black uppercase tracking-widest text-gray-500 mb-3">Segredos Locais</h3>
                                 <div className="flex flex-wrap gap-2">
-                                    {city.travelGuide.tourism.hiddenGems.map((gem, i) => (
-                                        <span key={i} className="px-3 py-1.5 bg-secondary/30 rounded-lg text-xs font-medium text-white/80 border border-white/5">
-                                            💎 {gem}
+                                    {(city.travelGuide?.tourism.hiddenGems || []).map((gem, i) => (
+                                        <span key={i} className="bg-white/5 px-3 py-1.5 rounded-lg text-xs font-medium text-gray-300">
+                                            • {gem}
                                         </span>
                                     ))}
                                 </div>
-                            </section>
+                            </div>
                         </div>
                     )}
 
                     {activeTab === "gastronomia" && city.travelGuide && (
                         <div className="space-y-6">
-                            <div className="bg-amber-500/10 rounded-xl p-4 border border-amber-500/20 mb-6">
-                                <h3 className="text-lg font-black text-amber-500 mb-1">{city.travelGuide.gastronomy.title}</h3>
-                                <p className="text-xs text-amber-200/70 italic">Experiências imperdíveis para seu paladar.</p>
-                            </div>
-
-                            <div className="space-y-4">
-                                {city.travelGuide.gastronomy.dishes.map((dish, i) => (
-                                    <div key={i} className="flex justify-between items-start border-b border-white/5 pb-4 last:border-0 last:pb-0">
-                                        <div>
-                                            <h4 className="text-sm font-bold text-white mb-1">{dish.name}</h4>
+                            <div>
+                                <h3 className="text-xs font-black uppercase tracking-widest text-emerald-400 mb-4 inline-flex items-center gap-2">
+                                    Gastronomia Local
+                                </h3>
+                                <div className="space-y-3">
+                                    {(translatedCity.travel?.dishes || city.travelGuide.gastronomy.dishes || []).map((dish, i) => (
+                                        <div key={i} className="bg-zinc-900 p-4 rounded-xl border border-white/5">
+                                            <div className="flex justify-between items-start mb-1">
+                                                <h4 className="text-sm font-black text-white">{dish.name}</h4>
+                                                <div className="flex gap-0.5 opacity-50">
+                                                    {[...Array(3)].map((_, idx) => (
+                                                        <DollarSign
+                                                            key={idx}
+                                                            className={cn("w-3 h-3", idx < (dish.priceLevel === 'high' ? 3 : dish.priceLevel === 'medium' ? 2 : 1) ? "text-white" : "text-white/20")}
+                                                        />
+                                                    ))}
+                                                </div>
+                                            </div>
                                             <p className="text-xs text-gray-400">{dish.description}</p>
                                         </div>
-                                        <div className="shrink-0 flex gap-0.5">
-                                            {[...Array(3)].map((_, idx) => (
-                                                <DollarSign
-                                                    key={idx}
-                                                    className={cn(
-                                                        "w-3 h-3",
-                                                        idx < (dish.priceLevel === 'high' ? 3 : dish.priceLevel === 'medium' ? 2 : 1)
-                                                            ? "text-green-400"
-                                                            : "text-gray-700"
-                                                    )}
-                                                />
-                                            ))}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-
-                            <section className="mt-6">
-                                <h3 className="text-xs font-bold text-white/50 uppercase tracking-wider mb-2">Dicas de Local</h3>
-                                <ul className="space-y-2">
-                                    {city.travelGuide.gastronomy.tips.map((tip, i) => (
-                                        <li key={i} className="text-xs text-gray-400 flex gap-2">
-                                            <span className="text-amber-500 text-xs">●</span>
-                                            {tip}
-                                        </li>
                                     ))}
-                                </ul>
-                            </section>
+                                </div>
+                            </div>
                         </div>
                     )}
                 </div>
 
-                {/* Footer Action */}
-                <div className="p-4 border-t border-white/5 bg-[#0a0a0a]">
-                    <button className="w-full py-4 bg-primary hover:bg-primary/90 text-black rounded-xl text-sm font-black transition-colors flex items-center justify-center gap-2">
-                        <Plane className="w-4 h-4" />
-                        Planejar Viagem para {city.name}
+                <div className="shrink-0 p-4 bg-zinc-950 border-t border-white/5 grid grid-cols-3 gap-3">
+                    <button
+                        onClick={() => Share.share({
+                            title: `ArenaCup - ${t(`cities.${city.id}.name`, { defaultValue: city.name })}`,
+                            url: 'https://arenacup.app/guia',
+                        })}
+                        className="col-span-1 h-12 rounded-xl bg-white/5 hover:bg-white/10 text-white text-[11px] font-black tracking-widest uppercase flex items-center justify-center transition-colors"
+                    >
+                        Share
+                    </button>
+                    <button className="col-span-2 h-12 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black text-[11px] font-black tracking-widest uppercase flex items-center justify-center gap-2 transition-colors">
+                        <Plane className="w-4 h-4" /> Plano
                     </button>
                 </div>
             </motion.div>
         </motion.div>
     );
 }
-

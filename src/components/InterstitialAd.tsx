@@ -42,7 +42,7 @@ export function InterstitialAd({ isOpen, onClose }: InterstitialAdProps) {
                 className="fixed inset-0 z-[100] bg-background/95 flex flex-col items-center justify-center p-4"
             >
                 <div className="w-full max-w-md space-y-4 text-center relative">
-                    <h2 className="text-xl font-bold mb-4">Apoie o ArenaCopa</h2>
+                    <h2 className="text-xl font-bold mb-4">Support ArenaCup</h2>
 
                     <div className="min-h-[300px] flex items-center justify-center bg-secondary/20 rounded-xl border border-border/50">
                         {/* 

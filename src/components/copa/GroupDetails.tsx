@@ -3,12 +3,10 @@ import { X, Trophy, CalendarDays } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Flag } from "@/components/Flag";
 import { MatchCard } from "@/components/MatchCard";
-import {
-    matches,
-    groupStandings,
-    getTeam,
-} from "@/data/mockData";
+import { matches as mockMatches, groupStandings, getTeam } from "@/data/mockData";
 import { useSimulacao } from "@/contexts/SimulacaoContext";
+import { useMatches } from "@/hooks/useMatches";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface GroupDetailsProps {
     groupId: string;
@@ -18,6 +16,7 @@ interface GroupDetailsProps {
 
 export function GroupDetails({ groupId, onClose, viewMode = "real" }: GroupDetailsProps) {
     const { standings: simStandings } = useSimulacao();
+    const { data: supabaseMatches, isLoading } = useMatches();
 
     const realStandings = groupStandings[groupId] || [];
     const simulatedGroupStandings = simStandings[groupId] || [];
@@ -38,6 +37,7 @@ export function GroupDetails({ groupId, onClose, viewMode = "real" }: GroupDetai
         }))
         : realStandings;
 
+    const matches = supabaseMatches || mockMatches;
     const groupMatches = matches
         .filter(m => m.group === groupId)
         .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
@@ -148,7 +148,11 @@ export function GroupDetails({ groupId, onClose, viewMode = "real" }: GroupDetai
                         </div>
 
                         <div className="space-y-3">
-                            {groupMatches.length > 0 ? (
+                            {isLoading ? (
+                                Array(6).fill(0).map((_, i) => (
+                                    <Skeleton key={i} className="h-24 rounded-2xl" />
+                                ))
+                            ) : groupMatches.length > 0 ? (
                                 groupMatches.map((match, idx) => (
                                     <MatchCard key={match.id} match={match} index={idx} />
                                 ))

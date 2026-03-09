@@ -2,10 +2,14 @@ import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { Home, Trophy, BarChart2, Bell, ChevronLeft, Dices, Compass, BookOpen } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { db } from "@/integrations/firebase/client";
+import { doc, getDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { NotificationsSheet } from "@/components/NotificationsSheet";
+import { OnboardingModal } from "@/components/OnboardingModal";
+import { PWABanner } from "@/components/PWABanner";
+import { FabWithPending } from "@/components/FabWithPending";
 import {
   Sidebar,
   SidebarContent,
@@ -30,17 +34,9 @@ function Header({ className }: { className?: string }) {
 
   const { user } = useAuth();
   const [profile, setProfile] = useState<{ name: string; avatar?: string } | null>(null);
-  const [logoUrl, setLogoUrl] = useState(defaultLogo);
+  const logoUrl = "/logo.png";
 
   useEffect(() => {
-    // Check for logo in storage
-    supabase.storage.from('assets').list('', { search: 'logo.png' }).then(({ data }) => {
-      if (data && data.length > 0) {
-        const { data: publicData } = supabase.storage.from('assets').getPublicUrl('logo.png');
-        setLogoUrl(publicData.publicUrl);
-      }
-    });
-
     if (!user) return;
 
     const fetchProfile = async () => {
@@ -51,15 +47,16 @@ function Header({ className }: { className?: string }) {
         return;
       }
 
-      // Fetch Profile
-      const { data: profileData } = await supabase
-        .from("profiles")
-        .select("name, avatar_url")
-        .eq("user_id", user.id)
-        .single();
+      try {
+        const docRef = doc(db, 'profiles', user.id);
+        const docSnap = await getDoc(docRef);
 
-      if (profileData) {
-        setProfile({ name: profileData.name, avatar: profileData.avatar_url });
+        if (docSnap.exists()) {
+          const profileData = docSnap.data();
+          setProfile({ name: profileData.name, avatar: profileData.avatar_url });
+        }
+      } catch (error) {
+        console.error("Error fetching profile:", error);
       }
     };
 
@@ -88,7 +85,7 @@ function Header({ className }: { className?: string }) {
   const title = getTitle();
 
   return (
-    <header className={cn("fixed top-0 inset-x-0 z-30 backdrop-blur-xl border-b border-white/[0.06] safe-top shadow-[0_4px_30px_rgba(0,0,0,0.4)] md:absolute md:w-full", className)} style={{ background: 'rgba(8, 32, 22, 0.55)' }}>
+    <header className={cn("fixed top-0 inset-x-0 z-30 backdrop-blur-md border-b border-white/[0.06] safe-top shadow-[0_4px_30px_rgba(0,0,0,0.4)] md:absolute md:w-full bg-gradient-to-r from-[#0C321A]/70 to-[#1A4D2E]/80", className)}>
       <div className="flex items-center justify-between px-4 h-14 md:h-16 max-w-7xl mx-auto w-full">
         {isSubpage ? (
           <button onClick={() => navigate(-1)} className="p-1.5 -ml-1.5 rounded-lg hover:bg-secondary md:hidden">
@@ -97,27 +94,32 @@ function Header({ className }: { className?: string }) {
         ) : (
           <div className="flex items-center gap-3 md:hidden">
             <div className="w-12 h-12 flex items-center justify-center p-1">
-              <img src={logoUrl} alt="ArenaCopa" className="h-10 w-10 object-contain" />
+              <img src={logoUrl} alt="ArenaCup" className="h-10 w-10 object-contain" />
             </div>
-            <span className="font-black text-xl tracking-tight drop-shadow-[0_0_8px_rgba(34,197,94,0.3)]">
-              ARENA<span className="text-primary">COPA</span>
+            <span className="font-display font-extrabold text-xl tracking-tighter drop-shadow-[0_0_8px_rgba(34,197,94,0.3)]">
+              ARENA<span className="text-primary italic">CUP</span>
             </span>
           </div>
         )}
 
-        {/* Desktop Title/Breadcrumb Substitute */}
-        <div className="hidden md:flex items-center gap-3">
+        {/* Desktop Title & Mobile Subpage Title */}
+        <div className="flex items-center gap-3">
           {isSubpage && (
-            <button onClick={() => navigate(-1)} className="p-1.5 -ml-1.5 rounded-lg hover:bg-secondary">
+            <button onClick={() => navigate(-1)} className="p-1.5 -ml-1.5 rounded-lg hover:bg-secondary hidden md:flex">
               <ChevronLeft className="w-5 h-5" />
             </button>
           )}
-          {title && <h1 className="text-lg font-bold">{title}</h1>}
+          {title && (
+            <h1 className={cn(
+              "font-bold transition-all",
+              isSubpage
+                ? "text-base absolute left-1/2 -translate-x-1/2 md:relative md:left-0 md:translate-x-0 md:text-lg"
+                : "text-lg hidden md:block"
+            )}>
+              {title}
+            </h1>
+          )}
         </div>
-
-        {title && isSubpage ? (
-          <h1 className="text-base font-bold absolute left-1/2 -translate-x-1/2 md:hidden">{title}</h1>
-        ) : null}
 
         <div className="flex items-center gap-3">
           <NotificationsSheet>
@@ -156,6 +158,7 @@ function Header({ className }: { className?: string }) {
 
 function BottomTabs({ className }: { className?: string }) {
   const { t } = useTranslation('common');
+  const location = useLocation();
 
   const tabs = [
     { path: "/", icon: Home, label: t('nav.home') },
@@ -166,24 +169,11 @@ function BottomTabs({ className }: { className?: string }) {
   ];
 
   return (
-    <nav className={cn("fixed bottom-0 inset-x-0 z-30 backdrop-blur-xl border-t border-white/[0.06] safe-bottom shadow-[0_-4px_30px_rgba(0,0,0,0.4)]", className)} style={{ background: 'rgba(8, 32, 22, 0.55)' }}>
+    <nav className={cn("fixed bottom-0 inset-x-0 z-30 backdrop-blur-md border-t border-white/[0.06] safe-bottom shadow-[0_-4px_30px_rgba(0,0,0,0.4)] bg-gradient-to-r from-[#0C321A]/80 to-[#1A4D2E]/75", className)}>
       <div className="flex items-center justify-around h-16 max-w-lg mx-auto relative">
         {tabs.map((tab) => {
           if (tab.isFab) {
-            return (
-              <NavLink
-                key={tab.path}
-                to={tab.path}
-                className={({ isActive }) =>
-                  cn(
-                    "flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-b from-primary to-[hsl(var(--copa-gold))] shadow-lg shadow-primary/40 -mt-7 border-4 border-background transition-transform active:scale-95",
-                    isActive && "ring-2 ring-primary ring-offset-2 ring-offset-background"
-                  )
-                }
-              >
-                <span className="text-2xl">⚽</span>
-              </NavLink>
-            );
+            return <FabWithPending key={tab.path} className={tab.path} isActive={location.pathname === tab.path} />;
           }
           return (
             <NavLink
@@ -230,14 +220,14 @@ function AppSidebar({ className }: { className?: string }) {
           <div className="p-4 flex items-center justify-center group-data-[collapsible=icon]:p-2">
             <div className="flex items-center gap-3 group-data-[collapsible=icon]:hidden">
               <div className="w-10 h-10 flex items-center justify-center">
-                <img src="/logo.png" alt="ArenaCopa" className="h-8 w-8 object-contain" />
+                <img src="/logo.png" alt="ArenaCup" className="h-8 w-8 object-contain" />
               </div>
               <span className="font-black text-xl tracking-tight drop-shadow-[0_0_8px_rgba(34,197,94,0.3)]">
-                ARENA<span className="text-primary">COPA</span>
+                ARENA<span className="text-primary">CUP</span>
               </span>
             </div>
             <div className="hidden group-data-[collapsible=icon]:flex w-full items-center justify-center">
-              <img src="/logo.png" alt="ArenaCopa" className="h-8 w-8 object-contain" />
+              <img src="/logo.png" alt="ArenaCup" className="h-8 w-8 object-contain" />
             </div>
           </div>
           <SidebarGroupContent className="mt-4">
@@ -260,12 +250,17 @@ function AppSidebar({ className }: { className?: string }) {
   )
 }
 
+import { CookieBanner } from "@/components/CookieBanner";
+
 export function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const hideBottomNav = location.pathname === "/boloes/criar";
+  const { user } = useAuth();
 
   return (
     <SidebarProvider>
+      <CookieBanner />
+      <OnboardingModal />
       <div className="flex min-h-screen w-full bg-background bg-[url('/images/campo-bg.png')] bg-fixed bg-cover bg-center bg-no-repeat bg-blend-overlay">
         <AppSidebar className="hidden md:flex z-40" />
         <SidebarInset className="bg-transparent flex flex-col flex-1 w-full overflow-hidden">
@@ -274,8 +269,22 @@ export function Layout({ children }: { children: React.ReactNode }) {
             {children}
           </main>
           {!hideBottomNav && <BottomTabs className="md:hidden" />}
+          {!user && (
+            <footer className="w-full border-t border-white/10 p-4 mt-auto">
+              <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-center md:gap-4 text-xs text-muted-foreground gap-2">
+                <span>© 2026 ArenaCopa</span>
+                <span className="hidden md:inline">·</span>
+                <div className="flex gap-4">
+                  <NavLink to="/termos" className="hover:text-primary transition-colors">Termos de Uso</NavLink>
+                  <NavLink to="/privacidade" className="hover:text-primary transition-colors">Política de Privacidade</NavLink>
+                  <a href="mailto:contato@arenacopa.com" className="hover:text-primary transition-colors">Contato</a>
+                </div>
+              </div>
+            </footer>
+          )}
         </SidebarInset>
       </div>
+      <PWABanner />
     </SidebarProvider>
   );
 }

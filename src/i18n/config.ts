@@ -27,7 +27,7 @@ i18n
         },
 
         // Namespaces configuration
-        ns: ['common', 'auth', 'copa', 'bolao', 'guia', 'ranking', 'profile', 'errors'],
+        ns: ['common', 'auth', 'copa', 'bolao', 'guia', 'ranking', 'profile', 'errors', 'sedes'],
         defaultNS: 'common',
 
         react: {

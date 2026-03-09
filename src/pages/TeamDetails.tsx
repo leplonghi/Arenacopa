@@ -1,16 +1,26 @@
-
 import { useParams, useNavigate } from "react-router-dom";
-import { teams, matches, getTeam, getStadium } from "@/data/mockData";
+import { teams, getTeam, getStadium } from "@/data/mockData";
 import { Flag } from "@/components/Flag";
 import { ArrowLeft, Trophy, Users, MapPin, Coins, Info, Globe, Calendar, MapPin as StadiumIcon, TrendingUp } from "lucide-react";
 import { formatMatchDate, formatMatchTime } from "@/data/mockData";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
+import { useMatches } from "@/hooks/useMatches";
 
 const TeamDetails = () => {
     const { code } = useParams<{ code: string }>();
     const navigate = useNavigate();
+    const { data: matches = [], isLoading } = useMatches();
+
     const team = code ? getTeam(code) : undefined;
+
+    if (isLoading) {
+        return (
+            <div className="flex justify-center items-center min-h-[50vh]">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+        );
+    }
 
     if (!team) {
         return (

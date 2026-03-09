@@ -7,7 +7,7 @@
         "invite_friends": "Invite more friends",
         "share_code": "Share code:",
         "btn_share": "Share",
-        "disclaimer": "⚠️ ArenaCopa **does not** process payments or financial transactions. Any amounts must be agreed upon between participants outside the app.",
+        "disclaimer": "⚠️ ArenaCup **does not** process payments or financial transactions. Any amounts must be agreed upon between participants outside the app.",
         "members_stat": "Members",
         "palpites_stat": "Predictions",
         "progress_stat": "Progress"
@@ -57,11 +57,18 @@
         "your_guess": "Your Pick",
         "saved_success": "Prediction saved! 🏆"
     },
+    "ranking": {
+        "default_user": "User",
+        "guesses": "predictions",
+        "points_abbr": "Pts",
+        "legend_rules": "Scoring Rules"
+    },
     "common": {
         "attention": "Attention",
         "error_title": "Error",
         "user": "User",
-        "points_abbr": "Pts"
+        "points_abbr": "Pts",
+        "group": "Group"
     },
     "create_bolao": {
         "title": "New Pool",
@@ -72,7 +79,7 @@
             "created_desc": "You have successfully created the pool '{{name}}'."
         },
         "financial": {
-            "warning": "Remember: ArenaCopa is just a smart spreadsheet. You are responsible for collecting and paying participants.",
+            "warning": "Remember: ArenaCup is just a smart spreadsheet. You are responsible for collecting and paying participants.",
             "fee_label": "Entry Fee ($)",
             "fee_placeholder": "0.00",
             "payment_label": "Payment Details",
@@ -129,7 +136,7 @@
             "type": "Type",
             "entry": "Entry",
             "scoring": "Scoring (E/W/D/P)",
-            "disclaimer": "I declare that I am solely responsible for collecting and paying the prizes for this pool. I exempt ArenaCopa from any financial responsibility.",
+            "disclaimer": "I declare that I am solely responsible for collecting and paying the prizes for this pool. I exempt ArenaCup from any financial responsibility.",
             "success_title": "Pool created! 🎉",
             "success_desc": "Settings saved successfully.",
             "error_title": "Error",
@@ -142,6 +149,33 @@
         },
         "paid_label": "Paid",
         "free_label": "Free"
+    },
+    "list": {
+        "title": "Your Pools",
+        "create": "Create Pool",
+        "my_leagues": "My Leagues",
+        "join_code_title": "Join with Code",
+        "join_code_placeholder": "Enter code...",
+        "btn_join": "Join",
+        "search_placeholder": "Search your pools...",
+        "empty_title": "No pools found",
+        "empty_desc": "You have not joined any pools yet.",
+        "section_mine": "Created by me",
+        "section_participating": "Participating",
+        "card_admin": "Admin",
+        "card_member": "Member",
+        "card_pending": "Pending",
+        "card_bet_now": "Predict Now",
+        "demo_1_name": "Demo Pool",
+        "demo_1_desc": "Official Demo Pool",
+        "demo_2_name": "Office Pool",
+        "demo_2_desc": "Chocolates prize",
+        "btn_cancel": "Cancel",
+        "btn_confirm": "Confirm Join",
+        "error_join": "Error joining",
+        "success_join": "Joined pool! 🎉",
+        "already_joined": "You already joined this pool!",
+        "no_results": "No pools found with this name."
     },
     "share": {
         "invite_msg": "🏆 Join my pool \"{{name}}\" for World Cup 2026!\n\n📋 Invite Code: {{code}}\n\n⚽ Join here: {{url}}",
@@ -166,5 +200,6 @@
         "desc": "This pool has an entry fee.",
         "fee_label": "Entry Fee",
         "terms": "I am aware that payment must be handled directly with the administrator. The app does not process payments."
-    }
+    },
+    "currency_symbol": "$"
 }

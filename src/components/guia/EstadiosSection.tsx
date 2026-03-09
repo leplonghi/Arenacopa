@@ -1,5 +1,5 @@
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import {
@@ -8,8 +8,11 @@ import {
     Thermometer, Mountain, Navigation, Info, SortAsc, SortDesc,
     Construction
 } from "lucide-react";
-import { hostCountries, type HostCity } from "@/data/guiaData";
+import { Share } from "@capacitor/share";
+import { Geolocation } from "@capacitor/geolocation";
+import { useTranslation } from "react-i18next";
 import { staggerContainer, staggerItem } from "@/components/copa/animations";
+import { hostCountries, type HostCity } from "@/data/guiaData";
 
 // Fallback images for stadiums until we have them all in the database
 const stadiumImages: Record<string, string> = {
@@ -46,7 +49,7 @@ export function EstadiosSection({ onViewOnMap }: { onViewOnMap?: (cityId: string
     const [selectedStadium, setSelectedStadium] = useState<(typeof allCities)[0] | null>(null);
 
     const filtered = useMemo(() => {
-        let result = countryFilter === "all"
+        const result = countryFilter === "all"
             ? [...allCities]
             : allCities.filter(c => c.countryCode === countryFilter);
 
@@ -66,8 +69,7 @@ export function EstadiosSection({ onViewOnMap }: { onViewOnMap?: (cityId: string
 
     // Use placeholder if specific stadium image not found
     const getStadiumImage = (id: string, name: string) => {
-        // Normalize ID to match keys
-        const key = Object.keys(stadiumImages).find(k => k === id || id.includes(k) || name.toLowerCase().includes(k));
+        const key = Object.keys(stadiumImages).find(k => k === id || id.includes(k) || name.toLowerCase().includes(k.toLowerCase()));
         return key ? stadiumImages[key] : "https://images.unsplash.com/photo-1522778119026-d647f0565c6a?auto=format&fit=crop&w=800&q=80";
     };
 
@@ -89,71 +91,86 @@ export function EstadiosSection({ onViewOnMap }: { onViewOnMap?: (cityId: string
             variants={staggerContainer}
             initial="hidden"
             animate="visible"
-            className="space-y-8 pb-24"
+            className="space-y-10 pb-24"
         >
             {/* Hero Stats Section */}
-            <div className="relative overflow-hidden rounded-3xl bg-black p-6 border border-white/10 group">
-                <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1556056504-5c7696c4c28d?auto=format&fit=crop&w=1200&q=80')] opacity-20 bg-cover bg-center group-hover:scale-105 transition-transform duration-700" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent" />
+            <div className="relative overflow-hidden rounded-[2rem] bg-black p-8 border border-emerald-500/20 group">
+                <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1556056504-5c7696c4c28d?auto=format&fit=crop&w=1200&q=80')] opacity-10 bg-cover bg-center group-hover:scale-105 transition-transform duration-1000" />
+                <div className="absolute inset-0 bg-gradient-to-br from-emerald-900/40 via-black to-black" />
+
+                {/* Glow Effects */}
+                <div className="absolute -top-24 -right-24 w-64 h-64 bg-emerald-500/20 blur-[100px] rounded-full" />
+                <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-emerald-600/10 blur-[80px] rounded-full" />
 
                 <div className="relative z-10 flex flex-col items-center text-center">
-                    <h2 className="text-2xl font-black text-white mb-6 uppercase tracking-tight flex items-center gap-3">
-                        <Building2 className="w-6 h-6 text-primary" />
-                        Arenas da Copa 2026
-                    </h2>
-                    <div className="grid grid-cols-4 gap-4 w-full max-w-lg mx-auto">
-                        <StatBox label="Estádios" value="16" sub="Sedes" accent="white" />
-                        <StatBox label="Lugares" value={`${(totalCapacity / 1000000).toFixed(1)}M`} sub="Total" accent="primary" />
-                        <StatBox label="Média" value={`${Math.round(avgCapacity / 1000)}k`} sub="Público" accent="emerald" />
-                        <StatBox label="Jogos" value={String(totalMatches)} sub="Confirmados" accent="amber" />
+                    <motion.div
+                        initial={{ scale: 0.9, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        className="flex items-center gap-3 mb-8"
+                    >
+                        <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/30 shadow-lg shadow-emerald-500/20">
+                            <Building2 className="w-6 h-6 text-emerald-400" />
+                        </div>
+                        <h2 className="text-3xl font-black text-white uppercase tracking-tighter">
+                            Arenas da Copa <span className="text-emerald-400">2026</span>
+                        </h2>
+                    </motion.div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 w-full">
+                        <StatBox label="Estádios" value="16" sub="Sedes Oficiais" accent="emerald" />
+                        <StatBox label="Capacidade" value={`${(totalCapacity / 1000000).toFixed(1)}M`} sub="Total Geral" accent="emerald" />
+                        <StatBox label="Média" value={`${Math.round(avgCapacity / 1000)}k`} sub="Por Arena" accent="emerald" />
+                        <StatBox label="Jogos" value={String(totalMatches)} sub="Total Confirmado" accent="emerald" />
                     </div>
                 </div>
             </div>
 
             {/* Controls */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center px-1">
+            <div className="flex flex-col sm:flex-row gap-6 justify-between items-start sm:items-center px-2">
                 {/* Country Filter */}
-                <div className="flex gap-2 p-1 bg-secondary/30 rounded-full border border-white/5 backdrop-blur-sm">
+                <div className="flex gap-2 p-1.5 bg-white/5 rounded-2xl border border-white/10 backdrop-blur-xl">
                     {([
                         { id: "all" as CountryFilter, label: "Todos", flag: "🌎" },
                         { id: "USA" as CountryFilter, label: "EUA", flag: "🇺🇸" },
-                        { id: "MEX" as CountryFilter, label: "México", flag: "🇲🇽" },
-                        { id: "CAN" as CountryFilter, label: "Canadá", flag: "🇨🇦" },
+                        { id: "MEX" as CountryFilter, label: "MÉX", flag: "🇲🇽" },
+                        { id: "CAN" as CountryFilter, label: "CAN", flag: "🇨🇦" },
                     ]).map(f => (
                         <button
                             key={f.id}
                             onClick={() => setCountryFilter(f.id)}
                             className={cn(
-                                "px-4 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5",
+                                "px-5 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-2",
                                 countryFilter === f.id
-                                    ? "bg-primary text-black shadow-lg shadow-primary/20"
-                                    : "text-muted-foreground hover:text-white"
+                                    ? "bg-emerald-500 text-black shadow-xl shadow-emerald-500/30 scale-105"
+                                    : "text-white/50 hover:text-white hover:bg-white/5"
                             )}
                         >
-                            <span>{f.flag}</span>
+                            <span className="text-sm">{f.flag}</span>
                             <span className="hidden sm:inline">{f.label}</span>
                         </button>
                     ))}
                 </div>
 
                 {/* Sort */}
-                <div className="flex gap-1.5 overflow-x-auto scrollbar-hide w-full sm:w-auto">
+                <div className="flex gap-2 overflow-x-auto scrollbar-hide w-full sm:w-auto">
                     {([
                         { id: "capacity" as SortField, label: "Capacidade" },
-                        { id: "matches" as SortField, label: "Jogos" },
+                        { id: "matches" as SortField, label: "Partidas" },
                     ]).map(s => (
                         <button
                             key={s.id}
                             onClick={() => handleSort(s.id)}
                             className={cn(
-                                "px-3 py-1.5 rounded-lg text-[10px] font-bold whitespace-nowrap transition-all flex items-center gap-1 border",
+                                "px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest whitespace-nowrap transition-all flex items-center gap-2 border",
                                 sortField === s.id
-                                    ? "bg-white/10 text-white border-white/20"
-                                    : "bg-transparent text-muted-foreground border-transparent hover:text-white"
+                                    ? "bg-emerald-500/10 text-emerald-100 border-emerald-500/40 shadow-lg shadow-emerald-500/10"
+                                    : "bg-transparent text-white/40 border-white/10 hover:border-white/20 hover:text-white"
                             )}
                         >
                             {sortField === s.id && (
-                                sortAsc ? <SortAsc className="w-3 h-3" /> : <SortDesc className="w-3 h-3" />
+                                <motion.div animate={{ rotate: sortAsc ? 0 : 180 }}>
+                                    <ArrowUpDown className="w-3.5 h-3.5" />
+                                </motion.div>
                             )}
                             {s.label}
                         </button>
@@ -162,7 +179,7 @@ export function EstadiosSection({ onViewOnMap }: { onViewOnMap?: (cityId: string
             </div>
 
             {/* Stadium Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 px-1">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 px-2">
                 {filtered.map((city, idx) => {
                     const bgImage = getStadiumImage(city.stadiumId, city.stadiumName);
                     return (
@@ -172,46 +189,51 @@ export function EstadiosSection({ onViewOnMap }: { onViewOnMap?: (cityId: string
                             custom={idx}
                             layoutId={`stadium-card-${city.id}`}
                             onClick={() => setSelectedStadium(city)}
-                            className="group relative h-64 rounded-3xl overflow-hidden cursor-pointer shadow-xl border border-white/5 active:scale-[0.98] transition-all"
+                            className="group relative h-72 rounded-[2rem] overflow-hidden cursor-pointer shadow-2xl border border-white/10 hover:border-emerald-500/40 transition-all duration-500"
                         >
                             {/* Background */}
                             <div
-                                className="absolute inset-0 bg-cover bg-center transition-transform duration-700 group-hover:scale-110"
+                                className="absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-110"
                                 style={{ backgroundImage: `url('${bgImage}')` }}
                             />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent opacity-90 group-hover:opacity-80 transition-opacity" />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent opacity-90 group-hover:opacity-100 transition-opacity" />
+
+                            {/* Glow on hover */}
+                            <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-700 bg-gradient-to-tr from-emerald-500/10 via-transparent to-emerald-500/10" />
 
                             {/* Floating Rank Badge */}
-                            <div className="absolute top-4 left-4 w-8 h-8 rounded-full bg-white/10 backdrop-blur-md border border-white/10 flex items-center justify-center font-black text-xs text-white z-20">
+                            <div className="absolute top-5 left-5 w-10 h-10 rounded-2xl bg-black/40 backdrop-blur-md border border-white/10 flex items-center justify-center font-black text-sm text-white/70 z-20 group-hover:border-emerald-500/50 group-hover:text-emerald-400 transition-all">
                                 {idx + 1}
                             </div>
 
                             {/* Content */}
-                            <div className="absolute inset-0 p-6 flex flex-col justify-end">
-                                <div className="transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
-                                    <div className="flex items-center gap-2 mb-1">
-                                        <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-md backdrop-blur-sm">
+                            <div className="absolute inset-0 p-8 flex flex-col justify-end">
+                                <div className="transform translate-y-4 group-hover:translate-y-0 transition-all duration-500">
+                                    <div className="flex items-center gap-3 mb-2">
+                                        <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.2em] font-black text-emerald-400 bg-emerald-500/10 px-3 py-1 rounded-lg backdrop-blur-md border border-emerald-500/20">
                                             <MapPin className="w-3 h-3" />
                                             {city.name}
                                         </div>
-                                        <span className="text-lg">{city.countryFlag}</span>
+                                        <span className="text-xl shadow-lg">{city.countryFlag}</span>
                                     </div>
 
-                                    <h3 className="text-2xl font-black text-white leading-none mb-2 drop-shadow-xl">{city.stadiumName}</h3>
+                                    <h3 className="text-3xl font-black text-white leading-none mb-4 drop-shadow-2xl group-hover:text-emerald-50 group-hover:scale-[1.02] origin-left transition-all">
+                                        {city.stadiumName}
+                                    </h3>
 
-                                    <div className="grid grid-cols-3 gap-2 mt-3 opacity-90">
-                                        <div className="bg-black/40 rounded-lg p-2 backdrop-blur-sm border border-white/5">
-                                            <p className="text-[8px] uppercase text-white/50 font-bold mb-0.5">Capacidade</p>
-                                            <p className="text-xs font-bold text-white">{Math.round(city.stadiumCapacity / 1000)}k</p>
+                                    <div className="grid grid-cols-3 gap-3">
+                                        <div className="bg-black/40 rounded-xl p-3 backdrop-blur-md border border-white/10 group-hover:border-emerald-500/20 transition-colors">
+                                            <p className="text-[8px] uppercase text-white/40 font-black tracking-widest mb-1">Capacidade</p>
+                                            <p className="text-sm font-black text-white">{Math.round(city.stadiumCapacity / 1000)}k</p>
                                         </div>
                                         {city.wcMatches && (
-                                            <div className="bg-primary/20 rounded-lg p-2 backdrop-blur-sm border border-primary/20">
-                                                <p className="text-[8px] uppercase text-primary/70 font-bold mb-0.5">Jogos</p>
-                                                <p className="text-xs font-bold text-primary">{city.wcMatches}</p>
+                                            <div className="bg-emerald-500/10 rounded-xl p-3 backdrop-blur-md border border-emerald-500/20 group-hover:bg-emerald-500/20 transition-all">
+                                                <p className="text-[8px] uppercase text-emerald-400/70 font-black tracking-widest mb-1">Partidas</p>
+                                                <p className="text-sm font-black text-emerald-400">{city.wcMatches}</p>
                                             </div>
                                         )}
-                                        <div className="bg-black/40 rounded-lg p-2 backdrop-blur-sm border border-white/5 flex items-center justify-center">
-                                            <ChevronRight className="w-4 h-4 text-white/50 group-hover:text-white transition-colors" />
+                                        <div className="bg-black/40 rounded-xl p-3 backdrop-blur-md border border-white/10 flex items-center justify-center group-hover:bg-white/10 transition-colors">
+                                            <ChevronRight className="w-5 h-5 text-white/30 group-hover:text-emerald-400 group-hover:translate-x-1 transition-all" />
                                         </div>
                                     </div>
                                 </div>
@@ -222,37 +244,45 @@ export function EstadiosSection({ onViewOnMap }: { onViewOnMap?: (cityId: string
             </div>
 
             {/* Comparison Chart */}
-            <section className="glass-card p-6 border border-white/5 relative overflow-hidden bg-gradient-to-br from-secondary/20 to-black">
-                <div className="absolute top-0 right-0 p-6 opacity-5">
-                    <ArrowUpDown className="w-32 h-32 text-white" />
+            <section className="mx-2 p-8 rounded-[2.5rem] bg-gradient-to-br from-[#0a0a0a] to-black border border-emerald-500/10 relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-12 opacity-5">
+                    <Trophy className="w-48 h-48 text-emerald-500" />
                 </div>
 
-                <h3 className="text-sm font-bold text-white mb-6 flex items-center gap-2 relative z-10">
-                    <ArrowUpDown className="w-4 h-4 text-primary" />
-                    Comparativo de Capacidade
-                </h3>
+                <div className="flex items-center justify-between mb-10 relative z-10">
+                    <div>
+                        <h3 className="text-2xl font-black text-white flex items-center gap-3">
+                            <Star className="w-6 h-6 text-emerald-400" />
+                            Elite das Arenas
+                        </h3>
+                        <p className="text-xs text-white/40 font-bold mt-1">Comparativo de capacidade dos maiores estádios da Copa 2026</p>
+                    </div>
+                </div>
 
-                <div className="space-y-3 relative z-10">
+                <div className="space-y-6 relative z-10">
                     {[...allCities]
                         .sort((a, b) => b.stadiumCapacity - a.stadiumCapacity)
-                        .slice(0, 5)
+                        .slice(0, 6)
                         .map((city, idx) => (
-                            <div key={city.id} className="flex items-center gap-3 group">
-                                <span className="text-[10px] font-bold text-muted-foreground w-4 text-right">{idx + 1}</span>
+                            <div key={city.id} className="flex items-center gap-4 group">
+                                <span className="text-xs font-black text-white/20 w-6 text-right tabular-nums group-hover:text-emerald-500 transition-colors">{idx + 1}</span>
                                 <div className="flex-1">
-                                    <div className="flex justify-between text-[10px] uppercase font-bold text-white/60 mb-1">
-                                        <span>{city.stadiumName}</span>
-                                        <span>{Math.round(city.stadiumCapacity / 1000)}k</span>
+                                    <div className="flex justify-between text-[10px] uppercase font-black tracking-widest text-white/60 mb-2 px-1">
+                                        <div className="flex items-center gap-2">
+                                            <span className="opacity-70">{city.countryFlag}</span>
+                                            <span className="group-hover:text-white transition-colors">{city.stadiumName}</span>
+                                        </div>
+                                        <span className="text-emerald-400 tabular-nums">{city.stadiumCapacity.toLocaleString()} lugares</span>
                                     </div>
-                                    <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                                    <div className="h-3 bg-white/5 rounded-full overflow-hidden border border-white/5 p-[1px]">
                                         <motion.div
                                             initial={{ width: 0 }}
-                                            animate={{ width: `${(city.stadiumCapacity / 87523) * 100}%` }} // Azteca max
-                                            transition={{ delay: idx * 0.1, duration: 1 }}
+                                            animate={{ width: `${(city.stadiumCapacity / 87523) * 100}%` }}
+                                            transition={{ delay: idx * 0.1, duration: 1.5, ease: "easeOut" }}
                                             className={cn(
-                                                "h-full rounded-full group-hover:brightness-125 transition-all",
-                                                idx === 0 ? "bg-gradient-to-r from-yellow-500 to-amber-600" :
-                                                    "bg-gradient-to-r from-primary to-emerald-600"
+                                                "h-full rounded-full group-hover:brightness-125 transition-all shadow-[0_0_15px_rgba(16,185,129,0.3)]",
+                                                idx === 0 ? "bg-gradient-to-r from-emerald-400 via-emerald-300 to-emerald-500" :
+                                                    "bg-gradient-to-r from-emerald-600/80 to-emerald-400/80"
                                             )}
                                         />
                                     </div>
@@ -278,22 +308,39 @@ export function EstadiosSection({ onViewOnMap }: { onViewOnMap?: (cityId: string
 }
 
 function StatBox({ label, value, sub, accent }: { label: string; value: string; sub: string; accent: string }) {
-    const accentColors: Record<string, string> = {
-        primary: "text-primary",
-        white: "text-white",
-        emerald: "text-emerald-400",
-        amber: "text-yellow-500",
-    };
     return (
-        <div className="bg-white/5 p-3 rounded-2xl text-center border border-white/5 backdrop-blur-sm">
-            <p className={cn("text-2xl font-black leading-none mb-1", accentColors[accent])}>{value}</p>
+        <div className="bg-white/5 p-5 rounded-[1.5rem] text-center border border-white/5 backdrop-blur-md hover:border-emerald-500/30 transition-all group overflow-hidden relative">
+            <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            <p className="text-3xl font-black leading-none mb-1 text-white group-hover:text-emerald-400 transition-colors">{value}</p>
             <div className="flex flex-col">
-                <p className="text-[7px] uppercase tracking-widest text-white/40 font-bold">{label}</p>
-                <p className="text-[9px] font-bold text-white/70">{sub}</p>
+                <p className="text-[8px] uppercase tracking-[0.2em] text-white/40 font-black mb-1">{label}</p>
+                <div className="h-[1px] w-8 bg-emerald-500/30 mx-auto mb-1 group-hover:w-16 transition-all" />
+                <p className="text-[10px] font-bold text-white/60 tracking-tight">{sub}</p>
             </div>
         </div>
     );
 }
+
+const handleShare = async (title: string, text: string) => {
+    try {
+        await Share.share({
+            title,
+            text,
+            url: "https://arenacup.app",
+        });
+    } catch (err) {
+        console.log("Error sharing", err);
+    }
+};
+
+const handleDirections = async (lat: number, lng: number, name: string) => {
+    const url = `https://maps.google.com/?q=${encodeURIComponent(name)}&ll=${lat},${lng}`;
+    try {
+        window.open(url, "_system");
+    } catch {
+        window.open(url, "_blank");
+    }
+};
 
 export function StadiumDetailModal({
     city,
@@ -306,141 +353,213 @@ export function StadiumDetailModal({
     onClose: () => void;
     onViewOnMap?: (cityId: string) => void;
 }) {
+    const { t } = useTranslation('sedes');
+    const [distance, setDistance] = useState<number | null>(null);
+
+    useEffect(() => {
+        const fetchLocation = async () => {
+            try {
+                const position = await Geolocation.getCurrentPosition({ enableHighAccuracy: false, timeout: 5000 });
+                const lat1 = position.coords.latitude;
+                const lon1 = position.coords.longitude;
+                const lat2 = city.geoCoordinates[0];
+                const lon2 = city.geoCoordinates[1];
+
+                // Haversine formula
+                const R = 6371; // Earth's radius in km
+                const dLat = (lat2 - lat1) * Math.PI / 180;
+                const dLon = (lon2 - lon1) * Math.PI / 180;
+                const a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                    Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                    Math.sin(dLon / 2) * Math.sin(dLon / 2);
+                const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+                setDistance(Math.round(R * c));
+            } catch (err) {
+                console.log("Could not get user location", err);
+            }
+        };
+        fetchLocation();
+    }, [city]);
+
     return (
         <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-black/80 backdrop-blur-md"
+            className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-black/90 backdrop-blur-xl"
             onClick={onClose}
         >
             <motion.div
                 layoutId={`stadium-card-${city.id}`}
-                className="w-full h-full sm:h-auto sm:max-w-2xl bg-[#0a0a0a] sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh] border border-white/10"
+                className="w-full h-full sm:h-auto sm:max-w-2xl bg-black/95 sm:rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col max-h-[95vh] border border-emerald-500/20"
                 onClick={(e) => e.stopPropagation()}
             >
-                {/* Hero Header */}
-                <div className="h-64 relative shrink-0">
+                {/* Hero Header - Compact like City Modal */}
+                <div className="h-56 relative shrink-0">
                     <div
-                        className="absolute inset-0 bg-cover bg-center"
+                        className="absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-110"
                         style={{ backgroundImage: `url('${image}')` }}
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-[#0a0a0a]/40 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent" />
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-transparent" />
 
                     <button
                         onClick={onClose}
-                        className="absolute top-4 right-4 w-9 h-9 bg-black/50 hover:bg-black/80 rounded-full text-white flex items-center justify-center transition-all backdrop-blur-md z-20 border border-white/10"
+                        className="absolute top-5 right-5 w-10 h-10 bg-black/60 hover:bg-black/90 rounded-full text-white flex items-center justify-center transition-all backdrop-blur-md z-20 border border-white/20 hover:border-emerald-500/50"
                     >
                         <X className="w-5 h-5" />
                     </button>
 
                     <div className="absolute bottom-0 left-0 right-0 p-8">
-                        {city.wcRole && (
-                            <div className="inline-block px-3 py-1 bg-primary text-black rounded-lg text-[10px] font-black uppercase tracking-wider mb-2 shadow-lg">
-                                {city.wcRole}
+                        <div className="flex items-center gap-3 mb-3">
+                            {city.wcRole && (
+                                <div className="px-3 py-1 bg-emerald-500 text-black rounded-lg text-[9px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20">
+                                    {city.wcRole}
+                                </div>
+                            )}
+                            <div className="flex items-center gap-1.5 text-xs font-black text-emerald-100/90 drop-shadow-lg">
+                                <MapPin className="w-3.5 h-3.5 text-emerald-400" />
+                                {city.name} {city.countryFlag}
                             </div>
-                        )}
-                        <h2 className="text-4xl font-black text-white leading-none mb-2 drop-shadow-xl">{city.stadiumName}</h2>
-                        <div className="flex items-center gap-2 text-white/80 font-medium">
-                            <MapPin className="w-4 h-4 text-primary" />
-                            {city.name}, {city.countryCode} {city.countryFlag}
+                            {distance !== null && (
+                                <div className="px-3 py-1 bg-black/60 backdrop-blur-md rounded-lg text-[9px] text-white font-bold uppercase tracking-widest border border-white/10 shadow-lg">
+                                    {distance} km
+                                </div>
+                            )}
                         </div>
+                        <h2 className="text-4xl font-black text-white leading-tight mb-0 drop-shadow-2xl">{city.stadiumName}</h2>
                     </div>
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 overflow-y-auto custom-scrollbar p-8 bg-[#0a0a0a]">
+                <div className="flex-1 overflow-y-auto custom-scrollbar p-8 bg-black/50">
 
-                    {/* Primary Stats */}
-                    <div className="grid grid-cols-2 gap-4 mb-8">
-                        <div className="bg-secondary/10 rounded-2xl p-4 border border-white/5 flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center">
-                                <Users className="w-5 h-5 text-blue-400" />
+                    {/* Quick Stats */}
+                    <div className="grid grid-cols-2 gap-4 mb-10">
+                        <div className="bg-emerald-500/5 rounded-2xl p-5 border border-emerald-500/10 flex items-center gap-4 group hover:bg-emerald-500/10 transition-colors">
+                            <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shadow-inner group-hover:scale-110 transition-transform">
+                                <Users className="w-6 h-6 text-emerald-400" />
                             </div>
                             <div>
-                                <p className="text-[10px] text-gray-500 uppercase font-bold">Capacidade</p>
-                                <p className="text-lg font-black text-white">{city.stadiumCapacity.toLocaleString()}</p>
+                                <p className="text-[9px] text-white/40 uppercase font-black tracking-widest mb-1">Capacidade</p>
+                                <p className="text-xl font-black text-white leading-none">{city.stadiumCapacity.toLocaleString()}</p>
                             </div>
                         </div>
-                        <div className="bg-secondary/10 rounded-2xl p-4 border border-white/5 flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center">
-                                <Calendar className="w-5 h-5 text-primary" />
+                        <div className="bg-white/5 rounded-2xl p-5 border border-white/5 flex items-center gap-4 group hover:bg-white/10 transition-colors">
+                            <div className="w-12 h-12 rounded-xl bg-white/5 flex items-center justify-center border border-white/10 shadow-inner group-hover:scale-110 transition-transform">
+                                <Calendar className="w-6 h-6 text-white/60" />
                             </div>
                             <div>
-                                <p className="text-[10px] text-gray-500 uppercase font-bold">Inauguração</p>
-                                <p className="text-lg font-black text-white">{city.stadiumYearBuilt}</p>
+                                <p className="text-[9px] text-white/40 uppercase font-black tracking-widest mb-1">Inauguração</p>
+                                <p className="text-xl font-black text-white leading-none">{city.stadiumYearBuilt}</p>
                             </div>
                         </div>
                     </div>
 
-                    <div className="space-y-6">
+                    <div className="space-y-10">
                         <section>
-                            <h3 className="text-xs font-bold text-white/50 uppercase tracking-wider mb-3">Sobre a Arena</h3>
-                            <p className="text-sm text-gray-300 leading-relaxed">
-                                {city.description} Um ícone moderno da arquitetura esportiva em {city.name}, preparado para receber as maiores estrelas do futebol mundial.
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="w-1 h-5 bg-emerald-500 rounded-full" />
+                                <h3 className="text-xs font-black text-white uppercase tracking-[0.2em]">Catedral do Futebol</h3>
+                            </div>
+                            <p className="text-sm text-white/60 leading-loose antialiased font-medium">
+                                {city.description} Uma obra prima da arquitetura que simboliza a paixão pelo esporte em <span className="text-white font-bold">{city.name}</span>. O palco perfeito para receber as maiores estrelas do futebol mundial no maior evento da história em 2026.
                             </p>
                         </section>
 
-                        {/* Technical Details */}
-                        <section className="bg-white/5 rounded-2xl p-5 border border-white/5">
-                            <h3 className="text-xs font-bold text-white/50 uppercase tracking-wider mb-4 flex items-center gap-2">
-                                <Construction className="w-4 h-4 text-orange-400" />
-                                Detalhes Técnicos
-                            </h3>
-                            <div className="grid grid-cols-2 gap-y-4">
-                                {city.stadiumCost && (
-                                    <div>
-                                        <p className="text-[9px] text-gray-500 uppercase">Custo de Construção</p>
-                                        <p className="text-sm font-bold text-white">{city.stadiumCost}</p>
+                        {/* Technical Details Cards */}
+                        <section className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="bg-black/40 rounded-[2rem] p-6 border border-emerald-500/10 hover:border-emerald-500/30 transition-all group">
+                                <h3 className="text-[10px] font-black text-emerald-400/70 uppercase tracking-widest mb-6 flex items-center gap-2">
+                                    <Construction className="w-3.5 h-3.5" />
+                                    Engenharia
+                                </h3>
+                                <div className="space-y-6">
+                                    {city.stadiumCost && (
+                                        <div className="flex justify-between items-end border-b border-white/5 pb-2">
+                                            <p className="text-[10px] text-white/30 uppercase font-bold">Investimento</p>
+                                            <p className="text-xs font-black text-white">{city.stadiumCost}</p>
+                                        </div>
+                                    )}
+                                    <div className="flex justify-between items-end border-b border-white/5 pb-2">
+                                        <p className="text-[10px] text-white/30 uppercase font-bold">Altitude</p>
+                                        <p className="text-xs font-black text-white">{city.altitude || 0}m</p>
                                     </div>
-                                )}
-                                {city.wcMatches && (
-                                    <div>
-                                        <p className="text-[9px] text-gray-500 uppercase">Partidas da Copa</p>
-                                        <p className="text-sm font-bold text-primary">{city.wcMatches} confirmadas</p>
+                                </div>
+                            </div>
+
+                            <div className="bg-emerald-500/[0.03] rounded-[2rem] p-6 border border-emerald-500/20 hover:border-emerald-500/40 transition-all group">
+                                <h3 className="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-6 flex items-center gap-2">
+                                    <Trophy className="w-3.5 h-3.5" />
+                                    Copa 2026
+                                </h3>
+                                <div className="space-y-6">
+                                    {city.wcMatches && (
+                                        <div className="flex justify-between items-end border-b border-emerald-500/10 pb-2">
+                                            <p className="text-[10px] text-emerald-400/50 uppercase font-black">Jogos Confirmados</p>
+                                            <p className="text-lg font-black text-emerald-400 leading-none">{city.wcMatches}</p>
+                                        </div>
+                                    )}
+                                    <div className="flex justify-between items-end border-b border-emerald-500/10 pb-2">
+                                        <p className="text-[10px] text-emerald-400/50 uppercase font-black">Gramado</p>
+                                        <p className="text-xs font-black text-white">Tecnologia Híbrida</p>
                                     </div>
-                                )}
-                                {city.altitude !== undefined && (
-                                    <div>
-                                        <p className="text-[9px] text-gray-500 uppercase">Altitude</p>
-                                        <p className="text-sm font-bold text-white">{city.altitude}m</p>
-                                    </div>
-                                )}
+                                </div>
                             </div>
                         </section>
 
                         {/* Curiosities */}
                         <section>
-                            <h3 className="text-xs font-bold text-white/50 uppercase tracking-wider mb-3">Curiosidades</h3>
-                            <ul className="space-y-3">
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="w-1 h-5 bg-white/20 rounded-full" />
+                                <h3 className="text-xs font-black text-white uppercase tracking-[0.2em]">Curiosidades</h3>
+                            </div>
+                            <div className="grid grid-cols-1 gap-3">
                                 {city.curiosities.map((c, i) => (
-                                    <li key={i} className="flex gap-3 text-sm text-gray-400 bg-secondary/10 p-3 rounded-lg border border-white/5">
-                                        <Star className="w-4 h-4 text-yellow-500 shrink-0 mt-0.5" />
-                                        {c}
-                                    </li>
+                                    <motion.div
+                                        key={i}
+                                        initial={{ x: -10, opacity: 0 }}
+                                        animate={{ x: 0, opacity: 1 }}
+                                        transition={{ delay: i * 0.1 }}
+                                        className="flex gap-4 text-sm text-white/50 bg-white/[0.02] hover:bg-white/[0.04] p-5 rounded-2xl border border-white/5 transition-all group"
+                                    >
+                                        <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0 border border-emerald-500/20 group-hover:scale-110 transition-transform">
+                                            <Star className="w-4 h-4 text-emerald-400" />
+                                        </div>
+                                        <p className="text-[13px] leading-relaxed font-medium group-hover:text-white/70 transition-colors">{c}</p>
+                                    </motion.div>
                                 ))}
-                            </ul>
+                            </div>
                         </section>
                     </div>
 
                     {/* Footer Actions */}
-                    <div className="mt-8 pt-4 border-t border-white/10 flex gap-3">
+                    <div className="mt-12 pt-8 border-t border-white/10 flex flex-wrap gap-4">
+                        <button
+                            onClick={() => handleDirections(city.geoCoordinates[0], city.geoCoordinates[1], city.stadiumName)}
+                            className="flex-1 py-4.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 rounded-[1.5rem] text-[10px] uppercase font-black tracking-widest transition-all flex items-center justify-center gap-3 border border-emerald-500/20"
+                        >
+                            <Navigation className="w-4 h-4" />
+                            Rotas
+                        </button>
+                        <button
+                            onClick={() => handleShare(`ArenaCup - ${city.stadiumName}`, `Conheça o ${city.stadiumName}, palco de jogos em ${city.name} na Copa 2026! `)}
+                            className="flex-1 py-4.5 bg-white/5 hover:bg-white/10 text-white rounded-[1.5rem] text-[10px] uppercase font-black tracking-widest transition-all flex items-center justify-center gap-3 border border-white/10"
+                        >
+                            Compartilhar
+                        </button>
                         {onViewOnMap && (
                             <button
                                 onClick={() => {
                                     onClose();
                                     onViewOnMap(city.id);
                                 }}
-                                className="flex-1 py-4 bg-secondary/20 hover:bg-secondary/40 text-white rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2 border border-white/10"
+                                className="flex-[2] py-4.5 bg-white/5 hover:bg-white/10 text-white rounded-[1.5rem] text-[10px] uppercase font-black tracking-widest transition-all flex items-center justify-center gap-3 border border-white/10"
                             >
-                                <MapPin className="w-4 h-4" />
-                                Localizar
+                                <MapPin className="w-4 h-4 text-emerald-400" />
+                                Ver no Mapa
                             </button>
                         )}
-                        <button className="flex-[2] py-4 bg-primary hover:bg-primary/90 text-black rounded-xl text-sm font-black transition-colors flex items-center justify-center gap-2 shadow-lg shadow-primary/20">
-                            <Plane className="w-4 h-4" />
-                            Planejar Visita
-                        </button>
                     </div>
                 </div>
             </motion.div>

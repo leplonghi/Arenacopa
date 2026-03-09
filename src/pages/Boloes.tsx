@@ -2,17 +2,13 @@ import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
-import { Plus, Users, Search, UserPlus, Trophy, ChevronRight, X, DollarSign, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Plus, Users, Search, UserPlus, Trophy, ChevronRight, X, Compass, CheckCircle2 } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion, AnimatePresence } from "framer-motion";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { type BolaoRowResponse } from "@/types/bolao";
 
 interface BolaoRow {
   id: string;
@@ -21,160 +17,172 @@ interface BolaoRow {
   creator_id: string;
   invite_code: string;
   created_at: string;
+  avatar_url: string;
   memberCount: number;
   isCreator: boolean;
-  is_paid: boolean;
-  entry_fee: number | null;
-  pendingCount?: number;
+}
+
+interface PublicBolaoRow extends BolaoRow {
+  leader_score: number;
 }
 
 const Boloes = () => {
   const { t } = useTranslation('bolao');
   const { user } = useAuth();
   const { toast } = useToast();
+
   const [boloes, setBoloes] = useState<BolaoRow[]>([]);
+  const [publicBoloes, setPublicBoloes] = useState<PublicBolaoRow[]>([]);
+
   const [loading, setLoading] = useState(true);
   const [joinCode, setJoinCode] = useState("");
   const [joining, setJoining] = useState(false);
   const [showJoin, setShowJoin] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  // Join Confirmation State
-  const [pendingJoinBolao, setPendingJoinBolao] = useState<BolaoRow | null>(null);
-  const [disclaimerAccepted, setDisclaimerAccepted] = useState(false);
-
-  const loadBoloes = useCallback(async () => {
+  const loadData = useCallback(async () => {
     if (!user) return;
+    try {
+      // Load user's boloes
+      const { data: myMemberships } = await supabase
+        .from('bolao_members')
+        .select('bolao_id, role')
+        .eq('user_id', user.id);
 
-    // Demo Mode Handler
-    const isDemo = localStorage.getItem("demo_mode") === "true";
-    if (isDemo) {
-      setBoloes([
-        {
-          id: "demo-bolao-1",
-          name: t('list.demo_1_name'),
-          description: t('list.demo_1_desc'),
-          creator_id: "demo-user-id",
-          invite_code: "DEMO123",
-          created_at: new Date().toISOString(),
-          memberCount: 5,
-          isCreator: true,
-          is_paid: false,
-          entry_fee: null
-        },
-        {
-          id: "demo-bolao-2",
-          name: t('list.demo_2_name'),
-          description: t('list.demo_2_desc'),
-          creator_id: "other-user",
-          invite_code: "FIRMA26",
-          created_at: new Date(Date.now() - 86400000).toISOString(),
-          memberCount: 12,
-          isCreator: false,
-          is_paid: true,
-          entry_fee: 50.00
+      if (myMemberships && myMemberships.length > 0) {
+        const bolaoIds = myMemberships.map(m => m.bolao_id);
+        const { data: myBoloesData } = await supabase
+          .from('boloes')
+          .select('*, bolao_members(count)')
+          .in('id', bolaoIds)
+          .order('created_at', { ascending: false });
+
+        if (myBoloesData) {
+          const mapped = myBoloesData.map(b => ({
+            id: b.id,
+            name: b.name,
+            description: b.description,
+            creator_id: b.creator_id,
+            invite_code: b.invite_code,
+            created_at: b.created_at,
+            avatar_url: b.avatar_url || '🏆',
+            memberCount: b.bolao_members[0].count,
+            isCreator: b.creator_id === user.id
+          }));
+          setBoloes(mapped);
         }
-      ]);
-      setLoading(false);
-      return;
-    }
+      } else {
+        setBoloes([]);
+      }
 
-    const { data, error } = await supabase
-      .from("boloes")
-      .select("*, bolao_members(count)")
-      .order("created_at", { ascending: false });
+      // Load public active boloes (explore)
+      const excludeIds = myMemberships?.map(m => m.bolao_id) || [];
 
-    if (!error && data) {
-      const typedData = data as unknown as BolaoRowResponse[];
-      setBoloes(typedData.map((b) => ({
-        id: b.id,
-        name: b.name,
-        description: b.description,
-        creator_id: b.creator_id,
-        invite_code: b.invite_code,
-        created_at: b.created_at,
-        memberCount: b.bolao_members?.[0]?.count || 0,
-        isCreator: b.creator_id === user.id,
-        is_paid: b.is_paid,
-        entry_fee: b.entry_fee
-      })));
+      let publicQuery = supabase
+        .from('boloes')
+        .select('*, bolao_members(count)')
+        .eq('category', 'public')
+        .eq('status', 'active');
+
+      if (excludeIds.length > 0) {
+        // Can't easily not.in if array is huge, but it's fine for now
+      }
+
+      const { data: publicData } = await publicQuery.limit(20);
+
+      if (publicData) {
+        // Find leader score from bolao_rankings for each
+        const pMapped: PublicBolaoRow[] = await Promise.all(publicData.map(async (b) => {
+          // Skip if already a member
+          if (excludeIds.includes(b.id)) return null;
+
+          const { data: ranks } = await supabase
+            .from('bolao_rankings')
+            .select('total_points')
+            .eq('bolao_id', b.id)
+            .order('total_points', { ascending: false })
+            .limit(1);
+
+          return {
+            id: b.id,
+            name: b.name,
+            description: b.description,
+            creator_id: b.creator_id,
+            invite_code: b.invite_code,
+            created_at: b.created_at,
+            avatar_url: b.avatar_url || '🏆',
+            memberCount: b.bolao_members[0].count,
+            isCreator: false,
+            leader_score: ranks && ranks.length > 0 ? ranks[0].total_points : 0
+          };
+        }));
+        setPublicBoloes(pMapped.filter(Boolean) as PublicBolaoRow[]);
+      }
+
+    } catch (error) {
+      console.error(error);
     }
     setLoading(false);
-  }, [user, t]);
+  }, [user]);
 
   useEffect(() => {
-    if (!user) return;
-    loadBoloes();
-  }, [user, loadBoloes]);
+    loadData();
+  }, [loadData]);
+
+  const completeJoin = async (bolaoId: string) => {
+    try {
+      await supabase.from('bolao_members').insert({
+        bolao_id: bolaoId,
+        user_id: user!.id,
+        role: "member",
+        payment_status: "exempt"
+      });
+      toast({
+        title: "Sucesso!",
+        description: "Você entrou na arena.",
+        className: "bg-emerald-500 text-white font-black"
+      });
+      loadData();
+    } catch (error) {
+      toast({ title: "Erro ao entrar", variant: "destructive" });
+    } finally {
+      setJoining(false);
+    }
+  };
 
   const verifyAndPrepareJoin = async () => {
     if (!user || !joinCode.trim()) return;
     setJoining(true);
 
     try {
-      const { data: bolao, error: findError } = await supabase
-        .from("boloes")
-        .select("id, name, is_paid, entry_fee")
-        .eq("invite_code", joinCode.trim().toLowerCase())
+      const { data, error } = await supabase
+        .from('boloes')
+        .select('id, name')
+        .eq('invite_code', joinCode.trim().toUpperCase())
         .single();
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const bolaoData = bolao as any;
+      if (error || !data) throw new Error("Código inválido.");
 
-      if (findError || !bolao) throw new Error(t('list.error_invalid_code'));
+      const { data: member } = await supabase
+        .from('bolao_members')
+        .select('id')
+        .eq('bolao_id', data.id)
+        .eq('user_id', user.id);
 
-      const { data: existing } = await supabase
-        .from("bolao_members")
-        .select("id")
-        .eq("bolao_id", bolaoData.id)
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (existing) {
-        toast({ title: t('list.already_member'), description: bolaoData.name });
-        setJoinCode("");
-        setShowJoin(false);
+      if (member && member.length > 0) {
+        toast({ title: "Você já está neste bolão!" });
         setJoining(false);
         return;
       }
 
-      if (bolaoData.is_paid) {
-        const pending = bolaoData as BolaoRow;
-        setPendingJoinBolao(pending);
-        setDisclaimerAccepted(false);
-        setJoining(false); // Stop generic loading, open modal
-      } else {
-        // Proceed directly
-        completeJoin(bolaoData.id, bolaoData.name);
-      }
-
+      await completeJoin(data.id);
+      setJoinCode("");
+      setShowJoin(false);
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Erro desconhecido";
-      toast({ title: "Erro", description: message, variant: "destructive" });
+      toast({ title: "Código de convite inválido ou expirado.", variant: "destructive" });
       setJoining(false);
     }
   };
-
-  const completeJoin = async (bolaoId: string, bolaoName: string) => {
-    try {
-      const { error: joinError } = await supabase
-        .from("bolao_members")
-        .insert({ bolao_id: bolaoId, user_id: user!.id, role: "member", payment_status: 'pending' });
-
-      if (joinError) throw joinError;
-
-      toast({ title: t('list.success_join'), description: bolaoName });
-      setJoinCode("");
-      setShowJoin(false);
-      setPendingJoinBolao(null);
-      loadBoloes();
-    } catch (error) {
-      console.error(error);
-      toast({ title: t('list.error_join'), description: "Tente novamente.", variant: "destructive" });
-    } finally {
-      setJoining(false);
-    }
-  }
 
   const filtered = boloes.filter(b =>
     !searchQuery || b.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -184,59 +192,33 @@ const Boloes = () => {
   const joinedBoloes = filtered.filter(b => !b.isCreator);
 
   return (
-    <div className="px-4 py-4">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+    <div className="px-4 py-4 pb-24 min-h-screen bg-[#050505]">
+      <div className="flex items-center justify-between mb-6">
         <div>
-          <span className="text-[10px] uppercase tracking-widest text-primary font-bold block">{t('list.my_leagues')}</span>
-          <h1 className="text-2xl font-black">{t('list.title')}</h1>
+          <span className="text-[10px] uppercase tracking-widest text-primary font-black block">Ligas</span>
+          <h1 className="text-3xl font-black text-white tracking-tighter">Meus Bolões</h1>
         </div>
-        <div className="flex gap-2">
-          <button
-            onClick={() => setShowJoin(!showJoin)}
-            className={cn(
-              "flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-bold transition-colors",
-              showJoin ? "bg-primary text-primary-foreground" : "bg-secondary text-secondary-foreground"
-            )}
-          >
-            <UserPlus className="w-4 h-4" />
+        <div className="flex gap-2 relative z-10">
+          <button onClick={() => setShowJoin(!showJoin)} className={cn("p-3 rounded-[20px] transition-all", showJoin ? "bg-primary text-black" : "bg-white/5 border border-white/10 text-white")}>
+            <UserPlus className="w-5 h-5" />
           </button>
-          <Link
-            to="/boloes/criar"
-            className="flex items-center gap-1.5 px-4 py-2 rounded-full bg-primary text-primary-foreground text-xs font-bold"
-          >
-            <Plus className="w-4 h-4" /> {t('list.create')}
+          <Link to="/boloes/criar" className="flex items-center gap-2 px-5 py-3 rounded-[20px] bg-primary text-black font-black uppercase text-[10px] tracking-widest hover:scale-105 transition-transform shadow-[0_0_20px_rgba(34,197,94,0.3)]">
+            <Plus className="w-4 h-4" /> CRIAR
           </Link>
         </div>
       </div>
 
-      {/* Join by code */}
       <AnimatePresence>
         {showJoin && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: "auto" }}
-            className="overflow-hidden mb-4"
-          >
-            <div className="glass-card p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-primary">{t('list.join_code_title')}</span>
-                <button onClick={() => setShowJoin(false)} className="p-1 rounded-md bg-secondary"><X className="w-3.5 h-3.5" /></button>
+          <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }} className="overflow-hidden mb-6">
+            <div className="bg-white/5 border border-white/10 p-5 rounded-[24px]">
+              <div className="flex items-center justify-between mb-4">
+                <span className="text-[10px] font-black uppercase tracking-widest text-primary">CÓDIGO DE CONVITE</span>
               </div>
               <div className="flex gap-2">
-                <input
-                  value={joinCode}
-                  onChange={e => setJoinCode(e.target.value)}
-                  placeholder={t('list.join_code_placeholder')}
-                  className="flex-1 px-4 py-2.5 rounded-xl bg-secondary border border-border text-sm font-medium placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-                />
-                <button
-                  onClick={verifyAndPrepareJoin}
-                  disabled={joining || !joinCode.trim()}
-                  className="px-5 py-2.5 rounded-xl bg-primary text-primary-foreground text-xs font-bold disabled:opacity-50"
-                >
-                  {joining ? "..." : t('list.btn_join')}
+                <input value={joinCode} onChange={e => setJoinCode(e.target.value)} placeholder="Ex: AX7T9Q" className="flex-1 px-4 py-3 rounded-[16px] bg-white/[0.03] border border-white/10 text-lg font-black uppercase placeholder:normal-case placeholder:text-gray-600 focus:border-primary/50 outline-none" />
+                <button onClick={verifyAndPrepareJoin} disabled={joining || !joinCode.trim()} className="px-6 rounded-[16px] bg-primary text-black font-black text-xs uppercase disabled:opacity-50">
+                  {joining ? "VERIFICANDO..." : "ENTRAR"}
                 </button>
               </div>
             </div>
@@ -244,169 +226,105 @@ const Boloes = () => {
         )}
       </AnimatePresence>
 
-      {/* Search (when has bolões) */}
       {!loading && boloes.length > 0 && (
-        <div className="relative mb-4">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <input
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            placeholder={t('list.search_placeholder')}
-            className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-secondary/60 border border-border/50 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50"
-          />
+        <div className="relative mb-6">
+          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" />
+          <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} placeholder="Pesquisar minhas ligas..." className="w-full pl-12 pr-4 py-4 rounded-[24px] bg-white/5 border border-white/5 text-sm placeholder:text-gray-600 focus:outline-none focus:border-primary/30 font-medium" />
         </div>
       )}
 
-      {/* Loading */}
       {loading ? (
-        <div className="space-y-3">
-          {[1, 2, 3].map(i => (
-            <Skeleton key={i} className="h-24 rounded-xl" />
-          ))}
+        <div className="space-y-4">
+          {[1, 2].map(i => <Skeleton key={i} className="h-24 rounded-[24px] bg-white/5" />)}
         </div>
-      ) : boloes.length === 0 ? (
-        <div className="mt-8">
-          <EmptyState icon="🏆" title={t('list.empty_title')} description={t('list.empty_desc')} />
+      ) : (boloes.length === 0 && publicBoloes.length === 0) ? (
+        <div className="mt-12 text-center">
+          <div className="w-24 h-24 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-6">
+            <Trophy className="w-10 h-10 text-gray-500" />
+          </div>
+          <h3 className="text-xl font-black mb-2">Nenhuma liga encontrada</h3>
+          <p className="text-gray-500 text-sm">Crie a sua própria arena ou participe através de um código de convite.</p>
         </div>
       ) : (
-        <div className="space-y-5">
-          {/* Created by me */}
+        <div className="space-y-8">
           {myBoloes.length > 0 && (
             <section>
-              <h3 className="text-[10px] font-bold uppercase tracking-widest text-primary mb-2 flex items-center gap-1.5">
-                <Trophy className="w-3.5 h-3.5" /> {t('list.section_mine')}
+              <h3 className="text-[10px] font-black uppercase tracking-widest text-white mb-4 flex items-center gap-2">
+                <Trophy className="w-4 h-4 text-primary" /> MINHAS ARENAS (CRIADAS POR MIM)
               </h3>
-              <div className="space-y-2 md:space-y-0 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {myBoloes.map(b => (
-                  <BolaoCard key={b.id} bolao={b} />
+                  <BolaoCard key={b.id} bolao={b} type="mine" />
                 ))}
               </div>
             </section>
           )}
 
-          {/* Joined */}
           {joinedBoloes.length > 0 && (
             <section>
-              <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2 flex items-center gap-1.5">
-                <Users className="w-3.5 h-3.5" /> {t('list.section_participating')}
+              <h3 className="text-[10px] font-black uppercase tracking-widest text-white mb-4 flex items-center gap-2">
+                <Users className="w-4 h-4 text-emerald-500" /> PARTICIPANDO
               </h3>
-              <div className="space-y-2 md:space-y-0 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {joinedBoloes.map(b => (
-                  <BolaoCard key={b.id} bolao={b} />
+                  <BolaoCard key={b.id} bolao={b} type="joined" />
                 ))}
               </div>
             </section>
           )}
 
-          {filtered.length === 0 && searchQuery && (
-            <EmptyState icon="🔍" title={t('list.no_results')} description="" />
+          {publicBoloes.length > 0 && !searchQuery && (
+            <section className="pt-8 border-t border-white/10">
+              <h3 className="text-[11px] font-black uppercase tracking-[0.2em] text-white mb-6 flex items-center gap-2">
+                <Compass className="w-5 h-5 text-blue-400" /> EXPLORE BOLÕES PÚBLICOS
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {publicBoloes.map(b => (
+                  <div key={b.id} className="p-5 rounded-[24px] bg-blue-500/5 border border-blue-500/20 flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="text-3xl">{b.avatar_url}</div>
+                      <div>
+                        <div className="font-black truncate max-w-[150px]">{b.name}</div>
+                        <div className="text-[10px] text-gray-400 font-bold uppercase mt-1">{b.memberCount} membros • LÍDER: {b.leader_score} pts</div>
+                      </div>
+                    </div>
+                    <button onClick={() => { setJoining(true); completeJoin(b.id); }} disabled={joining} className="px-4 py-2 bg-blue-500 text-white font-black text-[9px] uppercase tracking-widest rounded-xl hover:bg-blue-600 transition">
+                      ENTRAR
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </section>
           )}
         </div>
       )}
-
-      {/* Confirmation Dialog for Paid Bolões */}
-      <Dialog open={!!pendingJoinBolao} onOpenChange={(open) => !open && setPendingJoinBolao(null)}>
-        <DialogContent className="max-w-xs rounded-2xl p-0 overflow-hidden gap-0">
-          <div className="bg-primary/5 p-6 flex flex-col items-center text-center">
-            <div className="w-12 h-12 rounded-full bg-primary/20 flex items-center justify-center mb-3">
-              <DollarSign className="w-6 h-6 text-primary" />
-            </div>
-            <DialogTitle>{t('join_modal.title')}</DialogTitle>
-            <DialogDescription className="text-center mt-1">{t('join_modal.desc')}</DialogDescription>
-          </div>
-
-          <div className="p-6 space-y-4">
-            <div className="space-y-2">
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-muted-foreground">Bolão</span>
-                <span className="font-bold">{pendingJoinBolao?.name}</span>
-              </div>
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-muted-foreground">{t('join_modal.fee_label')}</span>
-                <span className="font-bold text-green-500">R$ {pendingJoinBolao?.entry_fee?.toFixed(2)}</span>
-              </div>
-            </div>
-
-            <div className="flex items-start gap-3 p-3 bg-secondary/50 rounded-lg border border-border/50">
-              <Checkbox id="terms" checked={disclaimerAccepted} onCheckedChange={(c) => setDisclaimerAccepted(!!c)} className="mt-0.5" />
-              <Label htmlFor="terms" className="text-[10px] leading-relaxed cursor-pointer text-muted-foreground">
-                <strong className="block mb-1">{t('join_modal.terms')}</strong>
-              </Label>
-            </div>
-          </div>
-
-          <div className="p-4 bg-secondary/30 flex gap-3">
-            <button onClick={() => setPendingJoinBolao(null)} className="flex-1 py-3 rounded-xl font-bold text-xs hover:bg-secondary transition-colors">{t('list.btn_cancel')}</button>
-            <button
-              onClick={() => pendingJoinBolao && completeJoin(pendingJoinBolao.id, pendingJoinBolao.name)}
-              disabled={!disclaimerAccepted}
-              className="flex-1 py-3 rounded-xl bg-primary text-primary-foreground font-bold text-xs disabled:opacity-50 transition-all"
-            >
-              {t('list.btn_confirm')}
-            </button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
 
-function BolaoCard({ bolao }: { bolao: BolaoRow }) {
-  const { t } = useTranslation('bolao');
+function BolaoCard({ bolao, type }: { bolao: BolaoRow, type: 'mine' | 'joined' }) {
   return (
-    <div className="glass-card-hover p-4 block relative">
-      <Link to={`/boloes/${bolao.id}`} className="flex items-center gap-3">
-        <div className={cn(
-          "w-12 h-12 rounded-xl flex items-center justify-center text-2xl shrink-0 relative",
-          bolao.isCreator ? "bg-primary/20" : "bg-secondary"
-        )}>
-          ⚽
-          {bolao.is_paid && (
-            <div className="absolute -top-1 -right-1 bg-green-500 text-white rounded-full p-0.5 border-2 border-background shadow-sm">
-              <DollarSign className="w-2.5 h-2.5" />
-            </div>
-          )}
+    <Link to={`/boloes/${bolao.id}`} className="block p-5 rounded-[24px] bg-white/[0.03] border border-white/5 hover:bg-white/5 hover:border-white/10 transition-all group overflow-hidden relative">
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+      <div className="flex items-center gap-4 relative z-10">
+        <div className={cn("w-14 h-14 rounded-[18px] flex items-center justify-center text-2xl shrink-0 border", type === 'mine' ? "bg-primary/20 border-primary/30" : "bg-white/5 border-white/10")}>
+          {bolao.avatar_url}
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="text-sm font-black truncate">{bolao.name}</h3>
-          <div className="flex items-center gap-2 mt-0.5">
-            <span className={cn(
-              "text-[9px] px-2 py-0.5 rounded-full font-bold uppercase",
-              bolao.isCreator ? "bg-primary/20 text-primary" : "bg-secondary text-muted-foreground"
-            )}>
-              {bolao.isCreator ? t('list.card_admin') : t('list.card_member')}
+          <h3 className="text-base font-black truncate">{bolao.name}</h3>
+          <div className="flex items-center gap-2 mt-1.5">
+            <span className={cn("text-[9px] px-2 py-0.5 rounded-md font-black uppercase tracking-widest", type === 'mine' ? "bg-primary/20 text-primary" : "bg-white/10 text-gray-400")}>
+              {type === 'mine' ? 'ADMIN' : 'MEMBRO'}
             </span>
-            <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+            <span className="text-[10px] text-gray-500 font-bold flex items-center gap-1">
               <Users className="w-3 h-3" /> {bolao.memberCount}
             </span>
-            {(bolao.pendingCount ?? 0) > 0 && (
-              <span className="text-[9px] font-bold text-red-500 bg-red-500/10 px-1.5 py-0.5 rounded-full flex items-center gap-1">
-                <AlertTriangle className="w-2.5 h-2.5" />
-                {bolao.pendingCount} {t('list.card_pending')}
-              </span>
-            )}
           </div>
-          {bolao.description && (
-            <p className="text-[10px] text-muted-foreground truncate mt-1">{bolao.description}</p>
-          )}
         </div>
-        <div className="flex flex-col items-end gap-1.5 shrink-0">
-          <ChevronRight className="w-4 h-4 text-muted-foreground" />
-        </div>
-      </Link>
-      {(bolao.pendingCount ?? 0) > 0 && (
-        <Link
-          to={`/boloes/${bolao.id}?tab=palpites`}
-          className="mt-2 w-full flex items-center justify-center gap-1.5 py-2 rounded-lg bg-primary/10 hover:bg-primary/20 text-primary text-[11px] font-bold transition-colors"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <Trophy className="w-3.5 h-3.5" />
-          {t('list.card_bet_now')}
-        </Link>
-      )}
-    </div>
+        <ChevronRight className="w-5 h-5 text-gray-600 group-hover:text-white transition-colors group-hover:translate-x-1" />
+      </div>
+    </Link>
   );
 }
 
 export default Boloes;
-

@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { toast } from "sonner";
+import { Purchases, LOG_LEVEL } from '@revenuecat/purchases-capacitor';
+import { Capacitor } from '@capacitor/core';
 
 interface MonetizationContextType {
     isPremium: boolean;
@@ -20,10 +22,61 @@ export function MonetizationProvider({ children }: { children: React.ReactNode }
     // Counter for interstitial logic (e.g., show ad every 5 navigations/actions)
     const [actionCount, setActionCount] = useState(0);
 
+    useEffect(() => {
+        const initRevenueCat = async () => {
+            if (Capacitor.isNativePlatform()) {
+                Purchases.setLogLevel({ level: LOG_LEVEL.DEBUG });
+
+                // TODO: Replace with the actual public API keys from RevenueCat
+                const apiKey = Capacitor.getPlatform() === 'ios'
+                    ? "appl_api_key_placeholder"
+                    : "goog_api_key_placeholder";
+
+                await Purchases.configure({ apiKey });
+
+                try {
+                    const info = await Purchases.getCustomerInfo();
+                    if (typeof info.customerInfo.entitlements.active['arena_elite'] !== 'undefined') {
+                        setIsPremium(true);
+                        localStorage.setItem("isPremium", "true");
+                    }
+                } catch (e) {
+                    console.error("Error fetching customer info", e);
+                }
+            }
+        };
+        initRevenueCat();
+    }, []);
+
     const purchasePremium = async () => {
         setIsLoading(true);
-        // TODO: Replace with real Stripe Payment Link or Checkout Session
-        // For now, simulating a successful purchase
+
+        if (Capacitor.isNativePlatform()) {
+            try {
+                const offerings = await Purchases.getOfferings();
+                const packageToBuy = offerings.current?.availablePackages.find(p => p.identifier === "arena_elite") || offerings.current?.availablePackages[0];
+
+                if (packageToBuy) {
+                    const { customerInfo } = await Purchases.purchasePackage({ aPackage: packageToBuy });
+                    if (typeof customerInfo.entitlements.active['arena_elite'] !== 'undefined') {
+                        localStorage.setItem("isPremium", "true");
+                        setIsPremium(true);
+                        toast.success("Premium ativado! Obrigado pelo apoio.");
+                    }
+                } else {
+                    toast.error("Pacote premium não encontrado.");
+                }
+            } catch (e: any) {
+                if (!e.userCancelled) {
+                    toast.error("Erro ao processar compra.");
+                }
+            } finally {
+                setIsLoading(false);
+            }
+            return;
+        }
+
+        // Fallback or Dev mode simulation for web
         return new Promise<void>((resolve) => {
             setTimeout(() => {
                 localStorage.setItem("isPremium", "true");

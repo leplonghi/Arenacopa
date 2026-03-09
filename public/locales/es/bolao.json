@@ -7,7 +7,7 @@
         "invite_friends": "Invita a más amigos",
         "share_code": "Comparte el código:",
         "btn_share": "Compartir",
-        "disclaimer": "⚠️ ArenaCopa **no realiza** procesamiento de pagos o transacciones financieras. Cualquier monto debe ser acordado entre los participantes fuera de la aplicación.",
+        "disclaimer": "⚠️ ArenaCup **no realiza** procesamiento de pagos o transacciones financieras. Cualquier monto debe ser acordado entre los participantes fuera de la aplicación.",
         "members_stat": "Miembros",
         "palpites_stat": "Pronósticos",
         "progress_stat": "Progreso"
@@ -57,11 +57,18 @@
         "your_guess": "Tu Pronóstico",
         "saved_success": "¡Pronóstico guardado! 🏆"
     },
+    "ranking": {
+        "default_user": "Usuario",
+        "guesses": "pronósticos",
+        "points_abbr": "Pts",
+        "legend_rules": "Reglas de Puntuación"
+    },
     "common": {
         "attention": "Atención",
         "error_title": "Error",
         "user": "Usuario",
-        "points_abbr": "Pts"
+        "points_abbr": "Pts",
+        "group": "Grupo"
     },
     "create_bolao": {
         "title": "Nueva Quiniela",
@@ -72,7 +79,7 @@
             "created_desc": "Has creado la quiniela '{{name}}' con éxito."
         },
         "financial": {
-            "warning": "Recuerda: ArenaCopa es solo una hoja de cálculo inteligente. Eres responsable de cobrar y pagar a los participantes.",
+            "warning": "Recuerda: ArenaCup es solo una hoja de cálculo inteligente. Eres responsable de cobrar y pagar a los participantes.",
             "fee_label": "Cuota de Entrada ($)",
             "fee_placeholder": "0,00",
             "payment_label": "Detalles de Pago",
@@ -129,7 +136,7 @@
             "type": "Tipo",
             "entry": "Entrada",
             "scoring": "Puntuación (E/G/E/P)",
-            "disclaimer": "Declaro que soy el único responsable de recaudar y pagar los premios de esta quiniela. Eximo a ArenaCopa de cualquier responsabilidad financiera.",
+            "disclaimer": "Declaro que soy el único responsable de recaudar y pagar los premios de esta quiniela. Eximo a ArenaCup de cualquier responsabilidad financiera.",
             "success_title": "¡Quiniela creada! 🎉",
             "success_desc": "Configuración guardada con éxito.",
             "error_title": "Error",
@@ -142,6 +149,33 @@
         },
         "paid_label": "Pagada",
         "free_label": "Gratis"
+    },
+    "list": {
+        "title": "Tus Quinielas",
+        "create": "Crear Quiniela",
+        "my_leagues": "Mis Ligas",
+        "join_code_title": "Unirse con Código",
+        "join_code_placeholder": "Ingresa el código...",
+        "btn_join": "Unirse",
+        "search_placeholder": "Buscar tus quinielas...",
+        "empty_title": "No se encontraron quinielas",
+        "empty_desc": "Aún no te has unido a ninguna quiniela.",
+        "section_mine": "Creadas por mí",
+        "section_participating": "Participando",
+        "card_admin": "Admin",
+        "card_member": "Miembro",
+        "card_pending": "Pendientes",
+        "card_bet_now": "Pronosticar Ahora",
+        "demo_1_name": "Quiniela Demo",
+        "demo_1_desc": "Quiniela Oficial de Demostración",
+        "demo_2_name": "Quiniela de la Oficina",
+        "demo_2_desc": "Premio de chocolates",
+        "btn_cancel": "Cancelar",
+        "btn_confirm": "Confirmar Entrada",
+        "error_join": "Error al unirse",
+        "success_join": "¡Te uniste a la quiniela! 🎉",
+        "already_joined": "¡Ya participas en esta quiniela!",
+        "no_results": "No se encontraron quinielas con este nombre."
     },
     "share": {
         "invite_msg": "🏆 ¡Únete a mi bolão \"{{name}}\" de la Copa del Mundo 2026!\n\n📋 Código de invitación: {{code}}\n\n⚽ Únete aquí: {{url}}",
@@ -166,5 +200,6 @@
         "desc": "Esta quiniela tiene una cuota de entrada.",
         "fee_label": "Cuota de Entrada",
         "terms": "Soy consciente de que el pago debe tratarse directamente con el administrador. La aplicación no procesa pagos."
-    }
+    },
+    "currency_symbol": "$"
 }

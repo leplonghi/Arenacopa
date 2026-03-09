@@ -1,0 +1,47 @@
+{
+    "title": "Guía del Mundial",
+    "description": "Todo sobre el torneo",
+    "calendar": "Calendario",
+    "teams": "Selecciones",
+    "stadiums": "Estadios",
+    "history": "Historia",
+    "historia": {
+        "saga": "La Saga",
+        "mundial": "Mundial",
+        "subtitle": "22 ediciones • más de 80 años • Recuerdos Eternos",
+        "period": "1930 — 2022",
+        "championsCount": "8 Campeones",
+        "tabs": {
+            "editions": "Ediciones",
+            "titles": "Títulos",
+            "scorers": "Goleadores",
+            "participations": "Participaciones",
+            "goals": "Goles",
+            "records": "Récords"
+        },
+        "sections": {
+            "allEditions": "Todas las Ediciones",
+            "allEditionsSub": "1930 a 2022 — Cronograma completo",
+            "hallOfChampions": "Salón de los Campeones",
+            "hallOfChampionsSub": "Las mayores potencias del mundo",
+            "goldScorers": "Goleadores de Oro",
+            "goldScorersSub": "Los mayores goleadores de los Mundiales",
+            "globalPresences": "Presencias Globales",
+            "globalPresencesSub": "Quién jugó más en la competición",
+            "goalMachines": "Máquinas de Goles",
+            "goalMachinesSub": "Los ataques más letales de la historia",
+            "historicRecords": "Récords Históricos",
+            "historicRecordsSub": "Los números que marcaron la historia"
+        },
+        "labels": {
+            "champion": "Campeón",
+            "vice": "Subcampeón",
+            "third": "3º Lugar",
+            "fourth": "4º Lugar",
+            "host": "Sede",
+            "goals": "Goles",
+            "matches": "Juegos",
+            "avg": "Promedio"
+        }
+    }
+}

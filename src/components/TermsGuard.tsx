@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { db } from "@/integrations/firebase/client";
+import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -31,18 +32,20 @@ export function TermsGuard({ children }: { children: React.ReactNode }) {
         }
 
         const checkTerms = async () => {
-            const { data, error } = await supabase
-                .from('profiles')
-                .select('terms_accepted')
-                .eq('user_id', user.id)
-                .single();
+            try {
+                const docRef = doc(db, 'profiles', user.id);
+                const docSnap = await getDoc(docRef);
 
-            if (error) {
-                // If error (e.g. detailed profile not created yet), we might just wait or assume false
-                // But profiles should be auto-created. Let's assume false if error or not found
+                if (docSnap.exists()) {
+                    const data = docSnap.data();
+                    if (!data.terms_accepted) {
+                        setShowModal(true);
+                    }
+                } else {
+                    console.error("Profile not found");
+                }
+            } catch (error) {
                 console.error("Error fetching profile:", error);
-            } else if (data && !data.terms_accepted) {
-                setShowModal(true);
             }
             setLoading(false);
         };
@@ -54,19 +57,16 @@ export function TermsGuard({ children }: { children: React.ReactNode }) {
         if (!user) return;
         setSubmitting(true);
 
-        const { error } = await supabase
-            .from('profiles')
-            .update({
+        try {
+            const docRef = doc(db, 'profiles', user.id);
+            await updateDoc(docRef, {
                 terms_accepted: true,
                 terms_accepted_at: new Date().toISOString()
-            })
-            .eq('user_id', user.id);
-
-        if (error) {
+            });
+            setShowModal(false);
+        } catch (error) {
             console.error("Error updating profile:", error);
             // Maybe show a toast error here
-        } else {
-            setShowModal(false);
         }
         setSubmitting(false);
     };

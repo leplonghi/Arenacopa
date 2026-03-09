@@ -1,7 +1,7 @@
-# i18n — Internacionalização do ArenaCopa
+# i18n — Internacionalização do ArenaCup
 
 ## Goal
-Adicionar suporte completo a **Inglês (en)** e **Espanhol (es)** ao ArenaCopa, com tradução total (UI + conteúdo rico + nomes de seleções/estádios), detecção automática de idioma, persistência no Supabase, e URLs com prefixo de locale para SEO.
+Adicionar suporte completo a **Inglês (en)** e **Espanhol (es)** ao ArenaCup, com tradução total (UI + conteúdo rico + nomes de seleções/estádios), detecção automática de idioma, persistência no Supabase, e URLs com prefixo de locale para SEO.
 
 ## Decisões Arquiteturais
 

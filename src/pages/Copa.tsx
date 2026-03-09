@@ -9,11 +9,12 @@ import { ChavesTab } from "@/components/copa/ChavesTab";
 import { SimulacaoTab } from "@/components/copa/SimulacaoTab";
 import { CopaOverview } from "@/components/copa/CopaOverview";
 import { NoticiasTab } from "@/components/copa/NoticiasTab";
+import { SedesTab } from "@/components/copa/SedesTab";
 import { SimulacaoProvider } from "@/contexts/SimulacaoContext";
-import { LayoutGrid, CalendarDays, Trophy, GitBranch, Calculator, Newspaper } from "lucide-react";
+import { LayoutGrid, CalendarDays, Trophy, GitBranch, Calculator, Newspaper, MapPin } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-type CopaTab = "overview" | "calendario" | "grupos" | "chaves" | "simulacao" | "noticias";
+type CopaTab = "overview" | "calendario" | "grupos" | "chaves" | "simulacao" | "sedes" | "noticias";
 
 const Copa = () => {
   const { subtab } = useParams<{ subtab?: string }>();
@@ -38,6 +39,7 @@ const Copa = () => {
     { id: "grupos", label: t('tabs.groups'), icon: <Trophy className="w-3.5 h-3.5" /> },
     { id: "chaves", label: t('tabs.bracket'), icon: <GitBranch className="w-3.5 h-3.5" /> },
     { id: "simulacao", label: t('tabs.simulator'), icon: <Calculator className="w-3.5 h-3.5" /> },
+    { id: "sedes", label: "Sedes", icon: <MapPin className="w-3.5 h-3.5" /> },
     { id: "noticias", label: t('tabs.news'), icon: <Newspaper className="w-3.5 h-3.5" /> },
   ];
 
@@ -87,6 +89,7 @@ const Copa = () => {
               {tab === "grupos" && <GruposTab />}
               {tab === "chaves" && <ChavesTab />}
               {tab === "simulacao" && <SimulacaoTab />}
+              {tab === "sedes" && <SedesTab />}
               {tab === "noticias" && <NoticiasTab />}
             </motion.div>
           </AnimatePresence>

@@ -1,0 +1,7 @@
+{
+    "general": "Ocurrió un error inesperado.",
+    "not_found": "Recurso no encontrado.",
+    "unauthorized": "Debes iniciar sesión.",
+    "network": "Error de conexión.",
+    "validation": "Verifica los datos proporcionados."
+}

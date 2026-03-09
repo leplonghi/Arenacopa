@@ -1,196 +1,228 @@
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Users, Trophy, BarChart3, TrendingUp, Star, Info, DollarSign, Scale } from "lucide-react";
+import { Trophy, Zap, Info, ArrowLeft, Settings, Share2, Crown, Swords, CheckCircle2 } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion, AnimatePresence } from "framer-motion";
-import { ShareSheet } from "@/components/copa/bolao/ShareSheet";
-import { OverviewTab } from "@/components/copa/bolao/OverviewTab";
-import { PalpitesTab } from "@/components/copa/bolao/PalpitesTab";
-import { RankingTab } from "@/components/copa/bolao/RankingTab";
-import { MembrosTab } from "@/components/copa/bolao/MembrosTab";
-import { ExtrasTab } from "@/components/copa/bolao/ExtrasTab";
+import { useToast } from "@/hooks/use-toast";
+import confetti from "canvas-confetti";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { type BolaoData, type MemberData, type Palpite, type ExtraBet } from "@/types/bolao";
+import { teams } from "@/data/mockData";
+import { Flag } from "@/components/Flag";
 
-import { useTranslation } from "react-i18next";
+// Tabs
+import { JogosTab } from "@/components/copa/bolao/JogosTab";
+import { RealtimeRankingTab } from "@/components/copa/bolao/RealtimeRankingTab";
+import { PublicPalpitesTab } from "@/components/copa/bolao/PublicPalpitesTab";
 
-const BolaoDetail = () => {
-  const { t } = useTranslation('bolao');
+export default function BolaoDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { user } = useAuth();
-  const [bolao, setBolao] = useState<BolaoData | null>(null);
-  const [members, setMembers] = useState<MemberData[]>([]);
-  const [palpites, setPalpites] = useState<Palpite[]>([]);
-  const [extraBets, setExtras] = useState<ExtraBet[]>([]);
+  const { toast } = useToast();
+
+  const [bolao, setBolao] = useState<any>(null);
+  const [memberCount, setMemberCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [shareOpen, setShareOpen] = useState(false);
   const [infoOpen, setInfoOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("overview");
+  const [championOpen, setChampionOpen] = useState(false);
+  const [championSelection, setChampionSelection] = useState("");
+  const [myChampion, setMyChampion] = useState<string | null>(null);
+
+  const [activeTab, setActiveTab] = useState("ranking");
 
   const loadBolao = useCallback(async () => {
     if (!id || !user) return;
-    const [bolaoRes, membersRes, palpitesRes, extrasRes] = await Promise.all([
-      supabase.from("boloes").select("*").eq("id", id).single(),
-      supabase.from("bolao_members").select("user_id, role, joined_at, payment_status, profiles(name, avatar_url)").eq("bolao_id", id),
-      supabase.from("bolao_palpites").select("*").eq("bolao_id", id),
-      // @ts-expect-error - table might be missing in generated types
-      supabase.from("bolao_extra_bets").select("*").eq("bolao_id", id),
-    ]);
+    setLoading(true);
+    try {
+      // Load Bolao
+      const { data: bData, error } = await supabase
+        .from('boloes')
+        .select('*, bolao_members(count)')
+        .eq('id', id)
+        .single();
 
-    if (bolaoRes.data) setBolao(bolaoRes.data as unknown as BolaoData);
-    if (membersRes.data) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      setMembers((membersRes.data as any).map((m: any) => ({
-        ...m,
-        profile: m.profiles,
-        payment_status: (m.payment_status as "pending" | "paid" | "exempt") || "pending"
-      })));
+      if (error || !bData) throw new Error("Bolão não encontrado");
+
+      setBolao(bData);
+      setMemberCount(bData.bolao_members[0].count);
+
+      // Check if user is member
+      const { data: member } = await supabase.from('bolao_members').select('*').eq('bolao_id', id).eq('user_id', user.id).single();
+      if (!member) {
+        toast({ title: "Você não é membro desta liga." });
+        navigate('/boloes');
+        return;
+      }
+
+      // Check my champion
+      const { data: champ } = await supabase.from('bolao_champion_predictions').select('*').eq('bolao_id', id).eq('user_id', user.id).single();
+      if (champ) setMyChampion(champ.team_code);
+
+    } catch (error) {
+      toast({ title: "Erro ao carregar detalhes.", variant: "destructive" });
+    } finally {
+      setLoading(false);
     }
-    if (palpitesRes.data) setPalpites(palpitesRes.data);
-    if (extrasRes.data) setExtras(extrasRes.data as unknown as ExtraBet[]);
-    setLoading(false);
-    setLoading(false);
   }, [id, user]);
 
+  useEffect(() => {
+    loadBolao();
+  }, [loadBolao]);
+
+  const saveChampion = async () => {
+    if (!championSelection) return;
+    try {
+      await supabase.from('bolao_champion_predictions').insert({
+        bolao_id: bolao.id,
+        user_id: user!.id,
+        team_code: championSelection
+      });
+      setMyChampion(championSelection);
+      setChampionOpen(false);
+      confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+      toast({ title: "Aposta registrada!", className: "bg-emerald-500 text-white font-black" });
+    } catch (e) {
+      toast({ title: "Erro ao salvar campeão.", variant: "destructive" });
+    }
+  };
+
+  const isCreator = bolao?.creator_id === user?.id;
+
+  if (loading) return <BolaoDetailSkeleton />;
+  if (!bolao) return <div className="py-20"><EmptyState icon="😕" title="Não encontrado" description="O bolão não existe ou foi removido." /></div>;
+
   const tabs = [
-    { id: "overview", label: t('detail.tabs.overview'), icon: BarChart3 },
-    { id: "palpites", label: t('detail.tabs.palpites'), icon: Trophy },
-    { id: "extras", label: t('detail.tabs.extras'), icon: Star },
-    { id: "ranking", label: t('detail.tabs.ranking'), icon: TrendingUp },
-    { id: "membros", label: t('detail.tabs.members'), icon: Users },
+    { id: "ranking", label: "Ranking (Líderes)", icon: <Trophy className="w-4 h-4" /> },
+    { id: "jogos", label: "Seus Palpites", icon: <Swords className="w-4 h-4" /> },
+    { id: "palpites", label: "Resenha (Palpites Rivais)", icon: <Zap className="w-4 h-4" /> }
   ];
 
-  useEffect(() => {
-    if (!id || !user) return;
-    loadBolao();
-  }, [id, user, loadBolao]);
-
-  if (loading) {
-    return (
-      <div className="px-4 py-4 space-y-4">
-        <Skeleton className="h-8 w-3/4" />
-        <Skeleton className="h-4 w-1/2" />
-        <div className="flex gap-2">{[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-9 flex-1 rounded-lg" />)}</div>
-        <Skeleton className="h-40 rounded-xl" />
-        <Skeleton className="h-32 rounded-xl" />
-      </div>
-    );
-  }
-
-  if (!bolao) return <EmptyState icon="🔍" title={t('detail.not_found')} description="" />;
-
-  const isCreator = bolao.creator_id === user?.id;
-
   return (
-    <div className="px-4 py-4 space-y-4">
-      {/* Header */}
-      <div className="flex items-start justify-between">
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-[9px] px-2 py-0.5 rounded-full bg-[hsl(var(--copa-success))]/20 text-[hsl(var(--copa-success))] font-bold uppercase">Copa 2026</span>
-            {isCreator && <span className="text-[9px] px-2 py-0.5 rounded-full bg-primary/20 text-primary font-bold uppercase">{t('list.card_admin')}</span>}
-            {bolao.is_paid && <span className="text-[9px] px-2 py-0.5 rounded-full bg-green-500/10 text-green-500 font-bold uppercase flex items-center gap-1"><DollarSign className="w-2.5 h-2.5" /> {t('detail.paid_badge')}</span>}
+    <div className="min-h-screen pb-24 bg-[#050505]">
+      {/* Immersive Header */}
+      <div className="relative pt-8 pb-16 px-6 overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-[600px] bg-gradient-to-b from-primary/20 via-primary/5 to-transparent pointer-events-none opacity-40" />
+        <div className="absolute top-[-100px] right-[-100px] w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] pointer-events-none animate-pulse" />
+
+        <div className="flex items-center justify-between relative z-10 mb-8 max-w-screen-xl mx-auto">
+          <motion.button onClick={() => navigate('/boloes')} className="w-12 h-12 rounded-[20px] bg-white/5 border border-white/10 flex items-center justify-center transition-all backdrop-blur-xl hover:bg-white/10">
+            <ArrowLeft className="w-6 h-6 text-white" />
+          </motion.button>
+
+          <div className="flex items-center gap-2">
+            {!myChampion && (
+              <button
+                onClick={() => setChampionOpen(true)}
+                className="px-4 h-12 rounded-[20px] bg-primary text-black font-black uppercase text-[10px] tracking-widest flex items-center gap-2 animate-pulse shadow-[0_0_20px_rgba(34,197,94,0.4)]"
+              >
+                <Crown className="w-4 h-4" /> APOSTAR CAMPEÃO
+              </button>
+            )}
+            {myChampion && (
+              <div className="px-4 h-12 rounded-[20px] bg-white/5 border border-white/10 text-white font-bold text-[10px] uppercase flex items-center gap-2">
+                <span className="text-gray-400 font-normal">Meu Campeão:</span> <Flag code={myChampion} size="sm" /> {myChampion}
+              </div>
+            )}
+            <button onClick={() => setInfoOpen(true)} className="w-12 h-12 rounded-[20px] bg-white/5 border border-white/10 flex items-center justify-center hover:bg-white/10"><Info className="w-5 h-5 text-gray-400 hover:text-white" /></button>
           </div>
-          <h1 className="text-xl font-black">{bolao.name}</h1>
-          {bolao.description && <p className="text-xs text-muted-foreground mt-0.5">{bolao.description}</p>}
         </div>
-        <button onClick={() => setInfoOpen(true)} className="p-2 rounded-full bg-secondary text-muted-foreground hover:text-foreground transition-colors">
-          <Info className="w-5 h-5" />
-        </button>
+
+        <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} className="relative z-10 flex flex-col items-center max-w-screen-xl mx-auto text-center">
+          <div className="text-5xl mb-4">{bolao.avatar_url || '🏆'}</div>
+          <h1 className="text-4xl md:text-6xl font-black text-white tracking-tighter leading-[0.9] mb-4">
+            {bolao.name}
+          </h1>
+          {bolao.description && <p className="text-gray-400 font-medium max-w-lg mb-8 leading-relaxed text-sm px-4">{bolao.description}</p>}
+          <div className="flex gap-4">
+            <div className="bg-white/5 px-4 py-2 rounded-2xl border border-white/10 text-xs font-bold uppercase tracking-widest text-primary">Membros: {memberCount}</div>
+            <div className="bg-white/5 px-4 py-2 rounded-2xl border border-white/10 text-xs font-bold uppercase tracking-widest text-blue-400">Tipo: {bolao.category}</div>
+          </div>
+        </motion.div>
       </div>
 
       {/* Tabs */}
-      <div className="flex justify-between gap-1 overflow-x-auto pb-1 no-scrollbar">
-        {tabs.map(t => (
-          <button
-            key={t.id}
-            onClick={() => setActiveTab(t.id)}
-            className={cn(
-              "flex-1 min-w-[70px] py-2 px-1 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all flex flex-col items-center justify-center gap-1",
-              activeTab === t.id ? "bg-primary text-primary-foreground shadow-sm" : "bg-secondary/50 text-muted-foreground hover:bg-secondary"
-            )}
-          >
-            <t.icon className="w-4 h-4" />
-            <span>{t.label}</span>
-          </button>
-        ))}
+      <div className="sticky top-0 z-50 bg-[#050505]/80 backdrop-blur-3xl border-b border-white/5 shadow-[0_10px_30px_rgba(0,0,0,0.5)]">
+        <div className="max-w-screen-xl mx-auto px-6 py-4 flex gap-2 overflow-x-auto no-scrollbar scroll-smooth items-center">
+          {tabs.map((tab) => (
+            <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={cn("flex items-center gap-3 px-6 py-3 rounded-2xl text-[11px] font-black uppercase tracking-[0.15em] transition-all relative shrink-0", activeTab === tab.id ? "bg-white text-black shadow-[0_10px_25px_rgba(255,255,255,0.15)] scale-105 z-10" : "text-gray-500 hover:text-white hover:bg-white/5")}>
+              <span className={cn("transition-transform", activeTab === tab.id && "scale-125")}>{tab.icon}</span>
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Tab content */}
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={activeTab}
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -8 }}
-          transition={{ duration: 0.15 }}
-        >
-          {activeTab === "overview" && <OverviewTab bolao={bolao} members={members} isCreator={isCreator} palpites={palpites} userId={user!.id} onShare={() => setShareOpen(true)} />}
-          {activeTab === "palpites" && <PalpitesTab bolaoId={bolao.id} palpites={palpites} setPalpites={setPalpites} userId={user!.id} />}
-          {activeTab === "extras" && <ExtrasTab bolaoId={bolao.id} userId={user!.id} />}
-          {activeTab === "ranking" && <RankingTab members={members} palpites={palpites} extraBets={extraBets} scoringRules={bolao.scoring_rules} />}
-          {activeTab === "membros" && <MembrosTab members={members} userId={user!.id} isCreator={isCreator} bolaoId={bolao.id} isPaid={bolao.is_paid} onRefresh={loadBolao} />}
-        </motion.div>
-      </AnimatePresence>
+      <main className="max-w-screen-xl mx-auto px-6 mt-8">
+        <AnimatePresence mode="wait">
+          <motion.div key={activeTab} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }}>
+            {activeTab === "ranking" && <RealtimeRankingTab bolaoId={bolao.id} rules={bolao.scoring_rules} />}
+            {activeTab === "jogos" && <JogosTab bolaoId={bolao.id} rules={bolao.scoring_rules} />}
+            {activeTab === "palpites" && <PublicPalpitesTab bolaoId={bolao.id} />}
+          </motion.div>
+        </AnimatePresence>
+      </main>
 
-      <ShareSheet open={shareOpen} onClose={() => setShareOpen(false)} bolao={bolao} />
-
-      {/* Info Dialog */}
-      <Dialog open={infoOpen} onOpenChange={setInfoOpen}>
-        <DialogContent className="max-w-md max-h-[85vh] p-0">
-          <DialogHeader className="p-6 pb-2">
-            <DialogTitle>{t('detail.info_title')}</DialogTitle>
+      {/* Champion Modal */}
+      <Dialog open={championOpen} onOpenChange={setChampionOpen}>
+        <DialogContent className="max-w-md bg-[#0a0a0a] border-white/10 rounded-[40px] p-6 shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-black text-center mb-6">QUEM LEVA A TAÇA?</DialogTitle>
           </DialogHeader>
-          <ScrollArea className="h-full max-h-[60vh] px-6 pb-6">
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <h3 className="text-sm font-bold flex items-center gap-2"><Scale className="w-4 h-4 text-primary" /> {t('detail.rules_title')}</h3>
-                <div className="text-xs space-y-1 text-muted-foreground">
-                  <p>{t('ranking.legend_exact')}: <span className="font-bold text-foreground">{bolao.scoring_rules?.exact ?? 5} pts</span></p>
-                  <p>{t('ranking.legend_winner')}: <span className="font-bold text-foreground">{bolao.scoring_rules?.winner ?? 3} pts</span></p>
-                  <p>{t('ranking.legend_draw')}: <span className="font-bold text-foreground">{bolao.scoring_rules?.draw ?? 2} pts</span></p>
-                  <p>{t('create_bolao.rules.participation')}: <span className="font-bold text-foreground">{bolao.scoring_rules?.participation ?? 1} pts</span> ({t('create_bolao.rules.participation_desc')})</p>
-                </div>
-              </div>
+          <div className="grid grid-cols-4 sm:grid-cols-5 gap-3 max-h-[50vh] overflow-y-auto pr-2">
+            {teams.map(t => (
+              <button key={t.code} onClick={() => setChampionSelection(t.code)} className={cn("flex flex-col items-center p-3 rounded-2xl border transition-all", championSelection === t.code ? "bg-primary/20 border-primary scale-105" : "bg-white/5 border-white/5 opacity-70 hover:bg-white/10")}>
+                <Flag code={t.code} size="md" className={cn(championSelection === t.code && "scale-110")} />
+                <span className={cn("text-[10px] mt-2 font-bold", championSelection === t.code ? "text-primary" : "text-gray-400")}>{t.code}</span>
+              </button>
+            ))}
+          </div>
+          <button onClick={saveChampion} disabled={!championSelection} className="w-full mt-6 py-4 rounded-xl bg-primary text-black font-black uppercase tracking-widest disabled:opacity-50">
+            CONFIRMAR APOSTA (IRREVERSÍVEL)
+          </button>
+        </DialogContent>
+      </Dialog>
 
-              {bolao.is_paid && (
-                <div className="space-y-2 pt-4 border-t border-border">
-                  <h3 className="text-sm font-bold flex items-center gap-2 text-green-500"><DollarSign className="w-4 h-4" /> {t('detail.financial_title')}</h3>
-
-                  <div className="glass-card p-3 space-y-2 bg-green-500/5 border-green-500/20 text-xs">
-                    <div>
-                      <span className="text-muted-foreground block">{t('detail.entry_fee')}</span>
-                      <span className="font-bold text-base text-foreground">{t('currency_symbol')} {bolao.entry_fee?.toFixed(2) ?? '0.00'}</span>
-                    </div>
-                    {bolao.payment_details && (
-                      <div>
-                        <span className="text-muted-foreground block">{t('detail.payment_data')}</span>
-                        <p className="font-medium text-foreground mt-0.5 whitespace-pre-wrap">{bolao.payment_details}</p>
-                      </div>
-                    )}
-                    {bolao.prize_distribution && (
-                      <div>
-                        <span className="text-muted-foreground block">{t('detail.prize_dist')}</span>
-                        <p className="font-medium text-foreground mt-0.5 whitespace-pre-wrap">{bolao.prize_distribution}</p>
-                      </div>
-                    )}
-                  </div>
-                  <p className="text-[10px] text-muted-foreground italic">
-                    {t('detail.disclaimer_payment')}
-                  </p>
-                </div>
-              )}
+      {/* INFO MODAL */}
+      <Dialog open={infoOpen} onOpenChange={setInfoOpen}>
+        <DialogContent className="max-w-md bg-[#0a0a0a] border-white/10 rounded-[32px] p-8">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-black">REGRAS DA ARENA</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-6 mt-6">
+            <div className="flex justify-between items-center p-4 bg-white/5 rounded-2xl">
+              <span className="font-bold text-gray-400 uppercase text-xs">Placar Exato</span>
+              <span className="text-primary font-black text-2xl">{bolao.scoring_rules.exact} pts</span>
             </div>
-          </ScrollArea>
+            <div className="flex justify-between items-center p-4 bg-white/5 rounded-2xl">
+              <span className="font-bold text-gray-400 uppercase text-xs">Acertou Resultado (V/E/D)</span>
+              <span className="text-blue-400 font-black text-2xl">{bolao.scoring_rules.winner} pts</span>
+            </div>
+            <div className="flex justify-between items-center p-4 bg-white/5 rounded-2xl">
+              <span className="font-bold text-gray-400 uppercase text-xs">Participação</span>
+              <span className="text-emerald-400 font-black text-2xl">{bolao.scoring_rules.participation} pts</span>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
   );
-};
+}
 
-export default BolaoDetail;
+function BolaoDetailSkeleton() {
+  return (
+    <div className="min-h-screen bg-[#050505] p-8 space-y-12 animate-pulse">
+      <div className="flex justify-between items-center max-w-screen-xl mx-auto">
+        <Skeleton className="w-12 h-12 rounded-[20px] bg-white/5" />
+      </div>
+      <div className="flex flex-col items-center gap-6">
+        <Skeleton className="h-20 w-3/4 rounded-3xl bg-white/5" />
+      </div>
+    </div>
+  );
+}

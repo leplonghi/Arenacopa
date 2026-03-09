@@ -10,10 +10,12 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Bell, Trophy, UserPlus, Info, CheckCircle2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { db } from "@/integrations/firebase/client";
+import { collection, query, where, getDocs, orderBy, writeBatch, doc, getDoc, updateDoc } from "firebase/firestore";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR, enUS, es } from "date-fns/locale";
+import { type Locale } from "date-fns";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 
@@ -30,7 +32,7 @@ interface Notification {
 const MOCK_NOTIFICATIONS: Notification[] = [
     {
         id: "1",
-        title: "Bem-vindo ao ArenaCopa!",
+        title: "Welcome to ArenaCup!",
         message: "Prepare seus palpites e divirta-se com seus amigos.",
         created_at: new Date().toISOString(),
         type: "info",
@@ -44,7 +46,7 @@ export function NotificationsSheet({ children }: { children: React.ReactNode }) 
     const isDemo = localStorage.getItem("demo_mode") === "true";
     const { t, i18n } = useTranslation('common');
 
-    const localeMap: Record<string, any> = {
+    const localeMap: Record<string, Locale> = {
         'pt-BR': ptBR,
         'en': enUS,
         'es': es
@@ -56,18 +58,25 @@ export function NotificationsSheet({ children }: { children: React.ReactNode }) 
             if (isDemo) return MOCK_NOTIFICATIONS;
             if (!user) return [];
 
-            const { data, error } = await supabase
-                .from("notifications")
-                .select("*")
-                .eq("user_id", user.id)
-                .order("created_at", { ascending: false });
+            try {
+                const notificationsRef = collection(db, 'notifications');
+                const q = query(
+                    notificationsRef,
+                    where('user_id', '==', user.id),
+                    // order by requires composite index, we might just order client side for now,
+                    // or use orderby if index is built. Assuming no index for simplicity or if it breaks, order client side.
+                );
 
-            if (error) {
+                const snapshot = await getDocs(q);
+                const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Notification));
+                // order client side
+                data.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
+                return data;
+            } catch (error) {
                 console.error("Error fetching notifications:", error);
                 return [];
             }
-
-            return data as Notification[];
         },
         enabled: !!user || isDemo,
     });
@@ -75,12 +84,13 @@ export function NotificationsSheet({ children }: { children: React.ReactNode }) 
     const markAsRead = useMutation({
         mutationFn: async (id: string) => {
             if (isDemo) return;
-            const { error } = await supabase
-                .from("notifications")
-                .update({ read: true })
-                .eq("id", id);
-
-            if (error) throw error;
+            try {
+                const notificationRef = doc(db, 'notifications', id);
+                await updateDoc(notificationRef, { read: true });
+            } catch (error) {
+                console.error("Error marking notification as read:", error);
+                throw error;
+            }
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["notifications"] });
@@ -92,13 +102,25 @@ export function NotificationsSheet({ children }: { children: React.ReactNode }) 
             if (isDemo) return;
             if (!user) return;
 
-            const { error } = await supabase
-                .from("notifications")
-                .update({ read: true })
-                .eq("user_id", user.id)
-                .eq("read", false);
+            try {
+                const notificationsRef = collection(db, 'notifications');
+                const q = query(
+                    notificationsRef,
+                    where('user_id', '==', user.id),
+                    where('read', '==', false)
+                );
+                const snapshot = await getDocs(q);
 
-            if (error) throw error;
+                const batch = writeBatch(db);
+                snapshot.docs.forEach((document) => {
+                    batch.update(document.ref, { read: true });
+                });
+
+                await batch.commit();
+            } catch (error) {
+                console.error("Error marking all notifications as read:", error);
+                throw error;
+            }
         },
         onSuccess: () => {
             toast.success(t('notifications.mark_all_read'));

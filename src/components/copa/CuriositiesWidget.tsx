@@ -1,6 +1,7 @@
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { db } from "@/integrations/firebase/client";
+import { collection, getDocs, limit, query } from "firebase/firestore";
 import { motion } from "framer-motion";
 import { Lightbulb, RotateCcw } from "lucide-react";
 import { staggerItem } from "./animations";
@@ -21,12 +22,12 @@ export function CuriositiesWidget() {
         try {
             // In a real app with many rows, using .random() effectively might need a remote function
             // For now, we fetch a few and pick one random client-side or use created_at desc
-            const { data } = await supabase
-                .from('curiosities')
-                .select('*')
-                .limit(10); // Get a pool
+            const curiositiesRef = collection(db, 'curiosities');
+            const q = query(curiositiesRef, limit(10));
+            const snapshot = await getDocs(q);
 
-            if (data && data.length > 0) {
+            if (!snapshot.empty) {
+                const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Curiosity));
                 const random = data[Math.floor(Math.random() * data.length)];
                 setCuriosity({
                     id: random.id,

@@ -4,5 +4,44 @@
     "calendar": "Calendário",
     "teams": "Seleções",
     "stadiums": "Estádios",
-    "history": "História"
+    "history": "História",
+    "historia": {
+        "saga": "A Saga",
+        "mundial": "Mundial",
+        "subtitle": "22 edições • 80+ anos • Memórias Eternas",
+        "period": "1930 — 2022",
+        "championsCount": "8 Campeões",
+        "tabs": {
+            "editions": "Edições",
+            "titles": "Títulos",
+            "scorers": "Artilheiros",
+            "participations": "Participações",
+            "goals": "Gols",
+            "records": "Recordes"
+        },
+        "sections": {
+            "allEditions": "Todas as Edições",
+            "allEditionsSub": "1930 a 2022 — Linha do tempo completa",
+            "hallOfChampions": "Hall dos Campeões",
+            "hallOfChampionsSub": "As maiores potências do mundo",
+            "goldScorers": "Artilheiros de Ouro",
+            "goldScorersSub": "Os maiores matadores das Copas",
+            "globalPresences": "Presenças Globais",
+            "globalPresencesSub": "Quem mais jogou a competição",
+            "goalMachines": "Máquinas de Gols",
+            "goalMachinesSub": "Os ataques mais letais da história",
+            "historicRecords": "Recordes Históricos",
+            "historicRecordsSub": "Os números que marcaram a história"
+        },
+        "labels": {
+            "champion": "Campeão",
+            "vice": "Vice",
+            "third": "3º Lugar",
+            "fourth": "4º Lugar",
+            "host": "Sede",
+            "goals": "Gols",
+            "matches": "Jogos",
+            "avg": "Média"
+        }
+    }
 }

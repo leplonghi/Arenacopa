@@ -1,9 +1,43 @@
 {
-    "title": "Ranking",
-    "subtitle": "Veja quem está liderando",
-    "global": "Ranking Geral",
-    "weekly": "Semanal",
-    "friends": "Amigos",
-    "position": "Sua Posição",
-    "points": "Pontos"
+    "title": "Ranking Geral",
+    "subtitle": "Os maiores palpiteiros da Copa do Mundo 2026. Suba na classificação e conquiste a glória eterna.",
+    "hall_of_fame": "HALL OF FAME",
+    "tabs": {
+        "global": "Global",
+        "boloes": "Bolões",
+        "historico": "Histórico",
+        "stats": "Stats"
+    },
+    "user_section": {
+        "podium_desc": "Elite Global",
+        "my_performance": "Sua Performance",
+        "status_protective": "Status Protetivo",
+        "climbing": "SUBINDO",
+        "points": "PONTOS",
+        "accuracy": "PRECISÃO",
+        "rank_sync": "Sincronizado há {{time}}",
+        "top_50": "Classificação Top 50"
+    },
+    "boloes_section": {
+        "elite": "Elite dos Bolões",
+        "members": "MEMBROS",
+        "accuracy": "ACC",
+        "total_prize": "PRÊMIO TOTAL"
+    },
+    "history_section": {
+        "legendary_winners": "CAMPEÕES LENDÁRIOS",
+        "panorama": "PANORAMA HISTÓRICO",
+        "titles": "TÍTULOS",
+        "participations": "PARTICIPAÇÕES",
+        "goals": "GOLS"
+    },
+    "stats_section": {
+        "top_scorers": "ARTILHEIROS HISTÓRICOS",
+        "records": {
+            "most_titles": "Seleção com mais títulos",
+            "most_wins": "Maior número de vitórias",
+            "goals_record": "Recorde de gols marcados",
+            "biggest_rout": "Maior goleada histórica"
+        }
+    }
 }

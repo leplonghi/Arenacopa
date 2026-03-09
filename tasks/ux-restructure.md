@@ -1,4 +1,4 @@
-# UX Restructure — ArenaCopa
+# UX Restructure — ArenaCup
 
 ## Objective
 Restructure content distribution across pages for clarity, cohesion, and reduced cognitive load. NO design changes.

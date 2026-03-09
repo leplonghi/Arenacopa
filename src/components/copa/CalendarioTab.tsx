@@ -1,16 +1,21 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import useEmblaCarousel from "embla-carousel-react";
 import { MatchCard } from "@/components/MatchCard";
 import { EmptyState } from "@/components/EmptyState";
-import { matches, formatMatchDate, type Match } from "@/data/mockData";
+import { formatMatchDate, type Match } from "@/data/mockData";
 import { motion } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { MatchDetailsModal } from "./MatchDetailsModal";
+import { useMatches } from "@/hooks/useMatches";
 
 export function CalendarioTab() {
+  const { data: matchesData = [], isLoading } = useMatches();
+
   // Group matches by date
   const matchDays = useMemo(() => {
-    const grouped: Record<string, typeof matches> = {};
-    matches.forEach(m => {
+    if (!matchesData.length) return [];
+    const grouped: Record<string, Match[]> = {};
+    matchesData.forEach(m => {
       const dateKey = m.date.split("T")[0];
       if (!grouped[dateKey]) grouped[dateKey] = [];
       grouped[dateKey].push(m);
@@ -19,10 +24,40 @@ export function CalendarioTab() {
     return Object.entries(grouped)
       .sort(([a], [b]) => a.localeCompare(b))
       .map(([date, dayMatches]) => ({ date, matches: dayMatches }));
-  }, []);
+  }, [matchesData]);
 
   const [dayIndex, setDayIndex] = useState(0);
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
+
+  const [emblaRef, emblaApi] = useEmblaCarousel({
+    axis: 'x',
+    startIndex: dayIndex,
+    loop: false,
+    dragFree: false
+  });
+
+  useEffect(() => {
+    if (emblaApi) emblaApi.scrollTo(dayIndex);
+  }, [dayIndex, emblaApi]);
+
+  useEffect(() => {
+    if (!emblaApi) return;
+    const onSelect = () => {
+      setDayIndex(emblaApi.selectedScrollSnap());
+    };
+    emblaApi.on('select', onSelect);
+    return () => {
+      emblaApi.off('select', onSelect);
+    };
+  }, [emblaApi]);
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-20">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   const currentDay = matchDays[dayIndex];
   if (!currentDay) {
@@ -63,23 +98,30 @@ export function CalendarioTab() {
         </button>
       </div>
 
-      {/* Matches */}
-      <motion.div
-        key={dayIndex}
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ duration: 0.2 }}
-        className="space-y-3 md:space-y-0 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-4"
-      >
-        {currentDay.matches.map((m, i) => (
-          <MatchCard
-            key={m.id}
-            match={m}
-            index={i}
-            onClick={() => setSelectedMatch(m)}
-          />
-        ))}
-      </motion.div>
+      {/* Matches Carousel */}
+      <div className="overflow-hidden" ref={emblaRef}>
+        <div className="flex touch-pan-y">
+          {matchDays.map((day, dIdx) => (
+            <div key={day.date} className="min-w-0 flex-[0_0_100%] pr-1">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.3 }}
+                className="space-y-3 md:space-y-0 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-4 pb-2"
+              >
+                {day.matches.map((m, i) => (
+                  <MatchCard
+                    key={m.id}
+                    match={m}
+                    index={i}
+                    onClick={() => setSelectedMatch(m)}
+                  />
+                ))}
+              </motion.div>
+            </div>
+          ))}
+        </div>
+      </div>
 
       <MatchDetailsModal
         match={selectedMatch}

@@ -151,6 +151,11 @@ function MatchCard({
     y.set(e.clientY - rect.top);
   };
 
+  const shineBackground = useTransform(
+    [x, y],
+    ([latestX, latestY]) => `radial-gradient(circle at ${latestX}px ${latestY}px, rgba(255,255,255,0.1) 0%, transparent 60%)`
+  );
+
   return (
     <motion.div
       ref={cardRef}
@@ -192,10 +197,7 @@ function MatchCard({
         <motion.div
           className="absolute inset-0 pointer-events-none opacity-0 group-hover/card:opacity-100 transition-opacity duration-500"
           style={{
-            background: useTransform(
-              [x, y],
-              ([latestX, latestY]) => `radial-gradient(circle at ${latestX}px ${latestY}px, rgba(255,255,255,0.1) 0%, transparent 60%)`
-            )
+            background: shineBackground
           }}
         />
       )}
@@ -351,12 +353,12 @@ function ChampionBanner({ data }: { data: KnockoutData }) {
   const navigate = useNavigate();
   const champion = getMatchWinner(data.final[0]);
 
-  if (!champion) return null;
-  const champTeam = getTeam(champion);
-
   // Floating animation
   const y = useMotionValue(0);
   const rotateX = useTransform(y, [-10, 10], [5, -5]);
+
+  if (!champion) return null;
+  const champTeam = getTeam(champion);
 
   return (
     <div className="perspective-[1000px] flex justify-center py-8">

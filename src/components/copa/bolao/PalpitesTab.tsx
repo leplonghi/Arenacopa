@@ -1,16 +1,20 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { Calendar, Info } from "lucide-react";
-import { matches, getTeam, type Match } from "@/data/mockData";
+import { Calendar, Info, Check, Zap, Save, ChevronRight, Filter } from "lucide-react";
+import { getTeam, type Match } from "@/data/mockData";
 import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
-import { supabase } from "@/integrations/supabase/client";
+import { db } from "@/integrations/firebase/client";
+import { collection, updateDoc, doc, addDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { ScoreInput } from "@/components/ui/ScoreInput";
 import { type Palpite } from "@/types/bolao";
 import { MatchDetailsModal } from "@/components/copa/MatchDetailsModal";
+import { useDateLocale } from "@/hooks/useDateLocale";
+import { motion, AnimatePresence } from "framer-motion";
+import { staggerContainer, staggerItem } from "../animations";
+import { useMatches } from "@/hooks/useMatches";
 
 interface PalpitesTabProps {
     bolaoId: string;
@@ -22,16 +26,17 @@ interface PalpitesTabProps {
 export function PalpitesTab({ bolaoId, palpites, setPalpites, userId }: PalpitesTabProps) {
     const { t } = useTranslation('bolao');
     const { toast } = useToast();
+    const dateLocale = useDateLocale();
     const [selectedGroup, setSelectedGroup] = useState("A");
     const [saving, setSaving] = useState<string | null>(null);
     const [localScores, setLocalScores] = useState<Record<string, { home: number | null; away: number | null; isPowerPlay: boolean }>>({});
     const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
     const navigate = useNavigate();
+    const { data: matches = [], isLoading } = useMatches();
 
     const groups = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"];
-    const groupMatches = matches.filter(m => m.phase === "groups" && m.group === selectedGroup);
+    const groupMatches = useMemo(() => matches.filter(m => m.phase === "groups" && m.group === selectedGroup), [selectedGroup, matches]);
 
-    // Init local scores from palpites
     useEffect(() => {
         const scores: Record<string, { home: number | null; away: number | null; isPowerPlay: boolean }> = {};
         palpites
@@ -51,35 +56,32 @@ export function PalpitesTab({ bolaoId, palpites, setPalpites, userId }: Palpites
         try {
             const existing = palpites.find(p => p.match_id === matchId && p.user_id === userId);
 
-            // If setting power play, unset others in this group (optional, but good UX)
-            // Implementation note: This might need a separate call or handled by user manually unchecking.
-            // For now, let's just save.
-
             if (existing) {
-                const { error } = await supabase.from("bolao_palpites").update({
+                const palpiteRef = doc(db, "bolao_palpites", existing.id);
+                await updateDoc(palpiteRef, {
                     home_score: home,
                     away_score: away,
                     is_power_play: isPowerPlay
-                }).eq("id", existing.id);
-                if (error) throw error;
+                });
                 setPalpites(palpites.map(p => p.id === existing.id ? { ...p, home_score: home, away_score: away, is_power_play: isPowerPlay } : p));
             } else {
-                const { data, error } = await supabase
-                    .from("bolao_palpites")
-                    .insert({
-                        bolao_id: bolaoId,
-                        user_id: userId,
-                        match_id: matchId,
-                        home_score: home,
-                        away_score: away,
-                        is_power_play: isPowerPlay
-                    })
-                    .select()
-                    .single();
-                if (error) throw error;
-                if (data) setPalpites([...palpites, data]);
+                const palpitesRef = collection(db, "bolao_palpites");
+                const newPalpiteData = {
+                    bolao_id: bolaoId,
+                    user_id: userId,
+                    match_id: matchId,
+                    home_score: home,
+                    away_score: away,
+                    is_power_play: isPowerPlay
+                };
+                const docRef = await addDoc(palpitesRef, newPalpiteData);
+                const data = { id: docRef.id, ...newPalpiteData } as Palpite;
+                setPalpites([...palpites, data]);
             }
-            toast({ title: t('palpites.saved') });
+            toast({
+                title: t('palpites.saved'),
+                className: "bg-emerald-500 border-emerald-600 text-white font-black uppercase text-[10px] tracking-widest"
+            });
         } catch (err) {
             const msg = err instanceof Error ? err.message : t('palpites.error_save');
             toast({ title: t('palpites.error_save'), description: msg, variant: "destructive" });
@@ -98,133 +100,226 @@ export function PalpitesTab({ bolaoId, palpites, setPalpites, userId }: Palpites
         });
     };
 
+    if (isLoading) {
+        return (
+            <div className="flex justify-center py-20">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+        );
+    }
+
     return (
-        <div className="space-y-4">
+        <motion.div
+            variants={staggerContainer}
+            initial="hidden"
+            animate="visible"
+            className="space-y-6"
+        >
             <MatchDetailsModal
                 match={selectedMatch}
                 isOpen={!!selectedMatch}
                 onClose={() => setSelectedMatch(null)}
             />
 
-            {/* Group selector */}
-            <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
-                {groups.map(g => {
-                    const groupMatchIds = matches.filter(m => m.group === g && m.phase === "groups").map(m => m.id);
-                    const done = palpites.filter(p => p.user_id === userId && groupMatchIds.includes(p.match_id)).length;
-                    const total = groupMatchIds.length;
-                    return (
-                        <button
-                            key={g}
-                            onClick={() => setSelectedGroup(g)}
-                            className={cn(
-                                "px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-colors relative",
-                                selectedGroup === g ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"
-                            )}
-                        >
-                            {g}
-                            {done === total && total > 0 && (
-                                <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-[hsl(var(--copa-success))] text-[7px] text-background font-black flex items-center justify-center">✓</span>
-                            )}
-                        </button>
-                    );
-                })}
+            {/* Filter Pills - Premium Slider */}
+            <div className="space-y-3">
+                <div className="flex items-center gap-2 px-1">
+                    <Filter className="w-3.5 h-3.5 text-gray-500" />
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">{t('common.filter_group')}</span>
+                </div>
+                <div className="flex gap-2 overflow-x-auto pb-2 -mx-2 px-2 scrollbar-none snap-x h-12 items-center">
+                    {groups.map(g => {
+                        const groupMatchIds = matches.filter(m => m.group === g && m.phase === "groups").map(m => m.id);
+                        const done = palpites.filter(p => p.user_id === userId && groupMatchIds.includes(p.match_id)).length;
+                        const total = groupMatchIds.length;
+                        const isSelected = selectedGroup === g;
+
+                        return (
+                            <motion.button
+                                key={g}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() => setSelectedGroup(g)}
+                                className={cn(
+                                    "px-5 py-2 rounded-2xl text-xs font-black transition-all snap-start relative flex items-center gap-2",
+                                    isSelected
+                                        ? "bg-primary text-primary-foreground shadow-[0_5px_15px_rgba(var(--primary-rgb),0.3)] scale-110 z-10"
+                                        : "bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white border border-white/5"
+                                )}
+                            >
+                                {t('common.group')} {g}
+                                {done === total && total > 0 && (
+                                    <div className="w-3.5 h-3.5 rounded-full bg-emerald-500 flex items-center justify-center shadow-[0_0_8px_rgba(16,185,129,0.5)]">
+                                        <Check className="w-2.5 h-2.5 text-white" />
+                                    </div>
+                                )}
+                            </motion.button>
+                        );
+                    })}
+                </div>
             </div>
 
-            {/* Matches */}
-            <div className="space-y-2 md:space-y-0 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-4">
-                {groupMatches.map(m => {
-                    const home = getTeam(m.homeTeam);
-                    const away = getTeam(m.awayTeam);
-                    const scores = localScores[m.id] ?? { home: null, away: null, isPowerPlay: false };
-                    const existingPalpite = palpites.find(p => p.match_id === m.id && p.user_id === userId);
+            {/* Matches Grid - Premium Cards */}
+            <div className="space-y-3 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-4 md:space-y-0">
+                <AnimatePresence mode="wait">
+                    {groupMatches.map((m, idx) => {
+                        const home = getTeam(m.homeTeam);
+                        const away = getTeam(m.awayTeam);
+                        const scores = localScores[m.id] ?? { home: null, away: null, isPowerPlay: false };
+                        const existingPalpite = palpites.find(p => p.match_id === m.id && p.user_id === userId);
+                        const isLocked = new Date() > new Date(m.date) || m.status !== "scheduled";
+                        const hasChanged = existingPalpite
+                            ? existingPalpite.home_score !== scores.home || existingPalpite.away_score !== scores.away || existingPalpite.is_power_play !== scores.isPowerPlay
+                            : (scores.home !== null || scores.away !== null);
 
-                    const isLocked = new Date() > new Date(m.date) || m.status !== "scheduled";
+                        return (
+                            <motion.div
+                                key={m.id}
+                                layout
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: idx * 0.05 }}
+                                className={cn(
+                                    "glass-card p-5 relative overflow-hidden group border-2 transition-all",
+                                    (existingPalpite && !hasChanged) ? "border-emerald-500/20" : "border-white/5 hover:border-white/10",
+                                    isLocked && "opacity-80 grayscale-[0.5]"
+                                )}
+                            >
+                                {isLocked && (
+                                    <div className="absolute top-0 right-0 bg-red-500/10 backdrop-blur-md text-red-500 text-[8px] font-black px-3 py-1 rounded-bl-2xl z-10 border-l border-b border-red-500/20 flex items-center gap-1 uppercase tracking-tighter">
+                                        <LockIcon className="w-2.5 h-2.5" /> {t('palpites.locked')}
+                                    </div>
+                                )}
 
-                    const hasChanged = existingPalpite
-                        ? existingPalpite.home_score !== scores.home || existingPalpite.away_score !== scores.away || existingPalpite.is_power_play !== scores.isPowerPlay
-                        : (scores.home !== null || scores.away !== null); // Considered changed if user typed something but hasn't saved
-
-                    return (
-                        <div key={m.id} className={cn("glass-card p-3 relative overflow-hidden", (existingPalpite && !hasChanged) ? "border-[hsl(var(--copa-success))]/20" : "")}>
-                            {isLocked && (
-                                <div className="absolute top-0 right-0 bg-red-500 text-white text-[8px] font-bold px-2 py-0.5 rounded-bl-lg z-10">
-                                    {t('palpites.locked')}
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                                        <span className="text-[10px] font-black text-gray-500 uppercase tracking-widest">
+                                            {format(new Date(m.date), "dd MMM · HH:mm", { locale: dateLocale })}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center gap-1.5">
+                                        <motion.button
+                                            whileTap={{ scale: 0.9 }}
+                                            onClick={() => !isLocked && updateLocal(m.id, "isPowerPlay", !scores.isPowerPlay)}
+                                            className={cn(
+                                                "flex items-center gap-1.5 px-3 py-1.5 rounded-xl border-2 transition-all",
+                                                scores.isPowerPlay
+                                                    ? "bg-yellow-500/10 border-yellow-500 text-yellow-500 font-black shadow-[0_0_15px_rgba(234,179,8,0.2)]"
+                                                    : "border-white/5 text-gray-500 hover:bg-white/5 hover:text-white"
+                                            )}
+                                            disabled={isLocked}
+                                        >
+                                            <Zap className={cn("w-3 h-3", scores.isPowerPlay && "fill-yellow-500")} />
+                                            <span className="text-[9px] uppercase tracking-tighter italic">BP x2</span>
+                                        </motion.button>
+                                        <button
+                                            onClick={() => setSelectedMatch(m)}
+                                            className="w-8 h-8 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center hover:bg-white/10 transition-colors"
+                                        >
+                                            <Info className="w-3.5 h-3.5 text-gray-500" />
+                                        </button>
+                                    </div>
                                 </div>
-                            )}
 
-                            <div className="flex items-center justify-between mb-2">
-                                <div className="text-[9px] text-muted-foreground flex items-center gap-1.5">
-                                    <Calendar className="w-3 h-3" />
-                                    {format(new Date(m.date), "dd MMM · HH:mm", { locale: ptBR })}
+                                <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+                                    <div className="text-right">
+                                        <div className="flex flex-col items-end group/team" onClick={() => navigate(`/team/${home.code}`)}>
+                                            <span className="text-[28px] mb-1 filter drop-shadow-md transition-transform group-hover/team:scale-110">{home?.flag}</span>
+                                            <span className="text-xs font-black text-white group-hover/team:text-primary transition-colors">{home?.code}</span>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-2">
+                                        <ScoreInput
+                                            value={scores.home}
+                                            onChange={v => updateLocal(m.id, "home", v)}
+                                            disabled={isLocked}
+                                        />
+                                        <span className="text-gray-600 font-black italic">×</span>
+                                        <ScoreInput
+                                            value={scores.away}
+                                            onChange={v => updateLocal(m.id, "away", v)}
+                                            disabled={isLocked}
+                                        />
+                                    </div>
+
+                                    <div className="text-left">
+                                        <div className="flex flex-col items-start group/team" onClick={() => navigate(`/team/${away.code}`)}>
+                                            <span className="text-[28px] mb-1 filter drop-shadow-md transition-transform group-hover/team:scale-110">{away?.flag}</span>
+                                            <span className="text-xs font-black text-white group-hover/team:text-primary transition-colors">{away?.code}</span>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <button
-                                        title={t('palpites.power_play_title')}
-                                        onClick={() => !isLocked && updateLocal(m.id, "isPowerPlay", !scores.isPowerPlay)}
-                                        className={cn(
-                                            "flex items-center gap-1 text-[9px] px-2 py-0.5 rounded-full border transition-all",
-                                            scores.isPowerPlay
-                                                ? "bg-yellow-500/20 border-yellow-500 text-yellow-500 font-bold"
-                                                : "border-border text-muted-foreground hover:bg-secondary"
+
+                                <AnimatePresence>
+                                    {hasChanged && !isLocked && (
+                                        <motion.button
+                                            initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                                            animate={{ opacity: 1, height: "auto", marginTop: 20 }}
+                                            exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                                            onClick={() => savePalpite(m.id, scores.home, scores.away, scores.isPowerPlay)}
+                                            disabled={saving === m.id}
+                                            className="w-full py-3 rounded-2xl bg-white text-black font-black text-[10px] uppercase tracking-[0.2em] shadow-xl hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                                        >
+                                            {saving === m.id ? (
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-3 h-3 border-2 border-black/20 border-t-black rounded-full animate-spin" />
+                                                    {t('palpites.btn_saving')}
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <Save className="w-3.5 h-3.5" />
+                                                    {existingPalpite ? t('palpites.btn_update') : t('palpites.btn_save')}
+                                                </>
+                                            )}
+                                        </motion.button>
+                                    )}
+                                </AnimatePresence>
+
+                                {existingPalpite && !hasChanged && !isLocked && (
+                                    <div className="flex items-center justify-center gap-3 mt-4 pt-4 border-t border-white/5">
+                                        <div className="flex items-center gap-1.5">
+                                            <div className="w-4 h-4 rounded-full bg-emerald-500/20 flex items-center justify-center border border-emerald-500/30">
+                                                <Check className="w-2.5 h-2.5 text-emerald-400" />
+                                            </div>
+                                            <span className="text-[9px] text-emerald-400 font-black uppercase tracking-tighter">{t('palpites.saved_label')}</span>
+                                        </div>
+                                        {existingPalpite.is_power_play && (
+                                            <div className="flex items-center gap-1.5">
+                                                <div className="w-4 h-4 rounded-full bg-yellow-500/20 flex items-center justify-center border border-yellow-500/30">
+                                                    <Zap className="w-2.5 h-2.5 text-yellow-400 fill-yellow-400/20" />
+                                                </div>
+                                                <span className="text-[9px] text-yellow-400 font-black uppercase tracking-tighter">BP ACTIVE</span>
+                                            </div>
                                         )}
-                                        disabled={isLocked}
-                                    >
-                                        ⚡ x2
-                                    </button>
-                                    <button
-                                        onClick={() => setSelectedMatch(m)}
-                                        className="p-1 rounded-full hover:bg-secondary/50 transition-colors"
-                                    >
-                                        <Info className="w-3 h-3 text-muted-foreground" />
-                                    </button>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <div
-                                    className="flex-1 flex items-center gap-2 justify-end cursor-pointer hover:underline"
-                                    onClick={() => navigate(`/team/${home.code}`)}
-                                >
-                                    <span className="text-xs font-bold">{home?.name}</span>
-                                    <span className="text-lg">{home?.flag}</span>
-                                </div>
-                                <ScoreInput
-                                    value={scores.home}
-                                    onChange={v => updateLocal(m.id, "home", v)}
-                                    disabled={isLocked}
-                                />
-                                <span className="text-muted-foreground text-xs font-bold">×</span>
-                                <ScoreInput
-                                    value={scores.away}
-                                    onChange={v => updateLocal(m.id, "away", v)}
-                                    disabled={isLocked}
-                                />
-                                <div
-                                    className="flex-1 flex items-center gap-2 cursor-pointer hover:underline"
-                                    onClick={() => navigate(`/team/${away.code}`)}
-                                >
-                                    <span className="text-lg">{away?.flag}</span>
-                                    <span className="text-xs font-bold">{away?.name}</span>
-                                </div>
-                            </div>
-                            {hasChanged && !isLocked && (
-                                <button
-                                    onClick={() => savePalpite(m.id, scores.home, scores.away, scores.isPowerPlay)}
-                                    disabled={saving === m.id}
-                                    className="w-full mt-2 py-2 rounded-lg bg-primary/20 text-primary text-[10px] font-bold uppercase tracking-wider disabled:opacity-50"
-                                >
-                                    {saving === m.id ? t('palpites.btn_saving') : existingPalpite ? t('palpites.btn_update') : t('palpites.btn_save')}
-                                </button>
-                            )}
-                            {existingPalpite && !hasChanged && !isLocked && (
-                                <div className="text-center mt-1">
-                                    <span className="text-[9px] text-[hsl(var(--copa-success))] font-bold">{t('palpites.saved_label')}</span>
-                                    {existingPalpite.is_power_play && <span className="ml-2 text-[9px] text-yellow-500 font-bold">{t('palpites.power_play_active')}</span>}
-                                </div>
-                            )}
-                        </div>
-                    );
-                })}
+                                    </div>
+                                )}
+                            </motion.div>
+                        );
+                    })}
+                </AnimatePresence>
             </div>
-        </div>
+        </motion.div>
     );
 }
+
+function LockIcon(props: any) {
+    return (
+        <svg
+            {...props}
+            xmlns="http://www.w3.org/2000/svg"
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+        >
+            <rect width="18" height="11" x="3" y="11" rx="2" ry="2" />
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+        </svg>
+    );
+}
+
