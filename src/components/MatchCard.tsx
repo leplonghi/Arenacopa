@@ -81,14 +81,16 @@ export function MatchCard({ match, compact = false, className, index = 0 }: Matc
           </div>
         </div>
 
-        {/* Seu palpite */}
+        {/* Live match footer — shows match minute */}
         <div className="border-t border-border/30 px-4 py-3 flex items-center justify-between bg-secondary/30">
           <span className="text-xs text-muted-foreground">
-            Seu palpite: <span className="font-black text-foreground ml-1">2 - 0</span>
+            {match.minute != null ? `⏱ ${match.minute}' — Em andamento` : "⚽ Jogo ao vivo"}
           </span>
-          <button className="text-[11px] font-bold px-3 py-1.5 rounded-lg bg-copa-green/20 text-copa-green-light border border-copa-green/30">
-            Editar
-          </button>
+          {match.group && (
+            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+              Grupo {match.group}
+            </span>
+          )}
         </div>
       </motion.div>
     );

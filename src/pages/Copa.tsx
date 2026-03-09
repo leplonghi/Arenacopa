@@ -1,15 +1,40 @@
-import { useState } from "react";
+import { useState, lazy, Suspense } from "react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { tabContentVariants } from "@/components/copa/animations";
 import { CalendarioTab } from "@/components/copa/CalendarioTab";
 import { GruposTab } from "@/components/copa/GruposTab";
 import { ChavesTab } from "@/components/copa/ChavesTab";
-import { MapaTab } from "@/components/copa/MapaTab";
 import { SimulacaoTab } from "@/components/copa/SimulacaoTab";
 import { SimulacaoProvider } from "@/contexts/SimulacaoContext";
+import { Loader2, Map } from "lucide-react";
+
+// ✅ Lazy-load MapaTab: Leaflet is ~1MB and only needed when user opens the tab
+const MapaTab = lazy(() =>
+  import("@/components/copa/MapaTab").then(m => ({ default: m.MapaTab }))
+);
 
 type CopaTab = "calendario" | "grupos" | "chaves" | "simulacao" | "mapa";
+
+const tabLabels: Record<CopaTab, string> = {
+  calendario: "Calendário",
+  grupos: "Grupos",
+  chaves: "Chaves",
+  simulacao: "Simulação",
+  mapa: "Mapa",
+};
+
+function MapaFallback() {
+  return (
+    <div className="flex flex-col items-center justify-center h-64 gap-3 text-muted-foreground">
+      <Map className="w-10 h-10 animate-pulse" />
+      <div className="flex items-center gap-2 text-sm">
+        <Loader2 className="w-4 h-4 animate-spin" />
+        Carregando mapa dos estádios…
+      </div>
+    </div>
+  );
+}
 
 const Copa = () => {
   const [tab, setTab] = useState<CopaTab>("calendario");
@@ -17,16 +42,18 @@ const Copa = () => {
   return (
     <SimulacaoProvider>
       <div>
-        <div className="flex gap-2 px-4 py-3 scrollbar-hide sticky top-0 z-20 backdrop-blur-xl" style={{ background: 'rgba(5, 20, 16, 0.95)' }}>
+        {/* Tab bar */}
+        <div
+          className="flex gap-2 px-4 py-3 scrollbar-hide sticky top-0 z-20 backdrop-blur-xl overflow-x-auto"
+          style={{ background: "rgba(5, 20, 16, 0.95)" }}
+        >
           {(["calendario", "grupos", "chaves", "simulacao", "mapa"] as CopaTab[]).map(t => (
             <button
               key={t}
               onClick={() => setTab(t)}
               className={cn(
                 "px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-colors shrink-0 relative",
-                tab === t
-                  ? "text-primary-foreground"
-                  : "bg-secondary text-secondary-foreground"
+                tab === t ? "text-primary-foreground" : "bg-secondary text-secondary-foreground"
               )}
             >
               {tab === t && (
@@ -36,13 +63,12 @@ const Copa = () => {
                   transition={{ type: "spring", stiffness: 400, damping: 30 }}
                 />
               )}
-              <span className="relative z-10">
-                {t === "calendario" ? "Calendário" : t === "simulacao" ? "Simulação" : t.charAt(0).toUpperCase() + t.slice(1)}
-              </span>
+              <span className="relative z-10">{tabLabels[t]}</span>
             </button>
           ))}
         </div>
 
+        {/* Tab content */}
         <div className="px-4 pt-2 pb-4">
           <AnimatePresence mode="wait">
             <motion.div
@@ -57,7 +83,11 @@ const Copa = () => {
               {tab === "grupos" && <GruposTab />}
               {tab === "chaves" && <ChavesTab />}
               {tab === "simulacao" && <SimulacaoTab />}
-              {tab === "mapa" && <MapaTab />}
+              {tab === "mapa" && (
+                <Suspense fallback={<MapaFallback />}>
+                  <MapaTab />
+                </Suspense>
+              )}
             </motion.div>
           </AnimatePresence>
         </div>

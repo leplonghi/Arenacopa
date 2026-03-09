@@ -1,18 +1,20 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import {
-  Share2, Users, Copy, Trophy, MessageCircle, Mail, Link2, X,
-  Settings, ChevronRight, Crown, Calendar, TrendingUp, BarChart3,
-  LogOut, Trash2, UserPlus
+  Share2, Users, Trophy, MessageCircle, Mail, Link2, X,
+  ChevronRight, Crown, Calendar, TrendingUp, BarChart3,
+  LogOut, UserPlus, Star
 } from "lucide-react";
 import { EmptyState } from "@/components/EmptyState";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { Flag } from "@/components/Flag";
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion, AnimatePresence } from "framer-motion";
-import { matches, getTeam, type Match } from "@/data/mockData";
+import { matches, getTeam, teams, type Match } from "@/data/mockData";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -24,6 +26,7 @@ interface BolaoData {
   invite_code: string;
   creator_id: string;
   created_at: string;
+  champion_winner?: string | null;
 }
 
 interface MemberData {
@@ -39,6 +42,7 @@ interface Palpite {
   user_id: string;
   home_score: number;
   away_score: number;
+  champion_team?: string | null;
 }
 
 // ─── Share Sheet ───
@@ -108,22 +112,157 @@ function ScoreInput({ value, onChange }: { value: number; onChange: (v: number) 
   );
 }
 
+// ─── Champion Picker ───
+function ChampionPicker({
+  bolaoId, userId, palpites, setPalpites, bolaoChampionWinner,
+}: {
+  bolaoId: string; userId: string; palpites: Palpite[];
+  setPalpites: (p: Palpite[]) => void; bolaoChampionWinner?: string | null;
+}) {
+  const { toast } = useToast();
+  const [showPicker, setShowPicker] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  const myChampionPalpite = palpites.find(p => p.user_id === userId && p.match_id === "champion_pick");
+  const selectedTeam = myChampionPalpite?.champion_team || null;
+  const selectedTeamData = selectedTeam ? getTeam(selectedTeam) : null;
+  const isCorrect = bolaoChampionWinner && selectedTeam === bolaoChampionWinner;
+  const isWrong = bolaoChampionWinner && selectedTeam && selectedTeam !== bolaoChampionWinner;
+
+  const saveChampion = async (teamCode: string) => {
+    setSaving(true);
+    try {
+      if (myChampionPalpite) {
+        const { error } = await supabase
+          .from("bolao_palpites")
+          .update({ champion_team: teamCode } as any)
+          .eq("id", myChampionPalpite.id);
+        if (error) throw error;
+        setPalpites(palpites.map(p => p.id === myChampionPalpite.id ? { ...p, champion_team: teamCode } : p));
+      } else {
+        const { data, error } = await supabase
+          .from("bolao_palpites")
+          .insert({
+            bolao_id: bolaoId, user_id: userId,
+            match_id: "champion_pick", home_score: 0, away_score: 0, champion_team: teamCode,
+          } as any)
+          .select().single();
+        if (error) throw error;
+        if (data) setPalpites([...palpites, data as Palpite]);
+      }
+      const t = getTeam(teamCode);
+      toast({ title: `Campeão: ${t.name} ${t.flag} ✅` });
+      setShowPicker(false);
+    } catch (err: any) {
+      toast({ title: "Erro", description: err.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className={cn(
+      "glass-card p-4 border",
+      isCorrect ? "border-copa-gold/50 bg-copa-gold/5" :
+      isWrong ? "border-destructive/20" : "border-copa-gold/20"
+    )}>
+      <div className="flex items-center gap-2 mb-3">
+        <div className="w-8 h-8 rounded-xl bg-copa-gold/20 flex items-center justify-center">
+          <Trophy className="w-4 h-4 text-copa-gold" />
+        </div>
+        <div className="flex-1">
+          <span className="text-sm font-black">Palpite de Campeão</span>
+          <span className="text-[10px] text-copa-gold font-black ml-2">+20 pts</span>
+        </div>
+        {isCorrect && <span className="text-[10px] font-black text-copa-gold px-2 py-0.5 rounded-full bg-copa-gold/20">+20 PTS ✓</span>}
+        {isWrong && <span className="text-[10px] font-black text-destructive/70 px-2 py-0.5 rounded-full bg-destructive/10">0 PTS ✗</span>}
+      </div>
+
+      {selectedTeamData ? (
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-copa-gold/30 flex items-center justify-center bg-secondary shrink-0">
+            <Flag code={selectedTeamData.code} size="lg" />
+          </div>
+          <div className="flex-1">
+            <span className="text-sm font-black block">{selectedTeamData.name}</span>
+            <span className="text-[10px] text-muted-foreground">Grupo {selectedTeamData.group} · {selectedTeamData.confederation}</span>
+          </div>
+          <button
+            onClick={() => setShowPicker(!showPicker)}
+            disabled={saving}
+            className="text-[10px] font-bold text-primary border border-primary/30 px-3 py-1.5 rounded-lg shrink-0"
+          >
+            Mudar
+          </button>
+        </div>
+      ) : (
+        <button
+          onClick={() => setShowPicker(true)}
+          className="w-full py-3 rounded-xl border border-dashed border-copa-gold/40 flex items-center justify-center gap-2 text-xs font-bold text-copa-gold"
+        >
+          <Star className="w-4 h-4" /> Escolher Campeão da Copa
+        </button>
+      )}
+
+      <AnimatePresence>
+        {showPicker && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: "auto", opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="overflow-hidden"
+          >
+            <div className="mt-3 max-h-52 overflow-y-auto rounded-xl bg-secondary/50 p-2">
+              <p className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground text-center mb-2">
+                Quem vai levantar a taça?
+              </p>
+              <div className="grid grid-cols-6 gap-1.5">
+                {teams.map(t => (
+                  <button
+                    key={t.code}
+                    onClick={() => saveChampion(t.code)}
+                    disabled={saving}
+                    className={cn(
+                      "flex flex-col items-center gap-0.5 p-1.5 rounded-lg transition-colors",
+                      selectedTeam === t.code ? "bg-copa-gold/20 ring-1 ring-copa-gold" : "hover:bg-secondary"
+                    )}
+                  >
+                    <Flag code={t.code} size="sm" />
+                    <span className="text-[7px] font-bold">{t.code}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <p className="text-[9px] text-muted-foreground mt-2 text-center">
+        Pode ser alterado até o início da Copa · 11/06/2026
+      </p>
+    </div>
+  );
+}
+
 // ─── Overview Tab ───
 function OverviewTab({ bolao, members, isCreator, palpites, userId, onShare }: {
-  bolao: BolaoData; members: MemberData[]; isCreator: boolean; palpites: Palpite[]; userId: string; onShare: () => void;
+  bolao: BolaoData; members: MemberData[]; isCreator: boolean;
+  palpites: Palpite[]; userId: string; onShare: () => void;
 }) {
-  const totalMatches = matches.filter(m => m.phase === "groups").length;
-  const myPalpites = palpites.filter(p => p.user_id === userId);
-  const progress = totalMatches > 0 ? Math.round((myPalpites.length / totalMatches) * 100) : 0;
+  const groupMatches = matches.filter(m => m.phase === "groups");
+  const myGroupPalpites = palpites.filter(p => p.user_id === userId && p.match_id !== "champion_pick");
+  const myChampion = palpites.find(p => p.user_id === userId && p.match_id === "champion_pick");
+  const totalItems = groupMatches.length + 1;
+  const progress = Math.round(((myGroupPalpites.length + (myChampion ? 1 : 0)) / totalItems) * 100);
 
-  const nextMatches = matches
-    .filter(m => m.status === "scheduled" && m.phase === "groups")
+  const nextMatches = groupMatches
+    .filter(m => m.status === "scheduled")
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
     .slice(0, 3);
 
   return (
     <div className="space-y-4">
-      {/* Stats grid */}
       <div className="grid grid-cols-3 gap-2">
         <div className="glass-card p-3 text-center">
           <Users className="w-4 h-4 text-muted-foreground mx-auto mb-1" />
@@ -132,7 +271,7 @@ function OverviewTab({ bolao, members, isCreator, palpites, userId, onShare }: {
         </div>
         <div className="glass-card p-3 text-center">
           <BarChart3 className="w-4 h-4 text-muted-foreground mx-auto mb-1" />
-          <span className="text-lg font-black block">{myPalpites.length}</span>
+          <span className="text-lg font-black block">{myGroupPalpites.length}</span>
           <span className="text-[9px] uppercase tracking-wider text-muted-foreground">Palpites</span>
         </div>
         <div className="glass-card p-3 text-center">
@@ -142,23 +281,23 @@ function OverviewTab({ bolao, members, isCreator, palpites, userId, onShare }: {
         </div>
       </div>
 
-      {/* Progress bar */}
       <div className="glass-card p-4">
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs font-bold">Seus Palpites</span>
-          <span className="text-[10px] text-muted-foreground">{myPalpites.length}/{totalMatches} jogos</span>
+          <span className="text-[10px] text-muted-foreground">
+            {myGroupPalpites.length}/{groupMatches.length} jogos · {myChampion ? "✓" : "—"} campeão
+          </span>
         </div>
         <div className="w-full h-2 bg-secondary rounded-full overflow-hidden">
           <div className="h-full bg-gradient-to-r from-primary to-[hsl(var(--copa-gold-light))] rounded-full transition-all duration-500" style={{ width: `${progress}%` }} />
         </div>
-        {progress < 100 && (
-          <p className="text-[10px] text-muted-foreground mt-2">
-            Faltam {totalMatches - myPalpites.length} palpites para completar a fase de grupos
+        {!myChampion && (
+          <p className="text-[10px] text-copa-gold mt-2 font-bold">
+            ⚠️ Não esqueça do Palpite de Campeão (+20 pts) na aba Palpites!
           </p>
         )}
       </div>
 
-      {/* Next matches to predict */}
       {nextMatches.length > 0 && (
         <div>
           <h3 className="text-[10px] font-bold uppercase tracking-widest text-primary mb-2">Próximos Jogos</h3>
@@ -166,26 +305,22 @@ function OverviewTab({ bolao, members, isCreator, palpites, userId, onShare }: {
             {nextMatches.map(m => {
               const home = getTeam(m.homeTeam);
               const away = getTeam(m.awayTeam);
-              const hasPalpite = myPalpites.some(p => p.match_id === m.id);
+              const hasPalpite = myGroupPalpites.some(p => p.match_id === m.id);
               return (
                 <div key={m.id} className={cn("glass-card p-3 flex items-center gap-3", hasPalpite && "border-[hsl(var(--copa-success))]/30")}>
                   <div className="flex-1">
                     <div className="flex items-center gap-2 text-sm font-bold">
-                      <span>{home?.flag}</span>
-                      <span className="text-xs">{home?.code}</span>
+                      <span>{home?.flag}</span><span className="text-xs">{home?.code}</span>
                       <span className="text-muted-foreground text-xs">vs</span>
-                      <span className="text-xs">{away?.code}</span>
-                      <span>{away?.flag}</span>
+                      <span className="text-xs">{away?.code}</span><span>{away?.flag}</span>
                     </div>
                     <span className="text-[10px] text-muted-foreground">
                       {format(new Date(m.date), "dd MMM · HH:mm", { locale: ptBR })} · Grupo {m.group}
                     </span>
                   </div>
-                  {hasPalpite ? (
-                    <span className="text-[9px] px-2 py-0.5 rounded-full bg-[hsl(var(--copa-success))]/20 text-[hsl(var(--copa-success))] font-bold">✓</span>
-                  ) : (
-                    <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                  )}
+                  {hasPalpite
+                    ? <span className="text-[9px] px-2 py-0.5 rounded-full bg-[hsl(var(--copa-success))]/20 text-[hsl(var(--copa-success))] font-bold">✓</span>
+                    : <ChevronRight className="w-4 h-4 text-muted-foreground" />}
                 </div>
               );
             })}
@@ -193,7 +328,6 @@ function OverviewTab({ bolao, members, isCreator, palpites, userId, onShare }: {
         </div>
       )}
 
-      {/* Invite card */}
       <div className="glass-card p-4">
         <div className="flex items-center gap-3 mb-3">
           <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
@@ -201,7 +335,7 @@ function OverviewTab({ bolao, members, isCreator, palpites, userId, onShare }: {
           </div>
           <div className="flex-1">
             <span className="text-sm font-bold block">Convide mais amigos</span>
-            <span className="text-[10px] text-muted-foreground">Compartilhe o código: <span className="font-black text-foreground tracking-wider">{bolao.invite_code}</span></span>
+            <span className="text-[10px] text-muted-foreground">Código: <span className="font-black text-foreground tracking-wider">{bolao.invite_code}</span></span>
           </div>
         </div>
         <button onClick={onShare} className="w-full py-2.5 rounded-xl bg-primary text-primary-foreground font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2">
@@ -209,10 +343,9 @@ function OverviewTab({ bolao, members, isCreator, palpites, userId, onShare }: {
         </button>
       </div>
 
-      {/* Disclaimer */}
       <div className="glass-card p-3 border-dashed border-muted-foreground/20">
         <p className="text-[10px] text-muted-foreground leading-relaxed text-center">
-          ⚠️ O ArenaCopa <span className="font-bold">não realiza</span> processamento de pagamentos ou transações financeiras. Eventuais valores devem ser combinados entre os participantes, fora do aplicativo.
+          ⚠️ O ArenaCopa <span className="font-bold">não realiza</span> processamento de pagamentos. Eventuais valores devem ser combinados entre os participantes, fora do aplicativo.
         </p>
       </div>
     </div>
@@ -220,23 +353,22 @@ function OverviewTab({ bolao, members, isCreator, palpites, userId, onShare }: {
 }
 
 // ─── Palpites Tab ───
-function PalpitesTab({ bolaoId, palpites, setPalpites, userId }: {
-  bolaoId: string; palpites: Palpite[]; setPalpites: (p: Palpite[]) => void; userId: string;
+function PalpitesTab({ bolaoId, palpites, setPalpites, userId, bolaoChampionWinner }: {
+  bolaoId: string; palpites: Palpite[]; setPalpites: (p: Palpite[]) => void;
+  userId: string; bolaoChampionWinner?: string | null;
 }) {
   const { toast } = useToast();
   const [selectedGroup, setSelectedGroup] = useState("A");
   const [saving, setSaving] = useState<string | null>(null);
   const [localScores, setLocalScores] = useState<Record<string, { home: number; away: number }>>({});
 
-  const groups = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"];
+  const groups = ["A","B","C","D","E","F","G","H","I","J","K","L"];
   const groupMatches = matches.filter(m => m.phase === "groups" && m.group === selectedGroup);
+  const myGroupPalpites = palpites.filter(p => p.user_id === userId && p.match_id !== "champion_pick");
 
-  // Init local scores from palpites
   useEffect(() => {
     const scores: Record<string, { home: number; away: number }> = {};
-    palpites.filter(p => p.user_id === userId).forEach(p => {
-      scores[p.match_id] = { home: p.home_score, away: p.away_score };
-    });
+    myGroupPalpites.forEach(p => { scores[p.match_id] = { home: p.home_score, away: p.away_score }; });
     setLocalScores(scores);
   }, [palpites, userId]);
 
@@ -251,42 +383,31 @@ function PalpitesTab({ bolaoId, palpites, setPalpites, userId }: {
       } else {
         const { data, error } = await supabase.from("bolao_palpites").insert({ bolao_id: bolaoId, user_id: userId, match_id: matchId, home_score: home, away_score: away }).select().single();
         if (error) throw error;
-        if (data) setPalpites([...palpites, data]);
+        if (data) setPalpites([...palpites, data as Palpite]);
       }
       toast({ title: "Palpite salvo! ✅" });
     } catch (err: any) {
       toast({ title: "Erro ao salvar", description: err.message, variant: "destructive" });
-    } finally {
-      setSaving(null);
-    }
+    } finally { setSaving(null); }
   };
 
   const updateLocal = (matchId: string, field: "home" | "away", value: number) => {
-    setLocalScores(prev => ({
-      ...prev,
-      [matchId]: { home: prev[matchId]?.home ?? 0, away: prev[matchId]?.away ?? 0, [field]: value }
-    }));
+    setLocalScores(prev => ({ ...prev, [matchId]: { home: prev[matchId]?.home ?? 0, away: prev[matchId]?.away ?? 0, [field]: value } }));
   };
 
   return (
     <div className="space-y-4">
-      {/* Group selector */}
+      <ChampionPicker bolaoId={bolaoId} userId={userId} palpites={palpites} setPalpites={setPalpites} bolaoChampionWinner={bolaoChampionWinner} />
+
       <div className="flex gap-1.5 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-hide">
         {groups.map(g => {
-          const groupMatchIds = matches.filter(m => m.group === g && m.phase === "groups").map(m => m.id);
-          const done = palpites.filter(p => p.user_id === userId && groupMatchIds.includes(p.match_id)).length;
-          const total = groupMatchIds.length;
+          const ids = matches.filter(m => m.group === g && m.phase === "groups").map(m => m.id);
+          const done = myGroupPalpites.filter(p => ids.includes(p.match_id)).length;
           return (
-            <button
-              key={g}
-              onClick={() => setSelectedGroup(g)}
-              className={cn(
-                "px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-colors relative",
-                selectedGroup === g ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"
-              )}
-            >
+            <button key={g} onClick={() => setSelectedGroup(g)}
+              className={cn("px-3 py-1.5 rounded-lg text-xs font-bold whitespace-nowrap transition-colors relative", selectedGroup === g ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground")}>
               {g}
-              {done === total && total > 0 && (
+              {done === ids.length && ids.length > 0 && (
                 <span className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-[hsl(var(--copa-success))] text-[7px] text-background font-black flex items-center justify-center">✓</span>
               )}
             </button>
@@ -294,16 +415,13 @@ function PalpitesTab({ bolaoId, palpites, setPalpites, userId }: {
         })}
       </div>
 
-      {/* Matches */}
       <div className="space-y-2">
         {groupMatches.map(m => {
           const home = getTeam(m.homeTeam);
           const away = getTeam(m.awayTeam);
           const scores = localScores[m.id] ?? { home: 0, away: 0 };
           const existingPalpite = palpites.find(p => p.match_id === m.id && p.user_id === userId);
-          const hasChanged = existingPalpite
-            ? existingPalpite.home_score !== scores.home || existingPalpite.away_score !== scores.away
-            : true;
+          const hasChanged = existingPalpite ? existingPalpite.home_score !== scores.home || existingPalpite.away_score !== scores.away : true;
 
           return (
             <div key={m.id} className={cn("glass-card p-3", existingPalpite && !hasChanged && "border-[hsl(var(--copa-success))]/20")}>
@@ -325,18 +443,13 @@ function PalpitesTab({ bolaoId, palpites, setPalpites, userId }: {
                 </div>
               </div>
               {hasChanged && (
-                <button
-                  onClick={() => savePalpite(m.id, scores.home, scores.away)}
-                  disabled={saving === m.id}
-                  className="w-full mt-2 py-2 rounded-lg bg-primary/20 text-primary text-[10px] font-bold uppercase tracking-wider disabled:opacity-50"
-                >
+                <button onClick={() => savePalpite(m.id, scores.home, scores.away)} disabled={saving === m.id}
+                  className="w-full mt-2 py-2 rounded-lg bg-primary/20 text-primary text-[10px] font-bold uppercase tracking-wider disabled:opacity-50">
                   {saving === m.id ? "Salvando..." : existingPalpite ? "Atualizar Palpite" : "Salvar Palpite"}
                 </button>
               )}
               {existingPalpite && !hasChanged && (
-                <div className="text-center mt-1">
-                  <span className="text-[9px] text-[hsl(var(--copa-success))] font-bold">✓ Palpite salvo</span>
-                </div>
+                <div className="text-center mt-1"><span className="text-[9px] text-[hsl(var(--copa-success))] font-bold">✓ Palpite salvo</span></div>
               )}
             </div>
           );
@@ -347,80 +460,65 @@ function PalpitesTab({ bolaoId, palpites, setPalpites, userId }: {
 }
 
 // ─── Scoring logic ───
-function calculatePoints(palpite: Palpite, match: Match | undefined): { points: number; label: string } {
-  if (!match || match.status !== "finished" || match.homeScore == null || match.awayScore == null) {
-    return { points: 0, label: "" };
+function calculatePoints(palpite: Palpite, match: Match | undefined, championWinner?: string | null): { points: number; label: string } {
+  if (palpite.match_id === "champion_pick") {
+    if (!championWinner) return { points: 0, label: "pendente" };
+    return palpite.champion_team === championWinner ? { points: 20, label: "campeão" } : { points: 0, label: "errou campeão" };
   }
-  const ph = palpite.home_score;
-  const pa = palpite.away_score;
-  const mh = match.homeScore;
-  const ma = match.awayScore;
-
-  // Exact score
+  if (!match || match.status !== "finished" || match.homeScore == null || match.awayScore == null) return { points: 0, label: "" };
+  const ph = palpite.home_score, pa = palpite.away_score, mh = match.homeScore, ma = match.awayScore;
   if (ph === mh && pa === ma) return { points: 5, label: "exato" };
-
-  // Correct winner or correct draw
-  const palpiteResult = ph > pa ? "home" : ph < pa ? "away" : "draw";
-  const matchResult = mh > ma ? "home" : mh < ma ? "away" : "draw";
-
-  if (palpiteResult === matchResult) {
-    return matchResult === "draw"
-      ? { points: 2, label: "empate" }
-      : { points: 3, label: "vencedor" };
-  }
-
+  const pr = ph > pa ? "home" : ph < pa ? "away" : "draw";
+  const mr = mh > ma ? "home" : mh < ma ? "away" : "draw";
+  if (pr === mr) return mr === "draw" ? { points: 2, label: "empate" } : { points: 3, label: "vencedor" };
   return { points: 0, label: "errou" };
 }
 
 // ─── Ranking Tab ───
-function RankingTab({ members, palpites }: { members: MemberData[]; palpites: Palpite[] }) {
+function RankingTab({ members, palpites, championWinner }: { members: MemberData[]; palpites: Palpite[]; championWinner?: string | null }) {
   const finishedMatches = useMemo(() => matches.filter(m => m.status === "finished"), []);
 
   const ranking = useMemo(() => {
     return members.map(m => {
       const memberPalpites = palpites.filter(p => p.user_id === m.user_id);
-      let points = 0;
-      let exactCount = 0;
-      let winnerCount = 0;
-      let drawCount = 0;
-
+      let points = 0, exactCount = 0, winnerCount = 0, drawCount = 0, championPoints = 0;
+      let championTeam: string | null = null;
       memberPalpites.forEach(p => {
+        if (p.match_id === "champion_pick") {
+          championTeam = p.champion_team || null;
+          const r = calculatePoints(p, undefined, championWinner);
+          points += r.points; championPoints = r.points;
+          return;
+        }
         const match = finishedMatches.find(fm => fm.id === p.match_id);
-        const result = calculatePoints(p, match);
-        points += result.points;
-        if (result.label === "exato") exactCount++;
-        else if (result.label === "vencedor") winnerCount++;
-        else if (result.label === "empate") drawCount++;
+        const r = calculatePoints(p, match, championWinner);
+        points += r.points;
+        if (r.label === "exato") exactCount++;
+        else if (r.label === "vencedor") winnerCount++;
+        else if (r.label === "empate") drawCount++;
       });
-
-      return { ...m, palpiteCount: memberPalpites.length, points, exactCount, winnerCount, drawCount };
+      return { ...m, palpiteCount: memberPalpites.filter(p => p.match_id !== "champion_pick").length, points, exactCount, winnerCount, drawCount, championTeam, championPoints };
     }).sort((a, b) => b.points - a.points || b.palpiteCount - a.palpiteCount);
-  }, [members, palpites, finishedMatches]);
+  }, [members, palpites, finishedMatches, championWinner]);
 
-  if (ranking.length === 0) {
-    return <EmptyState icon="🏆" title="Sem participantes" description="Convide amigos para competir!" />;
-  }
+  if (ranking.length === 0) return <EmptyState icon="🏆" title="Sem participantes" description="Convide amigos para competir!" />;
 
   return (
     <div className="space-y-2">
-      {/* Podium for top 3 */}
       {ranking.length >= 3 && (
         <div className="flex items-end justify-center gap-3 mb-4 pt-4">
           {[ranking[1], ranking[0], ranking[2]].map((r, i) => {
             const pos = i === 0 ? 2 : i === 1 ? 1 : 3;
-            const heights = { 1: "h-20", 2: "h-14", 3: "h-10" };
+            const heights: Record<number,string> = { 1: "h-20", 2: "h-14", 3: "h-10" };
             const name = r.profile?.name || "Usuário";
             return (
               <div key={r.user_id} className="flex flex-col items-center gap-1">
+                {r.championTeam && <div className="w-5 h-5 rounded-full overflow-hidden border border-copa-gold/30 mb-0.5"><Flag code={r.championTeam} size="sm" /></div>}
                 <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-xs font-black overflow-hidden">
                   {r.profile?.avatar_url ? <img src={r.profile.avatar_url} alt="" className="w-full h-full object-cover" /> : name.slice(0, 2).toUpperCase()}
                 </div>
                 <span className="text-[10px] font-bold truncate max-w-[60px]">{name.split(" ")[0]}</span>
-                <div className={cn(
-                  "w-16 rounded-t-lg flex items-start justify-center pt-2",
-                  heights[pos as 1 | 2 | 3],
-                  pos === 1 ? "bg-primary/30" : pos === 2 ? "bg-secondary" : "bg-secondary/60"
-                )}>
+                <div className={cn("w-16 rounded-t-lg flex items-start justify-center pt-2", heights[pos], pos === 1 ? "bg-primary/30" : pos === 2 ? "bg-secondary" : "bg-secondary/60")}>
                   <span className={cn("text-sm font-black", pos === 1 && "text-primary")}>{pos}º</span>
                 </div>
               </div>
@@ -429,47 +527,46 @@ function RankingTab({ members, palpites }: { members: MemberData[]; palpites: Pa
         </div>
       )}
 
-      {/* Full list */}
       <div className="glass-card overflow-hidden">
         {ranking.map((r, i) => {
           const name = r.profile?.name || "Usuário";
           return (
             <div key={r.user_id} className={cn("flex items-center gap-3 px-4 py-3", i < ranking.length - 1 && "border-b border-border/30")}>
-              <span className={cn(
-                "w-7 h-7 rounded-lg flex items-center justify-center text-xs font-black",
-                i === 0 ? "bg-primary text-primary-foreground" :
-                i === 1 ? "bg-primary/50 text-primary-foreground" :
-                i === 2 ? "bg-primary/30 text-foreground" :
-                "bg-secondary text-muted-foreground"
+              <span className={cn("w-7 h-7 rounded-lg flex items-center justify-center text-xs font-black shrink-0",
+                i === 0 ? "bg-primary text-primary-foreground" : i === 1 ? "bg-primary/50 text-primary-foreground" : i === 2 ? "bg-primary/30 text-foreground" : "bg-secondary text-muted-foreground"
               )}>{i + 1}</span>
               <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-xs font-black overflow-hidden shrink-0">
                 {r.profile?.avatar_url ? <img src={r.profile.avatar_url} alt="" className="w-full h-full object-cover" /> : name.slice(0, 2).toUpperCase()}
               </div>
               <div className="flex-1 min-w-0">
                 <span className="text-sm font-bold block truncate">{name}</span>
-                <span className="text-[10px] text-muted-foreground">
-                  {r.palpiteCount} palpites
-                  {(r.exactCount > 0 || r.winnerCount > 0 || r.drawCount > 0) && (
-                    <> · 🎯{r.exactCount} · ✓{r.winnerCount} · ={r.drawCount}</>
+                <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground flex-wrap">
+                  <span>{r.palpiteCount} palpites</span>
+                  {(r.exactCount > 0 || r.winnerCount > 0 || r.drawCount > 0) && <span>· 🎯{r.exactCount} ✓{r.winnerCount} ={r.drawCount}</span>}
+                  {r.championTeam && (
+                    <span className="flex items-center gap-0.5">
+                      · <Flag code={r.championTeam} size="sm" className="inline-block" />
+                      {r.championPoints === 20 && <span className="text-copa-gold font-bold">+20🏆</span>}
+                    </span>
                   )}
-                </span>
+                </div>
               </div>
-              <span className="text-sm font-black text-primary">{r.points} pts</span>
+              <span className="text-sm font-black text-primary shrink-0">{r.points} pts</span>
             </div>
           );
         })}
       </div>
 
-      {/* Scoring legend */}
       <div className="glass-card p-3">
         <p className="text-[10px] font-bold text-muted-foreground mb-1.5">Pontuação</p>
-        <div className="flex items-center gap-4 text-[10px] text-muted-foreground">
+        <div className="flex flex-wrap gap-x-3 gap-y-1 text-[10px] text-muted-foreground">
           <span>🎯 Exato = <span className="font-black text-foreground">5 pts</span></span>
           <span>✓ Vencedor = <span className="font-black text-foreground">3 pts</span></span>
           <span>= Empate = <span className="font-black text-foreground">2 pts</span></span>
+          <span>🏆 Campeão = <span className="font-black text-copa-gold">20 pts</span></span>
         </div>
         {finishedMatches.length === 0 && (
-          <p className="text-[10px] text-muted-foreground mt-1.5">Nenhum jogo encerrado ainda. A pontuação será atualizada automaticamente.</p>
+          <p className="text-[10px] text-muted-foreground mt-1.5">Nenhum jogo encerrado ainda. Pontuação atualiza automaticamente.</p>
         )}
       </div>
     </div>
@@ -482,27 +579,24 @@ function MembrosTab({ members, userId, isCreator, bolaoId, onRefresh }: {
 }) {
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [confirmLeave, setConfirmLeave] = useState(false);
+  const [confirmRemove, setConfirmRemove] = useState<string | null>(null);
+  const memberToRemove = members.find(m => m.user_id === confirmRemove);
 
-  const handleLeave = async () => {
-    if (!confirm("Tem certeza que deseja sair do bolão?")) return;
+  const doLeave = async () => {
     const { error } = await supabase.from("bolao_members").delete().eq("bolao_id", bolaoId).eq("user_id", userId);
-    if (error) {
-      toast({ title: "Erro", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: "Você saiu do bolão" });
-      navigate("/boloes");
-    }
+    if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Você saiu do bolão" });
+    navigate("/boloes");
   };
 
-  const handleRemove = async (targetUserId: string) => {
-    if (!confirm("Remover este membro do bolão?")) return;
-    const { error } = await supabase.from("bolao_members").delete().eq("bolao_id", bolaoId).eq("user_id", targetUserId);
-    if (error) {
-      toast({ title: "Erro", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: "Membro removido" });
-      onRefresh();
-    }
+  const doRemove = async () => {
+    if (!confirmRemove) return;
+    const { error } = await supabase.from("bolao_members").delete().eq("bolao_id", bolaoId).eq("user_id", confirmRemove);
+    if (error) { toast({ title: "Erro", description: error.message, variant: "destructive" }); return; }
+    toast({ title: "Membro removido" });
+    setConfirmRemove(null);
+    onRefresh();
   };
 
   return (
@@ -511,21 +605,18 @@ function MembrosTab({ members, userId, isCreator, bolaoId, onRefresh }: {
         {members.map((m, i) => {
           const name = m.profile?.name || "Usuário";
           const isMe = m.user_id === userId;
-          const initials = name.slice(0, 2).toUpperCase();
           return (
             <div key={m.user_id} className={cn("flex items-center gap-3 px-4 py-3", i < members.length - 1 && "border-b border-border/30", isMe && "bg-primary/5")}>
               <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center text-sm font-black shrink-0 overflow-hidden">
-                {m.profile?.avatar_url ? <img src={m.profile.avatar_url} alt="" className="w-full h-full object-cover" /> : initials}
+                {m.profile?.avatar_url ? <img src={m.profile.avatar_url} alt="" className="w-full h-full object-cover" /> : name.slice(0, 2).toUpperCase()}
               </div>
               <div className="flex-1 min-w-0">
-                <span className={cn("text-sm font-bold block truncate", isMe && "text-primary")}>
-                  {name}{isMe && " (Você)"}
-                </span>
-                <span className="text-[10px] text-muted-foreground capitalize">{m.role === "admin" ? "Administrador" : "Membro"}</span>
+                <span className={cn("text-sm font-bold block truncate", isMe && "text-primary")}>{name}{isMe && " (Você)"}</span>
+                <span className="text-[10px] text-muted-foreground">{m.role === "admin" ? "Administrador" : "Membro"}</span>
               </div>
               {m.role === "admin" && <Crown className="w-4 h-4 text-primary" />}
               {isCreator && !isMe && m.role !== "admin" && (
-                <button onClick={() => handleRemove(m.user_id)} className="p-1.5 rounded-lg bg-destructive/10 text-destructive">
+                <button onClick={() => setConfirmRemove(m.user_id)} className="p-1.5 rounded-lg bg-destructive/10 text-destructive">
                   <X className="w-3.5 h-3.5" />
                 </button>
               )}
@@ -535,10 +626,17 @@ function MembrosTab({ members, userId, isCreator, bolaoId, onRefresh }: {
       </div>
 
       {!isCreator && (
-        <button onClick={handleLeave} className="w-full glass-card p-3 flex items-center justify-center gap-2 text-sm font-bold text-destructive">
+        <button onClick={() => setConfirmLeave(true)} className="w-full glass-card p-3 flex items-center justify-center gap-2 text-sm font-bold text-destructive">
           <LogOut className="w-4 h-4" /> Sair do Bolão
         </button>
       )}
+
+      <ConfirmDialog open={confirmLeave} onClose={() => setConfirmLeave(false)} onConfirm={doLeave}
+        title="Sair do bolão?" description="Você perderá todos os seus palpites e não poderá mais ver o ranking. Esta ação não pode ser desfeita."
+        confirmLabel="Sair mesmo assim" destructive />
+      <ConfirmDialog open={confirmRemove !== null} onClose={() => setConfirmRemove(null)} onConfirm={doRemove}
+        title="Remover membro?" description={`Deseja remover ${memberToRemove?.profile?.name || "este membro"} do bolão? Todos os palpites deles serão excluídos.`}
+        confirmLabel="Remover" destructive />
     </div>
   );
 }
@@ -554,7 +652,6 @@ const tabs = [
 const BolaoDetail = () => {
   const { id } = useParams();
   const { user } = useAuth();
-  const { toast } = useToast();
   const [bolao, setBolao] = useState<BolaoData | null>(null);
   const [members, setMembers] = useState<MemberData[]>([]);
   const [palpites, setPalpites] = useState<Palpite[]>([]);
@@ -562,10 +659,7 @@ const BolaoDetail = () => {
   const [shareOpen, setShareOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
 
-  useEffect(() => {
-    if (!id || !user) return;
-    loadBolao();
-  }, [id, user]);
+  useEffect(() => { if (!id || !user) return; loadBolao(); }, [id, user]);
 
   const loadBolao = async () => {
     if (!id || !user) return;
@@ -574,26 +668,19 @@ const BolaoDetail = () => {
       supabase.from("bolao_members").select("user_id, role, joined_at, profiles(name, avatar_url)").eq("bolao_id", id),
       supabase.from("bolao_palpites").select("*").eq("bolao_id", id),
     ]);
-
-    if (bolaoRes.data) setBolao(bolaoRes.data);
-    if (membersRes.data) {
-      setMembers(membersRes.data.map((m: any) => ({ ...m, profile: m.profiles })));
-    }
-    if (palpitesRes.data) setPalpites(palpitesRes.data);
+    if (bolaoRes.data) setBolao(bolaoRes.data as BolaoData);
+    if (membersRes.data) setMembers(membersRes.data.map((m: any) => ({ ...m, profile: m.profiles })));
+    if (palpitesRes.data) setPalpites(palpitesRes.data as Palpite[]);
     setLoading(false);
   };
 
-  if (loading) {
-    return (
-      <div className="px-4 py-4 space-y-4">
-        <Skeleton className="h-8 w-3/4" />
-        <Skeleton className="h-4 w-1/2" />
-        <div className="flex gap-2">{[1,2,3,4].map(i => <Skeleton key={i} className="h-9 flex-1 rounded-lg" />)}</div>
-        <Skeleton className="h-40 rounded-xl" />
-        <Skeleton className="h-32 rounded-xl" />
-      </div>
-    );
-  }
+  if (loading) return (
+    <div className="px-4 py-4 space-y-4">
+      <Skeleton className="h-8 w-3/4" /><Skeleton className="h-4 w-1/2" />
+      <div className="flex gap-2">{[1,2,3,4].map(i => <Skeleton key={i} className="h-9 flex-1 rounded-lg" />)}</div>
+      <Skeleton className="h-40 rounded-xl" /><Skeleton className="h-32 rounded-xl" />
+    </div>
+  );
 
   if (!bolao) return <EmptyState icon="🔍" title="Bolão não encontrado" description="Este bolão não existe ou foi removido." />;
 
@@ -601,7 +688,6 @@ const BolaoDetail = () => {
 
   return (
     <div className="px-4 py-4 space-y-4">
-      {/* Header */}
       <div>
         <div className="flex items-center gap-2 mb-1">
           <span className="text-[9px] px-2 py-0.5 rounded-full bg-[hsl(var(--copa-success))]/20 text-[hsl(var(--copa-success))] font-bold uppercase">Copa 2026</span>
@@ -611,35 +697,22 @@ const BolaoDetail = () => {
         {bolao.description && <p className="text-xs text-muted-foreground mt-0.5">{bolao.description}</p>}
       </div>
 
-      {/* Tabs */}
       <div className="flex gap-1 bg-secondary/50 rounded-xl p-1">
         {tabs.map(t => (
-          <button
-            key={t.id}
-            onClick={() => setActiveTab(t.id)}
-            className={cn(
-              "flex-1 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1",
-              activeTab === t.id ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"
-            )}
-          >
+          <button key={t.id} onClick={() => setActiveTab(t.id)}
+            className={cn("flex-1 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all flex items-center justify-center gap-1",
+              activeTab === t.id ? "bg-card text-foreground shadow-sm" : "text-muted-foreground")}>
             <t.icon className="w-3.5 h-3.5" />
             <span className="hidden min-[380px]:inline">{t.label}</span>
           </button>
         ))}
       </div>
 
-      {/* Tab content */}
       <AnimatePresence mode="wait">
-        <motion.div
-          key={activeTab}
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -8 }}
-          transition={{ duration: 0.15 }}
-        >
+        <motion.div key={activeTab} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.15 }}>
           {activeTab === "overview" && <OverviewTab bolao={bolao} members={members} isCreator={isCreator} palpites={palpites} userId={user!.id} onShare={() => setShareOpen(true)} />}
-          {activeTab === "palpites" && <PalpitesTab bolaoId={bolao.id} palpites={palpites} setPalpites={setPalpites} userId={user!.id} />}
-          {activeTab === "ranking" && <RankingTab members={members} palpites={palpites} />}
+          {activeTab === "palpites" && <PalpitesTab bolaoId={bolao.id} palpites={palpites} setPalpites={setPalpites} userId={user!.id} bolaoChampionWinner={(bolao as any).champion_winner} />}
+          {activeTab === "ranking" && <RankingTab members={members} palpites={palpites} championWinner={(bolao as any).champion_winner} />}
           {activeTab === "membros" && <MembrosTab members={members} userId={user!.id} isCreator={isCreator} bolaoId={bolao.id} onRefresh={loadBolao} />}
         </motion.div>
       </AnimatePresence>
