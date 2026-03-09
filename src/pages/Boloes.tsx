@@ -37,17 +37,19 @@ const Boloes = () => {
 
   const loadBoloes = async () => {
     if (!user) return;
+    // ✅ Fixed: only load bolões where the user is a member (via bolao_members join)
     const { data, error } = await supabase
-      .from("boloes")
-      .select("*, bolao_members(count)")
-      .order("created_at", { ascending: false });
+      .from("bolao_members")
+      .select("bolao_id, role, boloes(*, bolao_members(count))")
+      .eq("user_id", user.id)
+      .order("created_at", { referencedTable: "boloes", ascending: false });
 
     if (!error && data) {
-      setBoloes(data.map((b: any) => ({
-        ...b,
-        memberCount: b.bolao_members?.[0]?.count || 0,
-        isCreator: b.creator_id === user.id,
-      })));
+      setBoloes((data as any[]).map((m) => ({
+        ...m.boloes,
+        memberCount: m.boloes?.bolao_members?.[0]?.count || 0,
+        isCreator: m.boloes?.creator_id === user.id,
+      })).filter(Boolean));
     }
     setLoading(false);
   };

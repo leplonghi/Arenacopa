@@ -11,6 +11,8 @@ import Boloes from "./pages/Boloes";
 import CriarBolao from "./pages/CriarBolao";
 import BolaoDetail from "./pages/BolaoDetail";
 import Perfil from "./pages/Perfil";
+import Guia from "./pages/Guia";
+import Ranking from "./pages/Ranking";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -40,6 +42,8 @@ const AppRoutes = () => (
     <Route path="/boloes/criar" element={<ProtectedRoute><Layout><CriarBolao /></Layout></ProtectedRoute>} />
     <Route path="/boloes/:id" element={<ProtectedRoute><Layout><BolaoDetail /></Layout></ProtectedRoute>} />
     <Route path="/perfil" element={<ProtectedRoute><Layout><Perfil /></Layout></ProtectedRoute>} />
+    <Route path="/guia" element={<ProtectedRoute><Layout><Guia /></Layout></ProtectedRoute>} />
+    <Route path="/ranking" element={<ProtectedRoute><Layout><Ranking /></Layout></ProtectedRoute>} />
     <Route path="*" element={<NotFound />} />
   </Routes>
 );

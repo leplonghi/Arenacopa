@@ -28,7 +28,8 @@ const CriarBolao = () => {
           name: name.trim(),
           description: description.trim(),
           creator_id: user.id,
-        })
+          is_public: privacy === "public",
+        } as any)
         .select("id")
         .single();
 

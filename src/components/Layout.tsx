@@ -1,20 +1,40 @@
-import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { Home, Trophy, Users, User, Bell, ChevronLeft } from "lucide-react";
+import { NavLink, useLocation, useNavigate, Link } from "react-router-dom";
+import { Home, Trophy, BookOpen, BarChart2, ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/contexts/AuthContext";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import logo from "@/assets/escudo_arenacopa_logo.png";
 
 const tabs = [
   { path: "/", icon: Home, label: "Início" },
   { path: "/copa", icon: Trophy, label: "Copa" },
   { path: "__fab__", icon: null, label: "" },
-  { path: "/boloes", icon: Users, label: "Bolões" },
-  { path: "/perfil", icon: User, label: "Perfil" },
+  { path: "/guia", icon: BookOpen, label: "Guia" },
+  { path: "/ranking", icon: BarChart2, label: "Ranking" },
 ];
 
 function Header() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [initials, setInitials] = useState("?");
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const isSubpage = location.pathname.split("/").filter(Boolean).length > 1;
+
+  useEffect(() => {
+    if (!user) return;
+    supabase
+      .from("profiles")
+      .select("name, avatar_url")
+      .eq("user_id", user.id)
+      .single()
+      .then(({ data }) => {
+        if (data?.name) setInitials(data.name.slice(0, 2).toUpperCase());
+        else if (user.email) setInitials(user.email.slice(0, 2).toUpperCase());
+        if (data?.avatar_url) setAvatarUrl(data.avatar_url);
+      });
+  }, [user]);
 
   const getTitle = () => {
     const path = location.pathname;
@@ -23,6 +43,8 @@ function Header() {
     if (path === "/boloes") return "Bolões";
     if (path === "/boloes/criar") return "Criar Bolão";
     if (path.startsWith("/boloes/")) return "Bolão";
+    if (path === "/guia") return null;
+    if (path === "/ranking") return "Ranking";
     if (path === "/perfil") return "Perfil";
     return null;
   };
@@ -30,7 +52,10 @@ function Header() {
   const title = getTitle();
 
   return (
-    <header className="sticky top-0 z-30 backdrop-blur-xl border-b border-white/[0.06] safe-top shadow-[0_4px_30px_rgba(0,0,0,0.4)]" style={{ background: 'rgba(5, 20, 16, 0.6)' }}>
+    <header
+      className="sticky top-0 z-30 backdrop-blur-xl border-b border-white/[0.06] safe-top shadow-[0_4px_30px_rgba(0,0,0,0.4)]"
+      style={{ background: "rgba(5, 20, 16, 0.6)" }}
+    >
       <div className="flex items-center justify-between px-4 h-14">
         {isSubpage ? (
           <button onClick={() => navigate(-1)} className="p-1.5 -ml-1.5 rounded-lg hover:bg-secondary">
@@ -51,10 +76,17 @@ function Header() {
           <h1 className="text-base font-bold absolute left-1/2 -translate-x-1/2">{title}</h1>
         ) : null}
 
-        <button className="w-10 h-10 rounded-full bg-secondary/60 border border-border/50 flex items-center justify-center relative">
-          <Bell className="w-5 h-5" />
-          <span className="absolute top-2 right-2 w-2 h-2 bg-copa-live rounded-full" />
-        </button>
+        {/* Profile avatar — replaces bell as Perfil entry point */}
+        <Link
+          to="/perfil"
+          className="w-10 h-10 rounded-full bg-gradient-to-br from-copa-green/60 to-copa-green/30 border border-copa-green/30 flex items-center justify-center overflow-hidden text-xs font-black shrink-0"
+        >
+          {avatarUrl ? (
+            <img src={avatarUrl} alt="" className="w-full h-full object-cover" />
+          ) : (
+            initials
+          )}
+        </Link>
       </div>
     </header>
   );
@@ -64,7 +96,10 @@ function BottomTabs() {
   const navigate = useNavigate();
 
   return (
-    <nav className="fixed bottom-0 inset-x-0 z-30 backdrop-blur-xl border-t border-white/[0.06] safe-bottom shadow-[0_-4px_30px_rgba(0,0,0,0.4)]" style={{ background: 'rgba(5, 20, 16, 0.6)' }}>
+    <nav
+      className="fixed bottom-0 inset-x-0 z-30 backdrop-blur-xl border-t border-white/[0.06] safe-bottom shadow-[0_-4px_30px_rgba(0,0,0,0.4)]"
+      style={{ background: "rgba(5, 20, 16, 0.6)" }}
+    >
       <div className="flex items-center justify-around h-16 max-w-lg mx-auto relative">
         {tabs.map((tab) => {
           if (tab.path === "__fab__") {
