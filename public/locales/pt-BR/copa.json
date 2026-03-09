@@ -52,7 +52,7 @@
             "button": "Criar Simulação"
         },
         "list": {
-            "title": "Simulações",
+            "title": "Minhas Simulações",
             "subtitle": "Crie e gerencie suas simulações",
             "new": "Nova",
             "login_title": "Faça login para simular",
@@ -75,20 +75,6 @@
             "phase_knockout": "Eliminatórias",
             "group_complete": "Completo",
             "standings": "Classificação"
-        },
-        "list": {
-            "title": "Minhas Simulações",
-            "subtitle": "Crie e gerencie seus palpites",
-            "new": "Nova",
-            "empty_title": "Sem simulações",
-            "empty_desc": "Crie sua primeira simulação para começar",
-            "create_first": "Criar Simulação",
-            "login_title": "Faça login para salvar",
-            "login_desc": "Suas simulações serão salvas na sua conta",
-            "groups_count": "{{count}} grupos",
-            "games_count": "{{filled}}/{{total}} preenchidos",
-            "created": "Simulação criada",
-            "deleted": "Simulação excluída"
         },
         "knockout": {
             "incomplete_title": "Fase de Grupos Incompleta",

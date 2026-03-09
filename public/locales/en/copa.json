@@ -7,6 +7,63 @@
         "simulator": "Simulator",
         "news": "News"
     },
+    "groups": {
+        "table": {
+            "country": "Country",
+            "j": "P",
+            "w": "W",
+            "gd": "GD",
+            "p": "Pts"
+        }
+    },
+    "simulator": {
+        "share": {
+            "text_intro": "Check out my simulation for World Cup {{name}}!",
+            "text_group": "Group {{group}}:",
+            "text_footer": "\\nSimulate yours at: https://arenacopa.app/copa/simulacao",
+            "copied": "Copied!",
+            "copied_desc": "Simulation text copied to clipboard.",
+            "title": "Share Simulation",
+            "desc": "Share your predictions with your friends.",
+            "whatsapp": "WhatsApp",
+            "whatsapp_desc": "Send via message",
+            "copy": "Copy Text",
+            "copy_desc": "Copy to paste anywhere",
+            "more": "More Options",
+            "more_desc": "Use system share"
+        },
+        "create": {
+            "title": "New Simulation",
+            "name_label": "SIMULATION NAME",
+            "name_placeholder": "My Prediction #1",
+            "groups_label": "GROUPS TO SIMULATE",
+            "select_all": "Select All",
+            "button": "Create Simulation"
+        },
+        "list": {
+            "created": "Simulation created!",
+            "deleted": "Simulation deleted.",
+            "login_title": "Login to Save",
+            "login_desc": "Create an account to save your simulations.",
+            "title": "Your Simulations",
+            "subtitle": "Create and manage your World Cup predictions.",
+            "new": "New",
+            "empty_title": "No simulations yet",
+            "empty_desc": "Create your first simulation to start predicting results.",
+            "create_first": "Create First Simulation",
+            "groups_count": "{{count}} Groups",
+            "games_count": "{{filled}}/{{total}} Games"
+        },
+        "editor": {
+            "selected_groups": "{{count}} groups selected",
+            "progress": "PROGRESS",
+            "games_count": "{{filled}}/{{total}}",
+            "phase_groups": "Group Stage",
+            "phase_knockout": "Knockout Stage",
+            "group_complete": "Complete",
+            "standings": "STANDINGS"
+        }
+    },
     "overview": {
         "featured": "Featured",
         "no_featured": "No featured match.",

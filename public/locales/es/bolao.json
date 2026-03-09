@@ -143,29 +143,28 @@
         "paid_label": "Pagada",
         "free_label": "Gratis"
     },
-    "members": {
-        "participants": "Participantes",
-        "leave_bolao": "Salir de la Quiniela",
-        "financial_status": "Estado Financiero",
-        "paid_exempt": "pagados/exentos",
-        "pendings": "pendientes",
-        "status_hint": "Toca el estado de un miembro para cambiarlo.",
-        "status": {
-            "pending": "Pendiente",
-            "paid": "Pagado",
-            "exempt": "Exento"
-        },
-        "role": {
-            "admin": "Administrador",
-            "member": "Apostador"
-        },
-        "you": "(Tú)",
-        "remove_confirm": "¿Eliminar a este miembro de la quiniela?",
-        "leave_confirm": "¿Estás seguro de que quieres salir de la quiniela?",
-        "left_success": "Saliste de la quiniela",
-        "removed_success": "Miembro eliminado",
-        "error_update": "No se pudo actualizar el estado.",
-        "default_user": "Usuario",
-        "click_to_change_status": "Clic para cambiar estado",
-        "payment_status": "Estado de pago",
-        "p
+    "share": {
+        "invite_msg": "🏆 ¡Únete a mi bolão \"{{name}}\" de la Copa del Mundo 2026!\n\n📋 Código de invitación: {{code}}\n\n⚽ Únete aquí: {{url}}",
+        "whatsapp": "WhatsApp",
+        "whatsapp_desc": "Enviar invitación por mensaje",
+        "instagram": "Instagram / Stories",
+        "instagram_desc": "Generar imagen para publicar",
+        "copy_link": "Copiar Enlace",
+        "copy_desc": "Copiar enlace de invitación",
+        "copied": "¡Copiado al portapapeles!",
+        "image_downloaded": "¡Imagen descargada!",
+        "image_download_desc": "Comparte manualmente en redes sociales.",
+        "error_image": "Error al generar imagen",
+        "title": "Invitar Amigos",
+        "subtitle": "Invita a todos a \"{{name}}\"",
+        "code_label": "Tu Código de Invitación",
+        "image_title": "Únete a mi bolão",
+        "image_cta": "Descarga la App Ahora"
+    },
+    "join_modal": {
+        "title": "Quiniela Pagada",
+        "desc": "Esta quiniela tiene una cuota de entrada.",
+        "fee_label": "Cuota de Entrada",
+        "terms": "Soy consciente de que el pago debe tratarse directamente con el administrador. La aplicación no procesa pagos."
+    }
+}
