@@ -82,7 +82,19 @@ export async function getDashboardData(userId: string) {
   if (rankingsResponse.error) throw rankingsResponse.error;
   if (palpitesResponse.error) throw palpitesResponse.error;
 
-  const rankingsMap = new Map(
+  // Calculate actual ranks for each bolao
+  const rankPromises = (rankingsResponse.data || []).map(r => 
+    supabase
+      .from("bolao_rankings")
+      .select("*", { count: "exact", head: true })
+      .eq("bolao_id", r.bolao_id)
+      .gt("total_points", r.total_points || 0)
+  );
+  
+  const rankResults = await Promise.all(rankPromises);
+  const ranksMap = new Map((rankingsResponse.data || []).map((r, i) => [r.bolao_id, (rankResults[i].count || 0) + 1]));
+
+  const rankingsPointsMap = new Map(
     (rankingsResponse.data || []).map((row) => [row.bolao_id, row.total_points || 0])
   );
 
@@ -100,8 +112,8 @@ export async function getDashboardData(userId: string) {
       id: bolao.id,
       name: bolao.name,
       memberCount: bolao.bolao_members?.[0]?.count ?? 0,
-      myPoints: rankingsMap.get(bolao.id) || 0,
-      myRank: 0,
+      myPoints: rankingsPointsMap.get(bolao.id) || 0,
+      myRank: ranksMap.get(bolao.id) || 0,
       pendingCount: Math.max((scheduledMatchesCount || 0) - totalPredictions, 0),
     };
   });

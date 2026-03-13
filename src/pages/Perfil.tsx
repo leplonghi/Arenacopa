@@ -9,6 +9,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/i18n/useLanguage";
+import { useProfileStats } from "@/hooks/useProfileStats";
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -49,6 +51,8 @@ const Perfil = () => {
   });
   const [showTeamPicker, setShowTeamPicker] = useState(false);
   const [loading, setLoading] = useState(true);
+
+  const { data: stats } = useProfileStats(user?.id);
 
   const fetchProfile = useCallback(async () => {
     if (!user) return;
@@ -319,7 +323,7 @@ const Perfil = () => {
           <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between backdrop-blur-md">
             <div>
               <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest mb-1">Total de Pontos</p>
-              <h4 className="text-2xl font-black text-white leading-none">1,450</h4>
+              <h4 className="text-2xl font-black text-white leading-none">{stats?.points || 0}</h4>
             </div>
             <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20">
               <Star className="w-5 h-5 text-primary" />
@@ -328,7 +332,7 @@ const Perfil = () => {
           <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between backdrop-blur-md">
             <div>
               <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest mb-1">Aproveitamento</p>
-              <h4 className="text-2xl font-black text-white leading-none">68%</h4>
+              <h4 className="text-2xl font-black text-white leading-none">{stats?.efficiency || 0}%</h4>
             </div>
             <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
               <Target className="w-5 h-5 text-blue-400" />
@@ -337,7 +341,7 @@ const Perfil = () => {
           <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between backdrop-blur-md">
             <div>
               <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest mb-1">Placares Exatos</p>
-              <h4 className="text-2xl font-black text-white leading-none">12</h4>
+              <h4 className="text-2xl font-black text-white leading-none">{stats?.exactScores || 0}</h4>
             </div>
             <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
               <Goal className="w-5 h-5 text-emerald-400" />
@@ -346,7 +350,7 @@ const Perfil = () => {
           <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between backdrop-blur-md">
             <div>
               <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest mb-1">Títulos</p>
-              <h4 className="text-2xl font-black text-white leading-none">1</h4>
+              <h4 className="text-2xl font-black text-white leading-none">{stats?.titles || 0}</h4>
             </div>
             <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center border border-amber-500/20">
               <Crown className="w-5 h-5 text-amber-500" />
@@ -359,24 +363,24 @@ const Perfil = () => {
           <p className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em] px-1">Conquistas Desbloqueadas</p>
           <div className="flex gap-3 overflow-x-auto pb-4 snap-x hide-scrollbar">
             {[
-              { id: "primeiro_palpite", title: "Chute Inicial", desc: "Deu seu primeiro palpite", icon: <Goal className="w-6 h-6 text-primary" />, color: "primary", unlocked: true },
-              { id: "placar_exato", title: "Na Mosca", desc: "Acertou 1 placar exato", icon: <Target className="w-6 h-6 text-blue-400" />, color: "blue-500", unlocked: true },
-              { id: "criador_bolao", title: "Líder nato", desc: "Criou um bolão", icon: <Crown className="w-6 h-6 text-amber-500" />, color: "amber-500", unlocked: true },
-              { id: "combo_3", title: "Hat-trick", desc: "Acertou 3 exatos seguidos", icon: <Zap className="w-6 h-6 text-violet-400" />, color: "violet-400", unlocked: false },
-              { id: "campeao", title: "Campeão", desc: "Venceu um bolão inteiro", icon: <Trophy className="w-6 h-6 text-emerald-400" />, color: "emerald-400", unlocked: false },
+              { id: "primeiro_palpite", title: "Chute Inicial", desc: "Deu seu primeiro palpite", icon: <Goal className="w-6 h-6 text-primary" />, color: "primary", unlocked: (stats?.totalPredictions || 0) > 0 },
+              { id: "placar_exato", title: "Na Mosca", desc: "Acertou 1 placar exato", icon: <Target className="w-6 h-6 text-blue-400" />, color: "blue-500", unlocked: (stats?.exactScores || 0) > 0 },
+              { id: "criador_bolao", title: "Líder nato", desc: "Criou um bolão", icon: <Crown className="w-6 h-6 text-amber-500" />, color: "amber-500", unlocked: (stats?.createdBoloes || 0) > 0 },
+              { id: "combo_3", title: "Hat-trick", desc: "Acertou 3 exatos totais", icon: <Zap className="w-6 h-6 text-violet-400" />, color: "violet-400", unlocked: (stats?.exactScores || 0) >= 3 },
+              { id: "campeao", title: "Campeão", desc: "Venceu um bolão inteiro", icon: <Trophy className="w-6 h-6 text-emerald-400" />, color: "emerald-400", unlocked: (stats?.titles || 0) > 0 },
             ].map(ach => (
               <div
                 key={ach.id}
                 className={cn(
                   "snap-center shrink-0 w-[140px] p-4 rounded-3xl border flex flex-col items-center justify-center text-center transition-all",
                   ach.unlocked
-                    ? `bg-${ach.color}/5 border-${ach.color}/20 shadow-[0_0_15px_rgba(var(--${ach.color}-rgb),0.1)]`
+                    ? "bg-white/10 border-white/20 shadow-xl"
                     : "bg-white/[0.02] border-white/5 opacity-50 grayscale"
                 )}
               >
                 <div className={cn(
                   "w-12 h-12 rounded-[16px] flex items-center justify-center mb-3",
-                  ach.unlocked ? `bg-${ach.color}/10` : "bg-white/5"
+                  ach.unlocked ? "bg-primary/20" : "bg-white/5"
                 )}>
                   {ach.icon}
                 </div>

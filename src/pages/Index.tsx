@@ -16,6 +16,7 @@ import { useMonetization } from "@/contexts/MonetizationContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { getDashboardData, type DashboardBolaoSummary, type DashboardNewsItem } from "@/services/dashboard/dashboard.service";
+import { useMatches } from "@/hooks/useMatches";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -67,23 +68,6 @@ const Index = () => {
 
     const fetchData = async () => {
       try {
-        const isDemo = localStorage.getItem("demo_mode") === "true";
-        if (isDemo) {
-          setProfile({ name: "Demo User", avatar: "https://github.com/shadcn.png" });
-          setMyBoloes([
-            { id: "demo1", name: "Bolão da Família", memberCount: 12, myPoints: 145, myRank: 2, pendingCount: 3 },
-            { id: "demo2", name: "Bolão da Firma", memberCount: 25, myPoints: 88, myRank: 5, pendingCount: 1 },
-            { id: "demo3", name: "Amigos do Futebol", memberCount: 8, myPoints: 42, myRank: 1, pendingCount: 0 },
-          ]);
-          setMiniNews([
-            { id: "n1", title: "Brasil faz último treino antes da estreia", category: "Seleção", time: "2h", image: "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=400", url: "#" },
-            { id: "n2", title: "Estádio MetLife recebe ajustes finais", category: "Sedes", time: "4h", image: "https://images.unsplash.com/photo-1522778119026-d647f0596c20?q=80&w=400", url: "#" },
-            { id: "n3", title: "Mbappé é dúvida para jogo da França", category: "Seleções", time: "6h", image: "https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?q=80&w=400", url: "#" },
-          ]);
-          setLoading(false);
-          return;
-        }
-
         const dashboardData = await getDashboardData(user.id);
         setProfile({
           name: dashboardData.profile?.name || "",
@@ -101,15 +85,18 @@ const Index = () => {
     fetchData();
   }, [user]);
 
+  const { data: allMatches } = useMatches();
+
   const nextFavMatch = useMemo(() =>
-    matches.find(
+    allMatches?.find(
       m => (m.homeTeam === favoriteTeamCode || m.awayTeam === favoriteTeamCode) && m.status !== "finished"
-    ), [favoriteTeamCode]);
+    ), [favoriteTeamCode, allMatches]);
 
   const displayName = profile?.name || user?.email?.split("@")[0] || "Torcedor";
   const totalPoints = myBoloes.reduce((acc, curr) => acc + (curr.myPoints || 0), 0);
   const bestRank = myBoloes.length > 0 ? Math.min(...myBoloes.map(b => b.myRank || 999).filter(r => r > 0)) : 999;
   const totalPending = myBoloes.reduce((acc, curr) => acc + (curr.pendingCount || 0), 0);
+
 
   return (
     <div className="min-h-screen bg-black/70 pb-24 overflow-hidden relative">

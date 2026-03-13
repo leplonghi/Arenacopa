@@ -7,12 +7,14 @@ import { motion } from "framer-motion";
 
 interface MatchCardProps {
   match: Match;
+  prediction?: { homeScore: number; awayScore: number };
   compact?: boolean;
   variant?: "default" | "broadcast";
   className?: string;
   index?: number;
   onClick?: () => void;
 }
+
 
 const cardVariants = {
   hidden: { opacity: 0, y: 20, scale: 0.95 },
@@ -30,7 +32,7 @@ const cardVariants = {
   }),
 };
 
-export function MatchCard({ match, compact = false, variant = "default", className, index = 0, onClick }: MatchCardProps) {
+export function MatchCard({ match, prediction, compact = false, variant = "default", className, index = 0, onClick }: MatchCardProps) {
   const home = getTeam(match.homeTeam);
   const away = getTeam(match.awayTeam);
   const stadium = getStadium(match.stadium);
@@ -214,14 +216,16 @@ export function MatchCard({ match, compact = false, variant = "default", classNa
         </div>
 
         {/* Seu palpite */}
-        <div className="border-t border-border/30 px-4 py-3 flex items-center justify-between bg-secondary/30">
-          <span className="text-xs text-muted-foreground">
-            Seu palpite: <span className="font-black text-foreground ml-1">2 - 0</span>
-          </span>
-          <button className="text-[11px] font-bold px-3 py-1.5 rounded-lg bg-copa-green/20 text-copa-green-light border border-copa-green/30">
-            Editar
-          </button>
-        </div>
+        {prediction && (
+          <div className="border-t border-border/30 px-4 py-3 flex items-center justify-between bg-secondary/30">
+            <span className="text-xs text-muted-foreground">
+              Seu palpite: <span className="font-black text-foreground ml-1">{prediction.homeScore} - {prediction.awayScore}</span>
+            </span>
+            <button className="text-[11px] font-bold px-3 py-1.5 rounded-lg bg-copa-green/20 text-copa-green-light border border-copa-green/30">
+              Editar
+            </button>
+          </div>
+        )}
       </motion.div>
     );
   }
