@@ -1,10 +1,9 @@
 
 import { useEffect, useState } from "react";
-import { db } from "@/integrations/firebase/client";
-import { collection, query, orderBy, limit, getDocs } from "firebase/firestore";
 import { motion, AnimatePresence } from "framer-motion";
 import { staggerItem } from "./animations";
-import { Eye, ArrowRight, TrendingUp, X, ExternalLink } from "lucide-react";
+import { Eye, ArrowRight, TrendingUp } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 interface NewsItemDisplay {
     id: string;
@@ -25,26 +24,25 @@ export function NewsFeed() {
     useEffect(() => {
         const fetchNews = async () => {
             try {
-                const newsRef = collection(db, "news");
-                const newsQuery = query(newsRef, orderBy("published_at", "desc"), limit(5));
-                const newsSnapshot = await getDocs(newsQuery);
+                const { data, error } = await supabase
+                    .from("copa_news")
+                    .select("id, title, source_name, published_at, url_to_image, url, description, country_filter")
+                    .order("published_at", { ascending: false })
+                    .limit(5);
 
-                const mappedNews: NewsItemDisplay[] = newsSnapshot.docs.map(docSnap => {
-                    const item = docSnap.data();
-                    return {
-                        id: docSnap.id,
-                        title: item.title,
-                        category: item.category || "Geral",
-                        time: item.published_at?.toDate
-                            ? new Date(item.published_at.toDate()).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })
-                            : new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }),
-                        image: item.image_url || "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=800",
-                        url: item.url || "#",
-                        views: "1.2k",
-                        content: item.content || item.summary || null,
-                        source: item.source || null,
-                    };
-                });
+                if (error) throw error;
+
+                const mappedNews: NewsItemDisplay[] = (data || []).map((item) => ({
+                    id: item.id,
+                    title: item.title,
+                    category: item.country_filter || "Geral",
+                    time: new Date(item.published_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }),
+                    image: item.url_to_image || "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=800",
+                    url: item.url || "#",
+                    views: "1.2k",
+                    content: item.description || undefined,
+                    source: item.source_name || undefined,
+                }));
 
                 setNews(mappedNews);
             } catch (err) {

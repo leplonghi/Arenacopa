@@ -1,6 +1,4 @@
 import { useState, useEffect } from "react";
-import { db } from "@/integrations/firebase/client";
-import { collection, getDocs } from "firebase/firestore";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     MapPin, Users, Trophy, Globe, TrendingUp, X,
@@ -27,23 +25,17 @@ export function GuiaTab() {
     const [cityStatus, setCityStatus] = useState<Record<string, CityStatusData>>({});
 
     useEffect(() => {
-        const fetchCityStatus = async () => {
-            try {
-                const statusRef = collection(db, 'city_status');
-                const statusSnapshot = await getDocs(statusRef);
-                if (!statusSnapshot.empty) {
-                    const statusMap: Record<string, CityStatusData> = {};
-                    statusSnapshot.docs.forEach((docSnap) => {
-                        const item = docSnap.data() as CityStatusData;
-                        statusMap[item.city_id] = item;
-                    });
-                    setCityStatus(statusMap);
-                }
-            } catch (err) {
-                console.error("Error fetching city status", err);
-            }
-        };
-        fetchCityStatus();
+        const derivedStatus = hostCountries.flatMap((country) => country.cities).reduce<Record<string, CityStatusData>>((acc, city) => {
+            const temperatureMatch = city.weather.match(/(\d+)[°º]C/);
+            acc[city.id] = {
+                city_id: city.id,
+                temperature: temperatureMatch ? Number(temperatureMatch[1]) : 24,
+                condition: city.weather.split(".")[0] || "Condição estável",
+            };
+            return acc;
+        }, {});
+
+        setCityStatus(derivedStatus);
     }, []);
 
     const activeCountry = hostCountries.find(c => c.code === selectedCountryCode)!;
@@ -310,7 +302,7 @@ export function CityDetailsModal({ city, dynamicStatus, onClose }: { city: HostC
 
                     <div className="absolute bottom-4 left-4 right-4">
                         <div className="inline-flex bg-white/10 backdrop-blur-md px-2 py-1 rounded border border-white/10 items-center gap-1.5 text-[9px] font-black uppercase text-white tracking-widest mb-2">
-                            <Flag code={city.countryCode as any} size="sm" />
+                            <Flag code={city.countryCode} size="sm" />
                             {city.countryCode} Sede
                         </div>
                         <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight leading-none mb-3">

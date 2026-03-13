@@ -1,13 +1,12 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { db } from "@/integrations/firebase/client";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
+import { acceptTerms, ensureProfile, getProfile } from "@/services/profile/profile.service";
 
 import { useTranslation } from "react-i18next";
 
@@ -33,16 +32,15 @@ export function TermsGuard({ children }: { children: React.ReactNode }) {
 
         const checkTerms = async () => {
             try {
-                const docRef = doc(db, 'profiles', user.id);
-                const docSnap = await getDoc(docRef);
+                await ensureProfile({
+                    id: user.id,
+                    email: user.email,
+                    user_metadata: user.user_metadata,
+                });
 
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    if (!data.terms_accepted) {
-                        setShowModal(true);
-                    }
-                } else {
-                    console.error("Profile not found");
+                const profile = await getProfile(user.id);
+                if (!profile?.terms_accepted && !profile?.accepted_terms_at) {
+                    setShowModal(true);
                 }
             } catch (error) {
                 console.error("Error fetching profile:", error);
@@ -58,15 +56,10 @@ export function TermsGuard({ children }: { children: React.ReactNode }) {
         setSubmitting(true);
 
         try {
-            const docRef = doc(db, 'profiles', user.id);
-            await updateDoc(docRef, {
-                terms_accepted: true,
-                terms_accepted_at: new Date().toISOString()
-            });
+            await acceptTerms(user.id);
             setShowModal(false);
         } catch (error) {
             console.error("Error updating profile:", error);
-            // Maybe show a toast error here
         }
         setSubmitting(false);
     };

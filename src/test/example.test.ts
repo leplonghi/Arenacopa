@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 
-describe("example", () => {
-  it("should pass", () => {
-    expect(true).toBe(true);
+describe("test setup", () => {
+  it("carrega o ambiente do vitest", () => {
+    expect(window).toBeDefined();
   });
 });

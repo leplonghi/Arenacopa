@@ -122,7 +122,7 @@ export default function CriarBolao() {
           user_id: user.id,
           team_code: champion,
         },
-        { onConflict: "bolao_id,user_id" as any }
+        { onConflict: "bolao_id,user_id" }
       );
 
       if (championError) throw championError;
@@ -137,14 +137,14 @@ export default function CriarBolao() {
       setCreatedInviteCode(bolaoData.invite_code);
       setStep(3);
 
-      if ((window as any).plausible) {
-        (window as any).plausible("Bolao Created", { props: { category } });
+      if (window.plausible) {
+        window.plausible("Bolao Created", { props: { category } });
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Erro ao criar bolão:", error);
       toast({
         title: "Erro ao criar bolão",
-        description: error?.message || "Revisa os dados e tenta de novo.",
+        description: error instanceof Error ? error.message : "Revisa os dados e tenta de novo.",
         variant: "destructive",
       });
     } finally {
@@ -401,7 +401,7 @@ export default function CriarBolao() {
             </div>
 
             <div className="grid grid-cols-3 gap-3 md:grid-cols-6">
-              {teams.map((team: any) => (
+              {teams.map((team) => (
                 <button
                   key={team.code}
                   onClick={() => setChampion(team.code)}

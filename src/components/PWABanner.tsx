@@ -1,14 +1,20 @@
 import { useState, useEffect } from "react";
 import { Download, X } from "lucide-react";
 
+interface BeforeInstallPromptEvent extends Event {
+    prompt: () => Promise<void>;
+    userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
+}
+
 export function PWABanner() {
-    const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+    const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
     const [showBanner, setShowBanner] = useState(false);
 
     useEffect(() => {
         const handler = (e: Event) => {
-            e.preventDefault();
-            setDeferredPrompt(e);
+            const promptEvent = e as BeforeInstallPromptEvent;
+            promptEvent.preventDefault();
+            setDeferredPrompt(promptEvent);
             setTimeout(() => {
                 setShowBanner(true);
             }, 30000); // 30 seconds wait

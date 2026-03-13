@@ -5,9 +5,6 @@ import { Flag } from "@/components/Flag";
 import { cn } from "@/lib/utils";
 import { LogOut, Settings, Bell, Sparkles, Goal, Newspaper, Clock, Loader2, Languages, Target, Star, Crown, Zap, Trophy, Medal, Award, Heart, BookOpen } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { db, storage } from "@/integrations/firebase/client";
-import { doc, getDoc, setDoc } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -18,11 +15,13 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { User, Calendar as CalendarIcon, Flag as FlagIcon } from "lucide-react";
+import { Flag as FlagIcon } from "lucide-react";
+import { getProfile, updateFavoriteTeam, updateProfile, uploadAvatar } from "@/services/profile/profile.service";
+import type { ProfileRecord } from "@/services/profile/profile.types";
 
 function urlBase64ToUint8Array(base64String: string) {
   const padding = '='.repeat((4 - base64String.length % 4) % 4);
-  const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
   const rawData = window.atob(base64);
   const outputArray = new Uint8Array(rawData.length);
   for (let i = 0; i < rawData.length; ++i) {
@@ -37,20 +36,7 @@ const Perfil = () => {
   const { toast } = useToast();
   const { t } = useTranslation('profile');
   const { language, changeLanguage } = useLanguage();
-  const [profile, setProfile] = useState<{
-    name: string;
-    nickname: string | null;
-    bio: string | null;
-    avatar_url: string | null;
-    birth_date: string | null;
-    gender: string | null;
-    nationality: string | null;
-    favorite_team: string | null;
-    fun_mode: boolean | null;
-    notifications_goals: boolean | null;
-    notifications_news: boolean | null;
-    notifications_match_start: boolean | null;
-  } | null>(null);
+  const [profile, setProfile] = useState<ProfileRecord | null>(null);
 
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({
@@ -67,12 +53,9 @@ const Perfil = () => {
   const fetchProfile = useCallback(async () => {
     if (!user) return;
     try {
-      const docRef = doc(db, "profiles", user.id);
-      const docSnap = await getDoc(docRef);
-
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        setProfile(data as typeof profile);
+      const data = await getProfile(user.id);
+      if (data) {
+        setProfile(data);
         setEditForm({
           name: data.name || "",
           nickname: data.nickname || "",
@@ -100,8 +83,7 @@ const Perfil = () => {
   const setFavoriteTeam = async (code: string) => {
     setProfile(prev => prev ? { ...prev, favorite_team: code } : null);
     if (user?.id) {
-      await setDoc(doc(db, 'profiles', user.id), { favorite_team: code }, { merge: true });
-      await supabase.from('profiles').upsert({ id: user.id, favorite_team: code }, { onConflict: 'id' });
+      await updateFavoriteTeam(user.id, code);
     }
     localStorage.setItem("favorite_team", code);
   };
@@ -143,15 +125,7 @@ const Perfil = () => {
 
                 try {
                   toast({ title: "Enviando...", description: "Atualizando sua foto de perfil." });
-
-                  const fileExt = file.name.split('.').pop();
-                  const filePath = `avatars/${user.id}/${crypto.randomUUID()}.${fileExt}`;
-
-                  const storageRef = ref(storage, filePath);
-                  await uploadBytes(storageRef, file);
-                  const publicUrl = await getDownloadURL(storageRef);
-
-                  await setDoc(doc(db, 'profiles', user.id), { avatar_url: publicUrl }, { merge: true });
+                  const publicUrl = await uploadAvatar(user.id, file);
 
                   setProfile(prev => prev ? { ...prev, avatar_url: publicUrl } : null);
                   toast({ title: t('bolao:create_bolao.notification.created_title'), description: t('avatar_success') });
@@ -283,7 +257,7 @@ const Perfil = () => {
                       gender: editForm.gender,
                       nationality: editForm.nationality
                     };
-                    await setDoc(doc(db, 'profiles', user.id), updateData, { merge: true });
+                    await updateProfile(user.id, updateData);
 
                     setProfile(prev => prev ? {
                       ...prev,
@@ -534,7 +508,7 @@ const Perfil = () => {
             const newVal = !profile?.fun_mode;
             setProfile(prev => prev ? { ...prev, fun_mode: newVal } : null);
             if (user?.id) {
-              await setDoc(doc(db, 'profiles', user.id), { fun_mode: newVal }, { merge: true });
+              await updateProfile(user.id, { fun_mode: newVal });
             }
           }}
           className={cn(
@@ -647,7 +621,7 @@ const Perfil = () => {
                   }
 
                   setProfile(prev => prev ? { ...prev, [n.key]: targetState } : null);
-                  await setDoc(doc(db, 'profiles', user.id), { [n.key]: targetState }, { merge: true });
+                  await updateProfile(user.id, { [n.key]: targetState });
                 }}
                 className={cn(
                   "w-12 h-7 rounded-full transition-colors relative shrink-0",

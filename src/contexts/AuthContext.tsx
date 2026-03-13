@@ -1,18 +1,18 @@
 import React, { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import { auth } from "@/integrations/firebase/client";
-import { onAuthStateChanged, signOut as firebaseSignOut, type User as FirebaseUser } from "firebase/auth";
+import type { Session, User as SupabaseUser } from "@supabase/supabase-js";
+import { supabase } from "@/services/supabase/client";
+import { ensureProfile } from "@/services/profile/profile.service";
+import { signOutUser } from "@/services/auth/auth.service";
 
-// Creating a unified User type that mimics the previous structure slightly 
-// to avoid breaking all components simultaneously during transition.
-export interface User extends Omit<FirebaseUser, "uid"> {
+export interface User {
   id: string;
   email: string | null;
-  user_metadata?: { full_name?: string; avatar_url?: string };
+  user_metadata?: { full_name?: string; avatar_url?: string; name?: string };
 }
 
 interface AuthContextType {
   user: User | null;
-  session: any | null; // Firebase uses idToken instead of explicit sessions
+  session: Session | null;
   loading: boolean;
   signOut: () => Promise<void>;
   loginAsDemo: () => Promise<void>;
@@ -30,59 +30,108 @@ export const useAuth = () => useContext(AuthContext);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check for demo mode in localStorage first
     const demoMode = localStorage.getItem("demo_mode") === "true";
     if (demoMode) {
       setUser({
         id: "demo-user-id",
         email: "demo@arenacup.com",
         user_metadata: { full_name: "Usuário Demo" },
-      } as User);
+      });
       setLoading(false);
       return;
     }
 
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
-      if (firebaseUser) {
-        setUser({
-          ...firebaseUser,
-          id: firebaseUser.uid, // Map uid to id for backwards compatibility
-          email: firebaseUser.email,
-          user_metadata: { full_name: firebaseUser.displayName || "Usuário" },
-        } as User);
-      } else {
-        setUser(null);
+    const mapUser = (authUser: SupabaseUser | null) => {
+      if (!authUser) return null;
+      return {
+        id: authUser.id,
+        email: authUser.email ?? null,
+        user_metadata: {
+          full_name:
+            authUser.user_metadata?.full_name ||
+            authUser.user_metadata?.name ||
+            undefined,
+          avatar_url: authUser.user_metadata?.avatar_url || undefined,
+          name: authUser.user_metadata?.name || undefined,
+        },
+      } satisfies User;
+    };
+
+    const syncSession = async () => {
+      const { data } = await supabase.auth.getSession();
+      setSession(data.session);
+      setUser(mapUser(data.session?.user ?? null));
+
+      if (data.session?.user) {
+        ensureProfile({
+          id: data.session.user.id,
+          email: data.session.user.email ?? null,
+          user_metadata: {
+            full_name: data.session.user.user_metadata?.full_name,
+            name: data.session.user.user_metadata?.name,
+            avatar_url: data.session.user.user_metadata?.avatar_url,
+          },
+        }).catch((error) => {
+          console.error("Error ensuring profile:", error);
+        });
       }
+
       setLoading(false);
+    };
+
+    void syncSession();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      setSession(nextSession);
+      setUser(mapUser(nextSession?.user ?? null));
+      setLoading(false);
+
+      if (nextSession?.user) {
+        ensureProfile({
+          id: nextSession.user.id,
+          email: nextSession.user.email ?? null,
+          user_metadata: {
+            full_name: nextSession.user.user_metadata?.full_name,
+            name: nextSession.user.user_metadata?.name,
+            avatar_url: nextSession.user.user_metadata?.avatar_url,
+          },
+        }).catch((error) => {
+          console.error("Error ensuring profile:", error);
+        });
+      }
     });
 
-    return () => unsubscribe();
+    return () => subscription.unsubscribe();
   }, []);
 
   const loginAsDemo = async () => {
     localStorage.setItem("demo_mode", "true");
-    const demoUser = {
+    setSession(null);
+    setUser({
       id: "demo-user-id",
       email: "demo@arenacup.com",
       user_metadata: { full_name: "Usuário Demo" },
-    } as User;
-    setUser(demoUser);
+    });
   };
 
   const signOut = async () => {
     if (localStorage.getItem("demo_mode")) {
       localStorage.removeItem("demo_mode");
       setUser(null);
+      setSession(null);
     } else {
-      await firebaseSignOut(auth);
+      await signOutUser();
     }
   };
 
   return (
-    <AuthContext.Provider value={{ user, session: null, loading, signOut, loginAsDemo }}>
+    <AuthContext.Provider value={{ user, session, loading, signOut, loginAsDemo }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React from "react";
 import {
     Sheet,
     SheetContent,
@@ -8,16 +8,19 @@ import {
     SheetTrigger,
 } from "@/components/ui/sheet";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Bell, Trophy, UserPlus, Info, CheckCircle2 } from "lucide-react";
+import { Bell, Trophy, UserPlus, Info } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { db } from "@/integrations/firebase/client";
-import { collection, query, where, getDocs, orderBy, writeBatch, doc, getDoc, updateDoc } from "firebase/firestore";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR, enUS, es } from "date-fns/locale";
 import { type Locale } from "date-fns";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
+import {
+    listNotifications,
+    markAllNotificationsAsRead,
+    markNotificationAsRead,
+} from "@/services/notifications/notifications.service";
 
 interface Notification {
     id: string;
@@ -59,20 +62,8 @@ export function NotificationsSheet({ children }: { children: React.ReactNode }) 
             if (!user) return [];
 
             try {
-                const notificationsRef = collection(db, 'notifications');
-                const q = query(
-                    notificationsRef,
-                    where('user_id', '==', user.id),
-                    // order by requires composite index, we might just order client side for now,
-                    // or use orderby if index is built. Assuming no index for simplicity or if it breaks, order client side.
-                );
-
-                const snapshot = await getDocs(q);
-                const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Notification));
-                // order client side
-                data.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-
-                return data;
+                const data = await listNotifications(user.id);
+                return data as Notification[];
             } catch (error) {
                 console.error("Error fetching notifications:", error);
                 return [];
@@ -84,13 +75,8 @@ export function NotificationsSheet({ children }: { children: React.ReactNode }) 
     const markAsRead = useMutation({
         mutationFn: async (id: string) => {
             if (isDemo) return;
-            try {
-                const notificationRef = doc(db, 'notifications', id);
-                await updateDoc(notificationRef, { read: true });
-            } catch (error) {
-                console.error("Error marking notification as read:", error);
-                throw error;
-            }
+            if (!user) return;
+            await markNotificationAsRead(id, user.id);
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["notifications"] });
@@ -101,26 +87,7 @@ export function NotificationsSheet({ children }: { children: React.ReactNode }) 
         mutationFn: async () => {
             if (isDemo) return;
             if (!user) return;
-
-            try {
-                const notificationsRef = collection(db, 'notifications');
-                const q = query(
-                    notificationsRef,
-                    where('user_id', '==', user.id),
-                    where('read', '==', false)
-                );
-                const snapshot = await getDocs(q);
-
-                const batch = writeBatch(db);
-                snapshot.docs.forEach((document) => {
-                    batch.update(document.ref, { read: true });
-                });
-
-                await batch.commit();
-            } catch (error) {
-                console.error("Error marking all notifications as read:", error);
-                throw error;
-            }
+            await markAllNotificationsAsRead(user.id);
         },
         onSuccess: () => {
             toast.success(t('notifications.mark_all_read'));

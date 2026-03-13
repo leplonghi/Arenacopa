@@ -58,7 +58,7 @@ export function RankingTab({ members, palpites, extraBets = [], scoringRules }: 
                 extraPoints
             };
         }).sort((a, b) => b.points - a.points || b.palpiteCount - a.palpiteCount);
-    }, [members, palpites, extraBets, finishedMatches, scoringRules]);
+    }, [members, palpites, extraBets, finishedMatches, isLoading, scoringRules]);
 
     if (isLoading) {
         return (

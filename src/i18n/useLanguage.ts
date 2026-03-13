@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/contexts/AuthContext';
-import { db } from '@/integrations/firebase/client';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { toast } from 'sonner';
+import { getProfile, updatePreferredLanguage } from '@/services/profile/profile.service';
 
 export type Language = 'pt-BR' | 'en' | 'es';
 
@@ -12,20 +11,14 @@ export function useLanguage() {
     const { user } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
 
-    // Sync with Firebase on login/load
     useEffect(() => {
         if (!user) return;
 
         const syncLanguage = async () => {
             try {
-                const docRef = doc(db, 'profiles', user.id);
-                const docSnap = await getDoc(docRef);
-
-                if (docSnap.exists()) {
-                    const data = docSnap.data();
-                    if (data?.preferred_language && data.preferred_language !== i18n.language) {
-                        i18n.changeLanguage(data.preferred_language);
-                    }
+                const profile = await getProfile(user.id);
+                if (profile?.preferred_language && profile.preferred_language !== i18n.language) {
+                    await i18n.changeLanguage(profile.preferred_language);
                 }
             } catch (err) {
                 console.error('Error syncing language:', err);
@@ -40,10 +33,8 @@ export function useLanguage() {
         try {
             await i18n.changeLanguage(lang);
 
-            // Persist to Firebase if logged in
             if (user) {
-                const docRef = doc(db, 'profiles', user.id);
-                await updateDoc(docRef, { preferred_language: lang });
+                await updatePreferredLanguage(user.id, lang);
             }
 
             // Helper message for demo purpose or feedback

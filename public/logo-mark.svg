@@ -1,0 +1,30 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" rx="128" fill="#061A10"/>
+  <rect x="24" y="24" width="464" height="464" rx="112" stroke="url(#outerGlow)" stroke-width="16"/>
+  <path d="M256 72L377 122V235C377 319.5 324.5 394.2 256 430C187.5 394.2 135 319.5 135 235V122L256 72Z" fill="url(#shieldFill)"/>
+  <path d="M256 108L342 144V230C342 289.9 307.1 345.7 256 373C204.9 345.7 170 289.9 170 230V144L256 108Z" fill="#0D2B1D"/>
+  <circle cx="256" cy="224" r="74" fill="url(#ballFill)"/>
+  <path d="M256 168L284.2 188.5L273.4 221.8H238.6L227.8 188.5L256 168Z" fill="#061A10"/>
+  <path d="M201 214.6L228.4 222.6L239.1 255.2L218 281.1L184.2 274.2L176.6 241L201 214.6Z" fill="#061A10"/>
+  <path d="M311 214.6L335.4 241L327.8 274.2L294 281.1L272.9 255.2L283.6 222.6L311 214.6Z" fill="#061A10"/>
+  <path d="M232.8 287.5H279.2L294.6 319.4L256 344L217.4 319.4L232.8 287.5Z" fill="#061A10"/>
+  <path d="M172 352C195.1 332.4 223.9 320 256 320C288.1 320 316.9 332.4 340 352" stroke="url(#accent)" stroke-width="22" stroke-linecap="round"/>
+  <defs>
+    <linearGradient id="shieldFill" x1="256" y1="72" x2="256" y2="430" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#F6C34B"/>
+      <stop offset="1" stop-color="#D79E1A"/>
+    </linearGradient>
+    <linearGradient id="ballFill" x1="197" y1="160" x2="315" y2="288" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFF2C9"/>
+      <stop offset="1" stop-color="#F6C34B"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="172" y1="352" x2="340" y2="352" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#28C76F"/>
+      <stop offset="1" stop-color="#F6C34B"/>
+    </linearGradient>
+    <linearGradient id="outerGlow" x1="40" y1="40" x2="472" y2="472" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#28C76F"/>
+      <stop offset="1" stop-color="#F6C34B"/>
+    </linearGradient>
+  </defs>
+</svg>

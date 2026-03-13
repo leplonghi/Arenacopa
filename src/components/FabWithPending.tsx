@@ -9,16 +9,24 @@ import { Flag } from "@/components/Flag";
 
 type PendingMatch = {
   id: string;
-  bolao_id?: string | null;
-  stage?: string | null;
-  home_team_code?: string | null;
-  away_team_code?: string | null;
-  timestamp?: number | null;
+  stage: string | null;
+  home_team_code: string | null;
+  away_team_code: string | null;
+  match_date: string;
 };
 
 type PendingPredictionItem = {
   match: PendingMatch;
   bolaoIds: string[];
+};
+
+type MembershipRow = {
+  bolao_id: string;
+};
+
+type PredictionRow = {
+  match_id: string;
+  bolao_id: string;
 };
 
 export function FabWithPending({
@@ -47,15 +55,15 @@ export function FabWithPending({
         return;
       }
 
-      const bolaoIds = memberships.map((m: any) => m.bolao_id);
+      const bolaoIds = memberships.map((m: MembershipRow) => m.bolao_id);
 
-      const now = Math.floor(Date.now() / 1000);
+      const now = new Date().toISOString();
       const { data: upcomingMatches, error: matchesError } = await supabase
         .from("matches")
-        .select("id, stage, home_team_code, away_team_code, timestamp")
-        .in("status", ["scheduled", "timed"])
-        .gte("timestamp", now)
-        .order("timestamp", { ascending: true })
+        .select("id, stage, home_team_code, away_team_code, match_date")
+        .eq("status", "scheduled")
+        .gte("match_date", now)
+        .order("match_date", { ascending: true })
         .limit(20);
 
       if (matchesError || !upcomingMatches?.length) {
@@ -63,17 +71,17 @@ export function FabWithPending({
         return;
       }
 
-      const matchIds = upcomingMatches.map((m: any) => m.id);
+      const matchIds = upcomingMatches.map((m: PendingMatch) => m.id);
 
       const { data: existingPredictions } = await supabase
-        .from("predictions")
+        .from("bolao_palpites")
         .select("match_id, bolao_id")
         .eq("user_id", user.id)
         .in("bolao_id", bolaoIds)
         .in("match_id", matchIds);
 
       const predictionsIndex = new Map<string, Set<string>>();
-      (existingPredictions || []).forEach((row: any) => {
+      (existingPredictions || []).forEach((row: PredictionRow) => {
         if (!predictionsIndex.has(row.match_id)) {
           predictionsIndex.set(row.match_id, new Set());
         }
@@ -81,7 +89,7 @@ export function FabWithPending({
       });
 
       const pending = upcomingMatches
-        .map((match: any) => {
+        .map((match: PendingMatch) => {
           const predictedIn = predictionsIndex.get(match.id) || new Set<string>();
           const missingFor = bolaoIds.filter((id: string) => !predictedIn.has(id));
           if (!missingFor.length) return null;
@@ -101,7 +109,7 @@ export function FabWithPending({
       .channel(`pending-predictions-${user.id}`)
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "predictions", filter: `user_id=eq.${user.id}` },
+        { event: "*", schema: "public", table: "bolao_palpites", filter: `user_id=eq.${user.id}` },
         fetchPending
       )
       .subscribe();
@@ -165,15 +173,11 @@ export function FabWithPending({
 
         <div className="mt-4 space-y-3">
           {pendingItems.map((item) => {
-            const date = item.match.timestamp
-              ? new Date(item.match.timestamp * 1000)
-              : null;
-            const dateString = date
-              ? `${date.toLocaleDateString("pt-BR")} • ${date.toLocaleTimeString("pt-BR", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}`
-              : "Horário a confirmar";
+            const date = new Date(item.match.match_date);
+            const dateString = `${date.toLocaleDateString("pt-BR")} • ${date.toLocaleTimeString("pt-BR", {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}`;
 
             return (
               <div

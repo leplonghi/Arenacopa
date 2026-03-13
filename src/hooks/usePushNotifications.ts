@@ -2,8 +2,7 @@ import { useEffect } from 'react';
 import { PushNotifications } from '@capacitor/push-notifications';
 import { Capacitor } from '@capacitor/core';
 import { useAuth } from '@/contexts/AuthContext';
-import { doc, setDoc } from 'firebase/firestore';
-import { db } from '@/integrations/firebase/client';
+import { supabase } from '@/integrations/supabase/client';
 
 export const usePushNotifications = () => {
     const { user } = useAuth();
@@ -35,7 +34,11 @@ export const usePushNotifications = () => {
             console.log('Push registration success, token: ' + token.value);
             if (user?.id) {
                 try {
-                    await setDoc(doc(db, 'users', user.id), { fcmToken: token.value }, { merge: true });
+                    await supabase.from('native_push_tokens').upsert({
+                        user_id: user.id,
+                        token: token.value,
+                        platform: Capacitor.getPlatform(),
+                    }, { onConflict: 'user_id,token' });
                 } catch (e) {
                     console.error("Could not save FCM token", e);
                 }

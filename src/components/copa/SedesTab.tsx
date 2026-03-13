@@ -5,8 +5,18 @@ import { MapPin, X, Users, Compass, ShieldCheck, ChevronRight } from "lucide-rea
 import { AdBanner } from "@/components/AdBanner";
 import { Flag } from "@/components/Flag";
 
+type SedeCity = {
+    id: string;
+    name: string;
+    country: string;
+    stadium: string;
+    capacity: number;
+    image: string;
+    desc: string;
+};
+
 export function SedesTab() {
-    const [selectedSede, setSelectedSede] = useState<any | null>(null);
+    const [selectedSede, setSelectedSede] = useState<SedeCity | null>(null);
 
     // Fallback data if sedes is not fully populated in mockData
     const defaultSedes = [
@@ -38,7 +48,7 @@ export function SedesTab() {
                 </motion.div>
 
                 <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4">
-                    {cityData.map((city: any, i: number) => (
+                    {cityData.map((city: SedeCity, i: number) => (
                         <motion.div
                             variants={staggerItem}
                             key={city.id || i}

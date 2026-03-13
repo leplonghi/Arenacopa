@@ -1,12 +1,11 @@
 import { createContext, useContext, useState, useCallback, useMemo, useEffect, type ReactNode } from "react";
 import { groups as allGroups } from "@/data/mockData";
-import { db } from "@/integrations/firebase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { collection, query, where, getDocs, orderBy, updateDoc, deleteDoc, doc, addDoc, serverTimestamp } from "firebase/firestore";
+import { supabase } from "@/integrations/supabase/client";
 import { initMatches, calcStandings } from "@/utils/simulacaoUtils";
 import {
   type KnockoutData, type KnockoutScore, type KnockoutRound,
-  getQualifiedTeams, buildKnockoutBracket, extractKnockoutScores,
+  getQualifiedTeams, buildKnockoutBracket,
 } from "@/utils/knockoutBracket";
 
 export interface SimMatch {
@@ -31,11 +30,21 @@ export interface Simulation {
   id: string;
   name: string;
   selectedGroups: string[];
-  matches: Record<string, SimMatch[]>;
+  matches: PersistedSimulationData;
   updatedAt: string;
 }
 
+type PersistedSimulationData = Record<string, SimMatch[]> & {
+  __knockout?: Record<string, KnockoutScore[]>;
+};
 
+type SimulationRecord = {
+  id: string;
+  name?: string;
+  selected_groups?: string[];
+  data?: PersistedSimulationData;
+  updated_at?: string;
+};
 
 interface SimulacaoContextType {
   simulations: Simulation[];
@@ -80,29 +89,20 @@ export function SimulacaoProvider({ children }: { children: ReactNode }) {
     if (!user) { setLoading(false); return; }
     const fetchSimulations = async () => {
       try {
-        const simulationsRef = collection(db, 'simulations');
-        const q = query(
-          simulationsRef,
-          where('user_id', '==', user.id),
-          // orderBy('updated_at', 'desc') // Need composite index for this, so order client side
-        );
+        const { data, error } = await supabase
+          .from("simulations")
+          .select("id, name, selected_groups, data, updated_at")
+          .eq("user_id", user.id)
+          .order("updated_at", { ascending: false });
 
-        const snapshot = await getDocs(q);
-        const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
+        if (error) throw error;
 
-        // Sort DESC
-        data.sort((a, b) => {
-          const timeA = a.updated_at ? new Date(a.updated_at).getTime() : 0;
-          const timeB = b.updated_at ? new Date(b.updated_at).getTime() : 0;
-          return timeB - timeA;
-        });
-
-        setSimulations(data.map((s: any) => ({
+        setSimulations(((data || []) as SimulationRecord[]).map((s) => ({
           id: s.id,
           name: s.name || "Minha Simulação",
           selectedGroups: s.selected_groups || allGroups,
-          matches: s.data as unknown as Record<string, SimMatch[]>,
-          updatedAt: s.updated_at,
+          matches: s.data || {},
+          updatedAt: s.updated_at || new Date().toISOString(),
         })));
         setLoading(false);
         setLoaded(true);
@@ -124,8 +124,7 @@ export function SimulacaoProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!currentSim) { setAllMatches({}); setKnockoutScores({}); return; }
     const base = initMatches(currentSim.selectedGroups);
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const rawData = currentSim.matches as any;
+    const rawData = currentSim.matches;
     Object.keys(base).forEach(g => {
       const saved = rawData?.[g];
       if (saved && Array.isArray(saved)) {
@@ -150,18 +149,22 @@ export function SimulacaoProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!user || !currentSimId || !loaded || Object.keys(allMatches).length === 0) return;
     const timeout = setTimeout(() => {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const dataToSave: any = { ...allMatches };
+      const dataToSave: PersistedSimulationData = { ...allMatches };
       if (Object.keys(knockoutScores).length > 0) {
         dataToSave.__knockout = knockoutScores;
       }
       const autoSave = async () => {
         try {
-          const simRef = doc(db, 'simulations', currentSimId);
-          await updateDoc(simRef, {
+          const { error } = await supabase
+            .from("simulations")
+            .update({
             data: dataToSave,
             updated_at: new Date().toISOString()
-          });
+            })
+            .eq("id", currentSimId);
+
+          if (error) throw error;
+
           setSimulations(prev => prev.map(s =>
             s.id === currentSimId ? { ...s, matches: dataToSave, updatedAt: new Date().toISOString() } : s
           ));
@@ -237,7 +240,6 @@ export function SimulacaoProvider({ children }: { children: ReactNode }) {
     const matchData = initMatches(selectedGroups);
     console.log("[Simulação] Creating simulation:", { name, selectedGroups: selectedGroups.length, userId: user.id });
     try {
-      const simulationsRef = collection(db, 'simulations');
       const newSimData = {
         user_id: user.id,
         name,
@@ -245,28 +247,34 @@ export function SimulacaoProvider({ children }: { children: ReactNode }) {
         data: matchData,
         updated_at: new Date().toISOString()
       };
-      const docRef = await addDoc(simulationsRef, newSimData);
+      const { data, error } = await supabase
+        .from("simulations")
+        .insert(newSimData)
+        .select("id, name, selected_groups, data, updated_at")
+        .single();
+
+      if (error || !data) throw error || new Error("Falha ao criar simulação");
 
       const newSim: Simulation = {
-        id: docRef.id,
-        name: newSimData.name,
-        selectedGroups: newSimData.selected_groups,
-        matches: newSimData.data as unknown as Record<string, SimMatch[]>,
-        updatedAt: newSimData.updated_at,
+        id: data.id,
+        name: data.name,
+        selectedGroups: data.selected_groups,
+        matches: data.data as PersistedSimulationData,
+        updatedAt: data.updated_at,
       };
       setSimulations(prev => [newSim, ...prev]);
-      setCurrentSimId(docRef.id);
-      return docRef.id;
+      setCurrentSimId(data.id);
+      return data.id;
     } catch (error) {
-      console.error("[Simulação] Firebase insert error:", error);
+      console.error("[Simulação] Supabase insert error:", error);
       return null;
     }
   }, [user]);
 
   const deleteSimulation = useCallback(async (id: string) => {
     try {
-      const simRef = doc(db, 'simulations', id);
-      await deleteDoc(simRef);
+      const { error } = await supabase.from("simulations").delete().eq("id", id);
+      if (error) throw error;
       setSimulations(prev => prev.filter(s => s.id !== id));
       if (currentSimId === id) setCurrentSimId(null);
     } catch (error) {
@@ -276,8 +284,8 @@ export function SimulacaoProvider({ children }: { children: ReactNode }) {
 
   const renameSimulation = useCallback(async (id: string, name: string) => {
     try {
-      const simRef = doc(db, 'simulations', id);
-      await updateDoc(simRef, { name });
+      const { error } = await supabase.from("simulations").update({ name }).eq("id", id);
+      if (error) throw error;
       setSimulations(prev => prev.map(s => s.id === id ? { ...s, name } : s));
     } catch (error) {
       console.error("Error renaming simulation:", error);

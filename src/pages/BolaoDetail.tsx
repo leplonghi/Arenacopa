@@ -127,7 +127,7 @@ export default function BolaoDetail() {
           user_id: user.id,
           team_code: championSelection,
         },
-        { onConflict: "bolao_id,user_id" as any }
+        { onConflict: "bolao_id,user_id" }
       );
 
       if (error) throw error;
@@ -260,7 +260,7 @@ export default function BolaoDetail() {
           </DialogHeader>
 
           <div className="grid grid-cols-3 gap-3 md:grid-cols-6">
-            {teams.map((team: any) => (
+            {teams.map((team) => (
               <button
                 key={team.code}
                 onClick={() => setChampionSelection(team.code)}

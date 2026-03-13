@@ -1,25 +1,35 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Flag } from "@/components/Flag";
 import { useNavigate } from "react-router-dom";
 import { Clock, Trophy } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 
+type MatchCardRow = {
+    id: string;
+    match_date: string;
+    home_team_code: string;
+    away_team_code: string;
+    home_score: number | null;
+    away_score: number | null;
+    status: "scheduled" | "live" | "finished";
+};
+
 export function LiveMatchCard() {
     const { user } = useAuth();
     const navigate = useNavigate();
-    const [liveMatch, setLiveMatch] = useState<any>(null);
-    const [nextMatch, setNextMatch] = useState<any>(null);
+    const [liveMatch, setLiveMatch] = useState<MatchCardRow | null>(null);
+    const [nextMatch, setNextMatch] = useState<MatchCardRow | null>(null);
     const [hasPrediction, setHasPrediction] = useState<boolean>(false);
     const [countdown, setCountdown] = useState<string>("");
 
-    const fetchMatches = async () => {
+    const fetchMatches = useCallback(async () => {
         // 1. Check for live match
         const { data: liveData } = await supabase
             .from("matches")
-            .select("*")
-            .eq("status", "in_play")
-            .order("timestamp", { ascending: true })
+            .select("id, match_date, home_team_code, away_team_code, home_score, away_score, status")
+            .eq("status", "live")
+            .order("match_date", { ascending: true })
             .limit(1)
             .maybeSingle();
 
@@ -28,26 +38,29 @@ export function LiveMatchCard() {
             setNextMatch(null);
             if (user) {
                 const { count } = await supabase
-                    .from("predictions")
-                    .select("*", { count: 'exact', head: true })
+                    .from("bolao_palpites")
+                    .select("id", { count: "exact", head: true })
                     .eq("user_id", user.id)
                     .eq("match_id", liveData.id);
                 setHasPrediction(!!(count && count > 0));
+            } else {
+                setHasPrediction(false);
             }
         } else {
             setLiveMatch(null);
+            setHasPrediction(false);
             // 2. No live match, fetch next scheduled match
             const { data: nextData } = await supabase
                 .from("matches")
-                .select("*")
-                .in("status", ["timed", "scheduled"])
-                .order("timestamp", { ascending: true })
+                .select("id, match_date, home_team_code, away_team_code, home_score, away_score, status")
+                .eq("status", "scheduled")
+                .order("match_date", { ascending: true })
                 .limit(1)
                 .maybeSingle();
 
             setNextMatch(nextData || null);
         }
-    };
+    }, [user]);
 
     useEffect(() => {
         fetchMatches();
@@ -66,13 +79,14 @@ export function LiveMatchCard() {
         return () => {
             supabase.removeChannel(channel);
         };
-    }, [user]);
+    }, [fetchMatches]);
+    
 
     useEffect(() => {
         if (!nextMatch) return;
         const intervalId = setInterval(() => {
             const now = new Date().getTime();
-            const matchTime = new Date(nextMatch.utcDate).getTime() || (nextMatch.timestamp * 1000);
+            const matchTime = new Date(nextMatch.match_date).getTime();
             const distance = matchTime - now;
 
             if (distance < 0) {
@@ -94,7 +108,7 @@ export function LiveMatchCard() {
         }, 1000);
 
         return () => clearInterval(intervalId);
-    }, [nextMatch]);
+    }, [fetchMatches, nextMatch]);
 
     if (!liveMatch && !nextMatch) return null;
 
@@ -108,7 +122,7 @@ export function LiveMatchCard() {
                         <div className="w-2 h-2 rounded-full bg-copa-live animate-pulse shadow-[0_0_8px_rgba(255,59,48,0.8)]" />
                         <span className="text-copa-live font-black text-xs uppercase tracking-widest">LIVE</span>
                     </div>
-                    <span className="text-copa-live/80 font-bold text-xs">{liveMatch.score?.duration || liveMatch.minute || "Ao vivo"}</span>
+                    <span className="text-copa-live/80 font-bold text-xs">Ao vivo</span>
                 </div>
 
                 <div className="flex items-center justify-between relative z-10 mb-4 px-2">

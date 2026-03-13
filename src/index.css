@@ -84,13 +84,13 @@
     content: '';
     position: fixed;
     inset: 0;
-    background-image: url('/images/campo-bg.png');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    filter: brightness(0.6);
-    -webkit-filter: brightness(0.6);
-    transform: scale(1.05);
+    background:
+      linear-gradient(180deg, hsl(154 44% 12%) 0%, hsl(153 36% 10%) 100%),
+      radial-gradient(circle at 50% 16%, hsl(44 86% 59% / 0.14), transparent 22%),
+      radial-gradient(circle at 50% 100%, hsl(145 58% 34% / 0.18), transparent 35%),
+      linear-gradient(90deg, transparent 0%, transparent 49.5%, hsl(0 0% 100% / 0.05) 50%, transparent 50.5%, transparent 100%),
+      linear-gradient(0deg, transparent 0%, transparent 49.5%, hsl(0 0% 100% / 0.04) 50%, transparent 50.5%, transparent 100%);
+    background-size: cover, cover, cover, 100% 100%, 100% 100%;
     z-index: -2;
     pointer-events: none;
   }

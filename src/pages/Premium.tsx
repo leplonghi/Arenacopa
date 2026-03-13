@@ -1,12 +1,52 @@
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ChevronLeft, CheckCircle2, Crown, Loader2, Star, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useMonetization } from "@/contexts/MonetizationContext";
 import { motion } from "framer-motion";
+import { monetizationEnv } from "@/lib/env";
 
 export default function Premium() {
     const navigate = useNavigate();
-    const { isPremium, purchasePremium, isLoading } = useMonetization();
+    const [searchParams, setSearchParams] = useSearchParams();
+    const { isPremium, purchasePremium, refreshPremiumStatus, isLoading, subscriptionStatus } = useMonetization();
+    const [feedback, setFeedback] = useState<string | null>(null);
+
+    useEffect(() => {
+        const checkoutState = searchParams.get("checkout");
+        const sessionId = searchParams.get("session_id");
+
+        if (!checkoutState) {
+            return;
+        }
+
+        const clearParams = () => {
+            const nextParams = new URLSearchParams(searchParams);
+            nextParams.delete("checkout");
+            nextParams.delete("session_id");
+            setSearchParams(nextParams, { replace: true });
+        };
+
+        if (checkoutState === "cancelled") {
+            setFeedback("Checkout cancelado. Voce pode tentar novamente quando quiser.");
+            clearParams();
+            return;
+        }
+
+        if (checkoutState === "success" && sessionId) {
+            setFeedback("Pagamento recebido. Validando sua assinatura...");
+            void refreshPremiumStatus(sessionId)
+                .then(() => {
+                    setFeedback("Pagamento confirmado. Seu Premium ja esta ativo.");
+                })
+                .catch(() => {
+                    setFeedback("Pagamento concluido, mas a confirmacao ainda esta sincronizando.");
+                })
+                .finally(() => {
+                    clearParams();
+                });
+        }
+    }, [refreshPremiumStatus, searchParams, setSearchParams]);
 
     return (
         <div className="min-h-screen bg-background pb-32 pt-20 px-4 text-white overflow-hidden relative">
@@ -24,6 +64,12 @@ export default function Premium() {
                     <h1 className="text-3xl font-black mb-3 tracking-tighter uppercase drop-shadow">Copa Premium</h1>
                     <p className="text-muted-foreground text-sm">Torne-se um apoiador e desbloqueie a experiência definitiva.</p>
                 </div>
+
+                {feedback && (
+                    <div className="mb-6 rounded-2xl border border-primary/20 bg-primary/10 px-4 py-3 text-sm text-primary">
+                        {feedback}
+                    </div>
+                )}
 
                 {isPremium ? (
                     <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="glass-card p-6 text-center border-primary/30">
@@ -81,9 +127,11 @@ export default function Premium() {
                             disabled={isLoading}
                             className="w-full h-14 bg-gradient-to-r from-primary to-[hsl(var(--copa-gold))] text-black font-black uppercase text-sm rounded-xl shadow-[0_0_30px_rgba(34,197,94,0.3)] hover:scale-[1.02] transition-transform"
                         >
-                            {isLoading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "Garantir Acesso Vitalício - R$9,90"}
+                            {isLoading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : `Garantir Acesso Vitalicio - ${monetizationEnv.premiumPriceLabel}`}
                         </Button>
-                        <p className="text-center text-[10px] text-muted-foreground mt-4">Pagamento único. Acesso vitalício a todos os torneios.</p>
+                        <p className="text-center text-[10px] text-muted-foreground mt-4">
+                            Checkout seguro via Stripe. Status atual: {subscriptionStatus === "pending" ? "aguardando pagamento" : "pronto para compra"}.
+                        </p>
                     </>
                 )}
             </div>

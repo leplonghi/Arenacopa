@@ -5,7 +5,7 @@ import { teams } from "@/data/mockData";
 import { Flag } from "@/components/Flag";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { supabase } from "@/integrations/supabase/client";
+import { updateFavoriteTeam } from "@/services/profile/profile.service";
 
 export function OnboardingModal() {
     const [isOpen, setIsOpen] = useState(false);
@@ -30,8 +30,7 @@ export function OnboardingModal() {
         if (user && hasSeen && fav && !migrated) {
             const migrate = async () => {
                 try {
-                    // Fire and forget upsert migration
-                    await supabase.from('profiles').upsert({ id: user.id, favorite_team: fav }, { onConflict: 'id' });
+                    await updateFavoriteTeam(user.id, fav);
                     localStorage.setItem("arenacopa_onboarding_migrated", "true");
                 } catch (e) {
                     console.error("Migration error:", e);
@@ -48,7 +47,7 @@ export function OnboardingModal() {
 
         if (user) {
             try {
-                await supabase.from('profiles').upsert({ id: user.id, favorite_team: selectedTeam }, { onConflict: 'id' });
+                await updateFavoriteTeam(user.id, selectedTeam);
                 localStorage.setItem("arenacopa_onboarding_migrated", "true");
             } catch (e) {
                 console.error(e);
@@ -68,7 +67,7 @@ export function OnboardingModal() {
             <DialogContent className="sm:max-w-md bg-[#0b0b0b] border-white/10 rounded-[32px] w-[92%] overflow-hidden shadow-2xl backdrop-blur-3xl">
                 <DialogHeader className="flex flex-col items-center pt-2">
                     <div className="w-20 h-20 mb-3 flex items-center justify-center p-3 rounded-[24px] bg-primary/10 border border-primary/20 shadow-2xl">
-                        <img src="/logo.png" alt="ArenaCopa Logo" className="w-full h-full object-contain drop-shadow-[0_0_12px_rgba(34,197,94,0.5)]" />
+                        <img src="/logo-mark.svg" alt="ArenaCopa Logo" className="w-full h-full object-contain drop-shadow-[0_0_12px_rgba(34,197,94,0.5)]" />
                     </div>
                     <DialogTitle className="text-2xl font-black text-center uppercase tracking-tighter text-white shadow-black drop-shadow-md">
                         Bem-vindo à ArenaCopa

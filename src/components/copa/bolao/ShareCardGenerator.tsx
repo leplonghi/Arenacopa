@@ -8,7 +8,16 @@ export type ShareCardFormat = 'story' | 'feed' | 'twitter';
 interface ShareCardProps {
     type: ShareCardType;
     format: ShareCardFormat;
-    data: any;
+    data: {
+        avatar_url?: string | null;
+        name?: string;
+        description?: string | null;
+        invite_code?: string;
+        homeTeam?: string;
+        awayTeam?: string;
+        homeScore?: number | string;
+        awayScore?: number | string;
+    };
     onReady?: (dataUrl: string) => void;
 }
 
@@ -52,7 +61,7 @@ export const ShareCardGenerator = forwardRef<HTMLDivElement, ShareCardProps>(({ 
         }, 800);
 
         return () => clearTimeout(timer);
-    }, [data, type, format, onReady, dims.width, dims.height]);
+    }, [data, type, format, onReady, ref, dims.width, dims.height]);
 
     // We render off-screen with transform scale so it doesn't take space
     return (

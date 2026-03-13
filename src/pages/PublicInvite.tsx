@@ -1,10 +1,19 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { motion } from "framer-motion";
-import { ChevronRight, ShieldCheck, Download, Loader2, Target } from "lucide-react";
+import { Loader2, Target } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+
+type PublicInviteBolao = {
+    id: string;
+    name: string;
+    description: string | null;
+    avatar_url: string | null;
+    category: string | null;
+    bolao_members: { count: number }[];
+};
 
 export default function PublicInvite() {
     const { inviteCode } = useParams();
@@ -12,44 +21,50 @@ export default function PublicInvite() {
     const { user } = useAuth();
     const { toast } = useToast();
 
-    const [bolao, setBolao] = useState<any>(null);
+    const [bolao, setBolao] = useState<PublicInviteBolao | null>(null);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
+    const loadBolao = useCallback(async () => {
         if (!inviteCode) return;
 
-        const loadBolao = async () => {
-            const code = inviteCode.toUpperCase();
-            const { data, error } = await supabase.from('boloes')
-                .select('*, bolao_members(count)')
-                .eq('invite_code', code)
-                .single();
+        const code = inviteCode.toUpperCase();
+        const { data, error } = await supabase.from('boloes')
+            .select('id, name, description, avatar_url, category, bolao_members(count)')
+            .eq('invite_code', code)
+            .single();
 
-            if (error || !data) {
-                toast({ title: "Bolão não encontrado", variant: "destructive" });
-                navigate('/');
+        if (error || !data) {
+            toast({ title: "Bolão não encontrado", variant: "destructive" });
+            navigate('/');
+            return;
+        }
+
+        if (user) {
+            const { data: member } = await supabase.from('bolao_members')
+                .select('id')
+                .eq('bolao_id', data.id)
+                .eq('user_id', user.id)
+                .maybeSingle();
+
+            if (member) {
+                navigate(`/boloes/${data.id}`);
                 return;
             }
+        }
 
-            if (user) {
-                // Check if already member
-                const { data: member } = await supabase.from('bolao_members')
-                    .select('id').eq('bolao_id', data.id).eq('user_id', user.id).single();
+        setBolao(data);
+        setLoading(false);
+    }, [inviteCode, navigate, toast, user]);
 
-                if (member) {
-                    navigate(`/boloes/${data.id}`);
-                    return;
-                }
-            }
-
-            setBolao(data);
-            setLoading(false);
-        };
-
+    useEffect(() => {
         loadBolao();
-    }, [inviteCode, user]);
+    }, [loadBolao]);
 
     const handleJoin = async () => {
+        if (!bolao) {
+            return;
+        }
+
         if (!user) {
             // Redireciona para login e depois para cá
             navigate(`/auth?redirect=/b/${inviteCode}`);
@@ -65,7 +80,7 @@ export default function PublicInvite() {
             });
             toast({ title: "Entrou com sucesso!", className: "bg-emerald-500 text-white" });
             navigate(`/boloes/${bolao.id}`);
-        } catch (e) {
+        } catch {
             toast({ title: "Erro ao entrar.", variant: "destructive" });
         }
     };

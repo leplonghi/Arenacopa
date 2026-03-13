@@ -18,6 +18,45 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes("node_modules")) return;
+
+          if (id.includes("@supabase") || id.includes("@tanstack")) {
+            return "data";
+          }
+
+          if (id.includes("@radix-ui")) {
+            return "ui";
+          }
+
+          if (id.includes("recharts") || id.includes("framer-motion")) {
+            return "visual";
+          }
+
+          if (id.includes("i18next")) {
+            return "i18n";
+          }
+
+          if (id.includes("react-router-dom")) {
+            return "routing";
+          }
+
+          if (id.includes("lucide-react")) {
+            return "icons";
+          }
+
+          if (id.includes("@capacitor") || id.includes("@revenuecat")) {
+            return "platform";
+          }
+
+          return "vendor";
+        },
+      },
+    },
+  },
 }));
 
 

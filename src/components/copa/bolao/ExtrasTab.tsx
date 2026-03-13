@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { db } from "@/integrations/firebase/client";
-import { collection, query, where, getDocs, updateDoc, addDoc } from "firebase/firestore";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { type ExtraBet } from "@/types/bolao";
@@ -26,14 +25,18 @@ export function ExtrasTab({ bolaoId, userId }: ExtrasTabProps) {
     useEffect(() => {
         const loadExtras = async () => {
             try {
-                const q = query(collection(db, "bolao_extra_bets"), where("bolao_id", "==", bolaoId), where("user_id", "==", userId));
-                const snapshot = await getDocs(q);
-                const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                const { data, error } = await supabase
+                    .from("bolao_extra_bets")
+                    .select("id, bolao_id, user_id, category, value, points_awarded, created_at")
+                    .eq("bolao_id", bolaoId)
+                    .eq("user_id", userId);
 
-                if (data.length > 0) {
-                    const typedData = data as unknown as ExtraBet[];
+                if (error) throw error;
+
+                if (data?.length) {
+                    const typedData = data as ExtraBet[];
                     setExtras(typedData);
-                    const ts = typedData.find(e => e.category === 'top_scorer');
+                    const ts = typedData.find((e) => e.category === 'top_scorer');
                     if (ts) setTopScorerInput(ts.value);
                 }
             } catch (error) {
@@ -49,20 +52,18 @@ export function ExtrasTab({ bolaoId, userId }: ExtrasTabProps) {
         if (!value) return;
         setSaving(category);
         try {
-            const q = query(collection(db, "bolao_extra_bets"), where("bolao_id", "==", bolaoId), where("user_id", "==", userId), where("category", "==", category));
-            const snapshot = await getDocs(q);
+            const { data, error } = await supabase
+                .from("bolao_extra_bets")
+                .upsert(
+                    { bolao_id: bolaoId, user_id: userId, category, value },
+                    { onConflict: "bolao_id,user_id,category" }
+                )
+                .select("id, bolao_id, user_id, category, value, points_awarded, created_at")
+                .single();
 
-            let newExtra: ExtraBet;
+            if (error) throw error;
 
-            if (!snapshot.empty) {
-                const docRef = snapshot.docs[0].ref;
-                await updateDoc(docRef, { value });
-                newExtra = { id: docRef.id, bolao_id: bolaoId, user_id: userId, category, value } as any;
-            } else {
-                const ref = collection(db, "bolao_extra_bets");
-                const docRef = await addDoc(ref, { bolao_id: bolaoId, user_id: userId, category, value });
-                newExtra = { id: docRef.id, bolao_id: bolaoId, user_id: userId, category, value } as any;
-            }
+            const newExtra = data as ExtraBet;
 
             setExtras(prev => {
                 const filtered = prev.filter(e => e.category !== category);

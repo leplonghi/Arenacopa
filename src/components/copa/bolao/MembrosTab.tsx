@@ -1,13 +1,12 @@
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { LogOut, X, Crown, DollarSign, CheckCircle2, Shield, Clock, AlertCircle, UserMinus } from "lucide-react";
-import { db } from "@/integrations/firebase/client";
-import { collection, query, where, getDocs, deleteDoc, updateDoc, doc } from "firebase/firestore";
+import { LogOut, Crown, DollarSign, CheckCircle2, Shield, Clock, AlertCircle, UserMinus } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { type MemberData } from "@/types/bolao";
 import { motion, AnimatePresence } from "framer-motion";
 import { staggerContainer, staggerItem } from "../animations";
+import { removeBolaoMember, updateBolaoMemberPaymentStatus } from "@/services/boloes/bolao.service";
 
 interface MembrosTabProps {
     members: MemberData[];
@@ -44,36 +43,28 @@ export function MembrosTab({ members, userId, isCreator, bolaoId, isPaid, onRefr
     const handleLeave = async () => {
         if (!confirm(t('members.leave_confirm'))) return;
         try {
-            const q = query(collection(db, "bolao_members"), where("bolao_id", "==", bolaoId), where("user_id", "==", userId));
-            const snapshot = await getDocs(q);
-            if (!snapshot.empty) {
-                await deleteDoc(snapshot.docs[0].ref);
-                toast({
-                    title: t('members.left_success'),
-                    className: "bg-emerald-500 border-emerald-600 text-white font-black uppercase text-[10px] tracking-widest"
-                });
-                navigate("/boloes");
-            }
-        } catch (error: any) {
-            toast({ title: t('common.error_title'), description: error.message, variant: "destructive" });
+            await removeBolaoMember(bolaoId, userId);
+            toast({
+                title: t('members.left_success'),
+                className: "bg-emerald-500 border-emerald-600 text-white font-black uppercase text-[10px] tracking-widest"
+            });
+            navigate("/boloes");
+        } catch (error) {
+            toast({ title: t('common.error_title'), description: error instanceof Error ? error.message : t('common.error_title'), variant: "destructive" });
         }
     };
 
     const handleRemove = async (targetUserId: string) => {
         if (!confirm(t('members.remove_confirm'))) return;
         try {
-            const q = query(collection(db, "bolao_members"), where("bolao_id", "==", bolaoId), where("user_id", "==", targetUserId));
-            const snapshot = await getDocs(q);
-            if (!snapshot.empty) {
-                await deleteDoc(snapshot.docs[0].ref);
-                toast({
-                    title: t('members.removed_success'),
-                    className: "bg-emerald-500 border-emerald-600 text-white font-black uppercase text-[10px] tracking-widest"
-                });
-                onRefresh();
-            }
-        } catch (error: any) {
-            toast({ title: t('common.error_title'), description: error.message, variant: "destructive" });
+            await removeBolaoMember(bolaoId, targetUserId);
+            toast({
+                title: t('members.removed_success'),
+                className: "bg-emerald-500 border-emerald-600 text-white font-black uppercase text-[10px] tracking-widest"
+            });
+            onRefresh();
+        } catch (error) {
+            toast({ title: t('common.error_title'), description: error instanceof Error ? error.message : t('common.error_title'), variant: "destructive" });
         }
     };
 
@@ -83,13 +74,13 @@ export function MembrosTab({ members, userId, isCreator, bolaoId, isPaid, onRefr
         const nextStatus = currentStatus === 'pending' ? 'paid' : currentStatus === 'paid' ? 'exempt' : 'pending';
 
         try {
-            const q = query(collection(db, "bolao_members"), where("bolao_id", "==", bolaoId), where("user_id", "==", targetUserId));
-            const snapshot = await getDocs(q);
-            if (!snapshot.empty) {
-                await updateDoc(snapshot.docs[0].ref, { payment_status: nextStatus });
-                onRefresh();
-            }
-        } catch (error: any) {
+            await updateBolaoMemberPaymentStatus({
+                bolaoId,
+                userId: targetUserId,
+                paymentStatus: nextStatus,
+            });
+            onRefresh();
+        } catch (error) {
             toast({ title: t('common.error_title'), description: t('members.error_update'), variant: "destructive" });
         }
     };
@@ -161,7 +152,7 @@ export function MembrosTab({ members, userId, isCreator, bolaoId, isPaid, onRefr
 
                 <div className="space-y-2">
                     <AnimatePresence mode="popLayout">
-                        {members.map((m, idx) => {
+                        {members.map((m) => {
                             const name = m.profile?.name || t('members.default_user');
                             const isMe = m.user_id === userId;
                             const status = m.payment_status || 'pending';

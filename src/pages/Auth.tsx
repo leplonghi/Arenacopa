@@ -1,19 +1,12 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { auth } from "@/integrations/firebase/client";
-import {
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  signInWithPopup,
-  GoogleAuthProvider,
-  updateProfile
-} from "firebase/auth";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Mail, Lock, User, Eye, EyeOff, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
-import logo from "@/assets/escudo_arenacup_logo.png";
 import { useTranslation } from "react-i18next";
+import { signInWithGoogle, signInWithPassword, signUpWithPassword } from "@/services/auth/auth.service";
+import { acceptTerms, ensureProfile, updateProfile } from "@/services/profile/profile.service";
 
 const Auth = () => {
   const [mode, setMode] = useState<"login" | "signup">("login");
@@ -25,51 +18,52 @@ const Auth = () => {
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { loginAsDemo } = useAuth();
   const { t } = useTranslation('auth');
+  const redirectPath = searchParams.get("redirect") || "/";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
+      localStorage.removeItem("demo_mode");
+
       if (mode === "signup") {
         if (!acceptedTerms) return;
-        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        await updateProfile(userCredential.user, { displayName: name });
+        const authData = await signUpWithPassword(email, password, name);
+        const createdUser = authData.session?.user;
 
-        try {
-          // Import supabase locally to avoid issues if it's not used at top level
-          const { supabase } = await import("@/integrations/supabase/client");
-          // Attempt to update Supabase profile if using Supabase DB
-          await supabase.from('profiles').update({
-            accepted_terms_at: new Date().toISOString()
-          }).eq('id', userCredential.user.uid);
-        } catch (err) {
-          console.error("Supabase profile update error:", err);
-        }
+        if (createdUser) {
+          await ensureProfile({
+            id: createdUser.id,
+            email: createdUser.email ?? null,
+            user_metadata: {
+              full_name: name,
+              name,
+              avatar_url: createdUser.user_metadata?.avatar_url,
+            },
+          });
 
-        try {
-          // Also attempt to update Firestore profile if using Firebase DB
-          const { db } = await import("@/integrations/firebase/client");
-          const { doc, setDoc } = await import("firebase/firestore");
-          await setDoc(doc(db, "profiles", userCredential.user.uid), {
-            name: name,
+          await updateProfile(createdUser.id, {
+            name,
             terms_accepted: true,
-            accepted_terms_at: new Date().toISOString()
-          }, { merge: true });
-        } catch (err) {
-          console.error("Firestore profile update error:", err);
+          });
+          await acceptTerms(createdUser.id);
         }
 
         toast({
           title: t('login.success_create'),
           description: t('login.success_create_desc'),
         });
-        navigate("/");
+
+        if (authData.session) {
+          navigate(redirectPath);
+        }
       } else {
-        await signInWithEmailAndPassword(auth, email, password);
-        navigate("/");
+        await signInWithPassword(email, password);
+        navigate(redirectPath);
       }
     } catch (error) {
       const message = error instanceof Error ? error.message : "Algo deu errado";
@@ -86,9 +80,9 @@ const Auth = () => {
   const handleGoogleSignIn = async () => {
     setLoading(true);
     try {
-      const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
-      navigate("/");
+      localStorage.removeItem("demo_mode");
+      const redirectTo = `${window.location.origin}${redirectPath}`;
+      await signInWithGoogle(redirectTo);
     } catch (error) {
       console.error("Erro no login com Google:", error);
       const message = error instanceof Error ? error.message : t('login.error_google');
@@ -109,7 +103,7 @@ const Auth = () => {
         title: "Modo Demo Ativado",
         description: "Você entrou no modo de demonstração.",
       });
-      navigate("/");
+      navigate(redirectPath);
     } catch (error) {
       console.error("Erro no login demo:", error);
       toast({
@@ -126,7 +120,7 @@ const Auth = () => {
     <div className="min-h-screen flex flex-col items-center justify-center px-6 py-12">
       <div className="flex flex-col items-center mb-10">
         <div className="w-20 h-20 rounded-full bg-secondary/80 border border-border/50 flex items-center justify-center overflow-hidden mb-4">
-          <img src={logo} alt="ArenaCup" className="h-14 w-14" />
+          <img src="/logo-mark.svg" alt="ArenaCup" className="h-14 w-14" />
         </div>
         <h1 className="font-black text-2xl tracking-tight">
           ARENA<span className="text-primary">CUP</span>

@@ -25,6 +25,24 @@ type PublicBolaoRow = BolaoRow & {
   leader_score: number;
 };
 
+type MembershipRow = {
+  bolao_id: string;
+  role: string;
+};
+
+type BolaoSelectRow = {
+  id: string;
+  name: string;
+  description: string | null;
+  creator_id: string;
+  invite_code: string;
+  created_at: string;
+  avatar_url: string | null;
+  category: "public" | "private";
+  status: string;
+  bolao_members: { count: number }[];
+};
+
 const statusWhitelist = ["open", "active"];
 
 export default function Boloes() {
@@ -51,7 +69,7 @@ export default function Boloes() {
 
       if (membershipError) throw membershipError;
 
-      const membershipIds = (myMemberships || []).map((m: any) => m.bolao_id);
+      const membershipIds = (myMemberships || []).map((m: MembershipRow) => m.bolao_id);
 
       if (membershipIds.length) {
         const { data: myBoloesData, error: myBoloesError } = await supabase
@@ -63,7 +81,7 @@ export default function Boloes() {
         if (myBoloesError) throw myBoloesError;
 
         setBoloes(
-          (myBoloesData || []).map((b: any) => ({
+          (myBoloesData || []).map((b: BolaoSelectRow) => ({
             id: b.id,
             name: b.name,
             description: b.description,
@@ -91,10 +109,10 @@ export default function Boloes() {
 
       if (publicError) throw publicError;
 
-      const filteredPublic = (publicData || []).filter((b: any) => !membershipIds.includes(b.id));
+      const filteredPublic = (publicData || []).filter((b: BolaoSelectRow) => !membershipIds.includes(b.id));
 
       const enriched = await Promise.all(
-        filteredPublic.map(async (b: any) => {
+        filteredPublic.map(async (b: BolaoSelectRow) => {
           const { data: ranks } = await supabase
             .from("bolao_rankings")
             .select("total_points")
@@ -200,10 +218,10 @@ export default function Boloes() {
       await completeJoin(data.id);
       setJoinCode("");
       setShowJoin(false);
-    } catch (error: any) {
+    } catch (error) {
       toast({
         title: "Não consegui entrar com esse código.",
-        description: error?.message || "Código inválido ou expirado.",
+        description: error instanceof Error ? error.message : "Código inválido ou expirado.",
         variant: "destructive",
       });
       setJoining(false);

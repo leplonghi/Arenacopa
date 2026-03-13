@@ -1,15 +1,29 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Trophy, Star, Target } from "lucide-react";
+import { Star, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export function RealtimeRankingTab({ bolaoId, rules }: { bolaoId: string, rules: any }) {
-    const [rankings, setRankings] = useState<any[]>([]);
+type RankingProfile = {
+    user_id: string;
+    name: string | null;
+    avatar_url: string | null;
+};
+
+type RankingRow = {
+    user_id: string;
+    total_points: number;
+    exact_matches: number;
+    correct_results: number;
+    profile?: RankingProfile;
+};
+
+export function RealtimeRankingTab({ bolaoId }: { bolaoId: string, rules?: unknown }) {
+    const [rankings, setRankings] = useState<RankingRow[]>([]);
     const { user } = useAuth();
 
-    const loadRankings = async () => {
+    const loadRankings = useCallback(async () => {
         const { data } = await supabase
             .from('bolao_rankings')
             .select('user_id, total_points, exact_matches, correct_results')
@@ -17,16 +31,15 @@ export function RealtimeRankingTab({ bolaoId, rules }: { bolaoId: string, rules:
             .order('total_points', { ascending: false });
 
         if (data) {
-            // Fetch profiles
             const userIds = data.map(d => d.user_id);
-            const { data: profiles } = await supabase.from('profiles').select('id, name, avatar_url').in('id', userIds);
+            const { data: profiles } = await supabase.from('profiles').select('user_id, name, avatar_url').in('user_id', userIds);
             const joined = data.map(d => {
-                const p = profiles?.find(p => p.id === d.user_id);
+                const p = profiles?.find(p => p.user_id === d.user_id);
                 return { ...d, profile: p };
             });
             setRankings(joined);
         }
-    };
+    }, [bolaoId]);
 
     useEffect(() => {
         loadRankings();
@@ -38,7 +51,7 @@ export function RealtimeRankingTab({ bolaoId, rules }: { bolaoId: string, rules:
             .subscribe();
 
         return () => { supabase.removeChannel(channel); };
-    }, [bolaoId]);
+    }, [bolaoId, loadRankings]);
 
     return (
         <div className="space-y-4">

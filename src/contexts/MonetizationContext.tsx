@@ -1,123 +1,124 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Purchases, LOG_LEVEL } from '@revenuecat/purchases-capacitor';
-import { Capacitor } from '@capacitor/core';
+import { useAuth } from "@/contexts/AuthContext";
+import { monetizationEnv } from "@/lib/env";
+import {
+  activatePremiumSimulation,
+  createStripeCheckoutSession,
+  getPremiumStatus,
+  redirectToCheckout,
+  syncStripeCheckoutSession,
+  type PremiumSubscriptionStatus,
+} from "@/services/monetization/stripe.service";
 
 interface MonetizationContextType {
-    isPremium: boolean;
-    purchasePremium: () => Promise<void>;
-    shouldShowInterstitial: () => boolean; // Checks if it's time to show an interstitial
-    incrementActionCount: () => void; // Call this on navigation or major actions
-    isLoading: boolean;
+  isPremium: boolean;
+  subscriptionStatus: PremiumSubscriptionStatus;
+  purchasePremium: () => Promise<void>;
+  refreshPremiumStatus: (checkoutSessionId?: string) => Promise<void>;
+  shouldShowInterstitial: () => boolean;
+  incrementActionCount: () => void;
+  isLoading: boolean;
 }
 
 const MonetizationContext = createContext<MonetizationContextType | undefined>(undefined);
 
 export function MonetizationProvider({ children }: { children: React.ReactNode }) {
-    const [isPremium, setIsPremium] = useState<boolean>(() => {
-        return localStorage.getItem("isPremium") === "true";
-    });
-    const [isLoading, setIsLoading] = useState(false);
+  const { user } = useAuth();
+  const [isPremium, setIsPremium] = useState(false);
+  const [subscriptionStatus, setSubscriptionStatus] = useState<PremiumSubscriptionStatus>("inactive");
+  const [isLoading, setIsLoading] = useState(false);
+  const [actionCount, setActionCount] = useState(0);
 
-    // Counter for interstitial logic (e.g., show ad every 5 navigations/actions)
-    const [actionCount, setActionCount] = useState(0);
+  const applyPremiumState = useCallback((nextIsPremium: boolean, nextStatus: PremiumSubscriptionStatus) => {
+    setIsPremium(nextIsPremium);
+    setSubscriptionStatus(nextStatus);
+    localStorage.setItem("isPremium", String(nextIsPremium));
+  }, []);
 
-    useEffect(() => {
-        const initRevenueCat = async () => {
-            if (Capacitor.isNativePlatform()) {
-                Purchases.setLogLevel({ level: LOG_LEVEL.DEBUG });
+  const refreshPremiumStatus = useCallback(async (checkoutSessionId?: string) => {
+    if (!user) {
+      applyPremiumState(false, "inactive");
+      return;
+    }
 
-                // TODO: Replace with the actual public API keys from RevenueCat
-                const apiKey = Capacitor.getPlatform() === 'ios'
-                    ? "appl_api_key_placeholder"
-                    : "goog_api_key_placeholder";
+    const isDemoUser = user.id === "demo-user-id";
+    if (isDemoUser) {
+      const simulatedPremium = localStorage.getItem("isPremium") === "true";
+      applyPremiumState(simulatedPremium, simulatedPremium ? "active" : "inactive");
+      return;
+    }
 
-                await Purchases.configure({ apiKey });
+    setIsLoading(true);
+    try {
+      const result = checkoutSessionId
+        ? await syncStripeCheckoutSession(checkoutSessionId)
+        : await getPremiumStatus(user.id);
+      applyPremiumState(result.isPremium, result.status);
+    } catch (error) {
+      console.error("Error loading premium status", error);
+      toast.error("Nao foi possivel validar seu status premium agora.");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [applyPremiumState, user]);
 
-                try {
-                    const info = await Purchases.getCustomerInfo();
-                    if (typeof info.customerInfo.entitlements.active['arena_elite'] !== 'undefined') {
-                        setIsPremium(true);
-                        localStorage.setItem("isPremium", "true");
-                    }
-                } catch (e) {
-                    console.error("Error fetching customer info", e);
-                }
-            }
-        };
-        initRevenueCat();
-    }, []);
+  useEffect(() => {
+    void refreshPremiumStatus();
+  }, [refreshPremiumStatus]);
 
-    const purchasePremium = async () => {
-        setIsLoading(true);
+  const purchasePremium = async () => {
+    setIsLoading(true);
+    try {
+      const isDemoUser = user?.id === "demo-user-id";
+      if (isDemoUser && monetizationEnv.enablePremiumSimulation) {
+        const simulated = activatePremiumSimulation();
+        applyPremiumState(simulated.isPremium, simulated.status);
+        toast.success("Premium simulado no modo demo.");
+        return;
+      }
 
-        if (Capacitor.isNativePlatform()) {
-            try {
-                const offerings = await Purchases.getOfferings();
-                const packageToBuy = offerings.current?.availablePackages.find(p => p.identifier === "arena_elite") || offerings.current?.availablePackages[0];
+      const checkout = await createStripeCheckoutSession();
+      redirectToCheckout(checkout.url);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Erro ao iniciar o checkout.";
+      toast.error(message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-                if (packageToBuy) {
-                    const { customerInfo } = await Purchases.purchasePackage({ aPackage: packageToBuy });
-                    if (typeof customerInfo.entitlements.active['arena_elite'] !== 'undefined') {
-                        localStorage.setItem("isPremium", "true");
-                        setIsPremium(true);
-                        toast.success("Premium ativado! Obrigado pelo apoio.");
-                    }
-                } else {
-                    toast.error("Pacote premium não encontrado.");
-                }
-            } catch (e: any) {
-                if (!e.userCancelled) {
-                    toast.error("Erro ao processar compra.");
-                }
-            } finally {
-                setIsLoading(false);
-            }
-            return;
-        }
+  const incrementActionCount = () => {
+    if (isPremium) return;
+    setActionCount((prev) => prev + 1);
+  };
 
-        // Fallback or Dev mode simulation for web
-        return new Promise<void>((resolve) => {
-            setTimeout(() => {
-                localStorage.setItem("isPremium", "true");
-                setIsPremium(true);
-                toast.success("Premium ativado! Obrigado pelo apoio.", {
-                    description: "Todos os anúncios foram removidos."
-                });
-                setIsLoading(false);
-                resolve();
-            }, 2000);
-        });
-    };
+  const shouldShowInterstitial = () => {
+    if (isPremium) return false;
+    return actionCount > 0 && actionCount % 7 === 0;
+  };
 
-    const incrementActionCount = () => {
-        if (isPremium) return;
-        setActionCount(prev => prev + 1);
-    };
-
-    const shouldShowInterstitial = () => {
-        if (isPremium) return false;
-        // Show interstitial every 7 significant actions to be less annoying
-        return actionCount > 0 && actionCount % 7 === 0;
-    };
-
-    return (
-        <MonetizationContext.Provider value={{
-            isPremium,
-            purchasePremium,
-            shouldShowInterstitial,
-            incrementActionCount,
-            isLoading
-        }}>
-            {children}
-        </MonetizationContext.Provider>
-    );
+  return (
+    <MonetizationContext.Provider
+      value={{
+        isPremium,
+        subscriptionStatus,
+        purchasePremium,
+        refreshPremiumStatus,
+        shouldShowInterstitial,
+        incrementActionCount,
+        isLoading,
+      }}
+    >
+      {children}
+    </MonetizationContext.Provider>
+  );
 }
 
 export const useMonetization = () => {
-    const context = useContext(MonetizationContext);
-    if (context === undefined) {
-        throw new Error("useMonetization must be used within a MonetizationProvider");
-    }
-    return context;
+  const context = useContext(MonetizationContext);
+  if (context === undefined) {
+    throw new Error("useMonetization must be used within a MonetizationProvider");
+  }
+  return context;
 };

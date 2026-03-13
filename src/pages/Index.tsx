@@ -1,25 +1,23 @@
 import { Link } from "react-router-dom";
 import { Flag } from "@/components/Flag";
 import { getTeam, matches, formatMatchTime, formatMatchDate, type Match } from "@/data/mockData";
-import { Users, Trophy, TrendingUp, ChevronRight, Calendar, AlertTriangle, Dices, Zap, Bell, Crown, Settings, Sparkles } from "lucide-react";
+import { Users, Trophy, ChevronRight, AlertTriangle, Dices, Zap, Bell, Crown, Settings, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
-import { db } from "@/integrations/firebase/client";
-import { doc, getDoc, collection, query, where, getDocs, orderBy, limit } from "firebase/firestore";
 import { useEffect, useState, useMemo } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MatchDetailsModal } from "@/components/copa/MatchDetailsModal";
 import { useTranslation } from "react-i18next";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { type Palpite } from "@/types/bolao";
 import { ElitePassModal } from "@/components/ElitePassModal";
 import { LiveMatchCard } from "@/components/LiveMatchCard";
 import { useMonetization } from "@/contexts/MonetizationContext";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { getDashboardData, type DashboardBolaoSummary, type DashboardNewsItem } from "@/services/dashboard/dashboard.service";
 
-const containerVariants: any = {
+const containerVariants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
@@ -27,32 +25,14 @@ const containerVariants: any = {
   }
 };
 
-const itemVariants: any = {
+const itemVariants = {
   hidden: { opacity: 0, y: 20 },
   visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
 };
 
-interface MyBolaoData {
-  id: string;
-  name: string;
-  memberCount: number;
-  myPoints?: number;
-  myRank?: number;
-  pendingCount?: number;
-}
-
-interface MiniNewsItem {
-  id: string;
-  title: string;
-  category: string;
-  time: string;
-  image: string;
-  url: string;
-}
-
 const Index = () => {
   const { user } = useAuth();
-  const { t, i18n } = useTranslation('home');
+  const { i18n } = useTranslation('home');
 
   const { data: dbFavoriteTeamCode } = useQuery({
     queryKey: ['favoriteTeam', user?.id],
@@ -61,7 +41,7 @@ const Index = () => {
       const { data, error } = await supabase
         .from('profiles')
         .select('favorite_team')
-        .eq('id', user.id)
+        .eq('user_id', user.id)
         .maybeSingle();
       if (error) {
         console.error("Error fetching favorite team from Supabase:", error);
@@ -74,11 +54,11 @@ const Index = () => {
   const favoriteTeamCode = dbFavoriteTeamCode || localStorage.getItem("favorite_team") || "BRA";
   const favoriteTeam = getTeam(favoriteTeamCode);
 
-  const [myBoloes, setMyBoloes] = useState<MyBolaoData[]>([]);
+  const [myBoloes, setMyBoloes] = useState<DashboardBolaoSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<{ name: string; avatar?: string } | null>(null);
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
-  const [miniNews, setMiniNews] = useState<MiniNewsItem[]>([]);
+  const [miniNews, setMiniNews] = useState<DashboardNewsItem[]>([]);
   const [isEliteModalOpen, setIsEliteModalOpen] = useState(false);
   const { isPremium } = useMonetization();
 
@@ -104,70 +84,13 @@ const Index = () => {
           return;
         }
 
-        const docRef = doc(db, "profiles", user.id);
-        const docSnap = await getDoc(docRef);
-
-        if (docSnap.exists()) {
-          const profileData = docSnap.data();
-          setProfile({ name: profileData.name || "", avatar: profileData.avatar_url || "" });
-        }
-
-        const membersRef = collection(db, "bolao_members");
-        const membersQuery = query(membersRef, where("user_id", "==", user.id));
-        const membersSnapshot = await getDocs(membersQuery);
-
-        if (!membersSnapshot.empty) {
-          const boloesWithPoints = await Promise.all(membersSnapshot.docs.map(async (memberDoc) => {
-            const memberData = memberDoc.data();
-
-            const bolaoDocSnap = await getDoc(doc(db, "boloes", memberData.bolao_id));
-            if (!bolaoDocSnap.exists()) return null;
-            const bolaoData = bolaoDocSnap.data();
-
-            const allMembersQuery = query(membersRef, where("bolao_id", "==", memberData.bolao_id));
-            const allMembersSnapshot = await getDocs(allMembersQuery);
-            const memberCount = allMembersSnapshot.size;
-
-            const palpitesRef = collection(db, "bolao_palpites");
-            const palpitesQuery = query(palpitesRef, where("bolao_id", "==", memberData.bolao_id), where("user_id", "==", user.id));
-            const palpitesSnapshot = await getDocs(palpitesQuery);
-            const palpites = palpitesSnapshot.docs.map(d => d.data() as Palpite);
-
-            const totalPoints = palpites.reduce((sum, p) => sum + (p.points || 0), 0) || 0;
-            const palpiteMatchIds = new Set(palpites.map(p => p.match_id));
-            const scheduledMatches = matches.filter((m: Match) => m.status === "scheduled");
-            const pendingCount = scheduledMatches.filter(m => !palpiteMatchIds.has(m.id)).length;
-
-            return {
-              id: memberData.bolao_id,
-              name: bolaoData.name,
-              memberCount: memberCount,
-              myPoints: totalPoints,
-              myRank: 0,
-              pendingCount,
-            };
-          }));
-
-          setMyBoloes(boloesWithPoints.filter(Boolean) as MyBolaoData[]);
-        }
-
-        const newsRef = collection(db, "news");
-        const newsQuery = query(newsRef, orderBy("published_at", "desc"), limit(3));
-        const newsSnapshot = await getDocs(newsQuery);
-
-        if (!newsSnapshot.empty) {
-          const newsData = newsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
-          setMiniNews(newsData.map(item => ({
-            id: item.id,
-            title: item.title,
-            category: item.category || t('highlights.general'),
-            time: item.published_at?.toDate
-              ? new Date(item.published_at.toDate()).toLocaleDateString(i18n.language, { day: '2-digit', month: 'short' })
-              : new Date().toLocaleDateString(i18n.language, { day: '2-digit', month: 'short' }),
-            image: item.image_url || "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=400",
-            url: item.url || "#",
-          })));
-        }
+        const dashboardData = await getDashboardData(user.id);
+        setProfile({
+          name: dashboardData.profile?.name || "",
+          avatar: dashboardData.profile?.avatar_url || "",
+        });
+        setMyBoloes(dashboardData.myBoloes);
+        setMiniNews(dashboardData.news);
       } catch (error) {
         console.error("Error loading dashboard data:", error);
       } finally {
@@ -176,7 +99,7 @@ const Index = () => {
     };
 
     fetchData();
-  }, [user, i18n.language, t]);
+  }, [user]);
 
   const nextFavMatch = useMemo(() =>
     matches.find(
@@ -498,14 +421,16 @@ const Index = () => {
                 <a key={item.id} href={item.url} target="_blank" rel="noopener noreferrer" className="group flex gap-6 p-5 rounded-[28px] bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] transition-all backdrop-blur-md shadow-lg">
                   <div className="w-28 h-20 rounded-[20px] overflow-hidden shrink-0 shadow-2xl group-hover:scale-105 transition-transform duration-700 relative">
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10" />
-                    <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
+                    <img src={item.imageUrl || "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=400"} alt={item.title} className="w-full h-full object-cover" />
                   </div>
                   <div className="flex flex-col justify-center flex-1 min-w-0">
                     <div className="flex items-center gap-4 mb-2.5">
                       <span className="text-[8px] font-black uppercase tracking-[0.25em] text-primary bg-primary/10 px-2.5 py-1 rounded-lg border border-primary/20">
                         {item.category}
                       </span>
-                      <span className="text-[9px] text-gray-600 font-black uppercase tracking-widest">{item.time}</span>
+                      <span className="text-[9px] text-gray-600 font-black uppercase tracking-widest">
+                        {new Date(item.publishedAt).toLocaleDateString(i18n.language, { day: '2-digit', month: 'short' })}
+                      </span>
                     </div>
                     <h3 className="text-base font-bold text-gray-100 leading-tight line-clamp-2 transition-colors group-hover:text-white tracking-tight">
                       {item.title}
@@ -538,7 +463,7 @@ const Index = () => {
 
 /* --- Refined UI Components --- */
 
-function StatCard({ icon, label, value, highlight = false, color = "text-white" }) {
+function StatCard({ icon, label, value, highlight = false, color = "text-white" }: { icon: React.ReactNode; label: string; value: string | number; highlight?: boolean; color?: string }) {
   return (
     <div
       className={cn(
@@ -565,7 +490,7 @@ function StatCard({ icon, label, value, highlight = false, color = "text-white" 
   );
 }
 
-function SectionHeader({ color, title, rightElement }) {
+function SectionHeader({ color, title, rightElement }: { color: string; title: string; rightElement: React.ReactNode }) {
   return (
     <div className="flex items-center justify-between px-2">
       <h2 className="text-sm font-black text-white flex items-center gap-4 tracking-[0.15em] uppercase">

@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ExternalLink, Newspaper, Sparkles } from "lucide-react";
-import { db } from "@/integrations/firebase/client";
-import { collection, getDocs, orderBy, query, limit } from "firebase/firestore";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 type NewsItem = {
   id: string;
@@ -12,7 +11,7 @@ type NewsItem = {
   external_url?: string;
   image_url?: string;
   teams?: string[];
-  published_at?: any;
+  published_at?: string;
   source_name?: string;
 };
 
@@ -33,14 +32,25 @@ export function NoticiasTab() {
     const loadNews = async () => {
       setLoading(true);
       try {
-        const newsRef = collection(db, "news");
-        const newsQuery = query(newsRef, orderBy("published_at", "desc"), limit(30));
-        const snapshot = await getDocs(newsQuery);
+        const { data, error } = await supabase
+          .from("copa_news")
+          .select("id, title, description, url, url_to_image, source_name, published_at, country_filter")
+          .order("published_at", { ascending: false })
+          .limit(30);
 
-        const items = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...(doc.data() as any),
-        })) as NewsItem[];
+        if (error) throw error;
+
+        const items = (data || []).map((item) => ({
+          id: item.id,
+          title: item.title,
+          summary: item.description || undefined,
+          category: item.country_filter ? "teams" : "general",
+          external_url: item.url,
+          image_url: item.url_to_image || undefined,
+          teams: item.country_filter ? [item.country_filter] : [],
+          published_at: item.published_at,
+          source_name: item.source_name,
+        })) satisfies NewsItem[];
 
         setNews(items);
       } catch (error) {
@@ -147,9 +157,9 @@ export function NoticiasTab() {
 
             <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
               <div className="text-xs text-zinc-500">
-                {item.published_at?.toDate
-                  ? item.published_at.toDate().toLocaleString("pt-BR")
-                  : item.published_at || "Data não informada"}
+                {item.published_at
+                  ? new Date(item.published_at).toLocaleString("pt-BR")
+                  : "Data não informada"}
               </div>
 
               {item.external_url && (

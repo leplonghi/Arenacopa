@@ -2,36 +2,34 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import "./i18n/config";
-import { Suspense } from "react";
+import { Suspense, lazy, useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { App as CapacitorApp } from '@capacitor/app';
-import { useEffect } from "react";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { Layout } from "@/components/Layout";
+import { TermsGuard } from "@/components/TermsGuard";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { MonetizationProvider } from "@/contexts/MonetizationContext";
-import Index from "./pages/Index";
-import Copa from "./pages/Copa";
-import Boloes from "./pages/Boloes";
-import CriarBolao from "./pages/CriarBolao";
-import BolaoDetail from "./pages/BolaoDetail";
-import Perfil from "./pages/Perfil";
-import Ranking from "./pages/Ranking";
-import Menu from "./pages/Menu";
-import Rules from "./pages/Rules";
-import TeamDetails from "./pages/TeamDetails";
-import Auth from "./pages/Auth";
-import Guia from "./pages/Guia";
-import NotFound from "./pages/NotFound";
-import Premium from "./pages/Premium";
-import PublicInvite from "./pages/PublicInvite";
-import Privacidade from "./pages/Privacidade";
-import Termos from "./pages/Termos";
+const Index = lazy(() => import("./pages/Index"));
+const Copa = lazy(() => import("./pages/Copa"));
+const Boloes = lazy(() => import("./pages/Boloes"));
+const CriarBolao = lazy(() => import("./pages/CriarBolao"));
+const BolaoDetail = lazy(() => import("./pages/BolaoDetail"));
+const Perfil = lazy(() => import("./pages/Perfil"));
+const Ranking = lazy(() => import("./pages/Ranking"));
+const Menu = lazy(() => import("./pages/Menu"));
+const Rules = lazy(() => import("./pages/Rules"));
+const TeamDetails = lazy(() => import("./pages/TeamDetails"));
+const Auth = lazy(() => import("./pages/Auth"));
+const Guia = lazy(() => import("./pages/Guia"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const Premium = lazy(() => import("./pages/Premium"));
+const PublicInvite = lazy(() => import("./pages/PublicInvite"));
+const Privacidade = lazy(() => import("./pages/Privacidade"));
+const Termos = lazy(() => import("./pages/Termos"));
 
 const queryClient = new QueryClient();
-
-import { TermsGuard } from "@/components/TermsGuard";
 
 function DeepLinkListener() {
   const navigate = useNavigate();
@@ -76,8 +74,10 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 
 function AuthRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
+  const location = useLocation();
   if (loading) return <LoadingScreen />;
-  if (user) return <Navigate to="/" replace />;
+  const redirectTo = new URLSearchParams(location.search).get("redirect") || "/";
+  if (user) return <Navigate to={redirectTo} replace />;
   return <>{children}</>;
 }
 

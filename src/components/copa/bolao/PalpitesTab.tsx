@@ -1,11 +1,9 @@
-import { useState, useEffect, useMemo } from "react";
+import { type ComponentProps, useState, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { Calendar, Info, Check, Zap, Save, ChevronRight, Filter } from "lucide-react";
+import { Info, Check, Zap, Save, Filter } from "lucide-react";
 import { getTeam, type Match } from "@/data/mockData";
 import { format } from "date-fns";
-import { db } from "@/integrations/firebase/client";
-import { collection, updateDoc, doc, addDoc } from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { ScoreInput } from "@/components/ui/ScoreInput";
@@ -13,8 +11,9 @@ import { type Palpite } from "@/types/bolao";
 import { MatchDetailsModal } from "@/components/copa/MatchDetailsModal";
 import { useDateLocale } from "@/hooks/useDateLocale";
 import { motion, AnimatePresence } from "framer-motion";
-import { staggerContainer, staggerItem } from "../animations";
+import { staggerContainer } from "../animations";
 import { useMatches } from "@/hooks/useMatches";
+import { saveBolaoPalpite } from "@/services/boloes/bolao.service";
 
 interface PalpitesTabProps {
     bolaoId: string;
@@ -55,28 +54,20 @@ export function PalpitesTab({ bolaoId, palpites, setPalpites, userId }: Palpites
         setSaving(matchId);
         try {
             const existing = palpites.find(p => p.match_id === matchId && p.user_id === userId);
+            const savedPalpite = await saveBolaoPalpite({
+                bolaoId,
+                userId,
+                matchId,
+                homeScore: home,
+                awayScore: away,
+                isPowerPlay,
+                existingId: existing?.id,
+            });
 
             if (existing) {
-                const palpiteRef = doc(db, "bolao_palpites", existing.id);
-                await updateDoc(palpiteRef, {
-                    home_score: home,
-                    away_score: away,
-                    is_power_play: isPowerPlay
-                });
-                setPalpites(palpites.map(p => p.id === existing.id ? { ...p, home_score: home, away_score: away, is_power_play: isPowerPlay } : p));
+                setPalpites(palpites.map((p) => (p.id === existing.id ? { ...p, ...savedPalpite } : p)));
             } else {
-                const palpitesRef = collection(db, "bolao_palpites");
-                const newPalpiteData = {
-                    bolao_id: bolaoId,
-                    user_id: userId,
-                    match_id: matchId,
-                    home_score: home,
-                    away_score: away,
-                    is_power_play: isPowerPlay
-                };
-                const docRef = await addDoc(palpitesRef, newPalpiteData);
-                const data = { id: docRef.id, ...newPalpiteData } as Palpite;
-                setPalpites([...palpites, data]);
+                setPalpites([...palpites, savedPalpite]);
             }
             toast({
                 title: t('palpites.saved'),
@@ -303,7 +294,7 @@ export function PalpitesTab({ bolaoId, palpites, setPalpites, userId }: Palpites
     );
 }
 
-function LockIcon(props: any) {
+function LockIcon(props: ComponentProps<"svg">) {
     return (
         <svg
             {...props}

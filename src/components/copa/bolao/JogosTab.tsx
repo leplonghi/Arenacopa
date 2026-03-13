@@ -10,15 +10,41 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { ShareCardGenerator } from "./ShareCardGenerator";
 import { toPng } from "html-to-image";
 
-export function JogosTab({ bolaoId, rules }: { bolaoId: string; rules: any }) {
+type JogosTabMatch = {
+    id: string;
+    match_date: string;
+    stage: string;
+    status: "scheduled" | "live" | "finished";
+    home_team_code: string;
+    away_team_code: string;
+};
+
+type ShareData = {
+    homeTeam: string;
+    awayTeam: string;
+    homeScore: number;
+    awayScore: number;
+};
+
+type PalpiteRealtimeRow = {
+    id: string;
+    bolao_id: string;
+    match_id: string;
+    home_score: number;
+    away_score: number;
+    points: number;
+    is_exact: boolean;
+};
+
+export function JogosTab({ bolaoId }: { bolaoId: string; rules?: unknown }) {
     const { user } = useAuth();
     const { toast } = useToast();
-    const [matches, setMatches] = useState<any[]>([]);
+    const [matches, setMatches] = useState<JogosTabMatch[]>([]);
     const [palpites, setPalpites] = useState<Record<string, { id?: string; home: string; away: string; points: number; is_exact: boolean }>>({});
 
     // Share States
     const [shareModalOpen, setShareModalOpen] = useState(false);
-    const [shareData, setShareData] = useState<any>(null);
+    const [shareData, setShareData] = useState<ShareData | null>(null);
     const shareRef = useRef<HTMLDivElement>(null);
     const [isGenerating, setIsGenerating] = useState(false);
 
@@ -33,7 +59,16 @@ export function JogosTab({ bolaoId, rules }: { bolaoId: string; rules: any }) {
             }
 
             if (pData) {
-                const m = pData.reduce((acc, p) => ({ ...acc, [p.match_id]: { id: p.id, home: p.home_score.toString(), away: p.away_score.toString(), points: p.points, is_exact: p.is_exact } }), {});
+                const m = pData.reduce<Record<string, { id?: string; home: string; away: string; points: number; is_exact: boolean }>>((acc, p) => ({
+                    ...acc,
+                    [p.match_id]: {
+                        id: p.id,
+                        home: p.home_score.toString(),
+                        away: p.away_score.toString(),
+                        points: p.points,
+                        is_exact: p.is_exact
+                    }
+                }), {});
                 setPalpites(m);
             }
         };
@@ -42,7 +77,7 @@ export function JogosTab({ bolaoId, rules }: { bolaoId: string; rules: any }) {
         // Listen for calculated points
         const chan = supabase.channel(`palpites_updates:${user.id}`)
             .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'bolao_palpites', filter: `user_id=eq.${user.id}` }, (payload) => {
-                const np = payload.new;
+                const np = payload.new as PalpiteRealtimeRow;
                 if (np.bolao_id === bolaoId) {
                     setPalpites(prev => ({ ...prev, [np.match_id]: { id: np.id, home: np.home_score.toString(), away: np.away_score.toString(), points: np.points, is_exact: np.is_exact } }));
                     if (np.is_exact) {
@@ -54,7 +89,7 @@ export function JogosTab({ bolaoId, rules }: { bolaoId: string; rules: any }) {
             }).subscribe();
 
         return () => { supabase.removeChannel(chan); };
-    }, [bolaoId, user]);
+    }, [bolaoId, toast, user]);
 
     const handleSave = async (matchId: string, homeTeam: string, awayTeam: string) => {
         const palpite = palpites[matchId];

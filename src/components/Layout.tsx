@@ -1,9 +1,7 @@
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { Home, Trophy, BarChart2, Bell, ChevronLeft, Dices, Compass, BookOpen } from "lucide-react";
+import { Home, Trophy, BarChart2, Bell, ChevronLeft, Dices, Compass } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
-import { db } from "@/integrations/firebase/client";
-import { doc, getDoc } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { NotificationsSheet } from "@/components/NotificationsSheet";
@@ -23,9 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 
 import { useTranslation } from "react-i18next";
-
-const defaultLogo = "/logo.png";
-
+import { getProfile } from "@/services/profile/profile.service";
 
 function Header({ className }: { className?: string }) {
   const location = useLocation();
@@ -34,7 +30,7 @@ function Header({ className }: { className?: string }) {
 
   const { user } = useAuth();
   const [profile, setProfile] = useState<{ name: string; avatar?: string } | null>(null);
-  const logoUrl = "/logo.png";
+  const logoUrl = "/logo-mark.svg";
 
   useEffect(() => {
     if (!user) return;
@@ -48,12 +44,9 @@ function Header({ className }: { className?: string }) {
       }
 
       try {
-        const docRef = doc(db, 'profiles', user.id);
-        const docSnap = await getDoc(docRef);
-
-        if (docSnap.exists()) {
-          const profileData = docSnap.data();
-          setProfile({ name: profileData.name, avatar: profileData.avatar_url });
+        const profileData = await getProfile(user.id);
+        if (profileData) {
+          setProfile({ name: profileData.name, avatar: profileData.avatar_url || undefined });
         }
       } catch (error) {
         console.error("Error fetching profile:", error);
@@ -220,14 +213,14 @@ function AppSidebar({ className }: { className?: string }) {
           <div className="p-4 flex items-center justify-center group-data-[collapsible=icon]:p-2">
             <div className="flex items-center gap-3 group-data-[collapsible=icon]:hidden">
               <div className="w-10 h-10 flex items-center justify-center">
-                <img src="/logo.png" alt="ArenaCup" className="h-8 w-8 object-contain" />
+                <img src="/logo-mark.svg" alt="ArenaCup" className="h-8 w-8 object-contain" />
               </div>
               <span className="font-black text-xl tracking-tight drop-shadow-[0_0_8px_rgba(34,197,94,0.3)]">
                 ARENA<span className="text-primary">CUP</span>
               </span>
             </div>
             <div className="hidden group-data-[collapsible=icon]:flex w-full items-center justify-center">
-              <img src="/logo.png" alt="ArenaCup" className="h-8 w-8 object-contain" />
+              <img src="/logo-mark.svg" alt="ArenaCup" className="h-8 w-8 object-contain" />
             </div>
           </div>
           <SidebarGroupContent className="mt-4">
@@ -261,7 +254,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     <SidebarProvider>
       <CookieBanner />
       <OnboardingModal />
-      <div className="flex min-h-screen w-full bg-background bg-[url('/images/campo-bg.png')] bg-fixed bg-cover bg-center bg-no-repeat bg-blend-overlay">
+      <div className="flex min-h-screen w-full bg-background">
         <AppSidebar className="hidden md:flex z-40" />
         <SidebarInset className="bg-transparent flex flex-col flex-1 w-full overflow-hidden">
           <Header className="w-full" />

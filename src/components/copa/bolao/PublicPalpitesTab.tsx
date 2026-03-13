@@ -4,8 +4,26 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Flag } from "@/components/Flag";
 import { motion } from "framer-motion";
 
+type PublicPalpite = {
+    id: string;
+    user_id: string;
+    match_id: string;
+    home_score: number;
+    away_score: number;
+    is_exact?: boolean;
+    match: {
+        home_team_code: string;
+        away_team_code: string;
+    };
+    profile?: {
+        user_id: string;
+        name: string | null;
+        avatar_url: string | null;
+    };
+};
+
 export function PublicPalpitesTab({ bolaoId }: { bolaoId: string }) {
-    const [palpites, setPalpites] = useState<any[]>([]);
+    const [palpites, setPalpites] = useState<PublicPalpite[]>([]);
 
     useEffect(() => {
         const loadData = async () => {
@@ -18,18 +36,17 @@ export function PublicPalpitesTab({ bolaoId }: { bolaoId: string }) {
             const { data: preds } = await supabase.from('bolao_palpites').select('*').eq('bolao_id', bolaoId).in('match_id', matchIds);
             if (!preds) return;
 
-            // 3. Get profiles for those users
             const userIds = [...new Set(preds.map(p => p.user_id))];
-            const { data: profiles } = await supabase.from('profiles').select('id, name, avatar_url').in('id', userIds);
+            const { data: profiles } = await supabase.from('profiles').select('user_id, name, avatar_url').in('user_id', userIds);
 
             const enriched = preds.map(p => {
                 const match = matches.find(m => m.id === p.match_id);
-                const profile = profiles?.find(prof => prof.id === p.user_id);
+                const profile = profiles?.find(prof => prof.user_id === p.user_id);
                 return {
                     ...p,
                     match,
                     profile
-                };
+                } as PublicPalpite;
             });
 
             setPalpites(enriched);

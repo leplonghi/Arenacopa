@@ -1,14 +1,14 @@
 
-import { matches } from './src/data/mockData.ts';
+import { matches } from "../src/data/mockData.ts";
 
-const phaseMap: Record<string, string> = {
-    'groups': 'group',
-    'round-of-32': 'round_of_32',
-    'round-of-16': 'round_of_16', // Adding this as it's in mockData but missing from user list
-    'quarter': 'qf',
-    'semi': 'sf',
-    'third': 'third_place',
-    'final': 'final'
+const phaseMap = {
+    groups: "group",
+    "round-of-32": "round_of_32",
+    "round-of-16": "round_of_16",
+    quarter: "qf",
+    semi: "sf",
+    third: "third_place",
+    final: "final"
 };
 
 const sql = matches.map(m => {

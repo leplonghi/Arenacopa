@@ -1,7 +1,7 @@
 {
     "name": "ArenaCopa",
     "short_name": "ArenaCopa",
-    "description": "Acompanhe a Copa 2026, crie bolões e desfie amigos.",
+    "description": "Acompanhe a Copa 2026, crie bolões e desafie amigos.",
     "start_url": "/",
     "display": "standalone",
     "background_color": "#061a10",

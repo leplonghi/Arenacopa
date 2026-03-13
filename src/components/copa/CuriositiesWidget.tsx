@@ -1,10 +1,9 @@
 
-import { useEffect, useState } from "react";
-import { db } from "@/integrations/firebase/client";
-import { collection, getDocs, limit, query } from "firebase/firestore";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { Lightbulb, RotateCcw } from "lucide-react";
 import { staggerItem } from "./animations";
+import { generalCuriosities, hostCountries } from "@/data/guiaData";
 
 interface Curiosity {
     id: string;
@@ -16,19 +15,32 @@ interface Curiosity {
 export function CuriositiesWidget() {
     const [curiosity, setCuriosity] = useState<Curiosity | null>(null);
     const [loading, setLoading] = useState(true);
+    const curiosityPool = useMemo<Curiosity[]>(() => {
+        const general = generalCuriosities.map((item, index) => ({
+            id: `general-${index}`,
+            content: item.description,
+            category: "general",
+        }));
 
-    const fetchRandomCuriosity = async () => {
+        const cityCuriosities = hostCountries.flatMap((country) =>
+            country.cities.flatMap((city, cityIndex) =>
+                city.curiosities.map((content, curiosityIndex) => ({
+                    id: `${country.code}-${city.id}-${cityIndex}-${curiosityIndex}`,
+                    content,
+                    category: country.code.toLowerCase(),
+                    image_url: city.image,
+                }))
+            )
+        );
+
+        return [...general, ...cityCuriosities];
+    }, []);
+
+    const fetchRandomCuriosity = useCallback(async () => {
         setLoading(true);
         try {
-            // In a real app with many rows, using .random() effectively might need a remote function
-            // For now, we fetch a few and pick one random client-side or use created_at desc
-            const curiositiesRef = collection(db, 'curiosities');
-            const q = query(curiositiesRef, limit(10));
-            const snapshot = await getDocs(q);
-
-            if (!snapshot.empty) {
-                const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Curiosity));
-                const random = data[Math.floor(Math.random() * data.length)];
+            if (curiosityPool.length > 0) {
+                const random = curiosityPool[Math.floor(Math.random() * curiosityPool.length)];
                 setCuriosity({
                     id: random.id,
                     content: random.content,
@@ -41,11 +53,11 @@ export function CuriositiesWidget() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [curiosityPool]);
 
     useEffect(() => {
         fetchRandomCuriosity();
-    }, []);
+    }, [fetchRandomCuriosity]);
 
     if (!curiosity && !loading) return null;
 

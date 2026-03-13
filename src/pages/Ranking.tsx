@@ -5,17 +5,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/EmptyState";
 
-type RankingRow = {
-  user_id: string;
-  total_points: number;
-  profiles?: {
-    favorite_team?: string | null;
-    name?: string | null;
-    nickname?: string | null;
-    avatar_url?: string | null;
-  } | null;
-};
-
 type UserStanding = {
   userId: string;
   name: string;
@@ -41,7 +30,7 @@ export default function Ranking() {
           .limit(200);
 
         const totals = new Map<string, number>();
-        (rankings || []).forEach((row: any) => {
+        (rankings || []).forEach((row) => {
           totals.set(row.user_id, (totals.get(row.user_id) || 0) + (row.total_points || 0));
         });
 
@@ -53,11 +42,17 @@ export default function Ranking() {
 
         const { data: profiles } = await supabase
           .from("profiles")
-          .select("id, favorite_team, name, nickname, avatar_url")
-          .in("id", userIds);
+          .select("user_id, favorite_team, name, nickname, avatar_url")
+          .in("user_id", userIds);
 
-        const profileMap = new Map<string, any>();
-        (profiles || []).forEach((profile: any) => profileMap.set(profile.id, profile));
+        const profileMap = new Map<string, {
+          user_id: string;
+          favorite_team: string | null;
+          name: string | null;
+          nickname: string | null;
+          avatar_url: string | null;
+        }>();
+        (profiles || []).forEach((profile) => profileMap.set(profile.user_id, profile));
 
         const rows = userIds
           .map((userId) => {
