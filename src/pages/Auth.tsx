@@ -32,25 +32,24 @@ const Auth = () => {
 
       if (mode === "signup") {
         if (!acceptedTerms) return;
-        const authData = await signUpWithPassword(email, password, name);
-        const createdUser = authData.session?.user;
+        const createdUser = await signUpWithPassword(email, password, name);
 
         if (createdUser) {
           await ensureProfile({
-            id: createdUser.id,
+            id: createdUser.uid,
             email: createdUser.email ?? null,
             user_metadata: {
               full_name: name,
               name,
-              avatar_url: createdUser.user_metadata?.avatar_url,
+              avatar_url: createdUser.photoURL ?? undefined,
             },
           });
 
-          await updateProfile(createdUser.id, {
+          await updateProfile(createdUser.uid, {
             name,
             terms_accepted: true,
           });
-          await acceptTerms(createdUser.id);
+          await acceptTerms(createdUser.uid);
         }
 
         toast({
@@ -58,7 +57,7 @@ const Auth = () => {
           description: t('login.success_create_desc'),
         });
 
-        if (authData.session) {
+        if (createdUser) {
           navigate(redirectPath);
         }
       } else {
@@ -82,7 +81,7 @@ const Auth = () => {
     try {
       localStorage.removeItem("demo_mode");
       const redirectTo = `${window.location.origin}${redirectPath}`;
-      await signInWithGoogle(redirectTo);
+      await signInWithGoogle();
     } catch (error) {
       console.error("Erro no login com Google:", error);
       const message = error instanceof Error ? error.message : t('login.error_google');
@@ -117,17 +116,78 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-6 py-12">
-      <div className="flex flex-col items-center mb-10">
-        <div className="w-20 h-20 rounded-full bg-secondary/80 border border-border/50 flex items-center justify-center overflow-hidden mb-4">
-          <img src="/logo-mark.svg" alt="ArenaCup" className="h-14 w-14" />
+    <div className="min-h-screen flex flex-col items-center justify-center px-6 py-12 relative overflow-hidden">
+      {/* ── Football Field Background ── */}
+      <div className="fixed inset-0 z-0 pointer-events-none">
+        {/* Deep green base */}
+        <div className="absolute inset-0 bg-[hsl(154_50%_8%)]" />
+
+        {/* Football field SVG */}
+        <svg
+          className="absolute inset-0 w-full h-full opacity-[0.13]"
+          viewBox="0 0 375 812"
+          preserveAspectRatio="xMidYMid slice"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          {/* Field stripes */}
+          {[0,1,2,3,4,5,6,7,8,9,10,11].map((i) => (
+            <rect key={i} x={0} y={i * 68} width={375} height={34} fill={i % 2 === 0 ? "#22c55e" : "#16a34a"} />
+          ))}
+          {/* Outer boundary */}
+          <rect x="18" y="36" width="339" height="740" rx="4" stroke="white" strokeWidth="2.5" />
+          {/* Halfway line */}
+          <line x1="18" y1="406" x2="357" y2="406" stroke="white" strokeWidth="2" />
+          {/* Centre circle */}
+          <circle cx="187.5" cy="406" r="72" stroke="white" strokeWidth="2" />
+          <circle cx="187.5" cy="406" r="3" fill="white" />
+          {/* Top penalty area */}
+          <rect x="85" y="36" width="205" height="100" rx="2" stroke="white" strokeWidth="2" />
+          {/* Top goal area */}
+          <rect x="132" y="36" width="111" height="44" rx="2" stroke="white" strokeWidth="2" />
+          {/* Top goal */}
+          <rect x="152" y="24" width="71" height="16" rx="2" stroke="white" strokeWidth="2" />
+          {/* Top penalty spot */}
+          <circle cx="187.5" cy="104" r="3" fill="white" />
+          {/* Top penalty arc */}
+          <path d="M140 136 Q187.5 88 235 136" stroke="white" strokeWidth="2" fill="none" />
+          {/* Bottom penalty area */}
+          <rect x="85" y="676" width="205" height="100" rx="2" stroke="white" strokeWidth="2" />
+          {/* Bottom goal area */}
+          <rect x="132" y="732" width="111" height="44" rx="2" stroke="white" strokeWidth="2" />
+          {/* Bottom goal */}
+          <rect x="152" y="772" width="71" height="16" rx="2" stroke="white" strokeWidth="2" />
+          {/* Bottom penalty spot */}
+          <circle cx="187.5" cy="708" r="3" fill="white" />
+          {/* Bottom penalty arc */}
+          <path d="M140 676 Q187.5 724 235 676" stroke="white" strokeWidth="2" fill="none" />
+          {/* Corner arcs */}
+          <path d="M18 36 Q30 36 30 48" stroke="white" strokeWidth="2" fill="none" />
+          <path d="M357 36 Q345 36 345 48" stroke="white" strokeWidth="2" fill="none" />
+          <path d="M18 776 Q30 776 30 764" stroke="white" strokeWidth="2" fill="none" />
+          <path d="M357 776 Q345 776 345 764" stroke="white" strokeWidth="2" fill="none" />
+        </svg>
+
+        {/* Overlay gradients to fade the field and make the form readable */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[hsl(154_50%_8%/0.55)] via-[hsl(154_50%_8%/0.45)] to-[hsl(154_50%_8%/0.7)]" />
+        {/* Gold glow top */}
+        <div className="absolute top-[-10%] left-1/2 -translate-x-1/2 w-[340px] h-[340px] rounded-full bg-[hsl(44_80%_46%/0.12)] blur-[80px]" />
+        {/* Green glow bottom */}
+        <div className="absolute bottom-[-5%] left-1/2 -translate-x-1/2 w-[300px] h-[300px] rounded-full bg-[hsl(145_60%_30%/0.15)] blur-[70px]" />
+      </div>
+
+      {/* ── Content ── */}
+      <div className="relative z-10 flex flex-col items-center mb-10">
+        <div className="w-24 h-24 rounded-[28px] overflow-hidden mb-4 shadow-[0_8px_32px_rgba(0,0,0,0.6)] border border-white/10">
+          <img src="/logo.png" alt="ArenaCopa" className="w-full h-full object-cover" />
         </div>
         <h1 className="font-black text-2xl tracking-tight">
-          ARENA<span className="text-primary">CUP</span>
+          ARENA<span className="text-primary">COPA</span>
         </h1>
         <p className="text-xs text-muted-foreground mt-1">{t('login.subtitle')}</p>
       </div>
 
+      <div className="relative z-10 flex flex-col items-center w-full">
       <div className="flex gap-2 mb-6">
         {(["login", "signup"] as const).map((m) => (
           <button
@@ -249,6 +309,7 @@ const Auth = () => {
         {t('login.demo')}
         <div className="w-6 h-px bg-muted-foreground/30 group-hover:bg-primary/50 transition-colors" />
       </button>
+      </div>{/* end z-10 wrapper */}
     </div>
   );
 };

@@ -1,4 +1,14 @@
-import { supabase } from "@/services/supabase/client";
+import { db } from "@/integrations/firebase/client";
+import { 
+  collection, 
+  query, 
+  where, 
+  getDocs, 
+  orderBy, 
+  doc, 
+  updateDoc, 
+  writeBatch 
+} from "firebase/firestore";
 
 export type NotificationRecord = {
   id: string;
@@ -12,32 +22,51 @@ export type NotificationRecord = {
 };
 
 export async function listNotifications(userId: string) {
-  const { data, error } = await supabase
-    .from("notifications")
-    .select("id, user_id, title, message, type, read, link, created_at")
-    .eq("user_id", userId)
-    .order("created_at", { ascending: false });
-
-  if (error) throw error;
-  return (data || []) as NotificationRecord[];
+  try {
+    const q = query(
+      collection(db, "notifications"),
+      where("user_id", "==", userId),
+      orderBy("created_at", "desc")
+    );
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as NotificationRecord[];
+  } catch (error) {
+    console.error("Error listing notifications:", error);
+    throw error;
+  }
 }
 
 export async function markNotificationAsRead(notificationId: string, userId: string) {
-  const { error } = await supabase
-    .from("notifications")
-    .update({ read: true })
-    .eq("id", notificationId)
-    .eq("user_id", userId);
-
-  if (error) throw error;
+  try {
+    const docRef = doc(db, "notifications", notificationId);
+    await updateDoc(docRef, { read: true });
+  } catch (error) {
+    console.error("Error marking notification as read:", error);
+    throw error;
+  }
 }
 
 export async function markAllNotificationsAsRead(userId: string) {
-  const { error } = await supabase
-    .from("notifications")
-    .update({ read: true })
-    .eq("user_id", userId)
-    .eq("read", false);
-
-  if (error) throw error;
+  try {
+    const q = query(
+      collection(db, "notifications"),
+      where("user_id", "==", userId),
+      where("read", "==", false)
+    );
+    const querySnapshot = await getDocs(q);
+    
+    const batch = writeBatch(db);
+    querySnapshot.docs.forEach((doc) => {
+      batch.update(doc.ref, { read: true });
+    });
+    
+    await batch.commit();
+  } catch (error) {
+    console.error("Error marking all notifications as read:", error);
+    throw error;
+  }
 }
+

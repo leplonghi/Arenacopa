@@ -30,7 +30,7 @@ function Header({ className }: { className?: string }) {
 
   const { user } = useAuth();
   const [profile, setProfile] = useState<{ name: string; avatar?: string } | null>(null);
-  const logoUrl = "/logo-mark.svg";
+  const logoUrl = "/logo.png";
 
   useEffect(() => {
     if (!user) return;
@@ -208,19 +208,19 @@ function AppSidebar({ className }: { className?: string }) {
 
   return (
     <Sidebar className={cn("border-r border-white/10", className)} collapsible="icon">
-      <SidebarContent className="bg-background">
+      <SidebarContent className="bg-sidebar/95 backdrop-blur-xl">
         <SidebarGroup>
           <div className="p-4 flex items-center justify-center group-data-[collapsible=icon]:p-2">
             <div className="flex items-center gap-3 group-data-[collapsible=icon]:hidden">
               <div className="w-10 h-10 flex items-center justify-center">
-                <img src="/logo-mark.svg" alt="ArenaCup" className="h-8 w-8 object-contain" />
+                <img src="/logo.png" alt="ArenaCup" className="h-8 w-8 object-contain rounded-lg" />
               </div>
               <span className="font-black text-xl tracking-tight drop-shadow-[0_0_8px_rgba(34,197,94,0.3)]">
                 ARENA<span className="text-primary">CUP</span>
               </span>
             </div>
             <div className="hidden group-data-[collapsible=icon]:flex w-full items-center justify-center">
-              <img src="/logo-mark.svg" alt="ArenaCup" className="h-8 w-8 object-contain" />
+              <img src="/logo.png" alt="ArenaCup" className="h-8 w-8 object-contain rounded-lg" />
             </div>
           </div>
           <SidebarGroupContent className="mt-4">
@@ -254,7 +254,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
     <SidebarProvider>
       <CookieBanner />
       <OnboardingModal />
-      <div className="flex min-h-screen w-full bg-background">
+      <div className="flex min-h-screen w-full bg-transparent">
         <AppSidebar className="hidden md:flex z-40" />
         <SidebarInset className="bg-transparent flex flex-col flex-1 w-full overflow-hidden">
           <Header className="w-full" />

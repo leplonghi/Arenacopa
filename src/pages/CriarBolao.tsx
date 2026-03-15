@@ -3,7 +3,17 @@ import { useNavigate } from "react-router-dom";
 import { CheckCircle2, ChevronLeft, ChevronRight, Crown, Globe, Loader2, Lock, Share2, ShieldCheck, Sparkles, Trophy } from "lucide-react";
 import { Haptics, ImpactStyle } from "@capacitor/haptics";
 import { Share } from "@capacitor/share";
-import { supabase } from "@/integrations/supabase/client";
+import { db } from "@/integrations/firebase/client";
+import { 
+  collection, 
+  query, 
+  where, 
+  getDocs, 
+  getCountFromServer,
+  addDoc,
+  setDoc,
+  doc
+} from "firebase/firestore";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useMonetization } from "@/contexts/MonetizationContext";
@@ -44,15 +54,17 @@ export default function CriarBolao() {
     if (!user) return;
 
     const fetchCount = async () => {
-      const { count } = await supabase
-        .from("boloes")
-        .select("*", { count: "exact", head: true })
-        .eq("creator_id", user.id);
-
-      const total = count ?? 0;
-      setCreatedCount(total);
-      if (total >= 2 && !isPremium) {
-        setShowPaywall(true);
+      try {
+        const q = query(collection(db, "boloes"), where("creator_id", "==", user.id));
+        const snap = await getCountFromServer(q);
+        const total = snap.data().count;
+        
+        setCreatedCount(total);
+        if (total >= 2 && !isPremium) {
+          setShowPaywall(true);
+        }
+      } catch (error) {
+        console.error("Error fetching bolao count:", error);
       }
     };
 
@@ -106,26 +118,30 @@ export default function CriarBolao() {
         status: "open",
         invite_code: inviteCodeVal,
         avatar_url: emoji,
+        created_at: new Date().toISOString()
       };
 
-      const { data: bolaoData, error: bolaoError } = await supabase
-        .from("boloes")
-        .insert(insertData)
-        .select("id, invite_code")
-        .single();
+      const boloesRef = collection(db, "boloes");
+      const bolaoDoc = await addDoc(boloesRef, insertData);
+      
+      // Add the creator as the first member
+      const memberId = `${user.id}_${bolaoDoc.id}`;
+      await setDoc(doc(db, "bolao_members", memberId), {
+        bolao_id: bolaoDoc.id,
+        user_id: user.id,
+        role: "admin",
+        payment_status: "exempt",
+        created_at: new Date().toISOString()
+      });
 
-      if (bolaoError) throw bolaoError;
-
-      const { error: championError } = await supabase.from("bolao_champion_predictions").upsert(
-        {
-          bolao_id: bolaoData.id,
-          user_id: user.id,
-          team_code: champion,
-        },
-        { onConflict: "bolao_id,user_id" }
-      );
-
-      if (championError) throw championError;
+      // Champion prediction
+      const predictionId = `${user.id}_${bolaoDoc.id}`;
+      await setDoc(doc(db, "bolao_champion_predictions", predictionId), {
+        bolao_id: bolaoDoc.id,
+        user_id: user.id,
+        team_code: champion,
+        updated_at: new Date().toISOString()
+      });
 
       toast({
         title: "Bolão criado.",
@@ -133,8 +149,8 @@ export default function CriarBolao() {
         className: "bg-emerald-500 text-white border-none font-black",
       });
 
-      setCreatedBolaoId(bolaoData.id);
-      setCreatedInviteCode(bolaoData.invite_code);
+      setCreatedBolaoId(bolaoDoc.id);
+      setCreatedInviteCode(inviteCodeVal);
       setStep(3);
 
       if (window.plausible) {

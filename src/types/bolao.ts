@@ -18,6 +18,7 @@ export interface BolaoData {
     payment_details: string | null;
     prize_distribution: string | null;
     scoring_rules: ScoringRules;
+    avatar_url: string | null;
     status: 'draft' | 'open' | 'active' | 'finished';
 }
 

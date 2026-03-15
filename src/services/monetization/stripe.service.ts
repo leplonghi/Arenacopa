@@ -1,4 +1,12 @@
-import { supabase } from "@/services/supabase/client";
+import { db } from "@/integrations/firebase/client";
+import { 
+  collection, 
+  query, 
+  where, 
+  getDocs, 
+  orderBy, 
+  limit 
+} from "firebase/firestore";
 
 export type PremiumSubscriptionStatus = "inactive" | "pending" | "active" | "expired" | "canceled" | "failed";
 
@@ -40,58 +48,35 @@ const mapSubscriptionRow = (row: PremiumSubscriptionRow | null): PremiumStatusRe
 };
 
 export async function getPremiumStatus(userId: string): Promise<PremiumStatusResult> {
-  const { data, error } = await supabase
-    .from("premium_subscriptions")
-    .select("status, stripe_checkout_session_id, amount_total, currency")
-    .eq("user_id", userId)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-
-  if (error) {
-    throw error;
+  try {
+    const q = query(
+      collection(db, "premium_subscriptions"),
+      where("user_id", "==", userId),
+      orderBy("created_at", "desc"),
+      limit(1)
+    );
+    const querySnapshot = await getDocs(q);
+    
+    if (querySnapshot.empty) return inactiveStatus;
+    
+    const data = querySnapshot.docs[0].data() as PremiumSubscriptionRow;
+    return mapSubscriptionRow(data);
+  } catch (error) {
+    console.error("Error getting premium status:", error);
+    return inactiveStatus;
   }
-
-  return mapSubscriptionRow(data as PremiumSubscriptionRow | null);
 }
 
 export async function createStripeCheckoutSession() {
-  const { data, error } = await supabase.functions.invoke("create-stripe-checkout", {
-    body: {},
-  });
-
-  if (error) {
-    throw error;
-  }
-
-  if (!data?.url) {
-    throw new Error("Stripe checkout URL was not returned.");
-  }
-
-  return {
-    url: data.url as string,
-    sessionId: (data.sessionId as string | undefined) ?? null,
-  };
+  // TODO: Implement with Firebase Cloud Functions
+  console.warn("Stripe checkout functions need migration to Firebase Cloud Functions");
+  throw new Error("Checkout temporariamente indisponível na migração para Firebase.");
 }
 
 export async function syncStripeCheckoutSession(checkoutSessionId: string): Promise<PremiumStatusResult> {
-  const { data, error } = await supabase.functions.invoke("sync-stripe-checkout", {
-    body: {
-      checkoutSessionId,
-    },
-  });
-
-  if (error) {
-    throw error;
-  }
-
-  return {
-    isPremium: Boolean(data?.isPremium),
-    status: (data?.status as PremiumSubscriptionStatus | undefined) ?? "inactive",
-    checkoutSessionId,
-    amountTotal: null,
-    currency: null,
-  };
+  // TODO: Implement with Firebase Cloud Functions
+  console.warn("Stripe sync functions need migration to Firebase Cloud Functions");
+  return inactiveStatus;
 }
 
 export function redirectToCheckout(url: string) {
@@ -108,3 +93,4 @@ export function activatePremiumSimulation(): PremiumStatusResult {
     currency: "brl",
   };
 }
+

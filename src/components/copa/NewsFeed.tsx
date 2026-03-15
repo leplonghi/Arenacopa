@@ -1,9 +1,10 @@
-
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
-import { staggerItem } from "./animations";
-import { Eye, ArrowRight, TrendingUp } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { staggerItem, staggerContainer } from "./animations";
+import { Eye, ArrowRight, TrendingUp, Newspaper, Clock } from "lucide-react";
+import { db } from "@/integrations/firebase/client";
+import { collection, query, orderBy, limit, onSnapshot } from "firebase/firestore";
 
 interface NewsItemDisplay {
     id: string;
@@ -18,102 +19,137 @@ interface NewsItemDisplay {
 }
 
 export function NewsFeed() {
+    const { t } = useTranslation('bolao');
     const [news, setNews] = useState<NewsItemDisplay[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const fetchNews = async () => {
-            try {
-                const { data, error } = await supabase
-                    .from("copa_news")
-                    .select("id, title, source_name, published_at, url_to_image, url, description, country_filter")
-                    .order("published_at", { ascending: false })
-                    .limit(5);
+        const newsRef = collection(db, "copa_news");
+        const q = query(newsRef, orderBy("published_at", "desc"), limit(6));
 
-                if (error) throw error;
+        const unsubscribe = onSnapshot(q, (snapshot) => {
+            const mappedNews: NewsItemDisplay[] = snapshot.docs.map((doc) => {
+                const data = doc.data();
+                return {
+                    id: doc.id,
+                    title: data.title,
+                    category: data.category || data.country_filter || "Geral",
+                    time: data.published_at ? new Date(data.published_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }) : "Recent",
+                    image: data.url_to_image || "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=800",
+                    url: data.url || "#",
+                    views: data.views ? (data.views >= 1000 ? `${(data.views / 1000).toFixed(1).replace('.0', '')}k` : `${data.views}`) : `${Math.floor(Math.random() * 5) + 1}.${Math.floor(Math.random() * 9)}k`,
+                    content: data.content || data.description || undefined,
+                    source: data.source_name || undefined,
+                };
+            });
+            setNews(mappedNews);
+            setLoading(false);
+        }, (error) => {
+            console.error("Error listening to news:", error);
+            setLoading(false);
+        });
 
-                const mappedNews: NewsItemDisplay[] = (data || []).map((item) => ({
-                    id: item.id,
-                    title: item.title,
-                    category: item.country_filter || "Geral",
-                    time: new Date(item.published_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }),
-                    image: item.url_to_image || "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=800",
-                    url: item.url || "#",
-                    views: "1.2k",
-                    content: item.description || undefined,
-                    source: item.source_name || undefined,
-                }));
-
-                setNews(mappedNews);
-            } catch (err) {
-                console.error("Error fetching news:", err);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchNews();
+        return () => unsubscribe();
     }, []);
 
-    if (loading) return <div className="p-4 text-center text-xs text-muted-foreground animate-pulse">Carregando notícias...</div>;
+    if (loading) {
+        return (
+            <div className="space-y-4 px-1">
+                <div className="h-6 w-32 bg-white/5 animate-pulse rounded-full" />
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {[1, 2, 3].map(i => (
+                        <div key={i} className="h-24 bg-white/5 animate-pulse rounded-2xl" />
+                    ))}
+                </div>
+            </div>
+        );
+    }
+
     if (news.length === 0) return null;
 
     return (
-        <>
-            <motion.div variants={staggerItem} className="space-y-4 px-1">
-                <div className="flex items-center justify-between">
-                    <h2 className="text-lg font-black flex items-center gap-2">
-                        <TrendingUp className="w-5 h-5 text-primary" />
-                        Destaques
+        <motion.div 
+            variants={staggerContainer}
+            initial="initial"
+            animate="animate"
+            className="space-y-5 px-1 pb-4"
+        >
+            <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                    <div className="w-1.5 h-6 bg-copa-gold rounded-full shadow-[0_0_10px_rgba(212,175,55,0.4)]" />
+                    <h2 className="text-[13px] font-black uppercase tracking-[0.2em] text-zinc-400 font-display flex items-center gap-2">
+                        <TrendingUp className="w-4 h-4 text-copa-gold" />
+                        {t('news.highlights', 'Highlights')}
                     </h2>
-                    <button className="text-xs font-bold text-primary hover:underline flex items-center gap-1">
-                        Ver tudo <ArrowRight className="w-3 h-3" />
-                    </button>
                 </div>
+                <button className="text-[10px] font-black uppercase tracking-wider text-copa-gold/70 hover:text-copa-gold transition-colors flex items-center gap-1.5 bg-white/5 px-3 py-1.5 rounded-full border border-white/5">
+                    {t('news.view_all', 'View All')} <ArrowRight className="w-3 h-3" />
+                </button>
+            </div>
 
-                <div className="space-y-3 md:space-y-0 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <AnimatePresence mode="popLayout">
                     {news.map((item, index) => (
                         <motion.div
                             key={item.id}
-                            initial={{ opacity: 0, x: -10 }}
-                            animate={{ opacity: 1, x: 0 }}
-                            transition={{ delay: index * 0.1 }}
+                            variants={staggerItem}
+                            layout
                             onClick={() => {
                                 if (item.url && item.url !== "#") {
                                     window.open(item.url, '_blank');
                                 }
                             }}
-                            className="group flex gap-3 p-2 rounded-xl hover:bg-white/5 transition-colors cursor-pointer"
+                            className="group relative flex flex-col gap-0 overflow-hidden rounded-[24px] border border-white/5 bg-zinc-900/40 backdrop-blur-sm transition-all duration-300 hover:border-copa-gold/30 hover:bg-zinc-800/40 cursor-pointer hover:shadow-[0_8px_30px_rgb(0,0,0,0.4)]"
                         >
-                            <div className="relative w-24 h-16 rounded-lg overflow-hidden shrink-0">
+                            <div className="relative aspect-[16/9] w-full overflow-hidden">
                                 <img
                                     src={item.image}
                                     alt={item.title}
-                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
                                 />
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                            </div>
-                            <div className="flex flex-col justify-center flex-1 min-w-0">
-                                <div className="flex items-center gap-2 mb-1">
-                                    <span className="text-[9px] font-black uppercase tracking-wider text-primary bg-primary/10 px-1.5 py-0.5 rounded">
+                                <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/20 to-transparent" />
+                                
+                                <div className="absolute top-3 left-3 flex gap-2">
+                                    <span className="text-[8px] font-black uppercase tracking-widest text-white bg-copa-gold/80 backdrop-blur-md px-2 py-1 rounded-md shadow-lg">
                                         {item.category}
                                     </span>
-                                    <span className="text-[9px] text-muted-foreground">{item.time}</span>
-                                </div>
-                                <h3 className="text-sm font-bold leading-tight line-clamp-2 group-hover:text-primary transition-colors">
-                                    {item.title}
-                                </h3>
-                                <div className="flex items-center gap-1 mt-1 text-[9px] text-muted-foreground/80">
-                                    <Eye className="w-3 h-3" />
-                                    {item.views} leituras
                                 </div>
                             </div>
+                            
+                            <div className="p-4 flex flex-col justify-between flex-1">
+                                <div className="space-y-2">
+                                    <div className="flex items-center gap-2 text-[9px] text-zinc-500 font-bold uppercase tracking-widest">
+                                        <Clock className="w-3 h-3 text-copa-gold/60" />
+                                        {item.time}
+                                        {item.source && (
+                                            <>
+                                                <span className="w-1 h-1 rounded-full bg-zinc-700" />
+                                                <span className="text-zinc-400">{item.source}</span>
+                                            </>
+                                        )}
+                                    </div>
+                                    <h3 className="text-sm font-bold leading-snug line-clamp-2 group-hover:text-copa-gold transition-colors duration-300">
+                                        {item.title}
+                                    </h3>
+                                </div>
+                                
+                                <div className="flex items-center justify-between mt-4">
+                                    <div className="flex items-center gap-1.5 text-[9px] text-zinc-500 font-medium">
+                                        <Eye className="w-3 h-3 text-zinc-600" />
+                                        {item.views} <span className="opacity-60 whitespace-nowrap">readers</span>
+                                    </div>
+                                    <div className="w-6 h-6 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-copa-gold transition-all duration-300">
+                                        <ArrowRight className="w-3 h-3 text-zinc-500 group-hover:text-zinc-950" />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Hover highlight effect */}
+                            <div className="absolute inset-x-0 bottom-0 h-0.5 bg-gradient-to-r from-transparent via-copa-gold/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                         </motion.div>
                     ))}
-                </div>
-            </motion.div>
-
-            {/* Removed Modal as per external redirection spec */}
-        </>
+                </AnimatePresence>
+            </div>
+        </motion.div>
     );
 }

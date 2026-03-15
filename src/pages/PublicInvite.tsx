@@ -1,6 +1,8 @@
+
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { db } from "@/integrations/firebase/client";
+import { collection, query, where, getDocs, limit, getCountFromServer, setDoc, doc } from "firebase/firestore";
 import { useAuth } from "@/contexts/AuthContext";
 import { motion } from "framer-motion";
 import { Loader2, Target } from "lucide-react";
@@ -12,7 +14,7 @@ type PublicInviteBolao = {
     description: string | null;
     avatar_url: string | null;
     category: string | null;
-    bolao_members: { count: number }[];
+    memberCount: number;
 };
 
 export default function PublicInvite() {
@@ -28,32 +30,51 @@ export default function PublicInvite() {
         if (!inviteCode) return;
 
         const code = inviteCode.toUpperCase();
-        const { data, error } = await supabase.from('boloes')
-            .select('id, name, description, avatar_url, category, bolao_members(count)')
-            .eq('invite_code', code)
-            .single();
+        try {
+            const boloesRef = collection(db, 'boloes');
+            const q = query(boloesRef, where('invite_code', '==', code), limit(1));
+            const querySnapshot = await getDocs(q);
 
-        if (error || !data) {
-            toast({ title: "Bolão não encontrado", variant: "destructive" });
-            navigate('/');
-            return;
-        }
-
-        if (user) {
-            const { data: member } = await supabase.from('bolao_members')
-                .select('id')
-                .eq('bolao_id', data.id)
-                .eq('user_id', user.id)
-                .maybeSingle();
-
-            if (member) {
-                navigate(`/boloes/${data.id}`);
+            if (querySnapshot.empty) {
+                toast({ title: "Bolão não encontrado", variant: "destructive" });
+                navigate('/');
                 return;
             }
-        }
 
-        setBolao(data);
-        setLoading(false);
+            const docSnap = querySnapshot.docs[0];
+            const data = docSnap.data();
+            const bolaoId = docSnap.id;
+
+            // Get member count
+            const membersRef = collection(db, 'bolao_members');
+            const membersCountSnap = await getCountFromServer(query(membersRef, where('bolao_id', '==', bolaoId)));
+            const memberCount = membersCountSnap.data().count;
+
+            if (user) {
+                const memberRef = collection(db, 'bolao_members');
+                const mq = query(memberRef, where('bolao_id', '==', bolaoId), where('user_id', '==', user.id), limit(1));
+                const memberSnap = await getDocs(mq);
+
+                if (!memberSnap.empty) {
+                    navigate(`/boloes/${bolaoId}`);
+                    return;
+                }
+            }
+
+            setBolao({
+                id: bolaoId,
+                name: data.name,
+                description: data.description || null,
+                avatar_url: data.avatar_url || null,
+                category: data.category || null,
+                memberCount
+            });
+        } catch (error) {
+            console.error("Error loading bolao:", error);
+            toast({ title: "Erro ao carregar bolão", variant: "destructive" });
+        } finally {
+            setLoading(false);
+        }
     }, [inviteCode, navigate, toast, user]);
 
     useEffect(() => {
@@ -61,26 +82,26 @@ export default function PublicInvite() {
     }, [loadBolao]);
 
     const handleJoin = async () => {
-        if (!bolao) {
-            return;
-        }
+        if (!bolao) return;
 
         if (!user) {
-            // Redireciona para login e depois para cá
             navigate(`/auth?redirect=/b/${inviteCode}`);
             return;
         }
 
         try {
-            await supabase.from('bolao_members').insert({
+            const memberId = `${user.id}_${bolao.id}`;
+            await setDoc(doc(db, 'bolao_members', memberId), {
                 bolao_id: bolao.id,
                 user_id: user.id,
                 role: "member",
-                payment_status: "exempt"
+                payment_status: "exempt",
+                joined_at: new Date().toISOString()
             });
             toast({ title: "Entrou com sucesso!", className: "bg-emerald-500 text-white" });
             navigate(`/boloes/${bolao.id}`);
-        } catch {
+        } catch (error) {
+            console.error("Error joining bolao:", error);
             toast({ title: "Erro ao entrar.", variant: "destructive" });
         }
     };
@@ -88,6 +109,8 @@ export default function PublicInvite() {
     if (loading) {
         return <div className="min-h-screen bg-[#050505] flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
     }
+
+    if (!bolao) return null;
 
     return (
         <div className="min-h-screen bg-[#050505] flex flex-col items-center justify-center p-6 relative overflow-hidden">
@@ -104,12 +127,12 @@ export default function PublicInvite() {
 
                     <div className="flex justify-center gap-6 mb-8">
                         <div className="text-center">
-                            <span className="block text-2xl font-black text-white">{bolao.bolao_members[0].count}</span>
+                            <span className="block text-2xl font-black text-white">{bolao.memberCount}</span>
                             <span className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Membros</span>
                         </div>
                         <div className="w-[1px] bg-white/10" />
                         <div className="text-center">
-                            <span className="block text-2xl font-black text-white uppercase">{bolao.category}</span>
+                            <span className="block text-2xl font-black text-white uppercase">{bolao.category || "Aberto"}</span>
                             <span className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Acesso</span>
                         </div>
                     </div>

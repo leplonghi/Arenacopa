@@ -11,6 +11,7 @@ import { Layout } from "@/components/Layout";
 import { TermsGuard } from "@/components/TermsGuard";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { MonetizationProvider } from "@/contexts/MonetizationContext";
+import FieldBackground from "@/components/FieldBackground";
 const Index = lazy(() => import("./pages/Index"));
 const Copa = lazy(() => import("./pages/Copa"));
 const Boloes = lazy(() => import("./pages/Boloes"));
@@ -113,6 +114,7 @@ const App = () => (
       <AuthProvider>
         <MonetizationProvider>
           <Suspense fallback={<LoadingScreen />}>
+            <FieldBackground />
             <BrowserRouter>
               <DeepLinkListener />
               <PushNotificationListener />

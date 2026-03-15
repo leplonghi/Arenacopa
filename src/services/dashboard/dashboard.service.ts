@@ -1,4 +1,15 @@
-import { supabase } from "@/services/supabase/client";
+import { db } from "@/integrations/firebase/client";
+import { 
+  collection, 
+  query, 
+  where, 
+  getDocs, 
+  orderBy, 
+  limit, 
+  doc, 
+  getDoc,
+  getCountFromServer
+} from "firebase/firestore";
 import { getProfile } from "@/services/profile/profile.service";
 
 export interface DashboardBolaoSummary {
@@ -20,116 +31,99 @@ export interface DashboardNewsItem {
 }
 
 export async function getDashboardData(userId: string) {
-  const profilePromise = getProfile(userId);
-  const membershipsPromise = supabase
-    .from("bolao_members")
-    .select("bolao_id")
-    .eq("user_id", userId);
-  const newsPromise = supabase
-    .from("copa_news")
-    .select("id, title, source_name, published_at, url_to_image, url")
-    .order("published_at", { ascending: false })
-    .limit(3);
-  const scheduledMatchesPromise = supabase
-    .from("matches")
-    .select("id", { count: "exact", head: true })
-    .eq("status", "scheduled");
+  try {
+    const profilePromise = getProfile(userId);
+    
+    // 1. Get user memberships
+    const membershipsQuery = query(collection(db, "bolao_members"), where("user_id", "==", userId));
+    const membershipsPromise = getDocs(membershipsQuery);
+    
+    // 2. Get latest news
+    const newsQuery = query(
+      collection(db, "copa_news"), 
+      orderBy("published_at", "desc"), 
+      limit(3)
+    );
+    const newsPromise = getDocs(newsQuery);
+    
+    // 3. Get scheduled matches count
+    const matchesQuery = query(collection(db, "matches"), where("status", "==", "scheduled"));
+    const scheduledMatchesPromise = getCountFromServer(matchesQuery);
 
-  const [{ data: membershipRows, error: membershipsError }, { data: newsRows, error: newsError }, { count: scheduledMatchesCount, error: scheduledMatchesError }, profile] =
-    await Promise.all([membershipsPromise, newsPromise, scheduledMatchesPromise, profilePromise]);
+    const [membershipsSnap, newsSnap, scheduledMatchesSnap, profile] = await Promise.all([
+      membershipsPromise,
+      newsPromise,
+      scheduledMatchesPromise,
+      profilePromise
+    ]);
 
-  if (membershipsError) throw membershipsError;
-  if (newsError) throw newsError;
-  if (scheduledMatchesError) throw scheduledMatchesError;
+    const bolaoIds = membershipsSnap.docs.map(doc => doc.data().bolao_id);
+    const scheduledMatchesCount = scheduledMatchesSnap.data().count;
 
-  const bolaoIds = (membershipRows || []).map((row) => row.bolao_id);
+    const news = newsSnap.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        title: data.title,
+        category: data.source_name || "Geral",
+        publishedAt: data.published_at,
+        imageUrl: data.url_to_image,
+        url: data.url,
+      } as DashboardNewsItem;
+    });
 
-  if (!bolaoIds.length) {
+    if (!bolaoIds.length) {
+      return {
+        profile,
+        favoriteTeam: profile?.favorite_team || null,
+        myBoloes: [] as DashboardBolaoSummary[],
+        news,
+        scheduledMatchesCount,
+      };
+    }
+
+    // 4. Fetch details for each bolao the user is in
+    const myBoloes = await Promise.all(bolaoIds.map(async (bolaoId) => {
+      // Get Bolao info
+      const bolaoDoc = await getDoc(doc(db, "boloes", bolaoId));
+      const bolaoData = bolaoDoc.data();
+      
+      // Get member count
+      const membersCountSnap = await getCountFromServer(query(collection(db, "bolao_members"), where("bolao_id", "==", bolaoId)));
+      
+      // Get my ranking/points
+      // Firestore doesn't support easy 'my rank' without fetching all or using a separate 'rankings' collection
+      // I'll look for a document in bolao_rankings with ID 'userId_bolaoId'
+      const rankingDoc = await getDoc(doc(db, "bolao_rankings", `${userId}_${bolaoId}`));
+      const rankingData = rankingDoc.data();
+      
+      // Get my predictions for this bolao to calculate pending
+      const predictionsSnap = await getCountFromServer(query(
+        collection(db, "bolao_palpites"), 
+        where("user_id", "==", userId),
+        where("bolao_id", "==", bolaoId)
+      ));
+
+      return {
+        id: bolaoId,
+        name: bolaoData?.name || "Bolão",
+        memberCount: membersCountSnap.data().count,
+        myPoints: rankingData?.total_points || 0,
+        myRank: rankingData?.rank || 0, // Assuming rank is pre-calculated/updated by a cloud function or similar
+        pendingCount: Math.max(scheduledMatchesCount - predictionsSnap.data().count, 0),
+      };
+    }));
+
     return {
       profile,
       favoriteTeam: profile?.favorite_team || null,
-      myBoloes: [] as DashboardBolaoSummary[],
-      news: (newsRows || []).map((item) => ({
-        id: item.id,
-        title: item.title,
-        category: item.source_name || "Geral",
-        publishedAt: item.published_at,
-        imageUrl: item.url_to_image,
-        url: item.url,
-      })),
-      scheduledMatchesCount: scheduledMatchesCount || 0,
+      myBoloes,
+      news,
+      scheduledMatchesCount,
     };
+  } catch (error) {
+    console.error("Error fetching dashboard data:", error);
+    throw error;
   }
-
-  const [boloesResponse, rankingsResponse, palpitesResponse] = await Promise.all([
-    supabase
-      .from("boloes")
-      .select("id, name, bolao_members(count)")
-      .in("id", bolaoIds),
-    supabase
-      .from("bolao_rankings")
-      .select("bolao_id, total_points")
-      .eq("user_id", userId)
-      .in("bolao_id", bolaoIds),
-    supabase
-      .from("bolao_palpites")
-      .select("bolao_id, match_id")
-      .eq("user_id", userId)
-      .in("bolao_id", bolaoIds),
-  ]);
-
-  if (boloesResponse.error) throw boloesResponse.error;
-  if (rankingsResponse.error) throw rankingsResponse.error;
-  if (palpitesResponse.error) throw palpitesResponse.error;
-
-  // Calculate actual ranks for each bolao
-  const rankPromises = (rankingsResponse.data || []).map(r => 
-    supabase
-      .from("bolao_rankings")
-      .select("*", { count: "exact", head: true })
-      .eq("bolao_id", r.bolao_id)
-      .gt("total_points", r.total_points || 0)
-  );
-  
-  const rankResults = await Promise.all(rankPromises);
-  const ranksMap = new Map((rankingsResponse.data || []).map((r, i) => [r.bolao_id, (rankResults[i].count || 0) + 1]));
-
-  const rankingsPointsMap = new Map(
-    (rankingsResponse.data || []).map((row) => [row.bolao_id, row.total_points || 0])
-  );
-
-  const palpitesByBolao = new Map<string, Set<string>>();
-  (palpitesResponse.data || []).forEach((row) => {
-    if (!palpitesByBolao.has(row.bolao_id)) {
-      palpitesByBolao.set(row.bolao_id, new Set());
-    }
-    palpitesByBolao.get(row.bolao_id)?.add(row.match_id);
-  });
-
-  const myBoloes = (boloesResponse.data || []).map((bolao) => {
-    const totalPredictions = palpitesByBolao.get(bolao.id)?.size || 0;
-    return {
-      id: bolao.id,
-      name: bolao.name,
-      memberCount: bolao.bolao_members?.[0]?.count ?? 0,
-      myPoints: rankingsPointsMap.get(bolao.id) || 0,
-      myRank: ranksMap.get(bolao.id) || 0,
-      pendingCount: Math.max((scheduledMatchesCount || 0) - totalPredictions, 0),
-    };
-  });
-
-  return {
-    profile,
-    favoriteTeam: profile?.favorite_team || null,
-    myBoloes,
-    news: (newsRows || []).map((item) => ({
-      id: item.id,
-      title: item.title,
-      category: item.source_name || "Geral",
-      publishedAt: item.published_at,
-      imageUrl: item.url_to_image,
-      url: item.url,
-    })),
-    scheduledMatchesCount: scheduledMatchesCount || 0,
-  };
 }
+

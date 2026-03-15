@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, type ReactNode } from "react";
-import type { Session, User as SupabaseUser } from "@supabase/supabase-js";
-import { supabase } from "@/services/supabase/client";
+import { onAuthStateChanged, User as FirebaseUser } from "firebase/auth";
+import { auth } from "@/integrations/firebase/client";
 import { ensureProfile } from "@/services/profile/profile.service";
 import { signOutUser } from "@/services/auth/auth.service";
 
@@ -12,7 +12,7 @@ export interface User {
 
 interface AuthContextType {
   user: User | null;
-  session: Session | null;
+  session: any | null; // Keep session for compatibility, though Firebase handles it differently
   loading: boolean;
   signOut: () => Promise<void>;
   loginAsDemo: () => Promise<void>;
@@ -30,7 +30,7 @@ export const useAuth = () => useContext(AuthContext);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
+  const [session, setSession] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -45,69 +45,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    const mapUser = (authUser: SupabaseUser | null) => {
-      if (!authUser) return null;
+    const mapUser = (firebaseUser: FirebaseUser | null) => {
+      if (!firebaseUser) return null;
       return {
-        id: authUser.id,
-        email: authUser.email ?? null,
+        id: firebaseUser.uid,
+        email: firebaseUser.email ?? null,
         user_metadata: {
-          full_name:
-            authUser.user_metadata?.full_name ||
-            authUser.user_metadata?.name ||
-            undefined,
-          avatar_url: authUser.user_metadata?.avatar_url || undefined,
-          name: authUser.user_metadata?.name || undefined,
+          full_name: firebaseUser.displayName || undefined,
+          avatar_url: firebaseUser.photoURL || undefined,
+          name: firebaseUser.displayName || undefined,
         },
       } satisfies User;
     };
 
-    const syncSession = async () => {
-      const { data } = await supabase.auth.getSession();
-      setSession(data.session);
-      setUser(mapUser(data.session?.user ?? null));
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        setSession(firebaseUser); // Using Firebase user as session object
+        const mappedUser = mapUser(firebaseUser);
+        setUser(mappedUser);
 
-      if (data.session?.user) {
-        ensureProfile({
-          id: data.session.user.id,
-          email: data.session.user.email ?? null,
-          user_metadata: {
-            full_name: data.session.user.user_metadata?.full_name,
-            name: data.session.user.user_metadata?.name,
-            avatar_url: data.session.user.user_metadata?.avatar_url,
-          },
-        }).catch((error) => {
-          console.error("Error ensuring profile:", error);
-        });
+        if (mappedUser) {
+          ensureProfile({
+            id: mappedUser.id,
+            email: mappedUser.email,
+            user_metadata: mappedUser.user_metadata,
+          }).catch((error) => {
+            console.error("Error ensuring profile:", error);
+          });
+        }
+      } else {
+        setSession(null);
+        setUser(null);
       }
-
       setLoading(false);
-    };
-
-    void syncSession();
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
-      setSession(nextSession);
-      setUser(mapUser(nextSession?.user ?? null));
-      setLoading(false);
-
-      if (nextSession?.user) {
-        ensureProfile({
-          id: nextSession.user.id,
-          email: nextSession.user.email ?? null,
-          user_metadata: {
-            full_name: nextSession.user.user_metadata?.full_name,
-            name: nextSession.user.user_metadata?.name,
-            avatar_url: nextSession.user.user_metadata?.avatar_url,
-          },
-        }).catch((error) => {
-          console.error("Error ensuring profile:", error);
-        });
-      }
     });
 
-    return () => subscription.unsubscribe();
+    return () => unsubscribe();
   }, []);
 
   const loginAsDemo = async () => {

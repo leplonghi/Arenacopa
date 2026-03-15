@@ -14,7 +14,6 @@ import { ElitePassModal } from "@/components/ElitePassModal";
 import { LiveMatchCard } from "@/components/LiveMatchCard";
 import { useMonetization } from "@/contexts/MonetizationContext";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { getDashboardData, type DashboardBolaoSummary, type DashboardNewsItem } from "@/services/dashboard/dashboard.service";
 import { useMatches } from "@/hooks/useMatches";
 
@@ -28,7 +27,7 @@ const containerVariants = {
 
 const itemVariants = {
   hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
+  visible: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 300, damping: 24 } }
 };
 
 const Index = () => {
@@ -39,15 +38,21 @@ const Index = () => {
     queryKey: ['favoriteTeam', user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('favorite_team')
-        .eq('user_id', user.id)
-        .maybeSingle();
-      if (error) {
-        console.error("Error fetching favorite team from Supabase:", error);
+      try {
+        const { getDoc, doc } = await import("firebase/firestore");
+        const { db } = await import("@/integrations/firebase/client");
+        const docRef = doc(db, "profiles", user.id);
+        const docSnap = await getDoc(docRef);
+        
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          return data.favorite_team || null;
+        }
+        return null;
+      } catch (error) {
+        console.error("Error fetching favorite team from Firestore:", error);
+        return null;
       }
-      return data?.favorite_team || null;
     },
     enabled: !!user?.id,
   });

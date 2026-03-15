@@ -1,6 +1,15 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { supabase } from "@/integrations/supabase/client";
+import { db } from "@/integrations/firebase/client";
+import { 
+    collection, 
+    query, 
+    where, 
+    getDocs, 
+    setDoc, 
+    doc,
+    serverTimestamp 
+} from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { type ExtraBet } from "@/types/bolao";
@@ -25,18 +34,19 @@ export function ExtrasTab({ bolaoId, userId }: ExtrasTabProps) {
     useEffect(() => {
         const loadExtras = async () => {
             try {
-                const { data, error } = await supabase
-                    .from("bolao_extra_bets")
-                    .select("id, bolao_id, user_id, category, value, points_awarded, created_at")
-                    .eq("bolao_id", bolaoId)
-                    .eq("user_id", userId);
+                const extrasRef = collection(db, "bolao_extra_bets");
+                const q = query(
+                    extrasRef, 
+                    where("bolao_id", "==", bolaoId), 
+                    where("user_id", "==", userId)
+                );
+                const querySnapshot = await getDocs(q);
+                
+                const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as unknown as ExtraBet[];
 
-                if (error) throw error;
-
-                if (data?.length) {
-                    const typedData = data as ExtraBet[];
-                    setExtras(typedData);
-                    const ts = typedData.find((e) => e.category === 'top_scorer');
+                if (data.length) {
+                    setExtras(data);
+                    const ts = data.find((e) => e.category === 'top_scorer');
                     if (ts) setTopScorerInput(ts.value);
                 }
             } catch (error) {
@@ -52,23 +62,25 @@ export function ExtrasTab({ bolaoId, userId }: ExtrasTabProps) {
         if (!value) return;
         setSaving(category);
         try {
-            const { data, error } = await supabase
-                .from("bolao_extra_bets")
-                .upsert(
-                    { bolao_id: bolaoId, user_id: userId, category, value },
-                    { onConflict: "bolao_id,user_id,category" }
-                )
-                .select("id, bolao_id, user_id, category, value, points_awarded, created_at")
-                .single();
+            const betId = `${userId}_${bolaoId}_${category}`;
+            const betRef = doc(db, "bolao_extra_bets", betId);
+            
+            const payload = {
+                id: betId,
+                bolao_id: bolaoId,
+                user_id: userId,
+                category,
+                value,
+                updated_at: serverTimestamp(),
+            };
 
-            if (error) throw error;
-
-            const newExtra = data as ExtraBet;
+            await setDoc(betRef, payload, { merge: true });
 
             setExtras(prev => {
                 const filtered = prev.filter(e => e.category !== category);
-                return [...filtered, newExtra];
+                return [...filtered, payload as unknown as ExtraBet];
             });
+            
             toast({
                 title: t('extras.saved_success'),
                 className: "bg-emerald-500 border-emerald-600 text-white font-black uppercase text-[10px] tracking-widest"

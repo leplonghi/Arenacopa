@@ -1,31 +1,13 @@
-import { supabase } from "@/services/supabase/client";
+import { db } from "@/integrations/firebase/client";
+import { 
+  doc, 
+  setDoc, 
+  updateDoc, 
+  deleteDoc, 
+  getDoc,
+  serverTimestamp 
+} from "firebase/firestore";
 import type { MemberData, Palpite } from "@/types/bolao";
-
-type BolaoPalpiteRow = {
-  id: string;
-  bolao_id: string;
-  user_id: string;
-  match_id: string;
-  home_score: number;
-  away_score: number;
-  points: number | null;
-  is_power_play: boolean | null;
-  created_at: string;
-};
-
-function mapPalpite(row: BolaoPalpiteRow): Palpite {
-  return {
-    id: row.id,
-    bolao_id: row.bolao_id,
-    user_id: row.user_id,
-    match_id: row.match_id,
-    home_score: row.home_score,
-    away_score: row.away_score,
-    points: row.points,
-    is_power_play: row.is_power_play ?? false,
-    created_at: row.created_at,
-  };
-}
 
 export async function saveBolaoPalpite(input: {
   bolaoId: string;
@@ -36,49 +18,50 @@ export async function saveBolaoPalpite(input: {
   isPowerPlay: boolean;
   existingId?: string;
 }) {
-  if (input.existingId) {
-    const { data, error } = await supabase
-      .from("bolao_palpites")
-      .update({
-        home_score: input.homeScore,
-        away_score: input.awayScore,
-        is_power_play: input.isPowerPlay,
-      })
-      .eq("id", input.existingId)
-      .select("id, bolao_id, user_id, match_id, home_score, away_score, points, is_power_play, created_at")
-      .single();
-
-    if (error) throw error;
-
-    return mapPalpite(data);
-  }
-
-  const { data, error } = await supabase
-    .from("bolao_palpites")
-    .insert({
+  try {
+    // We can use a deterministic ID: userId_bolaoId_matchId to avoid duplicates
+    const palpiteId = input.existingId || `${input.userId}_${input.bolaoId}_${input.matchId}`;
+    const docRef = doc(db, "bolao_palpites", palpiteId);
+    
+    const payload = {
       bolao_id: input.bolaoId,
       user_id: input.userId,
       match_id: input.matchId,
       home_score: input.homeScore,
       away_score: input.awayScore,
       is_power_play: input.isPowerPlay,
-    })
-    .select("id, bolao_id, user_id, match_id, home_score, away_score, points, is_power_play, created_at")
-    .single();
+      updated_at: serverTimestamp(),
+    };
 
-  if (error) throw error;
+    if (input.existingId) {
+      await updateDoc(docRef, payload);
+    } else {
+      await setDoc(docRef, {
+        ...payload,
+        id: palpiteId,
+        created_at: new Date().toISOString(),
+        points: null,
+      });
+    }
 
-  return mapPalpite(data);
+    const updatedDoc = await getDoc(docRef);
+    const data = updatedDoc.data();
+    
+    return {
+      id: updatedDoc.id,
+      ...data,
+      is_power_play: data?.is_power_play ?? false,
+    } as Palpite;
+  } catch (error) {
+    console.error("Error saving palpite:", error);
+    throw error;
+  }
 }
 
 export async function removeBolaoMember(bolaoId: string, userId: string) {
-  const { error } = await supabase
-    .from("bolao_members")
-    .delete()
-    .eq("bolao_id", bolaoId)
-    .eq("user_id", userId);
-
-  if (error) throw error;
+  // Strategy: assume member doc ID is userId_bolaoId
+  const memberId = `${userId}_${bolaoId}`;
+  await deleteDoc(doc(db, "bolao_members", memberId));
 }
 
 export async function updateBolaoMemberPaymentStatus(input: {
@@ -86,11 +69,8 @@ export async function updateBolaoMemberPaymentStatus(input: {
   userId: string;
   paymentStatus: NonNullable<MemberData["payment_status"]>;
 }) {
-  const { error } = await supabase
-    .from("bolao_members")
-    .update({ payment_status: input.paymentStatus })
-    .eq("bolao_id", input.bolaoId)
-    .eq("user_id", input.userId);
-
-  if (error) throw error;
+  const memberId = `${input.userId}_${input.bolaoId}`;
+  const docRef = doc(db, "bolao_members", memberId);
+  await updateDoc(docRef, { payment_status: input.paymentStatus });
 }
+

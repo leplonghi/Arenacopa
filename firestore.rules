@@ -1,0 +1,51 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Perfis: Qualquer um vê, apenas o dono edita
+    match /profiles/{userId} {
+      allow read: if true;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // Boloes: Qualquer um logado vê e cria
+    match /boloes/{bolaoId} {
+      allow read, create: if request.auth != null;
+      allow update, delete: if request.auth != null && resource.data.creator_id == request.auth.uid;
+    }
+    
+    // Participantes: Permitir ver quem está no bolão
+    match /bolao_members/{memberId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+    
+    // Palpites: Privacidade total, só o dono vê/edita (exceto se for público via bolão)
+    match /bolao_palpites/{palpiteId} {
+      allow read, write: if request.auth != null && (request.resource.data.user_id == request.auth.uid || resource.data.user_id == request.auth.uid);
+    }
+    
+    // Jogos: Público para leitura apenas
+    match /matches/{matchId} {
+      allow read: if true;
+      allow write: if false; // Apenas via Admin/Functions
+    }
+    
+    // Rankings: Público para leitura
+    match /bolao_rankings/{rankingId} {
+      allow read: if true;
+      allow write: if false; // Apenas via Admin/Functions
+    }
+
+    // Noticias: Público para leitura
+    match /copa_news/{newsId} {
+      allow read: if true;
+      allow write: if false; // Apenas via Admin/Functions
+    }
+    
+    // Partidas
+    match /matches/{matchId} {
+      allow read: if true;
+      allow write: if false; // Apenas via Admin/Functions
+    }
+  }
+}

@@ -3,107 +3,145 @@ const admin = require('firebase-admin');
 
 admin.initializeApp();
 
-// Gamification Logic: Distribute points when a match finishes
+const SCORING = {
+    EXACT: 5,
+    WINNER: 3,
+    DRAW: 2
+};
+
+/**
+ * Triggered when a match is updated.
+ * If the match finishes or the score changes while finished, recalculates all palpites.
+ */
 exports.onMatchResultUpdated = functions.firestore
     .document('matches/{matchId}')
     .onUpdate(async (change, context) => {
         const newValue = change.after.data();
         const previousValue = change.before.data();
 
-        // Check if the match status changed to finished
-        if (newValue.status === 'FINISHED' && previousValue.status !== 'FINISHED') {
-            const matchId = context.params.matchId;
-            const actualScoreHome = newValue.homeScore;
-            const actualScoreAway = newValue.awayScore;
+        // Check if status changed to finished or home_score/away_score changed while finished
+        const statusChangedToFinished = newValue.status === 'finished' && previousValue.status !== 'finished';
+        const scoreChangedWhileFinished = newValue.status === 'finished' && 
+            (newValue.home_score !== previousValue.home_score || newValue.away_score !== previousValue.away_score);
 
-            // Get all predictions for this match
-            const predictionsRef = admin.firestore().collection('predictions');
-            const predictionsSnapshot = await predictionsRef.where('matchId', '==', matchId).get();
+        if (statusChangedToFinished || scoreChangedWhileFinished) {
+            const matchId = context.params.matchId;
+            const mh = newValue.home_score;
+            const ma = newValue.away_score;
+
+            if (mh === null || ma === null) return null;
+
+            console.log(`Processing match ${matchId} result: ${mh} - ${ma}`);
+
+            // Get all predictions for this match across all boloes
+            const predictionsRef = admin.firestore().collection('bolao_palpites');
+            const predictionsSnapshot = await predictionsRef.where('match_id', '==', matchId).get();
+
+            if (predictionsSnapshot.empty) {
+                console.log(`No predictions found for match ${matchId}`);
+                return null;
+            }
 
             const batch = admin.firestore().batch();
 
             for (const doc of predictionsSnapshot.docs) {
-                const userPrediction = doc.data();
-                const userId = userPrediction.userId;
+                const palpite = doc.data();
+                const userId = palpite.user_id;
+                const bolaoId = palpite.bolao_id;
 
-                let pointsEarned = 0;
+                let points = 0;
+                let type = 'miss';
 
-                // Exact Match Score Rule
-                if (userPrediction.homeScore === actualScoreHome && userPrediction.awayScore === actualScoreAway) {
-                    pointsEarned = 10; // "Na Mosca"
+                const ph = palpite.home_score;
+                const pa = palpite.away_score;
+
+                // Exact score
+                if (ph === mh && pa === ma) {
+                    points = SCORING.EXACT;
+                    type = 'exact';
+                } else {
+                    const palpiteDiff = ph - pa;
+                    const matchDiff = mh - ma;
+                    const palpiteResult = palpiteDiff > 0 ? "home" : palpiteDiff < 0 ? "away" : "draw";
+                    const matchResult = matchDiff > 0 ? "home" : matchDiff < 0 ? "away" : "draw";
+
+                    if (palpiteResult === matchResult) {
+                        if (matchResult === "draw") {
+                            points = SCORING.DRAW;
+                            type = 'draw';
+                        } else {
+                            points = SCORING.WINNER;
+                            type = 'winner';
+                        }
+                    } else {
+                        type = 'miss';
+                    }
                 }
-                // Correct Winner/Draw Rule
-                else if (
-                    (userPrediction.homeScore > userPrediction.awayScore && actualScoreHome > actualScoreAway) ||
-                    (userPrediction.homeScore < userPrediction.awayScore && actualScoreHome < actualScoreAway) ||
-                    (userPrediction.homeScore === userPrediction.awayScore && actualScoreHome === actualScoreAway)
-                ) {
-                    pointsEarned = 5; // "Vencedor Seco"
+
+                // Power Play multiplier
+                if (palpite.is_power_play && points > 0) {
+                    points *= 2;
                 }
 
-                if (pointsEarned > 0) {
-                    const userRef = admin.firestore().collection('users').doc(userId);
+                // Update the prediction document
+                batch.update(doc.ref, {
+                    points: points,
+                    type: type,
+                    processed_at: admin.firestore.FieldValue.serverTimestamp()
+                });
 
-                    // Update User Score
-                    batch.update(userRef, {
-                        totalScore: admin.firestore.FieldValue.increment(pointsEarned),
-                        correctPredictions: admin.firestore.FieldValue.increment(1),
-                        exactMatches: pointsEarned === 10 ? admin.firestore.FieldValue.increment(1) : admin.firestore.FieldValue.increment(0)
-                    });
+                // Update bolao_rankings doc: ${userId}_${bolaoId}
+                const rankingRef = admin.firestore().collection('bolao_rankings').doc(`${userId}_${bolaoId}`);
+                
+                // Calculate difference if score was updated (previousValue was already finished)
+                const prevPoints = palpite.points || 0;
+                const diffPoints = points - prevPoints;
+                const prevType = palpite.type || 'miss';
+                const diffExacts = (type === 'exact' ? 1 : 0) - (prevType === 'exact' ? 1 : 0);
 
-                    // Update the prediction itself with points
-                    batch.update(doc.ref, {
-                        pointsAwarded: pointsEarned,
-                        processed: true
-                    });
-
-                    // Achievement logic can be added here
-                }
+                batch.set(rankingRef, {
+                    user_id: userId,
+                    bolao_id: bolaoId,
+                    total_points: admin.firestore.FieldValue.increment(diffPoints),
+                    exact_matches: admin.firestore.FieldValue.increment(diffExacts),
+                    updated_at: admin.firestore.FieldValue.serverTimestamp()
+                }, { merge: true });
             }
 
-            // Commit the batch update
             await batch.commit();
-            console.log(`Processed ${predictionsSnapshot.size} predictions for match ${matchId}`);
+            console.log(`Successfully processed ${predictionsSnapshot.size} predictions for match ${matchId}`);
         }
         return null;
     });
 
-// Push Notification Logic: Notify when a new Bolão invite happens
-exports.onNewBolaoInvite = functions.firestore
-    .document('bolaos/{bolaoId}/members/{userId}')
+/**
+ * Triggered when a user joins a bolão.
+ * Initializes their ranking entry.
+ */
+exports.onNewBolaoMember = functions.firestore
+    .document('bolao_members/{memberId}')
     .onCreate(async (snap, context) => {
-        const bolaoId = context.params.bolaoId;
-        const userId = context.params.userId;
-        const snapData = snap.data();
+        const data = snap.data();
+        const userId = data.user_id;
+        const bolaoId = data.bolao_id;
 
-        // Don't notify the admin themselves
-        if (snapData.role === 'admin') return null;
+        if (!userId || !bolaoId) return null;
 
-        const userRef = admin.firestore().collection('users').doc(userId);
-        const userDoc = await userRef.get();
-        if (!userDoc.exists) return null;
+        const rankingRef = admin.firestore().collection('bolao_rankings').doc(`${userId}_${bolaoId}`);
+        const rankingDoc = await rankingRef.get();
 
-        const fcmToken = userDoc.data()?.fcmToken;
-        if (!fcmToken) return null;
-
-        const bolaoDoc = await admin.firestore().collection('bolaos').doc(bolaoId).get();
-        const bolaoName = bolaoDoc.data()?.name || "um novo bolão";
-
-        const message = {
-            notification: {
-                title: 'Convite para Bolão!',
-                body: `Você foi convidado para participar de ${bolaoName}! Dá uma olhada e faça seus palpites.`
-            },
-            data: {
-                route: `/boloes/${bolaoId}`
-            },
-            token: fcmToken
-        };
-
-        try {
-            await admin.messaging().send(message);
-        } catch (error) {
-            console.error('Error sending push notification', error);
+        if (!rankingDoc.exists) {
+            await rankingRef.set({
+                user_id: userId,
+                bolao_id: bolaoId,
+                total_points: 0,
+                exact_matches: 0,
+                rank: 0,
+                created_at: admin.firestore.FieldValue.serverTimestamp(),
+                updated_at: admin.firestore.FieldValue.serverTimestamp()
+            });
+            console.log(`Initialized ranking for user ${userId} in bolão ${bolaoId}`);
         }
+
         return null;
     });

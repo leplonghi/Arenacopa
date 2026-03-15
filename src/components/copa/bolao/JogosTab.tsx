@@ -1,5 +1,16 @@
 import { useState, useEffect, useRef } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { db } from "@/integrations/firebase/client";
+import { 
+    collection, 
+    query, 
+    where, 
+    orderBy, 
+    getDocs, 
+    onSnapshot, 
+    doc, 
+    setDoc,
+    serverTimestamp
+} from "firebase/firestore";
 import { useAuth } from "@/contexts/AuthContext";
 import { Flag } from "@/components/Flag";
 import { useToast } from "@/hooks/use-toast";
@@ -36,7 +47,7 @@ type PalpiteRealtimeRow = {
     is_exact: boolean;
 };
 
-export function JogosTab({ bolaoId }: { bolaoId: string; rules?: unknown }) {
+export function JogosTab({ bolaoId, highlightedMatchId }: { bolaoId: string; highlightedMatchId?: string; rules?: unknown }) {
     const { user } = useAuth();
     const { toast } = useToast();
     const [matches, setMatches] = useState<JogosTabMatch[]>([]);
@@ -50,68 +61,77 @@ export function JogosTab({ bolaoId }: { bolaoId: string; rules?: unknown }) {
 
     useEffect(() => {
         if (!user) return;
-        const loadMatchesAndPalpites = async () => {
-            const { data: mData } = await supabase.from('matches').select('*').order('match_date', { ascending: true });
-            const { data: pData } = await supabase.from('bolao_palpites').select('*').eq('bolao_id', bolaoId).eq('user_id', user.id);
 
-            if (mData) {
-                setMatches(mData);
-            }
+        // Load Matches
+        const loadMatches = async () => {
+            const matchesRef = collection(db, "matches");
+            const q = query(matchesRef, orderBy("match_date", "asc"));
+            const snapshot = await getDocs(q);
+            const mData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as JogosTabMatch));
+            setMatches(mData);
+        };
+        loadMatches();
 
-            if (pData) {
-                const m = pData.reduce<Record<string, { id?: string; home: string; away: string; points: number; is_exact: boolean }>>((acc, p) => ({
+        // Listen for user's predictions in this bolao
+        const palpitesRef = collection(db, "bolao_palpites");
+        const qPalpites = query(
+            palpitesRef, 
+            where("bolao_id", "==", bolaoId),
+            where("user_id", "==", user.id)
+        );
+
+        const unsubscribe = onSnapshot(qPalpites, (snapshot) => {
+            const m = snapshot.docs.reduce<Record<string, { id?: string; home: string; away: string; points: number; is_exact: boolean }>>((acc, doc) => {
+                const p = doc.data() as PalpiteRealtimeRow;
+                return {
                     ...acc,
                     [p.match_id]: {
-                        id: p.id,
+                        id: doc.id,
                         home: p.home_score.toString(),
                         away: p.away_score.toString(),
-                        points: p.points,
-                        is_exact: p.is_exact
+                        points: p.points || 0,
+                        is_exact: p.is_exact || false
                     }
-                }), {});
-                setPalpites(m);
-            }
-        };
-        loadMatchesAndPalpites();
-
-        // Listen for calculated points
-        const chan = supabase.channel(`palpites_updates:${user.id}`)
-            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'bolao_palpites', filter: `user_id=eq.${user.id}` }, (payload) => {
-                const np = payload.new as PalpiteRealtimeRow;
-                if (np.bolao_id === bolaoId) {
-                    setPalpites(prev => ({ ...prev, [np.match_id]: { id: np.id, home: np.home_score.toString(), away: np.away_score.toString(), points: np.points, is_exact: np.is_exact } }));
+                };
+            }, {});
+            
+            // Check for exact match celebration
+            snapshot.docChanges().forEach((change) => {
+                if (change.type === "modified") {
+                    const np = change.doc.data() as PalpiteRealtimeRow;
                     if (np.is_exact) {
-                        // Confetti celebration
                         toast({ title: "Na mosca!", description: "Você cravou o placar exato!", className: "bg-primary text-black font-black" });
                         confetti({ particleCount: 150, spread: 90, origin: { y: 0.6 } });
                     }
                 }
-            }).subscribe();
+            });
 
-        return () => { supabase.removeChannel(chan); };
+            setPalpites(m);
+        });
+
+        return () => unsubscribe();
     }, [bolaoId, toast, user]);
 
     const handleSave = async (matchId: string, homeTeam: string, awayTeam: string) => {
+        if (!user) return;
         const palpite = palpites[matchId];
-        if (!palpite || !palpite.home || !palpite.away) return;
+        if (!palpite || palpite.home === '' || palpite.away === '') return;
 
         const hs = parseInt(palpite.home);
         const as = parseInt(palpite.away);
         if (isNaN(hs) || isNaN(as)) return;
 
         try {
-            if (palpite.id) {
-                await supabase.from('bolao_palpites').update({ home_score: hs, away_score: as }).eq('id', palpite.id);
-            } else {
-                const { data } = await supabase.from('bolao_palpites').insert({
-                    bolao_id: bolaoId,
-                    user_id: user!.id,
-                    match_id: matchId,
-                    home_score: hs,
-                    away_score: as
-                }).select().single();
-                if (data) setPalpites(prev => ({ ...prev, [matchId]: { ...prev[matchId], id: data.id } }));
-            }
+            const docId = `${user.id}_${matchId}_${bolaoId}`;
+            await setDoc(doc(db, "bolao_palpites", docId), {
+                bolao_id: bolaoId,
+                user_id: user.id,
+                match_id: matchId,
+                home_score: hs,
+                away_score: as,
+                updated_at: serverTimestamp()
+            }, { merge: true });
+
             toast({ title: "Salvo!" });
 
             // Open Share Dialog
@@ -123,6 +143,7 @@ export function JogosTab({ bolaoId }: { bolaoId: string; rules?: unknown }) {
             });
             setShareModalOpen(true);
         } catch (error) {
+            console.error(error);
             toast({ title: "Erro ao salvar palpite", variant: "destructive" });
         }
     };
@@ -185,9 +206,13 @@ export function JogosTab({ bolaoId }: { bolaoId: string; rules?: unknown }) {
             {matches.map(m => {
                 const isStarted = m.status === 'live' || m.status === 'finished';
                 const p = palpites[m.id] || { home: '', away: '', points: 0, is_exact: false };
+                const isHighlighted = highlightedMatchId === m.id;
 
                 return (
-                    <div key={m.id} className="relative p-6 bg-white/[0.03] border border-white/5 rounded-[32px] overflow-hidden">
+                    <div key={m.id} className={cn(
+                        "relative p-6 bg-white/[0.03] border rounded-[32px] overflow-hidden transition-all",
+                        isHighlighted ? "border-primary/50 bg-primary/5 ring-1 ring-primary/20" : "border-white/5"
+                    )}>
                         {isStarted && <div className="absolute inset-0 bg-black/50 z-10 backdrop-blur-sm pointer-events-none flex flex-col items-center justify-center">
                             <Lock className="w-8 h-8 text-gray-500 mb-2" />
                             <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Palpites Encerrados</span>
@@ -214,6 +239,7 @@ export function JogosTab({ bolaoId }: { bolaoId: string; rules?: unknown }) {
                                 <input
                                     type="text"
                                     maxLength={2}
+                                    inputMode="numeric"
                                     value={p.home}
                                     onChange={e => updateScore(m.id, 'home', e.target.value)}
                                     className="w-14 h-16 bg-white/5 border border-white/10 rounded-2xl text-center text-3xl font-black text-white outline-none focus:border-primary/50"
@@ -223,6 +249,7 @@ export function JogosTab({ bolaoId }: { bolaoId: string; rules?: unknown }) {
                                 <input
                                     type="text"
                                     maxLength={2}
+                                    inputMode="numeric"
                                     value={p.away}
                                     onChange={e => updateScore(m.id, 'away', e.target.value)}
                                     className="w-14 h-16 bg-white/5 border border-white/10 rounded-2xl text-center text-3xl font-black text-white outline-none focus:border-primary/50"
@@ -265,7 +292,6 @@ export function JogosTab({ bolaoId }: { bolaoId: string; rules?: unknown }) {
                         </button>
                     </div>
 
-                    {/* Rendering off-screen */}
                     <div className="fixed -left-[9999px] top-0 pointer-events-none" aria-hidden="true" ref={shareRef}>
                         {shareData && <ShareCardGenerator type="my_palpite" format="story" data={shareData} />}
                     </div>

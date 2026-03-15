@@ -1,6 +1,7 @@
 
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { db } from "@/integrations/firebase/client";
+import { collection, query, orderBy, getDocs } from "firebase/firestore";
 import { type Match, type MatchPhase, type MatchStatus } from "@/data/mockData";
 
 type MatchRow = {
@@ -20,36 +21,44 @@ export function useMatches() {
     return useQuery({
         queryKey: ["matches"],
         queryFn: async () => {
-            const { data, error } = await supabase
-                .from("matches")
-                .select("*")
-                .order("match_date", { ascending: true });
+            try {
+                const matchesRef = collection(db, "matches");
+                const q = query(matchesRef, orderBy("match_date", "asc"));
+                const querySnapshot = await getDocs(q);
+                
+                const data = querySnapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                })) as MatchRow[];
 
-            if (error) throw error;
+                // Map database stages back to MatchPhase for frontend compatibility
+                const phaseMap: Record<string, MatchPhase> = {
+                    'group': 'groups',
+                    'GROUP_STAGE': 'groups',
+                    'round_of_32': 'round-of-32',
+                    'round_of_16': 'round-of-16',
+                    'qf': 'quarter',
+                    'sf': 'semi',
+                    'third_place': 'third',
+                    'final': 'final'
+                };
 
-            // Map Supabase stages back to MatchPhase for frontend compatibility
-            const phaseMap: Record<string, MatchPhase> = {
-                'group': 'groups',
-                'round_of_32': 'round-of-32',
-                'round_of_16': 'round-of-16',
-                'qf': 'quarter',
-                'sf': 'semi',
-                'third_place': 'third',
-                'final': 'final'
-            };
-
-            return (data as MatchRow[]).map((m) => ({
-                id: m.id,
-                homeTeam: m.home_team_code,
-                awayTeam: m.away_team_code,
-                homeScore: m.home_score ?? undefined,
-                awayScore: m.away_score ?? undefined,
-                date: m.match_date,
-                stadium: m.venue_id,
-                status: m.status,
-                phase: (phaseMap[m.stage] || m.stage) as MatchPhase,
-                group: m.group_id ?? undefined
-            })) as Match[];
+                return data.map((m) => ({
+                    id: m.id,
+                    homeTeam: m.home_team_code,
+                    awayTeam: m.away_team_code,
+                    homeScore: m.home_score ?? undefined,
+                    awayScore: m.away_score ?? undefined,
+                    date: m.match_date,
+                    stadium: m.venue_id,
+                    status: m.status,
+                    phase: (phaseMap[m.stage] || m.stage) as MatchPhase,
+                    group: m.group_id ?? undefined
+                })) as Match[];
+            } catch (error) {
+                console.error("Error fetching matches from Firestore:", error);
+                throw error;
+            }
         },
     });
 }

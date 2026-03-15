@@ -1,38 +1,35 @@
-import { supabase } from "@/services/supabase/client";
+import { auth } from "@/integrations/firebase/client";
+import { 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword, 
+  signOut,
+  GoogleAuthProvider,
+  signInWithPopup,
+  updateProfile
+} from "firebase/auth";
 
 export async function signInWithPassword(email: string, password: string) {
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
-  if (error) throw error;
+  const userCredential = await signInWithEmailAndPassword(auth, email, password);
+  return userCredential.user;
 }
 
 export async function signUpWithPassword(email: string, password: string, name: string) {
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-    options: {
-      data: {
-        name,
-        full_name: name,
-      },
-    },
+  const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+  
+  // Update display name
+  await updateProfile(userCredential.user, {
+    displayName: name
   });
 
-  if (error) throw error;
-  return data;
+  return userCredential.user;
 }
 
-export async function signInWithGoogle(redirectTo?: string) {
-  const { error } = await supabase.auth.signInWithOAuth({
-    provider: "google",
-    options: {
-      redirectTo,
-    },
-  });
-
-  if (error) throw error;
+export async function signInWithGoogle() {
+  const provider = new GoogleAuthProvider();
+  const result = await signInWithPopup(auth, provider);
+  return result.user;
 }
 
 export async function signOutUser() {
-  const { error } = await supabase.auth.signOut();
-  if (error) throw error;
+  await signOut(auth);
 }

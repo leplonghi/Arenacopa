@@ -1,7 +1,20 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Compass, Loader2, Plus, Search, Trophy, UserPlus, Users } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { db } from "@/integrations/firebase/client";
+import { 
+  collection, 
+  query, 
+  where, 
+  getDocs, 
+  orderBy, 
+  limit, 
+  doc, 
+  getDoc, 
+  setDoc,
+  getCountFromServer,
+  documentId
+} from "firebase/firestore";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { EmptyState } from "@/components/EmptyState";
@@ -62,66 +75,88 @@ export default function Boloes() {
     setLoading(true);
 
     try {
-      const { data: myMemberships, error: membershipError } = await supabase
-        .from("bolao_members")
-        .select("bolao_id, role")
-        .eq("user_id", user.id);
+      // 1. Get user's memberships
+      const membersRef = collection(db, "bolao_members");
+      const qMembers = query(membersRef, where("user_id", "==", user.id));
+      const memberSnap = await getDocs(qMembers);
+      
+      const membershipIds = memberSnap.docs.map(doc => doc.data().bolao_id);
 
-      if (membershipError) throw membershipError;
-
-      const membershipIds = (myMemberships || []).map((m: MembershipRow) => m.bolao_id);
-
-      if (membershipIds.length) {
-        const { data: myBoloesData, error: myBoloesError } = await supabase
-          .from("boloes")
-          .select("id, name, description, creator_id, invite_code, created_at, avatar_url, category, status, bolao_members(count)")
-          .in("id", membershipIds)
-          .order("created_at", { ascending: false });
-
-        if (myBoloesError) throw myBoloesError;
-
-        setBoloes(
-          (myBoloesData || []).map((b: BolaoSelectRow) => ({
-            id: b.id,
-            name: b.name,
-            description: b.description,
-            creator_id: b.creator_id,
-            invite_code: b.invite_code,
-            created_at: b.created_at,
-            avatar_url: b.avatar_url,
-            category: b.category,
-            status: b.status,
-            memberCount: b.bolao_members?.[0]?.count ?? 0,
-            isCreator: b.creator_id === user.id,
-          }))
+      if (membershipIds.length > 0) {
+        // Firestore 'in' query supports up to 30 items. 
+        // For more than that we would need to chunk, but 30 is likely enough for now.
+        const boloesRef = collection(db, "boloes");
+        const qMyBoloes = query(
+          boloesRef, 
+          where(documentId(), "in", membershipIds.slice(0, 30))
         );
+        const myBoloesSnap = await getDocs(qMyBoloes);
+
+        const myBoloesEnriched = await Promise.all(
+          myBoloesSnap.docs.map(async (docElem) => {
+            const data = docElem.data();
+            
+            // Get member count
+            const countQuery = query(collection(db, "bolao_members"), where("bolao_id", "==", docElem.id));
+            const countSnap = await getCountFromServer(countQuery);
+            
+            return {
+              id: docElem.id,
+              name: data.name,
+              description: data.description,
+              creator_id: data.creator_id,
+              invite_code: data.invite_code,
+              created_at: data.created_at,
+              avatar_url: data.avatar_url,
+              category: data.category,
+              status: data.status,
+              memberCount: countSnap.data().count,
+              isCreator: data.creator_id === user.id,
+            } as BolaoRow;
+          })
+        );
+        
+        // Sort by created_at (since we manually enriched, orderBy in query isn't enough for the final list if we want to preserve order)
+        setBoloes(myBoloesEnriched.sort((a, b) => 
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        ));
       } else {
         setBoloes([]);
       }
 
-      const { data: publicData, error: publicError } = await supabase
-        .from("boloes")
-        .select("id, name, description, creator_id, invite_code, created_at, avatar_url, category, status, bolao_members(count)")
-        .eq("category", "public")
-        .in("status", statusWhitelist)
-        .order("created_at", { ascending: false })
-        .limit(20);
+      // 2. Get public boloes
+      const publicBoloesQuery = query(
+        collection(db, "boloes"),
+        where("category", "==", "public"),
+        where("status", "in", statusWhitelist),
+        orderBy("created_at", "desc"),
+        limit(20)
+      );
 
-      if (publicError) throw publicError;
+      const publicSnap = await getDocs(publicBoloesQuery);
+      
+      // Filter out those user is already a part of
+      const filteredPublicData = publicSnap.docs.filter(doc => !membershipIds.includes(doc.id));
 
-      const filteredPublic = (publicData || []).filter((b: BolaoSelectRow) => !membershipIds.includes(b.id));
-
-      const enriched = await Promise.all(
-        filteredPublic.map(async (b: BolaoSelectRow) => {
-          const { data: ranks } = await supabase
-            .from("bolao_rankings")
-            .select("total_points")
-            .eq("bolao_id", b.id)
-            .order("total_points", { ascending: false })
-            .limit(1);
-
+      const enrichedPublic = await Promise.all(
+        filteredPublicData.map(async (docElem) => {
+          const b = docElem.data();
+          
+          // Get member count
+          const countQuery = query(collection(db, "bolao_members"), where("bolao_id", "==", docElem.id));
+          const countSnap = await getCountFromServer(countQuery);
+          
+          // Get leader score
+          const rankingQuery = query(
+            collection(db, "bolao_rankings"),
+            where("bolao_id", "==", docElem.id),
+            orderBy("total_points", "desc"),
+            limit(1)
+          );
+          const rankingSnap = await getDocs(rankingQuery);
+          
           return {
-            id: b.id,
+            id: docElem.id,
             name: b.name,
             description: b.description,
             creator_id: b.creator_id,
@@ -130,14 +165,14 @@ export default function Boloes() {
             avatar_url: b.avatar_url,
             category: b.category,
             status: b.status,
-            memberCount: b.bolao_members?.[0]?.count ?? 0,
+            memberCount: countSnap.data().count,
             isCreator: false,
-            leader_score: ranks?.[0]?.total_points ?? 0,
-          } satisfies PublicBolaoRow;
+            leader_score: rankingSnap.docs[0]?.data()?.total_points ?? 0,
+          } as PublicBolaoRow;
         })
       );
 
-      setPublicBoloes(enriched);
+      setPublicBoloes(enrichedPublic);
     } catch (error) {
       console.error(error);
       toast({
@@ -157,16 +192,14 @@ export default function Boloes() {
   const completeJoin = async (bolaoId: string) => {
     if (!user) return;
     try {
-      const { error } = await supabase.from("bolao_members").insert({
+      const memberId = `${user.id}_${bolaoId}`;
+      await setDoc(doc(db, "bolao_members", memberId), {
         bolao_id: bolaoId,
         user_id: user.id,
         role: "member",
         payment_status: "exempt",
+        created_at: new Date().toISOString()
       });
-
-      if (error && !String(error.message || "").toLowerCase().includes("duplicate")) {
-        throw error;
-      }
 
       toast({
         title: "Você entrou na arena.",
@@ -175,12 +208,15 @@ export default function Boloes() {
       });
 
       await loadData();
-    } catch (error) {
-      toast({
-        title: "Erro ao entrar no bolão.",
-        description: "Confere o código e tenta de novo.",
-        variant: "destructive",
-      });
+    } catch (error: any) {
+      if (error && !String(error.message || "").toLowerCase().includes("duplicate")) {
+        console.error("Error joining bolao:", error);
+        toast({
+          title: "Erro ao entrar no bolão.",
+          description: "Confere o código e tenta de novo.",
+          variant: "destructive",
+        });
+      }
     } finally {
       setJoining(false);
     }
@@ -192,30 +228,30 @@ export default function Boloes() {
 
     try {
       const normalizedCode = joinCode.trim().toUpperCase();
-      const { data, error } = await supabase
-        .from("boloes")
-        .select("id, name, status")
-        .eq("invite_code", normalizedCode)
-        .single();
+      
+      const q = query(collection(db, "boloes"), where("invite_code", "==", normalizedCode), limit(1));
+      const querySnap = await getDocs(q);
 
-      if (error || !data) throw new Error("Código inválido.");
-      if (!statusWhitelist.includes(data.status)) {
+      if (querySnap.empty) throw new Error("Código inválido.");
+      
+      const bolaoDoc = querySnap.docs[0];
+      const bolaoData = bolaoDoc.data();
+
+      if (!statusWhitelist.includes(bolaoData.status)) {
         throw new Error("Este bolão não está disponível para entrada.");
       }
 
-      const { data: member } = await supabase
-        .from("bolao_members")
-        .select("id")
-        .eq("bolao_id", data.id)
-        .eq("user_id", user.id);
+      // Check if already a member
+      const memberId = `${user.id}_${bolaoDoc.id}`;
+      const memberSnap = await getDoc(doc(db, "bolao_members", memberId));
 
-      if (member?.length) {
+      if (memberSnap.exists()) {
         toast({ title: "Você já está neste bolão." });
         setJoining(false);
         return;
       }
 
-      await completeJoin(data.id);
+      await completeJoin(bolaoDoc.id);
       setJoinCode("");
       setShowJoin(false);
     } catch (error) {

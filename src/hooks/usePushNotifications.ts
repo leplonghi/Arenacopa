@@ -2,7 +2,8 @@ import { useEffect } from 'react';
 import { PushNotifications } from '@capacitor/push-notifications';
 import { Capacitor } from '@capacitor/core';
 import { useAuth } from '@/contexts/AuthContext';
-import { supabase } from '@/integrations/supabase/client';
+import { db } from '@/integrations/firebase/client';
+import { doc, setDoc } from 'firebase/firestore';
 
 export const usePushNotifications = () => {
     const { user } = useAuth();
@@ -34,13 +35,15 @@ export const usePushNotifications = () => {
             console.log('Push registration success, token: ' + token.value);
             if (user?.id) {
                 try {
-                    await supabase.from('native_push_tokens').upsert({
+                    const docId = `${user.id}_${token.value}`;
+                    await setDoc(doc(db, 'native_push_tokens', docId), {
                         user_id: user.id,
                         token: token.value,
                         platform: Capacitor.getPlatform(),
-                    }, { onConflict: 'user_id,token' });
+                        updated_at: new Date().toISOString(),
+                    }, { merge: true });
                 } catch (e) {
-                    console.error("Could not save FCM token", e);
+                    console.error("Could not save FCM token to Firestore", e);
                 }
             }
         });
@@ -55,7 +58,6 @@ export const usePushNotifications = () => {
 
         PushNotifications.addListener('pushNotificationActionPerformed', (notification) => {
             console.log('Push action performed: ' + JSON.stringify(notification));
-            // e.g., navigate to a specific bolao/match depending on payload
         });
 
         return () => {

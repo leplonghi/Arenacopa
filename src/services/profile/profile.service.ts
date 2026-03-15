@@ -1,7 +1,7 @@
-import { supabase } from "@/services/supabase/client";
+import { db, storage } from "@/integrations/firebase/client";
+import { doc, getDoc, setDoc, updateDoc, type UpdateData } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import type { PreferredLanguage, ProfileRecord, ProfileUpdateInput } from "@/services/profile/profile.types";
-
-const profileColumns = "*";
 
 type EnsureProfileUser = {
   id: string;
@@ -14,40 +14,36 @@ type EnsureProfileUser = {
 };
 
 export async function getProfile(userId: string) {
-  const { data, error } = await supabase
-    .from("profiles")
-    .select(profileColumns)
-    .eq("user_id", userId)
-    .maybeSingle();
-
-  if (error) throw error;
-  return data as ProfileRecord | null;
+  const docRef = doc(db, "profiles", userId);
+  const docSnap = await getDoc(docRef);
+  
+  if (docSnap.exists()) {
+    return docSnap.data() as ProfileRecord;
+  }
+  return null;
 }
 
 export async function ensureProfile(user: EnsureProfileUser) {
-  const payload = {
-    user_id: user.id,
-    name: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split("@")[0] || "Torcedor",
-    avatar_url: user.user_metadata?.avatar_url || null,
-  };
+  const docRef = doc(db, "profiles", user.id);
+  const docSnap = await getDoc(docRef);
 
-  const { error } = await supabase
-    .from("profiles")
-    .upsert(payload, { onConflict: "user_id" });
-
-  if (error) throw error;
+  if (!docSnap.exists()) {
+    const payload = {
+      user_id: user.id,
+      name: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split("@")[0] || "Torcedor",
+      avatar_url: user.user_metadata?.avatar_url || null,
+      created_at: new Date().toISOString(),
+    };
+    await setDoc(docRef, payload);
+  }
 }
 
 export async function updateProfile(userId: string, updates: ProfileUpdateInput) {
-  const { data, error } = await supabase
-    .from("profiles")
-    .update(updates)
-    .eq("user_id", userId)
-    .select(profileColumns)
-    .maybeSingle();
-
-  if (error) throw error;
-  return data as ProfileRecord | null;
+  const docRef = doc(db, "profiles", userId);
+  await updateDoc(docRef, updates as UpdateData<ProfileRecord>);
+  
+  const updatedSnap = await getDoc(docRef);
+  return updatedSnap.data() as ProfileRecord | null;
 }
 
 export async function updatePreferredLanguage(userId: string, language: PreferredLanguage) {
@@ -69,18 +65,12 @@ export async function acceptTerms(userId: string) {
 
 export async function uploadAvatar(userId: string, file: File) {
   const extension = file.name.split(".").pop() || "png";
-  const path = `${userId}/${crypto.randomUUID()}.${extension}`;
-
-  const { error: uploadError } = await supabase.storage
-    .from("avatars")
-    .upload(path, file, { upsert: true });
-
-  if (uploadError) throw uploadError;
-
-  const { data } = supabase.storage.from("avatars").getPublicUrl(path);
-  const publicUrl = data.publicUrl;
+  const filePath = `avatars/${userId}/${crypto.randomUUID()}.${extension}`;
+  const storageRef = ref(storage, filePath);
+  
+  await uploadBytes(storageRef, file);
+  const publicUrl = await getDownloadURL(storageRef);
 
   await updateProfile(userId, { avatar_url: publicUrl });
-
   return publicUrl;
 }

@@ -1,7 +1,9 @@
+
 import { useEffect, useMemo, useState } from "react";
 import { ExternalLink, Newspaper, Sparkles } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { db } from "@/integrations/firebase/client";
+import { collection, query, orderBy, limit, getDocs } from "firebase/firestore";
 
 type NewsItem = {
   id: string;
@@ -16,6 +18,16 @@ type NewsItem = {
 };
 
 const categories = ["all", "general", "matches", "teams", "travel", "tickets"];
+
+interface NewsDocument {
+  title: string;
+  description?: string;
+  url: string;
+  url_to_image?: string;
+  country_filter?: string;
+  published_at: string;
+  source_name: string;
+}
 
 export function NoticiasTab() {
   const { user } = useAuth();
@@ -32,25 +44,24 @@ export function NoticiasTab() {
     const loadNews = async () => {
       setLoading(true);
       try {
-        const { data, error } = await supabase
-          .from("copa_news")
-          .select("id, title, description, url, url_to_image, source_name, published_at, country_filter")
-          .order("published_at", { ascending: false })
-          .limit(30);
+        const newsRef = collection(db, "copa_news");
+        const q = query(newsRef, orderBy("published_at", "desc"), limit(30));
+        const querySnapshot = await getDocs(q);
 
-        if (error) throw error;
-
-        const items = (data || []).map((item) => ({
-          id: item.id,
-          title: item.title,
-          summary: item.description || undefined,
-          category: item.country_filter ? "teams" : "general",
-          external_url: item.url,
-          image_url: item.url_to_image || undefined,
-          teams: item.country_filter ? [item.country_filter] : [],
-          published_at: item.published_at,
-          source_name: item.source_name,
-        })) satisfies NewsItem[];
+        const items = querySnapshot.docs.map(docSnapshot => {
+            const item = docSnapshot.data() as NewsDocument;
+            return {
+              id: docSnapshot.id,
+              title: item.title,
+              summary: item.description || undefined,
+              category: item.country_filter ? "teams" : "general",
+              external_url: item.url,
+              image_url: item.url_to_image || undefined,
+              teams: item.country_filter ? [item.country_filter] : [],
+              published_at: item.published_at,
+              source_name: item.source_name,
+            };
+        }) satisfies NewsItem[];
 
         setNews(items);
       } catch (error) {

@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { useAuth } from "@/contexts/AuthContext";
 import { matches as mockMatches } from "@/data/mockData";
 import { cn } from "@/lib/utils";
 import { type MemberData, type Palpite, type ExtraBet, type ScoringRules } from "@/types/bolao";
@@ -20,6 +21,7 @@ interface RankingTabProps {
 
 export function RankingTab({ members, palpites, extraBets = [], scoringRules }: RankingTabProps) {
     const { t } = useTranslation('bolao');
+    const { user } = useAuth();
     const { data: supabaseMatches, isLoading } = useMatches();
 
     const matches = supabaseMatches || mockMatches;
@@ -96,206 +98,225 @@ export function RankingTab({ members, palpites, extraBets = [], scoringRules }: 
             animate="visible"
             className="space-y-8"
         >
-            {/* Top 3 Podium - High End Design */}
+            {/* Top 3 Podium - Layered & Fragmented Design */}
             {ranking.length >= 3 && (
-                <div className="flex items-end justify-center gap-3 pt-12 pb-6 px-2 relative min-h-[260px]">
-                    <div className="absolute inset-0 bg-gradient-to-t from-primary/5 via-transparent to-transparent opacity-50" />
-
-                    {/* 2nd Place */}
-                    <motion.div
-                        variants={staggerItem}
-                        className="flex flex-col items-center gap-2 relative z-10 w-1/3 max-w-[120px]"
-                    >
-                        <div className="relative group">
-                            <div className="w-16 h-16 rounded-2xl p-1 bg-gradient-to-br from-gray-300 to-gray-500 shadow-[0_10px_20px_rgba(0,0,0,0.4)] transition-transform group-hover:scale-105">
-                                <div className="w-full h-full rounded-[14px] bg-black flex items-center justify-center text-xs font-black overflow-hidden border border-white/10">
-                                    {ranking[1].profile?.avatar_url ?
-                                        <img src={ranking[1].profile.avatar_url} alt="" className="w-full h-full object-cover" /> :
-                                        <span className="text-gray-400">{ranking[1].profile?.name.slice(0, 2).toUpperCase()}</span>}
+                <div className="pt-24 pb-12 px-2 relative min-h-[380px] perspective-1000">
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-copa-gold/10 rounded-full blur-[100px] z-0" />
+                    
+                    <div className="flex items-end justify-center relative translate-z-10 transform-3d">
+                        {/* 2nd Place */}
+                        <motion.div
+                            variants={staggerItem}
+                            whileHover={{ scale: 1.05, translateZ: "20px" }}
+                            className="flex flex-col items-center gap-2 relative z-10 w-1/3 max-w-[120px] -mr-4 -rotate-y-12 translate-y-4"
+                        >
+                            <div className="relative group">
+                                <div className="w-16 h-16 rounded-2xl p-0.5 bg-gradient-to-br from-gray-300 via-gray-400 to-gray-600 shadow-2xl transition-transform">
+                                    <div className="w-full h-full rounded-[14px] bg-zinc-950 flex items-center justify-center text-xs font-black overflow-hidden border border-white/5 relative">
+                                        <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
+                                        {ranking[1].profile?.avatar_url ?
+                                            <img src={ranking[1].profile.avatar_url} alt="" className="w-full h-full object-cover" /> :
+                                            <span className="text-gray-400">{(ranking[1].profile?.name || "??").slice(0, 2).toUpperCase()}</span>}
+                                    </div>
+                                </div>
+                                <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full bg-zinc-400 text-xs font-black flex items-center justify-center text-zinc-950 border-4 border-[#0a0a0a] shadow-xl">
+                                    2
                                 </div>
                             </div>
-                            <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full bg-gray-400 text-xs font-black flex items-center justify-center text-gray-950 border-4 border-[#121212] shadow-xl">
-                                2
+                            <div className="text-center mt-2 group">
+                                <span className="text-[10px] font-black uppercase tracking-widest block truncate text-zinc-500 mb-1 font-display">
+                                    {(ranking[1].profile?.name || t('ranking.default_user')).split(" ")[0]}
+                                </span>
+                                <span className="text-lg font-black text-white font-display leading-none">
+                                    {ranking[1].points}<span className="text-[10px] ml-0.5 text-zinc-600">PTS</span>
+                                </span>
                             </div>
-                        </div>
-                        <div className="text-center mt-2">
-                            <span className="text-[10px] font-black uppercase tracking-widest block truncate text-gray-500 mb-1">
-                                {(ranking[1].profile?.name || t('ranking.default_user')).split(" ")[0]}
-                            </span>
-                            <span className="text-xl font-black text-white">{ranking[1].points}<span className="text-[10px] ml-1 text-gray-600">PTS</span></span>
-                        </div>
-                        <div className="w-full h-20 bg-gradient-to-t from-gray-500/20 to-white/5 backdrop-blur-xl rounded-t-3xl border-x border-t border-white/10 flex items-center justify-center shadow-2xl">
-                            <Award className="w-8 h-8 text-gray-400/20" />
-                        </div>
-                    </motion.div>
-
-                    {/* 1st Place */}
-                    <motion.div
-                        variants={staggerItem}
-                        className="flex flex-col items-center gap-2 relative z-20 w-1/3 max-w-[140px] -mt-16"
-                    >
-                        <motion.div
-                            animate={{ y: [0, -6, 0] }}
-                            transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                            className="absolute -top-10"
-                        >
-                            <Crown className="w-10 h-10 text-yellow-500 filter drop-shadow-[0_0_15px_rgba(234,179,8,0.6)]" />
+                            <div className="w-full h-24 bg-gradient-to-t from-zinc-800/40 via-zinc-800/10 to-transparent backdrop-blur-xl rounded-t-3xl border-x border-t border-white/5 flex items-center justify-center shadow-inner pt-4">
+                                <Award className="w-8 h-8 text-zinc-600/20" />
+                            </div>
                         </motion.div>
 
-                        <div className="relative group">
-                            <div className="w-20 h-20 rounded-3xl p-1 bg-gradient-to-br from-yellow-300 via-yellow-500 to-amber-600 shadow-[0_15px_30px_rgba(234,179,8,0.2)] transition-transform group-hover:scale-110">
-                                <div className="w-full h-full rounded-[22px] bg-black flex items-center justify-center text-sm font-black overflow-hidden border border-white/10">
-                                    {ranking[0].profile?.avatar_url ?
-                                        <img src={ranking[0].profile.avatar_url} alt="" className="w-full h-full object-cover" /> :
-                                        <span className="text-yellow-500">{ranking[0].profile?.name.slice(0, 2).toUpperCase()}</span>}
+                        {/* 1st Place */}
+                        <motion.div
+                            variants={staggerItem}
+                            whileHover={{ scale: 1.05, translateZ: "50px" }}
+                            className="flex flex-col items-center gap-2 relative z-30 w-1/3 max-w-[160px] translate-z-20 transform-3d"
+                        >
+                            <motion.div
+                                animate={{ y: [0, -8, 0], rotate: [0, 5, -5, 0] }}
+                                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                                className="absolute -top-16 z-40"
+                            >
+                                <Crown className="w-12 h-12 text-copa-gold filter drop-shadow-[0_0_20px_rgba(234,179,8,0.5)]" />
+                            </motion.div>
+
+                            <div className="relative group">
+                                <div className="absolute inset-0 bg-copa-gold/20 blur-[30px] rounded-full scale-125 opacity-50 group-hover:opacity-100 transition-opacity" />
+                                <div className="w-24 h-24 rounded-3xl p-1 bg-gradient-to-br from-copa-gold via-yellow-400 to-amber-600 shadow-[0_20px_40px_rgba(234,179,8,0.25)] relative overflow-hidden">
+                                    <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/10 to-transparent h-1/2 w-full animate-pulse-slow pointer-events-none" />
+                                    <div className="w-full h-full rounded-[22px] bg-zinc-950 flex items-center justify-center text-sm font-black overflow-hidden border border-white/10 relative">
+                                        <div className="absolute inset-0 opacity-[0.05] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
+                                        {ranking[0].profile?.avatar_url ?
+                                            <img src={ranking[0].profile.avatar_url} alt="" className="w-full h-full object-cover" /> :
+                                            <span className="text-copa-gold text-lg">{(ranking[0].profile?.name || "??").slice(0, 2).toUpperCase()}</span>}
+                                    </div>
+                                </div>
+                                <div className="absolute -bottom-3 -right-3 w-12 h-12 rounded-full bg-copa-gold text-base font-black flex items-center justify-center text-zinc-950 border-4 border-[#0a0a0a] shadow-2xl z-20">
+                                    1
                                 </div>
                             </div>
-                            <div className="absolute -bottom-2 -right-2 w-10 h-10 rounded-full bg-yellow-500 text-sm font-black flex items-center justify-center text-yellow-950 border-4 border-[#121212] shadow-2xl">
-                                1
+
+                            <div className="text-center mt-4">
+                                <span className="text-[11px] font-black uppercase tracking-[0.3em] block truncate text-copa-gold mb-1 font-display">
+                                    {(ranking[0].profile?.name || t('ranking.default_user')).split(" ")[0]}
+                                </span>
+                                <span className="text-3xl font-black text-white font-display tracking-tight leading-none">
+                                    {ranking[0].points}<span className="text-[12px] ml-1 text-zinc-500 font-sans tracking-normal font-bold">PTS</span>
+                                </span>
                             </div>
-                        </div>
+                            
+                            <div className="w-full h-40 bg-gradient-to-t from-copa-gold/20 via-copa-gold/5 to-transparent backdrop-blur-2xl rounded-t-[48px] border-x border-t border-copa-gold/20 shadow-[0_-20px_60px_rgba(234,179,8,0.15)] flex flex-col items-center pt-8 relative overflow-hidden mt-2">
+                                <Trophy className="w-12 h-12 text-copa-gold/20" />
+                                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-1/2 h-0.5 bg-gradient-to-r from-transparent via-copa-gold/40 to-transparent" />
+                            </div>
+                        </motion.div>
 
-                        <div className="text-center mt-3">
-                            <span className="text-[11px] font-black uppercase tracking-[0.2em] block truncate text-yellow-500 mb-1">
-                                {(ranking[0].profile?.name || t('ranking.default_user')).split(" ")[0]}
-                            </span>
-                            <span className="text-2xl font-black text-white">{ranking[0].points}<span className="text-[12px] ml-1 text-gray-500 tracking-normal">PTS</span></span>
-                        </div>
-                        <div className="w-full h-32 bg-gradient-to-t from-yellow-500/20 via-yellow-400/5 to-transparent backdrop-blur-xl rounded-t-[40px] border-x border-t border-yellow-500/30 shadow-[0_-15px_50px_rgba(234,179,8,0.15)] flex flex-col items-center pt-6">
-                            <Trophy className="w-10 h-10 text-yellow-500/30" />
-                        </div>
-                    </motion.div>
-
-                    {/* 3rd Place */}
-                    <motion.div
-                        variants={staggerItem}
-                        className="flex flex-col items-center gap-2 relative z-10 w-1/3 max-w-[120px]"
-                    >
-                        <div className="relative group">
-                            <div className="w-16 h-16 rounded-2xl p-1 bg-gradient-to-br from-amber-600 to-orange-800 shadow-[0_10px_20px_rgba(0,0,0,0.4)] transition-transform group-hover:scale-105">
-                                <div className="w-full h-full rounded-[14px] bg-black flex items-center justify-center text-xs font-black overflow-hidden border border-white/10">
-                                    {ranking[2].profile?.avatar_url ?
-                                        <img src={ranking[2].profile.avatar_url} alt="" className="w-full h-full object-cover" /> :
-                                        <span className="text-amber-600">{ranking[2].profile?.name.slice(0, 2).toUpperCase()}</span>}
+                        {/* 3rd Place */}
+                        <motion.div
+                            variants={staggerItem}
+                            whileHover={{ scale: 1.05, translateZ: "20px" }}
+                            className="flex flex-col items-center gap-2 relative z-10 w-1/3 max-w-[120px] -ml-4 rotate-y-12 translate-y-8"
+                        >
+                            <div className="relative group">
+                                <div className="w-16 h-16 rounded-2xl p-0.5 bg-gradient-to-br from-amber-600 via-amber-700 to-orange-900 shadow-2xl transition-transform">
+                                    <div className="w-full h-full rounded-[14px] bg-zinc-950 flex items-center justify-center text-xs font-black overflow-hidden border border-white/5 relative">
+                                        <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
+                                        {ranking[2].profile?.avatar_url ?
+                                            <img src={ranking[2].profile.avatar_url} alt="" className="w-full h-full object-cover" /> :
+                                            <span className="text-amber-700">{(ranking[2].profile?.name || "??").slice(0, 2).toUpperCase()}</span>}
+                                    </div>
+                                </div>
+                                <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full bg-amber-700 text-xs font-black flex items-center justify-center text-white border-4 border-[#0a0a0a] shadow-xl">
+                                    3
                                 </div>
                             </div>
-                            <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full bg-amber-600 text-xs font-black flex items-center justify-center text-white border-4 border-[#121212] shadow-xl">
-                                3
+                            <div className="text-center mt-2">
+                                <span className="text-[10px] font-black uppercase tracking-widest block truncate text-amber-800 mb-1 font-display">
+                                    {(ranking[2].profile?.name || t('ranking.default_user')).split(" ")[0]}
+                                </span>
+                                <span className="text-lg font-black text-white font-display leading-none">
+                                    {ranking[2].points}<span className="text-[10px] ml-0.5 text-zinc-600">PTS</span>
+                                </span>
                             </div>
-                        </div>
-                        <div className="text-center mt-2">
-                            <span className="text-[10px] font-black uppercase tracking-widest block truncate text-amber-700 mb-1">
-                                {(ranking[2].profile?.name || t('ranking.default_user')).split(" ")[0]}
-                            </span>
-                            <span className="text-xl font-black text-white">{ranking[2].points}<span className="text-[10px] ml-1 text-gray-600">PTS</span></span>
-                        </div>
-                        <div className="w-full h-14 bg-gradient-to-t from-amber-800/20 to-white/5 backdrop-blur-xl rounded-t-3xl border-x border-t border-white/10 flex items-center justify-center shadow-xl">
-                            <Award className="w-8 h-8 text-amber-600/20" />
-                        </div>
-                    </motion.div>
+                            <div className="w-full h-16 bg-gradient-to-t from-amber-900/40 via-amber-900/10 to-transparent backdrop-blur-xl rounded-t-3xl border-x border-t border-white/5 flex items-center justify-center shadow-inner pt-2">
+                                <Award className="w-8 h-8 text-amber-900/20" />
+                            </div>
+                        </motion.div>
+                    </div>
                 </div>
             )}
 
-            {/* List Header */}
-            <div className="flex items-center justify-between px-2">
-                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">{t('ranking.full_table')}</h3>
-                <div className="w-20 h-px bg-gradient-to-r from-transparent via-gray-800 to-transparent" />
+            <div className="flex items-center justify-between px-4">
+                <div className="flex items-center gap-3">
+                    <div className="w-1.5 h-6 bg-copa-gold rounded-full" />
+                    <h3 className="text-[11px] font-black uppercase tracking-[0.3em] text-zinc-400 font-display">{t('ranking.full_table')}</h3>
+                </div>
+                <div className="flex-1 mx-6 h-px bg-zinc-800/50" />
             </div>
 
-            {/* Full List - Premium Scroll */}
-            <div className="space-y-2 pb-10">
+            <div className="grid grid-cols-1 gap-3 pb-20 px-1 perspective-1000">
                 {ranking.map((r, i) => {
                     const name = r.profile?.name || t('ranking.default_user');
                     const isTop3 = i < 3;
-                    const isMe = false; // Add real logic if available
+                    const isMe = r.user_id === user?.id;
 
                     return (
                         <motion.div
                             key={r.user_id}
                             variants={staggerItem}
-                            whileHover={{ scale: 1.01, x: 4 }}
+                            whileHover={{ scale: 1.02, translateX: isMe ? 0 : 8, translateZ: "10px", rotateY: isMe ? 0 : -2 }}
                             className={cn(
-                                "flex items-center gap-4 px-5 py-4 rounded-2xl border transition-all cursor-default relative overflow-hidden group",
-                                i === 0 ? "bg-gradient-to-r from-yellow-500/10 via-yellow-500/[0.03] to-transparent border-yellow-500/30 shadow-[0_0_25px_rgba(234,179,8,0.1)]" :
-                                    i === 1 ? "bg-gradient-to-r from-gray-400/10 via-gray-400/[0.03] to-transparent border-gray-400/30" :
-                                        i === 2 ? "bg-gradient-to-r from-amber-600/10 via-amber-600/[0.03] to-transparent border-amber-600/30" :
-                                            "bg-white/5 border-white/5 hover:border-white/10 hover:bg-white/[0.08]"
+                                "flex items-center gap-4 px-6 py-5 rounded-[28px] border transition-all cursor-default relative overflow-hidden group transform-3d shadow-sm",
+                                i === 0 ? "bg-gradient-to-r from-copa-gold/20 via-copa-gold/[0.05] to-transparent border-copa-gold/40 shadow-[0_10px_30px_rgba(234,179,8,0.15)] ring-1 ring-copa-gold/20" :
+                                    i === 1 ? "bg-gradient-to-r from-zinc-400/15 via-zinc-400/[0.05] to-transparent border-zinc-400/40" :
+                                        i === 2 ? "bg-gradient-to-r from-amber-700/15 via-amber-700/[0.05] to-transparent border-amber-800/40" :
+                                            isMe ? "bg-copa-green/10 border-copa-green-light/40 shadow-lg" : "bg-zinc-900/40 border-white/5 hover:border-white/10 hover:bg-zinc-800/60"
                             )}
                         >
-                            {/* Position Indicator */}
-                            <div className="w-8 shrink-0 flex items-center justify-center relative">
+                            <div className="w-10 shrink-0 flex items-center justify-center relative">
                                 <span className={cn(
-                                    "text-lg font-black italic tracking-tighter transition-all group-hover:scale-110",
-                                    i === 0 ? "text-yellow-500" :
-                                        i === 1 ? "text-gray-400" :
-                                            i === 2 ? "text-amber-600" :
-                                                "text-gray-600 group-hover:text-gray-400"
+                                    "text-2xl font-black font-display italic tracking-tighter transition-all group-hover:scale-110",
+                                    i === 0 ? "text-copa-gold drop-shadow-sm" :
+                                        i === 1 ? "text-zinc-400" :
+                                            i === 2 ? "text-amber-700" :
+                                                isMe ? "text-copa-green-light" : "text-zinc-700 group-hover:text-zinc-400"
                                 )}>
-                                    {i + 1}
+                                    {String(i + 1).padStart(2, '0')}
                                 </span>
                             </div>
 
-                            {/* Avatar */}
-                            <div className="relative shrink-0 transition-transform group-hover:scale-105">
+                            <div className="relative shrink-0 transition-transform group-hover:scale-105 group-hover:rotate-3">
                                 <div className={cn(
-                                    "w-11 h-11 rounded-xl flex items-center justify-center p-0.5",
-                                    isTop3 ? (i === 0 ? "bg-yellow-500/50" : i === 1 ? "bg-gray-400/50" : "bg-amber-600/50") : "bg-white/10"
+                                    "w-12 h-12 rounded-2xl flex items-center justify-center p-0.5",
+                                    isTop3 ? (i === 0 ? "bg-copa-gold/50" : i === 1 ? "bg-zinc-400/50" : "bg-amber-700/50") : isMe ? "bg-copa-green-light/50" : "bg-white/10"
                                 )}>
-                                    <div className="w-full h-full rounded-[10px] bg-black flex items-center justify-center text-[10px] font-black overflow-hidden border border-white/10">
+                                    <div className="w-full h-full rounded-[14px] bg-zinc-950 flex items-center justify-center text-[10px] font-black overflow-hidden border border-zinc-800 relative">
+                                        <div className="absolute inset-0 opacity-[0.05] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
                                         {r.profile?.avatar_url ?
                                             <img src={r.profile.avatar_url} alt="" className="w-full h-full object-cover" /> :
-                                            <span className="text-gray-500">{name.slice(0, 2).toUpperCase()}</span>
+                                            <span className="text-zinc-500">{name.slice(0, 2).toUpperCase()}</span>
                                         }
                                     </div>
                                 </div>
+                                {isMe && (
+                                    <div className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-copa-green-light border-2 border-[#0a0a0a] shadow-lg animate-pulse" />
+                                )}
                             </div>
 
-                            {/* Info */}
                             <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 mb-0.5">
+                                <div className="flex items-center gap-2 mb-1">
                                     <span className={cn(
-                                        "text-sm font-black truncate tracking-tight transition-colors",
-                                        isTop3 ? "text-white" : "text-gray-300 group-hover:text-white"
+                                        "text-base font-black truncate tracking-tight transition-colors font-display",
+                                        isTop3 || isMe ? "text-white" : "text-zinc-400 group-hover:text-white"
                                     )}>
-                                        {name}
+                                        {name} {isMe && <span className="text-[10px] text-copa-green-light ml-1 opacity-80">(VOCÊ)</span>}
                                     </span>
                                     {i === 0 && (
-                                        <div className="flex items-center gap-1 bg-yellow-500/20 px-2 py-0.5 rounded-lg border border-yellow-500/30">
-                                            <Crown className="w-2.5 h-2.5 text-yellow-500 shrink-0" />
-                                            <span className="text-[8px] font-black text-yellow-500 uppercase">LEADER</span>
+                                        <div className="flex items-center gap-1.5 bg-copa-gold/20 px-2 py-0.5 rounded-full border border-copa-gold/30">
+                                            <Crown className="w-2.5 h-2.5 text-copa-gold shrink-0" />
+                                            <span className="text-[8px] font-black text-copa-gold uppercase tracking-tighter">LEADER</span>
                                         </div>
                                     )}
                                 </div>
-                                <div className="flex items-center gap-3">
-                                    <div className="flex items-center gap-1.5 text-[10px] text-gray-500 font-bold uppercase tracking-widest group-hover:text-gray-400 transition-colors">
-                                        <TrendingUp className="w-3 h-3 text-emerald-500" />
-                                        {r.palpiteCount} <span className="text-[8px] opacity-60">GUESSES</span>
+                                <div className="flex items-center gap-4">
+                                    <div className="flex items-center gap-1.5 text-[10px] text-zinc-500 font-bold uppercase tracking-widest group-hover:text-zinc-400 transition-colors">
+                                        <TrendingUp className="w-3 h-3 text-emerald-500/80" />
+                                        {r.palpiteCount} <span className="text-[9px] opacity-50 font-sans tracking-normal font-medium">PALPITES</span>
                                     </div>
                                     {r.exactCount > 0 && (
                                         <div className="flex items-center gap-1.5 text-[10px] text-emerald-400 font-black">
-                                            <Target className="w-3 h-3 group-hover:animate-pulse" />
-                                            {r.exactCount} <span className="text-[8px] opacity-60">EXACT</span>
+                                            <Target className="w-3.5 h-3.5 group-hover:animate-pulse" />
+                                            {r.exactCount} <span className="text-[9px] opacity-60 font-sans tracking-normal font-medium">EXATOS</span>
                                         </div>
                                     )}
                                 </div>
                             </div>
 
-                            {/* Points Badge */}
                             <div className="text-right">
                                 <div className={cn(
-                                    "px-4 py-2 rounded-2xl border-2 transition-all group-hover:shadow-[0_0_20px_rgba(255,255,255,0.05)]",
-                                    i === 0 ? "bg-yellow-500/20 border-yellow-500 shadow-xl" :
-                                        i === 1 ? "bg-gray-400/10 border-gray-400 shadow-lg" :
-                                            i === 2 ? "bg-amber-600/10 border-amber-600 shadow-md" :
-                                                "bg-white/5 border-white/5 group-hover:border-white/20"
+                                    "px-5 py-2.5 rounded-2xl border-2 transition-all group-hover:shadow-[0_0_20px_rgba(254,215,170,0.1)]",
+                                    i === 0 ? "bg-copa-gold/30 border-copa-gold shadow-xl rotate-1" :
+                                        i === 1 ? "bg-zinc-400/20 border-zinc-400 shadow-lg -rotate-1" :
+                                            i === 2 ? "bg-amber-700/20 border-amber-800 shadow-md rotate-1" :
+                                                isMe ? "bg-copa-green/30 border-copa-green-light/50" : "bg-white/5 border-white/5 group-hover:border-white/20"
                                 )}>
                                     <span className={cn(
-                                        "text-lg font-black block leading-none tracking-tighter",
-                                        isTop3 ? "text-white" : "text-gray-300 group-hover:text-white"
+                                        "text-xl font-black block leading-none tracking-tight font-display mb-0.5",
+                                        isTop3 || isMe ? "text-white" : "text-zinc-300 group-hover:text-white"
                                     )}>
                                         {r.points}
                                     </span>
-                                    <span className="text-[8px] text-gray-500 uppercase font-black tracking-widest">{t('ranking.points_abbr')}</span>
+                                    <span className="text-[9px] text-zinc-500 uppercase font-black tracking-[0.2em]">{t('ranking.points_abbr')}</span>
                                 </div>
                             </div>
                         </motion.div>
@@ -303,31 +324,21 @@ export function RankingTab({ members, palpites, extraBets = [], scoringRules }: 
                 })}
             </div>
 
-            {/* Legend - High End Design */}
             <motion.div
                 variants={staggerItem}
                 className="rounded-[40px] border border-white/5 p-8 bg-gradient-to-b from-white/[0.03] to-transparent backdrop-blur-2xl relative overflow-hidden"
             >
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
-
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-copa-gold/20 to-transparent" />
                 <div className="flex items-center gap-3 mb-8 justify-center">
                     <div className="px-5 py-2 rounded-full bg-white/5 border border-white/10 flex items-center gap-2">
-                        <Star className="w-3.5 h-3.5 text-primary" />
-                        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-gray-400">{t('ranking.legend_rules')}</span>
+                        <Star className="w-3.5 h-3.5 text-copa-gold" />
+                        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400">{t('ranking.legend_rules')}</span>
                     </div>
                 </div>
-
                 <div className="grid grid-cols-1 xs:grid-cols-3 gap-4">
                     <LegendItem icon={<Target className="w-6 h-6" />} label={t('ranking.legend_exact')} points={exactPts} color="text-emerald-400" bg="bg-emerald-500/10" border="border-emerald-500/20" />
                     <LegendItem icon={<Check className="w-6 h-6" />} label={t('ranking.legend_winner')} points={winnerPts} color="text-amber-500" bg="bg-amber-500/10" border="border-amber-500/20" />
                     <LegendItem icon={<Minus className="w-6 h-6" />} label={t('ranking.legend_draw')} points={drawPts} color="text-blue-400" bg="bg-blue-500/10" border="border-blue-500/20" />
-                </div>
-
-                <div className="mt-8 flex justify-center">
-                    <div className="flex items-center gap-2 text-[9px] font-bold text-gray-600">
-                        <Award className="w-3 h-3" />
-                        {t('ranking.powerplay_reminder')}
-                    </div>
                 </div>
             </motion.div>
         </motion.div>
@@ -338,12 +349,11 @@ function LegendItem({ icon, label, points, color, bg, border }: { icon: React.Re
     return (
         <div className={cn("group rounded-3xl p-6 border transition-all hover:scale-105 hover:shadow-2xl flex flex-col items-center text-center", bg, border)}>
             <div className={cn("mb-4 transform group-hover:rotate-12 transition-transform", color)}>{icon}</div>
-            <span className="text-[9px] font-black text-gray-500 uppercase tracking-widest mb-2 leading-tight px-2">{label}</span>
+            <span className="text-[9px] font-black text-zinc-500 uppercase tracking-widest mb-2 leading-tight px-2">{label}</span>
             <div className="flex items-baseline gap-1">
                 <span className={cn("text-2xl font-black", color)}>{points}</span>
-                <span className="text-[10px] font-black text-gray-600">PTS</span>
+                <span className="text-[10px] font-black text-zinc-600">PTS</span>
             </div>
         </div>
     );
 }
-

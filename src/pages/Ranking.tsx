@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Award, Crown, Medal, Trophy } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { db } from "@/integrations/firebase/client";
+import { collection, query, orderBy, limit, getDocs, where } from "firebase/firestore";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/EmptyState";
 
@@ -23,14 +24,14 @@ export default function Ranking() {
       setLoading(true);
 
       try {
-        const { data: rankings } = await supabase
-          .from("bolao_rankings")
-          .select("user_id, total_points")
-          .order("total_points", { ascending: false })
-          .limit(200);
+        const rankingsRef = collection(db, "bolao_rankings");
+        const q = query(rankingsRef, orderBy("total_points", "desc"), limit(200));
+        const querySnapshot = await getDocs(q);
+        
+        const rankings = querySnapshot.docs.map(doc => doc.data());
 
         const totals = new Map<string, number>();
-        (rankings || []).forEach((row) => {
+        rankings.forEach((row) => {
           totals.set(row.user_id, (totals.get(row.user_id) || 0) + (row.total_points || 0));
         });
 
@@ -40,19 +41,27 @@ export default function Ranking() {
           return;
         }
 
-        const { data: profiles } = await supabase
-          .from("profiles")
-          .select("user_id, favorite_team, name, nickname, avatar_url")
-          .in("user_id", userIds);
+        // Firestore 'in' query supports up to 30 values. Filtering here for simplicity or using multiple queries.
+        // For a global ranking, it's better to fetch profiles. 
+        // Here we'll fetch profiles in chunks if needed, but for the top 50 it's manageable.
+        const profilesRef = collection(db, "profiles");
+        // Simple case: fetch profiles for the users we found
+        const profileMap = new Map<string, any>();
+        
+        // Fetching profiles in batches of 30 due to Firestore limits
+        const batches = [];
+        for (let i = 0; i < userIds.length; i += 30) {
+          batches.push(userIds.slice(i, i + 30));
+        }
 
-        const profileMap = new Map<string, {
-          user_id: string;
-          favorite_team: string | null;
-          name: string | null;
-          nickname: string | null;
-          avatar_url: string | null;
-        }>();
-        (profiles || []).forEach((profile) => profileMap.set(profile.user_id, profile));
+        for (const batch of batches) {
+          const pq = query(profilesRef, where("user_id", "in", batch));
+          const ps = await getDocs(pq);
+          ps.docs.forEach(doc => {
+            const data = doc.data();
+            profileMap.set(data.user_id, data);
+          });
+        }
 
         const rows = userIds
           .map((userId) => {
@@ -69,6 +78,8 @@ export default function Ranking() {
           .slice(0, 50);
 
         setGlobalRows(rows);
+      } catch (error) {
+        console.error("Error loading global ranking:", error);
       } finally {
         setLoading(false);
       }
@@ -98,6 +109,7 @@ export default function Ranking() {
     return (
       <div className="mx-auto max-w-4xl px-4 py-6">
         <EmptyState
+          icon="🏆"
           title="Ranking ainda vazio"
           description="Assim que os bolões começarem a pontuar, o ranking global aparece aqui com dados reais."
         />
