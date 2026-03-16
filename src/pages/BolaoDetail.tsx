@@ -12,7 +12,9 @@ import {
   query,
   where,
   getCountFromServer,
-  onSnapshot
+  onSnapshot,
+  orderBy,
+  limit,
 } from "firebase/firestore";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -27,8 +29,13 @@ import { PublicPalpitesTab } from "@/components/copa/bolao/PublicPalpitesTab";
 import { OverviewTab } from "@/components/copa/bolao/OverviewTab";
 import { MembrosTab } from "@/components/copa/bolao/MembrosTab";
 import { ExtrasTab } from "@/components/copa/bolao/ExtrasTab";
+import { PhaseMarketsTab } from "@/components/copa/bolao/markets/PhaseMarketsTab";
+import { SpecialMarketsTab } from "@/components/copa/bolao/markets/SpecialMarketsTab";
+import { BolaoIntroModal } from "@/components/copa/bolao/onboarding/BolaoIntroModal";
+import { BolaoTour } from "@/components/copa/bolao/onboarding/BolaoTour";
 import { EmptyState } from "@/components/EmptyState";
-import type { BolaoData, MemberData, Palpite } from "@/types/bolao";
+import { saveBolaoPrediction } from "@/services/boloes/bolao-prediction.service";
+import type { BolaoActivity, BolaoData, BolaoMarket, BolaoOnboardingState, BolaoPrediction, MemberData, Palpite } from "@/types/bolao";
 
 export default function BolaoDetail() {
   const { id } = useParams();
@@ -39,21 +46,45 @@ export default function BolaoDetail() {
 
   const initialTab = searchParams.get("tab") || "ranking";
   const highlightedMatch = searchParams.get("match");
+  const validTabs = useMemo(
+    () => new Set(["overview", "ranking", "jogos", "fase", "palpites", "membros", "extras", "especiais"]),
+    []
+  );
 
   const [bolao, setBolao] = useState<BolaoData | null>(null);
   const [members, setMembers] = useState<MemberData[]>([]);
   const [memberCount, setMemberCount] = useState(0);
   const [myPalpites, setMyPalpites] = useState<Palpite[]>([]);
+  const [bolaoMarkets, setBolaoMarkets] = useState<BolaoMarket[]>([]);
+  const [myMarketPredictions, setMyMarketPredictions] = useState<BolaoPrediction[]>([]);
+  const [allMarketPredictions, setAllMarketPredictions] = useState<BolaoPrediction[]>([]);
+  const [activityFeed, setActivityFeed] = useState<BolaoActivity[]>([]);
+  const [onboardingState, setOnboardingState] = useState<BolaoOnboardingState | null>(null);
+  const [showBolaoIntro, setShowBolaoIntro] = useState(false);
   const [loading, setLoading] = useState(true);
   const [infoOpen, setInfoOpen] = useState(false);
   const [championOpen, setChampionOpen] = useState(false);
   const [championSelection, setChampionSelection] = useState("");
   const [myChampion, setMyChampion] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState(initialTab);
+  const [activeTab, setActiveTab] = useState(validTabs.has(initialTab) ? initialTab : "ranking");
 
   const isCreator = bolao?.creator_id === user?.id;
   const myMember = members.find(m => m.user_id === user?.id);
   const isPaid = myMember?.payment_status === 'paid' || myMember?.payment_status === 'exempt' || isCreator;
+  const championMarket = bolaoMarkets.find((market) => market.slug === "champion");
+  const matchMarkets = bolaoMarkets.filter((market) => market.scope === "match");
+  const phaseMarkets = bolaoMarkets.filter((market) => market.scope === "phase");
+  const specialMarkets = bolaoMarkets.filter((market) => market.scope === "special");
+  const tournamentMarkets = bolaoMarkets.filter((market) => market.scope === "tournament");
+  const formatLabel = bolao?.format_id
+    ? ({
+        classic: "Clássico",
+        detailed: "Detalhado",
+        knockout: "Mata-mata",
+        tournament: "Campeonato",
+        strategic: "Estratégico",
+      } as const)[bolao.format_id] ?? bolao.format_id
+    : null;
 
   const loadBolao = useCallback(async () => {
     if (!id || !user) return;
@@ -92,6 +123,10 @@ export default function BolaoDetail() {
         payment_details: bData.payment_details || null,
         prize_distribution: bData.prize_distribution || null,
         status: bData.status || 'active',
+        format_id: bData.format_id,
+        scoring_mode: bData.scoring_mode,
+        visibility_mode: bData.visibility_mode,
+        cutoff_mode: bData.cutoff_mode,
       } as BolaoData);
 
       // Fetch member count
@@ -144,11 +179,12 @@ export default function BolaoDetail() {
       for (let i = 0; i < profileIds.length; i += chunkSize) {
         const chunk = profileIds.slice(i, i + chunkSize);
         if (chunk.length === 0) continue;
-        const qProfiles = query(collection(db, "profiles"), where("id", "in", chunk));
+        const qProfiles = query(collection(db, "profiles"), where("user_id", "in", chunk));
         const pSnap = await getDocs(qProfiles);
         pSnap.forEach(d => {
           const profileData = d.data();
-          profilesMap[d.id] = {
+          const profileKey = typeof profileData.user_id === "string" ? profileData.user_id : d.id;
+          profilesMap[profileKey] = {
             name: profileData.displayName || profileData.name || null,
             avatar_url: profileData.photoURL || profileData.avatar_url || null,
           };
@@ -181,22 +217,112 @@ export default function BolaoDetail() {
       setMyPalpites(pList);
     });
 
+    const marketsRef = collection(db, "bolao_markets");
+    const qMarkets = query(marketsRef, where("bolao_id", "==", id));
+
+    const unsubscribeMarkets = onSnapshot(qMarkets, (snapshot) => {
+      const marketList = snapshot.docs
+        .map((snapshotDoc) => ({ id: snapshotDoc.id, ...snapshotDoc.data() }) as BolaoMarket)
+        .sort((a, b) => a.order_index - b.order_index);
+
+      setBolaoMarkets(marketList);
+    });
+
+    const predictionsRef = collection(db, "bolao_predictions");
+    const qPredictions = query(predictionsRef, where("bolao_id", "==", id), where("user_id", "==", user.id));
+
+    const unsubscribePredictions = onSnapshot(qPredictions, (snapshot) => {
+      const predictionList = snapshot.docs.map((snapshotDoc) => ({
+        id: snapshotDoc.id,
+        ...snapshotDoc.data(),
+      })) as BolaoPrediction[];
+
+      setMyMarketPredictions(predictionList);
+    });
+
+    const qAllPredictions = query(predictionsRef, where("bolao_id", "==", id));
+    const unsubscribeAllPredictions = onSnapshot(qAllPredictions, (snapshot) => {
+      const predictionList = snapshot.docs.map((snapshotDoc) => ({
+        id: snapshotDoc.id,
+        ...snapshotDoc.data(),
+      })) as BolaoPrediction[];
+
+      setAllMarketPredictions(predictionList);
+    });
+
+    const activityRef = collection(db, "bolao_activity");
+    const qActivity = query(activityRef, where("bolao_id", "==", id), orderBy("created_at", "desc"), limit(12));
+    const unsubscribeActivity = onSnapshot(qActivity, (snapshot) => {
+      const rows = snapshot.docs.map((snapshotDoc) => ({
+        id: snapshotDoc.id,
+        ...snapshotDoc.data(),
+        created_at:
+          typeof snapshotDoc.data().created_at?.toDate === "function"
+            ? snapshotDoc.data().created_at.toDate().toISOString()
+            : snapshotDoc.data().created_at,
+      })) as BolaoActivity[];
+
+      setActivityFeed(rows);
+    });
+
+    const onboardingRef = doc(db, "bolao_onboarding_state", `${user.id}_${id}`);
+    const unsubscribeOnboarding = onSnapshot(onboardingRef, (snapshot) => {
+      if (!snapshot.exists()) {
+        setOnboardingState(null);
+        setShowBolaoIntro(true);
+        return;
+      }
+
+      const data = snapshot.data() as Omit<BolaoOnboardingState, "id">;
+      const nextState = { id: snapshot.id, ...data } as BolaoOnboardingState;
+      setOnboardingState(nextState);
+      setShowBolaoIntro(!nextState.seen_intro);
+    });
+
     return () => {
       unsubscribeMembers();
       unsubscribePalpites();
+      unsubscribeMarkets();
+      unsubscribePredictions();
+      unsubscribeAllPredictions();
+      unsubscribeActivity();
+      unsubscribeOnboarding();
     };
   }, [id, user]);
+
+  useEffect(() => {
+    if (!championMarket) return;
+
+    const prediction = myMarketPredictions.find((item) => item.market_id === championMarket.id);
+    const predictionValue = prediction?.prediction_value;
+
+    if (typeof predictionValue === "string" && predictionValue) {
+      setMyChampion(predictionValue);
+      setChampionSelection(predictionValue);
+    }
+  }, [championMarket, myMarketPredictions]);
 
   const saveChampion = async () => {
     if (!championSelection || !user || !bolao) return;
 
     try {
-      await setDoc(doc(db, "bolao_champion_predictions", `${user.id}_${bolao.id}`), {
+      const legacyChampionPromise = setDoc(doc(db, "bolao_champion_predictions", `${user.id}_${bolao.id}`), {
         bolao_id: bolao.id,
         user_id: user.id,
         team_code: championSelection,
         updated_at: new Date().toISOString()
       });
+
+      const predictionPromise = championMarket
+        ? saveBolaoPrediction({
+            bolaoId: bolao.id,
+            marketId: championMarket.id,
+            userId: user.id,
+            predictionValue: championSelection,
+          })
+        : Promise.resolve(null);
+
+      await Promise.all([legacyChampionPromise, predictionPromise]);
 
       setMyChampion(championSelection);
       setChampionOpen(false);
@@ -216,16 +342,128 @@ export default function BolaoDetail() {
     }
   };
 
+  const handleShareInvite = async () => {
+    if (!bolao) return;
+
+    const inviteUrl = `${window.location.origin}/b/${bolao.invite_code}`;
+    const shareText = `Vem pro bolao "${bolao.name}" no ArenaCopa. Usa o codigo ${bolao.invite_code} ou entra por aqui: ${inviteUrl}`;
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: `Convite para ${bolao.name}`,
+          text: shareText,
+          url: inviteUrl,
+        });
+      } else {
+        await navigator.clipboard.writeText(inviteUrl);
+        toast({
+          title: "Link copiado.",
+          description: "Agora é só compartilhar com a galera.",
+        });
+      }
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") {
+        return;
+      }
+
+      console.error(error);
+      toast({
+        title: "Não consegui compartilhar agora.",
+        description: "Tenta novamente em alguns segundos.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const persistBolaoIntroState = useCallback(
+    async (nextValues?: Partial<BolaoOnboardingState>) => {
+      if (!id || !user) return;
+
+      const onboardingId = `${user.id}_${id}`;
+      const basePayload = {
+        id: onboardingId,
+        bolao_id: id,
+        user_id: user.id,
+        seen_intro: true,
+        seen_scoring: onboardingState?.seen_scoring ?? false,
+        seen_markets: onboardingState?.seen_markets ?? false,
+        seen_ranking: onboardingState?.seen_ranking ?? false,
+        completed_at: onboardingState?.completed_at ?? null,
+        updated_at: new Date().toISOString(),
+        ...nextValues,
+      };
+
+      await setDoc(doc(db, "bolao_onboarding_state", onboardingId), basePayload, { merge: true });
+    },
+    [id, onboardingState, user]
+  );
+
+  const closeBolaoIntro = useCallback(() => {
+    void persistBolaoIntroState();
+    setShowBolaoIntro(false);
+  }, [persistBolaoIntroState]);
+
+  const handleBolaoIntroToPredictions = useCallback(() => {
+    void persistBolaoIntroState({ seen_markets: true });
+    setActiveTab("jogos");
+    setShowBolaoIntro(false);
+  }, [persistBolaoIntroState]);
+
+  const activeTourTab = useMemo(() => {
+    if (showBolaoIntro) return null;
+
+    if (activeTab === "ranking" && !onboardingState?.seen_ranking) {
+      return "ranking" as const;
+    }
+
+    if (
+      (activeTab === "jogos" || activeTab === "fase" || activeTab === "extras" || activeTab === "especiais") &&
+      !onboardingState?.seen_markets
+    ) {
+      return activeTab;
+    }
+
+    return null;
+  }, [activeTab, onboardingState, showBolaoIntro]);
+
+  const dismissTour = useCallback(() => {
+    if (activeTourTab === "ranking") {
+      void persistBolaoIntroState({ seen_ranking: true });
+      return;
+    }
+
+    if (activeTourTab) {
+      void persistBolaoIntroState({ seen_markets: true });
+    }
+  }, [activeTourTab, persistBolaoIntroState]);
+
   const tabs = useMemo(
-    () => [
-      { id: "overview", label: "Visão Geral" },
-      { id: "ranking", label: "Ranking" },
-      { id: "jogos", label: highlightedMatch ? "Palpite pendente" : "Seus palpites" },
-      { id: "palpites", label: "Palpites rivais" },
-      { id: "membros", label: "Membros" },
-      { id: "extras", label: "Extras" },
-    ],
-    [highlightedMatch]
+    () => {
+      const baseTabs = [
+        { id: "overview", label: "Visão Geral" },
+        { id: "ranking", label: "Ranking" },
+        { id: "jogos", label: highlightedMatch ? "Palpite pendente" : "Seus palpites" },
+      ];
+
+      if (phaseMarkets.length > 0) {
+        baseTabs.push({ id: "fase", label: "Por fase" });
+      }
+
+      baseTabs.push({ id: "palpites", label: "Palpites rivais" });
+      baseTabs.push({ id: "membros", label: "Membros" });
+
+      if (tournamentMarkets.length > 0 || bolaoMarkets.length === 0) {
+        baseTabs.push({ id: "extras", label: tournamentMarkets.length > 0 ? "Campeonato" : "Extras" });
+      }
+
+      if (specialMarkets.length > 0) {
+        baseTabs.push({ id: "especiais", label: "Especiais" });
+      }
+
+      return baseTabs;
+    },
+    [highlightedMatch, phaseMarkets.length, specialMarkets.length, tournamentMarkets.length, bolaoMarkets.length]
   );
 
   useEffect(() => {
@@ -234,16 +472,38 @@ export default function BolaoDetail() {
     }
   }, [highlightedMatch]);
 
+  useEffect(() => {
+    if (validTabs.has(initialTab)) {
+      setActiveTab(initialTab);
+      return;
+    }
+
+    setActiveTab("ranking");
+  }, [initialTab, validTabs]);
+
   if (loading) return <BolaoDetailSkeleton />;
   if (!bolao) return <EmptyState icon="🏆" title="Bolão não encontrado" description="Confira o link ou volte para a lista." />;
 
   return (
     <div className="mx-auto max-w-6xl px-4 pb-28 pt-6 text-white">
+      <BolaoIntroModal
+        open={showBolaoIntro && Boolean(bolao)}
+        bolaoName={bolao.name}
+        formatLabel={formatLabel}
+        matchMarketsCount={matchMarkets.length}
+        phaseMarketsCount={phaseMarkets.length}
+        tournamentMarketsCount={tournamentMarkets.length}
+        specialMarketsCount={specialMarkets.length}
+        onClose={closeBolaoIntro}
+        onGoToPredictions={handleBolaoIntroToPredictions}
+      />
+
       <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
         <div className="flex items-start gap-3">
           <button
+            aria-label="Voltar para bolões"
             onClick={() => navigate("/boloes")}
-            className="flex h-12 w-12 items-center justify-center rounded-[20px] border border-white/10 bg-white/5"
+            className="surface-card-soft flex h-12 w-12 items-center justify-center rounded-[20px]"
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
@@ -253,7 +513,7 @@ export default function BolaoDetail() {
               {bolao.category === "public" ? "Bolão público" : "Bolão privado"}
             </p>
             <div className="mt-2 flex items-center gap-3">
-              <div className="flex h-14 w-14 items-center justify-center rounded-[22px] border border-white/10 bg-black/20 text-2xl">
+              <div className="surface-card-soft flex h-14 w-14 items-center justify-center rounded-[22px] text-2xl">
                 {bolao.avatar_url || "🏆"}
               </div>
               <div>
@@ -265,7 +525,7 @@ export default function BolaoDetail() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          {!myChampion && (
+          {championMarket && !myChampion && (
             <button
               onClick={() => setChampionOpen(true)}
               className="inline-flex h-12 items-center gap-2 rounded-[20px] bg-primary px-4 text-[11px] font-black uppercase tracking-[0.18em] text-black"
@@ -275,7 +535,7 @@ export default function BolaoDetail() {
             </button>
           )}
 
-          {myChampion && (
+          {championMarket && myChampion && (
             <div className="inline-flex h-12 items-center gap-2 rounded-[20px] border border-primary/30 bg-primary/10 px-4 text-[11px] font-black uppercase tracking-[0.18em] text-primary">
               <Trophy className="h-4 w-4" />
               Meu campeão: {myChampion}
@@ -283,8 +543,9 @@ export default function BolaoDetail() {
           )}
 
           <button
+            aria-label="Abrir informações do bolão"
             onClick={() => setInfoOpen(true)}
-            className="flex h-12 w-12 items-center justify-center rounded-[20px] border border-white/10 bg-white/5"
+            className="surface-card-soft flex h-12 w-12 items-center justify-center rounded-[20px]"
           >
             <Info className="h-5 w-5" />
           </button>
@@ -292,14 +553,26 @@ export default function BolaoDetail() {
       </div>
 
       <div className="mb-6 flex flex-wrap gap-3 text-sm text-zinc-300">
-        <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2">
+        <div className="surface-chip rounded-full px-4 py-2">
           <Users className="h-4 w-4 text-primary" />
           {memberCount} membros
         </div>
-        <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2">
+        <div className="surface-chip rounded-full px-4 py-2">
           <Share2 className="h-4 w-4 text-primary" />
           Código: {bolao.invite_code}
         </div>
+        {formatLabel && (
+          <div className="surface-chip rounded-full px-4 py-2">
+            <Trophy className="h-4 w-4 text-primary" />
+            Formato: {formatLabel}
+          </div>
+        )}
+        {bolaoMarkets.length > 0 && (
+          <div className="surface-chip rounded-full px-4 py-2">
+            <Info className="h-4 w-4 text-primary" />
+            {bolaoMarkets.length} mercados ativos
+          </div>
+        )}
       </div>
 
       <div className="mb-8 flex space-x-2 overflow-x-auto pb-2 scrollbar-hide">
@@ -311,7 +584,7 @@ export default function BolaoDetail() {
               "whitespace-nowrap rounded-2xl px-6 py-3 text-[11px] font-black uppercase tracking-[0.18em] transition-all",
               activeTab === tab.id
                 ? "bg-white text-black shadow-[0_0_20px_rgba(255,255,255,0.3)]"
-                : "border border-white/10 bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white"
+                : "surface-card-soft text-zinc-400 hover:text-white"
             )}
           >
             {tab.label}
@@ -319,7 +592,8 @@ export default function BolaoDetail() {
         ))}
       </div>
 
-      <div className="rounded-[32px] border border-white/10 bg-zinc-950 p-4 md:p-6">
+      <div className="surface-card-strong rounded-[32px] p-4 md:p-6">
+        {activeTourTab && <BolaoTour tab={activeTourTab} onDismiss={dismissTour} />}
         {activeTab === "overview" && bolao && (
           <OverviewTab 
             bolao={bolao} 
@@ -327,11 +601,30 @@ export default function BolaoDetail() {
             palpites={myPalpites} 
             userId={user!.id} 
             isCreator={isCreator}
-            onShare={() => {}} 
+            markets={bolaoMarkets}
+            marketPredictions={allMarketPredictions}
+            activityFeed={activityFeed}
+            onShare={handleShareInvite} 
           />
         )}
-        {activeTab === "ranking" && <RealtimeRankingTab bolaoId={bolao.id} />}
-        {activeTab === "jogos" && <JogosTab bolaoId={bolao.id} highlightedMatchId={highlightedMatch || undefined} />}
+        {activeTab === "ranking" && <RealtimeRankingTab bolaoId={bolao.id} rules={bolao.scoring_rules} />}
+        {activeTab === "jogos" && (
+          <JogosTab
+            bolaoId={bolao.id}
+            highlightedMatchId={highlightedMatch || undefined}
+            markets={bolaoMarkets}
+            predictions={myMarketPredictions}
+          />
+        )}
+        {activeTab === "fase" && (
+          <PhaseMarketsTab
+            bolaoId={bolao.id}
+            userId={user!.id}
+            markets={phaseMarkets}
+            predictions={myMarketPredictions}
+            canManage={isCreator}
+          />
+        )}
         {activeTab === "palpites" && <PublicPalpitesTab bolaoId={bolao.id} />}
         {activeTab === "membros" && (
           <MembrosTab 
@@ -343,11 +636,29 @@ export default function BolaoDetail() {
             onRefresh={() => {}} 
           />
         )}
-        {activeTab === "extras" && <ExtrasTab bolaoId={bolao.id} userId={user!.id} />}
+        {activeTab === "extras" && (
+          <ExtrasTab
+            bolaoId={bolao.id}
+            userId={user!.id}
+            markets={bolaoMarkets}
+            predictions={myMarketPredictions}
+            canManage={isCreator}
+          />
+        )}
+        {activeTab === "especiais" && (
+          <SpecialMarketsTab
+            bolaoId={bolao.id}
+            userId={user!.id}
+            markets={specialMarkets}
+            predictions={myMarketPredictions}
+            phaseMarkets={phaseMarkets}
+            canManage={isCreator}
+          />
+        )}
       </div>
 
       <Dialog open={championOpen} onOpenChange={setChampionOpen}>
-        <DialogContent className="border-white/10 bg-zinc-950 text-white sm:max-w-[425px]">
+        <DialogContent className="surface-dialog sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Quem será o campeão?</DialogTitle>
           </DialogHeader>
@@ -377,12 +688,16 @@ export default function BolaoDetail() {
       </Dialog>
 
       <Dialog open={infoOpen} onOpenChange={setInfoOpen}>
-        <DialogContent className="border-white/10 bg-zinc-950 text-white sm:max-w-[425px]">
+        <DialogContent className="surface-dialog sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Regras da arena</DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-3 rounded-2xl border border-white/10 bg-white/5 p-4 text-sm">
+          <div className="surface-card-soft space-y-3 rounded-2xl p-4 text-sm">
+            {formatLabel && <div className="flex justify-between gap-4"><span>Formato</span><strong>{formatLabel}</strong></div>}
+            {bolaoMarkets.length > 0 && <div className="flex justify-between gap-4"><span>Mercados ativos</span><strong>{bolaoMarkets.length}</strong></div>}
+            {bolao.visibility_mode && <div className="flex justify-between gap-4"><span>Visibilidade</span><strong>{bolao.visibility_mode}</strong></div>}
+            {bolao.cutoff_mode && <div className="flex justify-between gap-4"><span>Fechamento</span><strong>{bolao.cutoff_mode}</strong></div>}
             <div className="flex justify-between gap-4"><span>Placar exato</span><strong>{bolao.scoring_rules?.exact ?? 0} pts</strong></div>
             <div className="flex justify-between gap-4"><span>Resultado (vitória/empate/derrota)</span><strong>{bolao.scoring_rules?.winner ?? 0} pts</strong></div>
             <div className="flex justify-between gap-4"><span>Empate</span><strong>{bolao.scoring_rules?.draw ?? 0} pts</strong></div>

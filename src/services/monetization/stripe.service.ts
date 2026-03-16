@@ -7,6 +7,7 @@ import {
   orderBy, 
   limit 
 } from "firebase/firestore";
+import { monetizationEnv } from "@/lib/env";
 
 export type PremiumSubscriptionStatus = "inactive" | "pending" | "active" | "expired" | "canceled" | "failed";
 
@@ -32,6 +33,9 @@ const inactiveStatus: PremiumStatusResult = {
   amountTotal: null,
   currency: null,
 };
+
+export const PREMIUM_CHECKOUT_UNAVAILABLE_MESSAGE =
+  "Premium temporariamente indisponivel enquanto o backend desta versao e estabilizado.";
 
 const mapSubscriptionRow = (row: PremiumSubscriptionRow | null): PremiumStatusResult => {
   if (!row) {
@@ -68,14 +72,15 @@ export async function getPremiumStatus(userId: string): Promise<PremiumStatusRes
 }
 
 export async function createStripeCheckoutSession() {
-  // TODO: Implement with Firebase Cloud Functions
-  console.warn("Stripe checkout functions need migration to Firebase Cloud Functions");
-  throw new Error("Checkout temporariamente indisponível na migração para Firebase.");
+  if (!monetizationEnv.premiumCheckoutEnabled) {
+    throw new Error(PREMIUM_CHECKOUT_UNAVAILABLE_MESSAGE);
+  }
+
+  throw new Error(PREMIUM_CHECKOUT_UNAVAILABLE_MESSAGE);
 }
 
 export async function syncStripeCheckoutSession(checkoutSessionId: string): Promise<PremiumStatusResult> {
-  // TODO: Implement with Firebase Cloud Functions
-  console.warn("Stripe sync functions need migration to Firebase Cloud Functions");
+  void checkoutSessionId;
   return inactiveStatus;
 }
 
@@ -93,4 +98,3 @@ export function activatePremiumSimulation(): PremiumStatusResult {
     currency: "brl",
   };
 }
-

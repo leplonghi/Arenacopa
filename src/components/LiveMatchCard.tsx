@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useEffect, useMemo, useState } from "react";
 import { Flag } from "@/components/Flag";
 import { useNavigate } from "react-router-dom";
 import { Clock, Trophy } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { db } from "@/integrations/firebase/client";
+import { collection, getDocs, onSnapshot, orderBy, query, where } from "firebase/firestore";
 
 type MatchCardRow = {
     id: string;
@@ -15,6 +16,39 @@ type MatchCardRow = {
     status: "scheduled" | "live" | "finished";
 };
 
+type FirestoreMatchRow = {
+    match_date?: string | { toDate?: () => Date };
+    home_team_code?: string;
+    away_team_code?: string;
+    home_score?: number | null;
+    away_score?: number | null;
+    status?: string;
+};
+
+const normalizeMatchDate = (value: FirestoreMatchRow["match_date"]) => {
+    if (!value) {
+        return new Date(0).toISOString();
+    }
+
+    if (typeof value === "string") {
+        return value;
+    }
+
+    if (typeof value === "object" && typeof value.toDate === "function") {
+        return value.toDate().toISOString();
+    }
+
+    return new Date(0).toISOString();
+};
+
+const normalizeStatus = (status?: string): MatchCardRow["status"] => {
+    const normalized = status?.toLowerCase();
+
+    if (normalized === "live") return "live";
+    if (normalized === "finished") return "finished";
+    return "scheduled";
+};
+
 export function LiveMatchCard() {
     const { user } = useAuth();
     const navigate = useNavigate();
@@ -23,64 +57,52 @@ export function LiveMatchCard() {
     const [hasPrediction, setHasPrediction] = useState<boolean>(false);
     const [countdown, setCountdown] = useState<string>("");
 
-    const fetchMatches = useCallback(async () => {
-        // 1. Check for live match
-        const { data: liveData } = await supabase
-            .from("matches")
-            .select("id, match_date, home_team_code, away_team_code, home_score, away_score, status")
-            .eq("status", "live")
-            .order("match_date", { ascending: true })
-            .limit(1)
-            .maybeSingle();
+    useEffect(() => {
+        const matchesQuery = query(collection(db, "matches"), orderBy("match_date", "asc"));
 
-        if (liveData) {
-            setLiveMatch(liveData);
-            setNextMatch(null);
-            if (user) {
-                const { count } = await supabase
-                    .from("bolao_palpites")
-                    .select("id", { count: "exact", head: true })
-                    .eq("user_id", user.id)
-                    .eq("match_id", liveData.id);
-                setHasPrediction(!!(count && count > 0));
-            } else {
-                setHasPrediction(false);
-            }
-        } else {
-            setLiveMatch(null);
-            setHasPrediction(false);
-            // 2. No live match, fetch next scheduled match
-            const { data: nextData } = await supabase
-                .from("matches")
-                .select("id, match_date, home_team_code, away_team_code, home_score, away_score, status")
-                .eq("status", "scheduled")
-                .order("match_date", { ascending: true })
-                .limit(1)
-                .maybeSingle();
+        const unsubscribe = onSnapshot(matchesQuery, (snapshot) => {
+            const now = Date.now();
+            const matches = snapshot.docs.map((docSnapshot) => {
+                const data = docSnapshot.data() as FirestoreMatchRow;
+                return {
+                    id: docSnapshot.id,
+                    match_date: normalizeMatchDate(data.match_date),
+                    home_team_code: data.home_team_code || "---",
+                    away_team_code: data.away_team_code || "---",
+                    home_score: data.home_score ?? null,
+                    away_score: data.away_score ?? null,
+                    status: normalizeStatus(data.status),
+                } satisfies MatchCardRow;
+            });
 
-            setNextMatch(nextData || null);
-        }
-    }, [user]);
+            const currentLiveMatch = matches.find((match) => match.status === "live") || null;
+            const currentNextMatch =
+                matches.find((match) => match.status === "scheduled" && new Date(match.match_date).getTime() >= now) || null;
+
+            setLiveMatch(currentLiveMatch);
+            setNextMatch(currentLiveMatch ? null : currentNextMatch);
+        });
+
+        return () => unsubscribe();
+    }, []);
+
+    const activeLiveMatchId = useMemo(() => liveMatch?.id ?? null, [liveMatch?.id]);
 
     useEffect(() => {
-        fetchMatches();
+        if (!user?.id || !activeLiveMatchId) {
+            setHasPrediction(false);
+            return;
+        }
 
-        const channel = supabase
-            .channel('public:matches')
-            .on(
-                'postgres_changes',
-                { event: 'UPDATE', schema: 'public', table: 'matches' },
-                () => {
-                    fetchMatches();
-                }
-            )
-            .subscribe();
+        const predictionsQuery = query(collection(db, "bolao_palpites"), where("user_id", "==", user.id));
 
-        return () => {
-            supabase.removeChannel(channel);
-        };
-    }, [fetchMatches]);
-    
+        const unsubscribe = onSnapshot(predictionsQuery, (snapshot) => {
+            const predicted = snapshot.docs.some((docSnapshot) => docSnapshot.data().match_id === activeLiveMatchId);
+            setHasPrediction(predicted);
+        });
+
+        return () => unsubscribe();
+    }, [activeLiveMatchId, user?.id]);
 
     useEffect(() => {
         if (!nextMatch) return;
@@ -92,7 +114,6 @@ export function LiveMatchCard() {
             if (distance < 0) {
                 clearInterval(intervalId);
                 setCountdown("CARREGANDO...");
-                fetchMatches(); // Maybe it started
                 return;
             }
 
@@ -108,7 +129,7 @@ export function LiveMatchCard() {
         }, 1000);
 
         return () => clearInterval(intervalId);
-    }, [fetchMatches, nextMatch]);
+    }, [nextMatch]);
 
     if (!liveMatch && !nextMatch) return null;
 

@@ -1,13 +1,13 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { Users, BarChart3, TrendingUp, ChevronRight, UserPlus, Share2, Calendar, Swords, Zap, Check, MapPin } from "lucide-react";
+import { Users, BarChart3, TrendingUp, ChevronRight, UserPlus, Share2, Calendar, Swords, Zap, Check, MapPin, Activity, Trophy, Layers3, Sparkles } from "lucide-react";
 import { format } from "date-fns";
 import { matches as mockMatches, getTeam, type Match } from "@/data/mockData";
 import { useMatches } from "@/hooks/useMatches";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { type BolaoData, type MemberData, type Palpite } from "@/types/bolao";
+import { type BolaoActivity, type BolaoData, type BolaoMarket, type BolaoPrediction, type MemberData, type Palpite } from "@/types/bolao";
 import { MatchDetailsModal } from "@/components/copa/MatchDetailsModal";
 import { useDateLocale } from "@/hooks/useDateLocale";
 import { motion, AnimatePresence } from "framer-motion";
@@ -18,11 +18,39 @@ interface OverviewTabProps {
     members: MemberData[];
     isCreator: boolean;
     palpites: Palpite[];
+    markets: BolaoMarket[];
+    marketPredictions: BolaoPrediction[];
+    activityFeed: BolaoActivity[];
     userId: string;
     onShare: () => void;
 }
 
-export function OverviewTab({ bolao, members, palpites, userId, onShare }: OverviewTabProps) {
+function getScopeIcon(scope: BolaoMarket["scope"]) {
+    switch (scope) {
+        case "phase":
+            return <Layers3 className="w-4 h-4 text-blue-400" />;
+        case "tournament":
+            return <Trophy className="w-4 h-4 text-amber-400" />;
+        case "special":
+            return <Sparkles className="w-4 h-4 text-fuchsia-400" />;
+        default:
+            return <Swords className="w-4 h-4 text-emerald-400" />;
+    }
+}
+
+function formatActivityTime(value?: string) {
+    if (!value) return "agora";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "agora";
+    return date.toLocaleString("pt-BR", {
+        day: "2-digit",
+        month: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+    });
+}
+
+export function OverviewTab({ bolao, members, palpites, markets, marketPredictions, activityFeed, userId, onShare }: OverviewTabProps) {
     const { t } = useTranslation('bolao');
     const dateLocale = useDateLocale();
     const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
@@ -30,9 +58,31 @@ export function OverviewTab({ bolao, members, palpites, userId, onShare }: Overv
     const { data: supabaseMatches, isLoading } = useMatches();
 
     const matches = supabaseMatches || mockMatches;
-    const totalMatches = matches.filter(m => m.phase === "groups").length;
+    const matchMarkets = markets.filter((market) => market.scope === "match");
+    const uniqueMatchMarketIds = Array.from(new Set(matchMarkets.map((market) => market.match_id).filter(Boolean)));
+    const exactScoreMarkets = matchMarkets.filter((market) => market.slug === "exact_score");
+    const totalMatches =
+        exactScoreMarkets.length ||
+        uniqueMatchMarketIds.length ||
+        matches.filter(m => m.phase === "groups").length;
     const myPalpites = palpites.filter(p => p.user_id === userId);
     const progress = totalMatches > 0 ? Math.round((myPalpites.length / totalMatches) * 100) : 0;
+    const marketEngagement = useMemo(() => {
+        if (markets.length === 0 || members.length === 0) return [];
+
+        return markets
+            .map((market) => {
+                const savedCount = marketPredictions.filter((prediction) => prediction.market_id === market.id).length;
+                const coverage = Math.round((savedCount / members.length) * 100);
+                return {
+                    market,
+                    savedCount,
+                    coverage,
+                };
+            })
+            .sort((a, b) => b.coverage - a.coverage || b.savedCount - a.savedCount)
+            .slice(0, 4);
+    }, [marketPredictions, markets, members.length]);
 
     const nextMatches = matches
         .filter(m => m.status === "scheduled" && m.phase === "groups")
@@ -81,9 +131,9 @@ export function OverviewTab({ bolao, members, palpites, userId, onShare }: Overv
                 />
                 <StatCard
                     icon={<BarChart3 className="w-5 h-5 text-amber-400" />}
-                    value={myPalpites.length}
+                    value={markets.length > 0 ? markets.length : myPalpites.length}
                     label={t('overview.palpites_stat')}
-                    subLabel="PREDICTIONS"
+                    subLabel={markets.length > 0 ? "MARKETS" : "PREDICTIONS"}
                     color="amber"
                     delay={0.2}
                 />
@@ -235,6 +285,103 @@ export function OverviewTab({ bolao, members, palpites, userId, onShare }: Overv
                             );
                         })}
                     </div>
+                </div>
+            )}
+
+            {(marketEngagement.length > 0 || activityFeed.length > 0) && (
+                <div className="grid gap-4 xl:grid-cols-[1.05fr_0.95fr]">
+                    <motion.div
+                        variants={staggerItem}
+                        className="rounded-[32px] border border-white/10 bg-white/[0.04] p-6"
+                    >
+                        <div className="flex items-center justify-between gap-3">
+                            <div>
+                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Pulso da liga</p>
+                                <h3 className="mt-2 text-xl font-black text-white">Mercados mais quentes</h3>
+                            </div>
+                            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                                <Activity className="w-5 h-5" />
+                            </div>
+                        </div>
+
+                        <div className="mt-5 space-y-3">
+                            {marketEngagement.map(({ market, savedCount, coverage }) => (
+                                <div
+                                    key={market.id}
+                                    className="rounded-[24px] border border-white/10 bg-black/10 p-4"
+                                >
+                                    <div className="flex items-start justify-between gap-4">
+                                        <div className="min-w-0">
+                                            <div className="flex items-center gap-2">
+                                                {getScopeIcon(market.scope)}
+                                                <p className="truncate text-sm font-black text-white">{market.title}</p>
+                                            </div>
+                                            <p className="mt-1 text-xs text-zinc-400">{market.description}</p>
+                                        </div>
+                                        <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-zinc-300">
+                                            {coverage}%
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-4">
+                                        <div className="h-2 overflow-hidden rounded-full bg-white/5">
+                                            <div
+                                                className="h-full rounded-full bg-gradient-to-r from-primary via-emerald-400 to-blue-400"
+                                                style={{ width: `${Math.max(6, coverage)}%` }}
+                                            />
+                                        </div>
+                                        <div className="mt-2 flex items-center justify-between text-xs text-zinc-400">
+                                            <span>{savedCount} palpites salvos</span>
+                                            <span>{members.length} membros na arena</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </motion.div>
+
+                    <motion.div
+                        variants={staggerItem}
+                        className="rounded-[32px] border border-white/10 bg-white/[0.04] p-6"
+                    >
+                        <div className="flex items-center justify-between gap-3">
+                            <div>
+                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Tempo real</p>
+                                <h3 className="mt-2 text-xl font-black text-white">Atividade da liga</h3>
+                            </div>
+                            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                                <Users className="w-5 h-5" />
+                            </div>
+                        </div>
+
+                        <div className="mt-5 space-y-3">
+                            {activityFeed.length > 0 ? activityFeed.map((item) => (
+                                <div
+                                    key={item.id}
+                                    className="rounded-[24px] border border-white/10 bg-black/10 p-4"
+                                >
+                                    <div className="flex items-start justify-between gap-3">
+                                        <div className="min-w-0">
+                                            <p className="text-sm font-black text-white">{item.title}</p>
+                                            {item.description && <p className="mt-1 text-xs leading-relaxed text-zinc-400">{item.description}</p>}
+                                        </div>
+                                        <span className="shrink-0 text-[10px] font-black uppercase tracking-[0.16em] text-zinc-500">
+                                            {formatActivityTime(item.created_at)}
+                                        </span>
+                                    </div>
+                                    {item.actor_name && (
+                                        <p className="mt-3 text-[10px] font-black uppercase tracking-[0.16em] text-primary">
+                                            {item.actor_name}
+                                        </p>
+                                    )}
+                                </div>
+                            )) : (
+                                <div className="rounded-[24px] border border-dashed border-white/10 bg-black/10 p-6 text-sm text-zinc-400">
+                                    Assim que a liga começar a receber palpites, entradas e resultados oficiais, a atividade aparece aqui em tempo real.
+                                </div>
+                            )}
+                        </div>
+                    </motion.div>
                 </div>
             )}
 

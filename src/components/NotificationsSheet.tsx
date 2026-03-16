@@ -16,6 +16,7 @@ import { ptBR, enUS, es } from "date-fns/locale";
 import { type Locale } from "date-fns";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 import {
     listNotifications,
     markAllNotificationsAsRead,
@@ -46,6 +47,7 @@ const MOCK_NOTIFICATIONS: Notification[] = [
 export function NotificationsSheet({ children }: { children: React.ReactNode }) {
     const { user } = useAuth();
     const queryClient = useQueryClient();
+    const navigate = useNavigate();
     const isDemo = localStorage.getItem("demo_mode") === "true";
     const { t, i18n } = useTranslation('common');
 
@@ -55,7 +57,7 @@ export function NotificationsSheet({ children }: { children: React.ReactNode }) 
         'es': es
     };
 
-    const { data: notifications = [], isLoading } = useQuery({
+    const { data: notifications = [], isLoading, isError } = useQuery({
         queryKey: ["notifications", user?.id],
         queryFn: async () => {
             if (isDemo) return MOCK_NOTIFICATIONS;
@@ -66,7 +68,7 @@ export function NotificationsSheet({ children }: { children: React.ReactNode }) 
                 return data as Notification[];
             } catch (error) {
                 console.error("Error fetching notifications:", error);
-                return [];
+                throw error;
             }
         },
         enabled: !!user || isDemo,
@@ -113,7 +115,9 @@ export function NotificationsSheet({ children }: { children: React.ReactNode }) 
         if (!notification.read) {
             markAsRead.mutate(notification.id);
         }
-        // If there's a link, we could navigate here using useNavigate
+        if (notification.link) {
+            navigate(notification.link);
+        }
     };
 
     return (
@@ -149,6 +153,20 @@ export function NotificationsSheet({ children }: { children: React.ReactNode }) 
                     <div className="flex flex-col gap-3">
                         {isLoading ? (
                             <div className="text-center py-10 text-muted-foreground">{t('common.loading')}</div>
+                        ) : isError ? (
+                            <div className="flex flex-col items-center justify-center py-10 text-center space-y-3 opacity-80">
+                                <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center">
+                                    <Bell className="w-6 h-6 text-muted-foreground" />
+                                </div>
+                                <p className="text-sm font-medium">{t('notifications.load_error')}</p>
+                                <button
+                                    type="button"
+                                    onClick={() => queryClient.invalidateQueries({ queryKey: ["notifications", user?.id] })}
+                                    className="text-sm font-semibold text-primary hover:underline"
+                                >
+                                    {t('common.retry')}
+                                </button>
+                            </div>
                         ) : (
                             <>
                                 {notifications.map((notification) => (
@@ -193,7 +211,7 @@ export function NotificationsSheet({ children }: { children: React.ReactNode }) 
                         )}
                     </div>
 
-                    {!isLoading && notifications.length === 0 && (
+                    {!isLoading && !isError && notifications.length === 0 && (
                         <div className="flex flex-col items-center justify-center py-10 text-center space-y-3 opacity-60">
                             <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center">
                                 <Bell className="w-6 h-6 text-muted-foreground" />

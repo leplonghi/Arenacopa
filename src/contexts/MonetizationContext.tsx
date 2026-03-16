@@ -14,7 +14,7 @@ import {
 interface MonetizationContextType {
   isPremium: boolean;
   subscriptionStatus: PremiumSubscriptionStatus;
-  purchasePremium: () => Promise<void>;
+  purchasePremium: () => Promise<boolean>;
   refreshPremiumStatus: (checkoutSessionId?: string) => Promise<void>;
   shouldShowInterstitial: () => boolean;
   incrementActionCount: () => void;
@@ -75,14 +75,16 @@ export function MonetizationProvider({ children }: { children: React.ReactNode }
         const simulated = activatePremiumSimulation();
         applyPremiumState(simulated.isPremium, simulated.status);
         toast.success("Premium simulado no modo demo.");
-        return;
+        return true;
       }
 
       const checkout = await createStripeCheckoutSession();
       redirectToCheckout(checkout.url);
+      return true;
     } catch (error) {
       const message = error instanceof Error ? error.message : "Erro ao iniciar o checkout.";
       toast.error(message);
+      return false;
     } finally {
       setIsLoading(false);
     }

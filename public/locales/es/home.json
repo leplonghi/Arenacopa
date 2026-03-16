@@ -31,5 +31,10 @@
         "view_all": "Ver todo",
         "general": "General"
     },
+    "dashboard_partial": {
+        "title": "Panel parcial",
+        "desc": "No pude actualizar tu panel ahora. Algunos bloques pueden aparecer vacíos.",
+        "retry": "Intentar de nuevo"
+    },
     "cta_predict": "Hacer Pronósticos"
 }

@@ -1,11 +1,12 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { Clock } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { db } from "@/integrations/firebase/client";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Flag } from "@/components/Flag";
+import { collection, getDocs, onSnapshot, orderBy, query, where } from "firebase/firestore";
 
 type PendingMatch = {
   id: string;
@@ -29,6 +30,19 @@ type PredictionRow = {
   bolao_id: string;
 };
 
+type FirestoreMatchRow = PendingMatch & {
+  status?: string;
+};
+
+const normalizeMatchDate = (value: string | { toDate?: () => Date } | undefined) => {
+  if (!value) return new Date(0).toISOString();
+  if (typeof value === "string") return value;
+  if (typeof value === "object" && typeof value.toDate === "function") {
+    return value.toDate().toISOString();
+  }
+  return new Date(0).toISOString();
+};
+
 export function FabWithPending({
   className,
   isActive,
@@ -41,44 +55,58 @@ export function FabWithPending({
   const [pendingItems, setPendingItems] = useState<PendingPredictionItem[]>([]);
   const [isOpen, setIsOpen] = useState(false);
 
-  useEffect(() => {
-    if (!user) return;
+  const fetchPending = useCallback(async () => {
+    if (!user?.id) {
+      setPendingItems([]);
+      return;
+    }
 
-    const fetchPending = async () => {
-      const { data: memberships, error: membershipError } = await supabase
-        .from("bolao_members")
-        .select("bolao_id")
-        .eq("user_id", user.id);
+    try {
+      const membershipsSnapshot = await getDocs(
+        query(collection(db, "bolao_members"), where("user_id", "==", user.id))
+      );
 
-      if (membershipError || !memberships?.length) {
+      const memberships = membershipsSnapshot.docs.map((docSnapshot) => docSnapshot.data() as MembershipRow);
+
+      if (!memberships.length) {
         setPendingItems([]);
         return;
       }
 
       const bolaoIds = memberships.map((m: MembershipRow) => m.bolao_id);
 
-      const now = new Date().toISOString();
-      const { data: upcomingMatches, error: matchesError } = await supabase
-        .from("matches")
-        .select("id, stage, home_team_code, away_team_code, match_date")
-        .eq("status", "scheduled")
-        .gte("match_date", now)
-        .order("match_date", { ascending: true })
-        .limit(20);
+      const [matchesSnapshot, predictionsSnapshot] = await Promise.all([
+        getDocs(query(collection(db, "matches"), orderBy("match_date", "asc"))),
+        getDocs(query(collection(db, "bolao_palpites"), where("user_id", "==", user.id))),
+      ]);
 
-      if (matchesError || !upcomingMatches?.length) {
+      const now = Date.now();
+      const upcomingMatches = matchesSnapshot.docs
+        .map((docSnapshot) => {
+          const data = docSnapshot.data() as FirestoreMatchRow & { match_date?: string | { toDate?: () => Date } };
+          return {
+            id: docSnapshot.id,
+            stage: data.stage || null,
+            home_team_code: data.home_team_code || null,
+            away_team_code: data.away_team_code || null,
+            match_date: normalizeMatchDate(data.match_date),
+            status: data.status,
+          };
+        })
+        .filter((match) => (match.status || "").toLowerCase() === "scheduled")
+        .filter((match) => new Date(match.match_date).getTime() >= now)
+        .slice(0, 20);
+
+      if (!upcomingMatches.length) {
         setPendingItems([]);
         return;
       }
 
-      const matchIds = upcomingMatches.map((m: PendingMatch) => m.id);
+      const matchIds = upcomingMatches.map((m) => m.id);
 
-      const { data: existingPredictions } = await supabase
-        .from("bolao_palpites")
-        .select("match_id, bolao_id")
-        .eq("user_id", user.id)
-        .in("bolao_id", bolaoIds)
-        .in("match_id", matchIds);
+      const existingPredictions = predictionsSnapshot.docs
+        .map((docSnapshot) => docSnapshot.data() as PredictionRow)
+        .filter((row) => bolaoIds.includes(row.bolao_id) && matchIds.includes(row.match_id));
 
       const predictionsIndex = new Map<string, Set<string>>();
       (existingPredictions || []).forEach((row: PredictionRow) => {
@@ -101,23 +129,42 @@ export function FabWithPending({
         .filter(Boolean) as PendingPredictionItem[];
 
       setPendingItems(pending);
-    };
+    } catch (error) {
+      console.error("Error loading pending predictions:", error);
+      setPendingItems([]);
+    }
+  }, [user?.id]);
 
-    fetchPending();
+  useEffect(() => {
+    if (!user?.id) return;
 
-    const channel = supabase
-      .channel(`pending-predictions-${user.id}`)
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "bolao_palpites", filter: `user_id=eq.${user.id}` },
-        fetchPending
-      )
-      .subscribe();
+    void fetchPending();
+
+    const membershipQuery = query(collection(db, "bolao_members"), where("user_id", "==", user.id));
+    const predictionsQuery = query(collection(db, "bolao_palpites"), where("user_id", "==", user.id));
+    const matchesQuery = query(collection(db, "matches"), orderBy("match_date", "asc"));
+
+    const unsubscribeMemberships = onSnapshot(membershipQuery, () => {
+      void fetchPending();
+    });
+    const unsubscribePredictions = onSnapshot(predictionsQuery, () => {
+      void fetchPending();
+    });
+    const unsubscribeMatches = onSnapshot(matchesQuery, () => {
+      void fetchPending();
+    });
+
+    const intervalId = window.setInterval(() => {
+      void fetchPending();
+    }, 30000);
 
     return () => {
-      supabase.removeChannel(channel);
+      unsubscribeMemberships();
+      unsubscribePredictions();
+      unsubscribeMatches();
+      window.clearInterval(intervalId);
     };
-  }, [user]);
+  }, [fetchPending, user?.id]);
 
   const totalMissingPredictions = useMemo(
     () => pendingItems.reduce((acc, item) => acc + item.bolaoIds.length, 0),

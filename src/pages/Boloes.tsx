@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Compass, Loader2, Plus, Search, Trophy, UserPlus, Users } from "lucide-react";
 import { db } from "@/integrations/firebase/client";
 import { 
@@ -58,21 +58,34 @@ type BolaoSelectRow = {
 
 const statusWhitelist = ["open", "active"];
 
+function chunkValues<T>(values: T[], chunkSize: number) {
+  const chunks: T[][] = [];
+  for (let index = 0; index < values.length; index += chunkSize) {
+    chunks.push(values.slice(index, index + chunkSize));
+  }
+  return chunks;
+}
+
 export default function Boloes() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   const [boloes, setBoloes] = useState<BolaoRow[]>([]);
   const [publicBoloes, setPublicBoloes] = useState<PublicBolaoRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [joinCode, setJoinCode] = useState("");
   const [joining, setJoining] = useState(false);
+  const [joiningPublicBolaoId, setJoiningPublicBolaoId] = useState<string | null>(null);
   const [showJoin, setShowJoin] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [publicBoloesUnavailable, setPublicBoloesUnavailable] = useState(false);
 
   const loadData = useCallback(async () => {
     if (!user) return;
     setLoading(true);
+    setPublicBoloesUnavailable(false);
+    let membershipIds: string[] = [];
 
     try {
       // 1. Get user's memberships
@@ -80,20 +93,24 @@ export default function Boloes() {
       const qMembers = query(membersRef, where("user_id", "==", user.id));
       const memberSnap = await getDocs(qMembers);
       
-      const membershipIds = memberSnap.docs.map(doc => doc.data().bolao_id);
+      membershipIds = memberSnap.docs.map(doc => doc.data().bolao_id);
 
       if (membershipIds.length > 0) {
-        // Firestore 'in' query supports up to 30 items. 
-        // For more than that we would need to chunk, but 30 is likely enough for now.
         const boloesRef = collection(db, "boloes");
-        const qMyBoloes = query(
-          boloesRef, 
-          where(documentId(), "in", membershipIds.slice(0, 30))
+        const myBoloesDocs = await Promise.all(
+          chunkValues(membershipIds, 30).map(async (membershipChunk) => {
+            const qMyBoloes = query(
+              boloesRef,
+              where(documentId(), "in", membershipChunk)
+            );
+            const snapshot = await getDocs(qMyBoloes);
+            return snapshot.docs;
+          })
         );
-        const myBoloesSnap = await getDocs(qMyBoloes);
+        const myBoloesSnap = myBoloesDocs.flat();
 
         const myBoloesEnriched = await Promise.all(
-          myBoloesSnap.docs.map(async (docElem) => {
+          myBoloesSnap.map(async (docElem) => {
             const data = docElem.data();
             
             // Get member count
@@ -123,38 +140,54 @@ export default function Boloes() {
       } else {
         setBoloes([]);
       }
+    } catch (error) {
+      console.error(error);
+      toast({
+        title: "Não foi possível carregar seus bolões.",
+        description: "Tenta novamente em alguns segundos.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
 
-      // 2. Get public boloes
+    try {
+      // Busca pública separada para não derrubar a tela inteira
+      // nem depender de índice composto para category + status + created_at.
       const publicBoloesQuery = query(
         collection(db, "boloes"),
         where("category", "==", "public"),
-        where("status", "in", statusWhitelist),
         orderBy("created_at", "desc"),
         limit(20)
       );
 
       const publicSnap = await getDocs(publicBoloesQuery);
-      
-      // Filter out those user is already a part of
-      const filteredPublicData = publicSnap.docs.filter(doc => !membershipIds.includes(doc.id));
+      const filteredPublicData = publicSnap.docs.filter((docSnapshot) => {
+        const data = docSnapshot.data();
+        return !membershipIds.includes(docSnapshot.id) && statusWhitelist.includes(data.status);
+      });
 
       const enrichedPublic = await Promise.all(
         filteredPublicData.map(async (docElem) => {
           const b = docElem.data();
-          
-          // Get member count
+
           const countQuery = query(collection(db, "bolao_members"), where("bolao_id", "==", docElem.id));
           const countSnap = await getCountFromServer(countQuery);
-          
-          // Get leader score
-          const rankingQuery = query(
-            collection(db, "bolao_rankings"),
-            where("bolao_id", "==", docElem.id),
-            orderBy("total_points", "desc"),
-            limit(1)
-          );
-          const rankingSnap = await getDocs(rankingQuery);
-          
+
+          let leaderScore = 0;
+          try {
+            const rankingQuery = query(
+              collection(db, "bolao_rankings"),
+              where("bolao_id", "==", docElem.id),
+              orderBy("total_points", "desc"),
+              limit(1)
+            );
+            const rankingSnap = await getDocs(rankingQuery);
+            leaderScore = rankingSnap.docs[0]?.data()?.total_points ?? 0;
+          } catch (rankingError) {
+            console.error("Erro ao carregar ranking público do bolão:", rankingError);
+          }
+
           return {
             id: docElem.id,
             name: b.name,
@@ -167,21 +200,16 @@ export default function Boloes() {
             status: b.status,
             memberCount: countSnap.data().count,
             isCreator: false,
-            leader_score: rankingSnap.docs[0]?.data()?.total_points ?? 0,
+            leader_score: leaderScore,
           } as PublicBolaoRow;
         })
       );
 
       setPublicBoloes(enrichedPublic);
     } catch (error) {
-      console.error(error);
-      toast({
-        title: "Não foi possível carregar seus bolões.",
-        description: "Tenta novamente em alguns segundos.",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
+      console.error("Erro ao carregar bolões públicos:", error);
+      setPublicBoloes([]);
+      setPublicBoloesUnavailable(true);
     }
   }, [toast, user]);
 
@@ -198,7 +226,8 @@ export default function Boloes() {
         user_id: user.id,
         role: "member",
         payment_status: "exempt",
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
+        joined_at: new Date().toISOString(),
       });
 
       toast({
@@ -208,8 +237,10 @@ export default function Boloes() {
       });
 
       await loadData();
-    } catch (error: any) {
-      if (error && !String(error.message || "").toLowerCase().includes("duplicate")) {
+      return true;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "";
+      if (!message.toLowerCase().includes("duplicate")) {
         console.error("Error joining bolao:", error);
         toast({
           title: "Erro ao entrar no bolão.",
@@ -217,8 +248,7 @@ export default function Boloes() {
           variant: "destructive",
         });
       }
-    } finally {
-      setJoining(false);
+      return false;
     }
   };
 
@@ -260,7 +290,20 @@ export default function Boloes() {
         description: error instanceof Error ? error.message : "Código inválido ou expirado.",
         variant: "destructive",
       });
+    } finally {
       setJoining(false);
+    }
+  };
+
+  const handleJoinPublicBolao = async (bolaoId: string) => {
+    setJoiningPublicBolaoId(bolaoId);
+    try {
+      const joined = await completeJoin(bolaoId);
+      if (joined) {
+        navigate(`/boloes/${bolaoId}`);
+      }
+    } finally {
+      setJoiningPublicBolaoId(null);
     }
   };
 
@@ -292,7 +335,7 @@ export default function Boloes() {
         </Link>
       </div>
 
-      <div className="mb-6 rounded-3xl border border-white/10 bg-white/5 p-4">
+      <div className="surface-card mb-6 p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="text-xs font-black uppercase tracking-[0.18em] text-zinc-400">Entrada rápida</p>
@@ -300,7 +343,7 @@ export default function Boloes() {
           </div>
           <button
             onClick={() => setShowJoin((prev) => !prev)}
-            className="rounded-2xl border border-white/10 bg-white/5 px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em]"
+            className="surface-chip rounded-2xl px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em]"
           >
             {showJoin ? "Fechar" : "Usar convite"}
           </button>
@@ -312,7 +355,7 @@ export default function Boloes() {
               value={joinCode}
               onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
               placeholder="Ex: AX7T9Q"
-              className="flex-1 rounded-2xl border border-white/10 bg-black/20 px-4 py-3 text-lg font-black uppercase outline-none"
+              className="surface-input flex-1 rounded-2xl px-4 py-3 text-lg font-black uppercase"
             />
             <button
               onClick={verifyAndPrepareJoin}
@@ -333,7 +376,7 @@ export default function Boloes() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Pesquisar minhas ligas..."
-            className="w-full rounded-3xl border border-white/10 bg-white/5 py-4 pl-12 pr-4 text-sm outline-none"
+            className="surface-input w-full rounded-3xl py-4 pl-12 pr-4 text-sm"
           />
         </div>
       )}
@@ -387,15 +430,14 @@ export default function Boloes() {
               </div>
               <div className="grid gap-4">
                 {publicBoloes.map((b) => (
-                  <Link
+                  <article
                     key={b.id}
-                    to={`/boloes/${b.id}`}
-                    className="rounded-3xl border border-white/10 bg-white/5 p-5 transition-colors hover:bg-white/10"
+                    className="surface-card-hover p-5"
                   >
                     <div className="flex items-start justify-between gap-4">
                       <div>
                         <div className="flex items-center gap-3">
-                          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-black/20 text-xl">
+                          <div className="surface-card-soft flex h-12 w-12 items-center justify-center rounded-2xl text-xl">
                             {b.avatar_url || "🏆"}
                           </div>
                           <div>
@@ -409,13 +451,37 @@ export default function Boloes() {
                       </div>
                     </div>
 
-                    <div className="mt-4 flex flex-wrap gap-3 text-sm text-zinc-300">
-                      <span>{b.memberCount} membros</span>
-                      <span>•</span>
-                      <span>Líder: {b.leader_score} pts</span>
+                    <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                      <div className="flex flex-wrap gap-3 text-sm text-zinc-300">
+                        <span>{b.memberCount} membros</span>
+                        <span>•</span>
+                        <span>Líder: {b.leader_score} pts</span>
+                      </div>
+
+                      <button
+                        onClick={() => void handleJoinPublicBolao(b.id)}
+                        disabled={joiningPublicBolaoId === b.id}
+                        className="inline-flex min-w-[150px] items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-black disabled:opacity-60"
+                      >
+                        {joiningPublicBolaoId === b.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
+                        {joiningPublicBolaoId === b.id ? "Entrando..." : "Entrar agora"}
+                      </button>
                     </div>
-                  </Link>
+                  </article>
                 ))}
+              </div>
+            </section>
+          )}
+
+          {publicBoloesUnavailable && !searchQuery && (
+            <section>
+              <div className="surface-card-soft p-5 text-sm text-zinc-300">
+                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">
+                  Explorar bolões públicos indisponível no momento
+                </p>
+                <p className="mt-2 text-sm text-zinc-400">
+                  Suas arenas continuam funcionando normalmente. Tente novamente em alguns instantes.
+                </p>
               </div>
             </section>
           )}
@@ -429,11 +495,11 @@ function BolaoCard({ bolao, href }: { bolao: BolaoRow; href: string }) {
   return (
     <Link
       to={href}
-      className="rounded-3xl border border-white/10 bg-white/5 p-5 transition-colors hover:bg-white/10"
+      className="surface-card-hover p-5"
     >
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/10 bg-black/20 text-xl">
+          <div className="surface-card-soft flex h-12 w-12 items-center justify-center rounded-2xl text-xl">
             {bolao.avatar_url || "⚽"}
           </div>
           <div>
@@ -441,7 +507,7 @@ function BolaoCard({ bolao, href }: { bolao: BolaoRow; href: string }) {
             <p className="text-sm text-zinc-400">{bolao.description || "Sem descrição."}</p>
           </div>
         </div>
-        <div className="rounded-full bg-white/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-zinc-300">
+        <div className="surface-chip rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-zinc-300">
           {bolao.category === "public" ? "Público" : "Privado"}
         </div>
       </div>

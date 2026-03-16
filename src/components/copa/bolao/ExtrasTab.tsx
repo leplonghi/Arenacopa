@@ -1,266 +1,480 @@
-import { useState, useEffect } from "react";
-import { useTranslation } from "react-i18next";
+import { useEffect, useMemo, useState } from "react";
+import { collection, doc, getDocs, query, serverTimestamp, setDoc, where } from "firebase/firestore";
+import { CheckCircle2, Loader2, Save, Sparkles, Star, Trophy } from "lucide-react";
+import { motion } from "framer-motion";
 import { db } from "@/integrations/firebase/client";
-import { 
-    collection, 
-    query, 
-    where, 
-    getDocs, 
-    setDoc, 
-    doc,
-    serverTimestamp 
-} from "firebase/firestore";
 import { useToast } from "@/hooks/use-toast";
-import { cn } from "@/lib/utils";
-import { type ExtraBet } from "@/types/bolao";
 import { teams } from "@/data/mockData";
-import { Trophy, Medal, Loader2, Save, Target, Star, ChevronDown, CheckCircle2 } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { cn } from "@/lib/utils";
+import { saveBolaoMarketResolution } from "@/services/boloes/bolao-market.service";
+import { saveBolaoPrediction } from "@/services/boloes/bolao-prediction.service";
 import { staggerContainer, staggerItem } from "../animations";
+import { MarketTooltip } from "./markets/MarketTooltip";
+import type { BolaoMarket, BolaoPrediction, ExtraBet, PredictionValue } from "@/types/bolao";
 
 interface ExtrasTabProps {
     bolaoId: string;
     userId: string;
+    markets: BolaoMarket[];
+    predictions: BolaoPrediction[];
+    canManage?: boolean;
 }
 
-export function ExtrasTab({ bolaoId, userId }: ExtrasTabProps) {
-    const { t } = useTranslation('bolao');
+const editableTournamentMarkets = new Set([
+    "champion",
+    "runner_up",
+    "surprise_team",
+    "best_attack",
+    "best_defense",
+    "top_scorer",
+    "tournament_total_goals",
+]);
+
+function getPredictionDisplayValue(value: PredictionValue) {
+    if (typeof value === "string" || typeof value === "number") return value;
+    if (Array.isArray(value)) return value.join(", ");
+    if (value && typeof value === "object") {
+        if ("winner" in value && value.winner) return value.winner;
+        if ("teams" in value && Array.isArray(value.teams)) return value.teams.join(", ");
+    }
+    return "";
+}
+
+function getTeamVisual(teamValue: string) {
+    const normalized = teamValue.trim().toUpperCase();
+    const byCode = teams.find((team) => team.code === normalized);
+    if (byCode) return byCode;
+
+    return teams.find((team) => team.name.toUpperCase() === normalized) ?? null;
+}
+
+export function ExtrasTab({ bolaoId, userId, markets, predictions, canManage = false }: ExtrasTabProps) {
     const { toast } = useToast();
-    const [extras, setExtras] = useState<ExtraBet[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [saving, setSaving] = useState<string | null>(null);
-    const [topScorerInput, setTopScorerInput] = useState("");
+    const [legacyExtras, setLegacyExtras] = useState<ExtraBet[]>([]);
+    const [loadingLegacy, setLoadingLegacy] = useState(true);
+    const [savingMarketId, setSavingMarketId] = useState<string | null>(null);
+    const [drafts, setDrafts] = useState<Record<string, string>>({});
+    const [resolutionDrafts, setResolutionDrafts] = useState<Record<string, string>>({});
+    const [resolvingMarketId, setResolvingMarketId] = useState<string | null>(null);
 
     useEffect(() => {
-        const loadExtras = async () => {
+        const loadLegacyExtras = async () => {
             try {
                 const extrasRef = collection(db, "bolao_extra_bets");
-                const q = query(
-                    extrasRef, 
-                    where("bolao_id", "==", bolaoId), 
-                    where("user_id", "==", userId)
-                );
-                const querySnapshot = await getDocs(q);
-                
-                const data = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as unknown as ExtraBet[];
-
-                if (data.length) {
-                    setExtras(data);
-                    const ts = data.find((e) => e.category === 'top_scorer');
-                    if (ts) setTopScorerInput(ts.value);
-                }
+                const extrasQuery = query(extrasRef, where("bolao_id", "==", bolaoId), where("user_id", "==", userId));
+                const snapshot = await getDocs(extrasQuery);
+                const rows = snapshot.docs.map((snapshotDoc) => ({ id: snapshotDoc.id, ...snapshotDoc.data() })) as ExtraBet[];
+                setLegacyExtras(rows);
             } catch (error) {
-                console.error(error);
+                console.error("Erro ao carregar extras legados:", error);
             } finally {
-                setLoading(false);
+                setLoadingLegacy(false);
             }
         };
-        loadExtras();
+
+        loadLegacyExtras();
     }, [bolaoId, userId]);
 
-    const saveExtra = async (category: 'champion' | 'top_scorer', value: string) => {
-        if (!value) return;
-        setSaving(category);
-        try {
-            const betId = `${userId}_${bolaoId}_${category}`;
-            const betRef = doc(db, "bolao_extra_bets", betId);
-            
-            const payload = {
-                id: betId,
+    const extraMarkets = useMemo(
+        () => markets.filter((market) => market.scope === "tournament"),
+        [markets]
+    );
+
+    const predictionByMarketId = useMemo(() => {
+        return predictions.reduce<Record<string, BolaoPrediction>>((accumulator, prediction) => {
+            accumulator[prediction.market_id] = prediction;
+            return accumulator;
+        }, {});
+    }, [predictions]);
+
+    const getSavedValueForMarket = (market: BolaoMarket) => {
+        const newPrediction = predictionByMarketId[market.id];
+        if (newPrediction) {
+            return getPredictionDisplayValue(newPrediction.prediction_value);
+        }
+
+        if (market.slug === "champion" || market.slug === "top_scorer") {
+            return legacyExtras.find((extra) => extra.category === market.slug)?.value ?? "";
+        }
+
+        return "";
+    };
+
+    const updateDraft = (marketId: string, value: string) => {
+        setDrafts((current) => ({ ...current, [marketId]: value }));
+    };
+
+    const updateResolutionDraft = (marketId: string, value: string) => {
+        setResolutionDrafts((current) => ({ ...current, [marketId]: value }));
+    };
+
+    const saveLegacyMirrorIfNeeded = async (market: BolaoMarket, value: string) => {
+        if (market.slug !== "champion" && market.slug !== "top_scorer") {
+            return;
+        }
+
+        const legacyId = `${userId}_${bolaoId}_${market.slug}`;
+        await setDoc(
+            doc(db, "bolao_extra_bets", legacyId),
+            {
+                id: legacyId,
                 bolao_id: bolaoId,
                 user_id: userId,
-                category,
+                category: market.slug,
                 value,
                 updated_at: serverTimestamp(),
-            };
+            },
+            { merge: true }
+        );
+    };
 
-            await setDoc(betRef, payload, { merge: true });
+    const saveMarket = async (market: BolaoMarket, rawValue: string) => {
+        const value = rawValue.trim();
+        if (!value) return;
 
-            setExtras(prev => {
-                const filtered = prev.filter(e => e.category !== category);
-                return [...filtered, payload as unknown as ExtraBet];
+        try {
+            setSavingMarketId(market.id);
+            await saveBolaoPrediction({
+                bolaoId,
+                marketId: market.id,
+                userId,
+                predictionValue: value,
             });
-            
+            await saveLegacyMirrorIfNeeded(market, value);
+            setDrafts((current) => {
+                const next = { ...current };
+                delete next[market.id];
+                return next;
+            });
             toast({
-                title: t('extras.saved_success'),
-                className: "bg-emerald-500 border-emerald-600 text-white font-black uppercase text-[10px] tracking-widest"
+                title: "Mercado salvo.",
+                description: `${market.title} atualizado com sucesso.`,
+                className: "bg-emerald-500 border-emerald-600 text-white font-black",
             });
         } catch (error) {
-            console.error(error);
-            toast({ title: t('palpites.error_save'), variant: "destructive" });
+            console.error("Erro ao salvar mercado extra:", error);
+            toast({
+                title: "Não consegui salvar esse mercado agora.",
+                variant: "destructive",
+            });
         } finally {
-            setSaving(null);
+            setSavingMarketId(null);
         }
     };
 
-    const championBet = extras.find(e => e.category === 'champion');
+    const saveResolution = async (market: BolaoMarket, rawValue: string) => {
+        const value = rawValue.trim();
+        if (!value) return;
 
-    if (loading) {
+        try {
+            setResolvingMarketId(market.id);
+            const resolutionValue = market.prediction_type === "number" ? Number(value) : value;
+            await saveBolaoMarketResolution({
+                marketId: market.id,
+                resolvedBy: userId,
+                resolutionValue,
+            });
+            setResolutionDrafts((current) => {
+                const next = { ...current };
+                delete next[market.id];
+                return next;
+            });
+            toast({
+                title: "Resultado oficial salvo.",
+                description: `${market.title} foi resolvido no bolão.`,
+                className: "bg-emerald-500 border-emerald-600 text-white font-black",
+            });
+        } catch (error) {
+            console.error("Erro ao salvar resolução do mercado:", error);
+            toast({
+                title: "Não consegui salvar o resultado oficial agora.",
+                variant: "destructive",
+            });
+        } finally {
+            setResolvingMarketId(null);
+        }
+    };
+
+    if (loadingLegacy && markets.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center p-20 gap-4">
-                <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 animate-pulse">{t('common.loading')}</span>
+                <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary/20 border-t-primary" />
+                <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">Carregando extras...</span>
+            </div>
+        );
+    }
+
+    if (extraMarkets.length === 0 && legacyExtras.length === 0) {
+        return (
+            <div className="rounded-[28px] border border-white/10 bg-white/5 p-6 text-center">
+                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">Sem extras ativos</p>
+                <p className="mt-3 text-sm text-zinc-400">
+                    Este bolão ainda não ativou mercados de campeonato ou especiais. Quando eles existirem, aparecem aqui.
+                </p>
             </div>
         );
     }
 
     return (
-        <motion.div
-            variants={staggerContainer}
-            initial="hidden"
-            animate="visible"
-            className="space-y-8"
-        >
-            {/* Header / Banner */}
-            <motion.div
-                variants={staggerItem}
-                className="relative glass-card p-6 overflow-hidden group border-2 border-amber-500/20"
-            >
-                <div className="absolute top-0 right-0 p-8 transform translate-x-1/4 -translate-y-1/4 opacity-10 group-hover:scale-110 transition-transform">
-                    <Trophy className="w-32 h-32 text-amber-500" />
-                </div>
-                <div className="relative z-10">
-                    <div className="flex items-center gap-3 mb-2">
-                        <div className="w-10 h-10 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
-                            <Star className="w-5 h-5 text-amber-500" />
-                        </div>
-                        <h3 className="font-black text-xl uppercase tracking-tighter text-white">
-                            {t('extras.title')}
-                        </h3>
+        <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="space-y-6">
+            <motion.div variants={staggerItem} className="surface-card-soft rounded-[28px] p-6">
+                <div className="flex items-center gap-3">
+                    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/15 text-primary">
+                        <Sparkles className="h-5 w-5" />
                     </div>
-                    <p className="text-[11px] text-gray-400 font-medium tracking-tight leading-normal max-w-[80%]">
-                        {t('extras.subtitle')}
-                    </p>
-                </div>
-            </motion.div>
-
-            {/* ARTILHEIRO (TOP SCORER) */}
-            <motion.div variants={staggerItem} className="space-y-4">
-                <div className="flex items-center justify-between px-2">
-                    <div className="flex items-center gap-2">
-                        <Target className="w-4 h-4 text-blue-400" />
-                        <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">{t('extras.top_scorer_title')}</h4>
-                    </div>
-                    <div className="px-3 py-1 rounded-full bg-blue-500/10 border border-blue-500/20">
-                        <span className="text-[9px] font-black text-blue-400 uppercase tracking-widest">+15 PTS</span>
-                    </div>
-                </div>
-
-                <div className="glass-card p-6 space-y-4 border-2 border-white/5">
-                    <div className="flex gap-2">
-                        <div className="relative flex-1 group">
-                            <input
-                                type="text"
-                                placeholder={t('extras.top_scorer_placeholder')}
-                                className="w-full rounded-2xl bg-white/5 border-2 border-white/5 px-6 py-4 text-sm font-black placeholder:font-bold placeholder:text-gray-600 outline-none focus:border-primary/50 focus:bg-white/10 transition-all uppercase tracking-wider"
-                                value={topScorerInput}
-                                onChange={(e) => setTopScorerInput(e.target.value)}
-                            />
-                            <div className="absolute inset-0 rounded-2xl ring-2 ring-primary/20 opacity-0 group-focus-within:opacity-100 transition-opacity pointer-events-none" />
-                        </div>
-                        <motion.button
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => saveExtra('top_scorer', topScorerInput)}
-                            disabled={saving === 'top_scorer' || !topScorerInput || topScorerInput === extras.find(e => e.category === 'top_scorer')?.value}
-                            className="bg-primary text-primary-foreground rounded-2xl px-6 flex items-center justify-center disabled:opacity-50 disabled:grayscale hover:shadow-[0_0_20px_rgba(var(--primary-rgb),0.3)] transition-all"
-                        >
-                            {saving === 'top_scorer' ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5 fill-current" />}
-                        </motion.button>
-                    </div>
-                    <div className="flex items-center gap-2 text-[10px] text-gray-500 bg-white/5 p-3 rounded-xl border border-white/5">
-                        <Medal className="w-3.5 h-3.5 text-blue-400 shrink-0" />
-                        <p className="italic leading-relaxed">
-                            {t('extras.top_scorer_hint')}
+                    <div>
+                        <h3 className="text-xl font-black text-white">Mercados extras</h3>
+                        <p className="text-sm text-zinc-400">
+                            Aqui ficam os mercados de campeonato e especiais que dão personalidade ao bolão.
                         </p>
                     </div>
                 </div>
             </motion.div>
 
-            {/* CAMPEÃO (CHAMPION) */}
-            <motion.div variants={staggerItem} className="space-y-4">
-                <div className="flex items-center justify-between px-2">
-                    <div className="flex items-center gap-2">
-                        <Trophy className="w-4 h-4 text-amber-500" />
-                        <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">{t('extras.champion_title')}</h4>
-                    </div>
-                    <div className="px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20">
-                        <span className="text-[9px] font-black text-amber-500 uppercase tracking-widest">+20 PTS</span>
-                    </div>
-                </div>
+            <div className="grid gap-4">
+                {extraMarkets.map((market) => {
+                    const prediction = predictionByMarketId[market.id];
+                    const savedValue = String(getSavedValueForMarket(market) ?? "");
+                    const draftValue = drafts[market.id] ?? savedValue;
+                    const resolvedValue = String(getPredictionDisplayValue(market.resolution_value ?? null) ?? "");
+                    const resolutionDraftValue = resolutionDrafts[market.id] ?? resolvedValue;
+                    const isEditable = editableTournamentMarkets.has(market.slug);
+                    const isTeamSelector =
+                        market.prediction_type === "team" &&
+                        ["champion", "runner_up", "surprise_team", "best_attack", "best_defense"].includes(market.slug);
 
-                <div className="glass-card p-4 space-y-6 border-2 border-white/5 overflow-hidden">
-                    <AnimatePresence mode="wait">
-                        {championBet && (
-                            <motion.div
-                                initial={{ opacity: 0, height: 0, scale: 0.9 }}
-                                animate={{ opacity: 1, height: "auto", scale: 1 }}
-                                exit={{ opacity: 0, height: 0, scale: 0.9 }}
-                                className="relative overflow-hidden group"
-                            >
-                                <div className="absolute inset-0 bg-gradient-to-r from-amber-500/20 to-orange-500/20 blur-xl opacity-50" />
-                                <div className="relative bg-amber-500/10 border border-amber-500/30 rounded-3xl p-6 flex items-center gap-6">
-                                    <div className="w-20 h-20 rounded-2xl bg-black/40 backdrop-blur-xl border border-white/10 flex items-center justify-center text-5xl shadow-2xl group-hover:scale-110 transition-transform">
-                                        {teams.find(t => t.name === championBet.value)?.flag}
+                    return (
+                        <motion.div
+                            key={market.id}
+                            variants={staggerItem}
+                            className="rounded-[28px] border border-white/10 bg-white/[0.04] p-5"
+                        >
+                            <div className="flex flex-wrap items-start justify-between gap-3">
+                                <div>
+                                    <div className="flex items-center gap-2">
+                                        <h4 className="text-lg font-black text-white">{market.title}</h4>
+                                        <MarketTooltip title={market.title} description={market.help_text || market.description} />
+                                        <span className="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-primary">
+                                            Campeonato
+                                        </span>
                                     </div>
-                                    <div className="flex-1">
-                                        <p className="text-[10px] text-amber-500 font-black uppercase tracking-[0.3em] mb-1">{t('extras.your_guess')}</p>
-                                        <p className="font-black text-3xl text-white tracking-tighter uppercase">{championBet.value}</p>
-                                    </div>
-                                    <div className="shrink-0">
-                                        <CheckCircle2 className="w-8 h-8 text-emerald-500" />
-                                    </div>
+                                    <p className="mt-2 text-sm text-zinc-400">{market.description}</p>
+                                    <p className="mt-3 text-[11px] font-black uppercase tracking-[0.18em] text-primary">
+                                        até {market.points_exact} pts
+                                    </p>
                                 </div>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
 
-                    <div className="grid grid-cols-2 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 max-h-[500px] overflow-y-auto pr-2 scrollbar-none snap-y pt-4">
-                        {teams.map(team => {
-                            const isSelected = championBet?.value === team.name;
-                            return (
-                                <motion.button
-                                    key={team.code}
-                                    whileHover={{ y: -2 }}
-                                    whileTap={{ scale: 0.95 }}
-                                    onClick={() => saveExtra('champion', team.name)}
-                                    disabled={saving === 'champion'}
-                                    className={cn(
-                                        "group flex flex-col items-center gap-3 p-5 rounded-3xl border-2 transition-all relative overflow-hidden snap-start",
-                                        isSelected
-                                            ? "bg-amber-500/20 border-amber-500 shadow-[0_0_30px_rgba(245,158,11,0.2)]"
-                                            : "bg-white/5 border-white/5 hover:border-white/10 hover:bg-white/10"
-                                    )}
-                                >
-                                    <div className={cn(
-                                        "text-4xl filter drop-shadow-xl transition-transform group-hover:scale-110",
-                                        !isSelected && "grayscale-[0.3] group-hover:grayscale-0"
-                                    )}>
-                                        {team.flag}
+                                {savedValue && (
+                                    <div className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-emerald-400">
+                                        Salvo
                                     </div>
-                                    <span className={cn(
-                                        "text-[10px] font-black uppercase tracking-widest text-center leading-tight transition-colors",
-                                        isSelected ? "text-amber-500" : "text-gray-500 group-hover:text-white"
-                                    )}>
-                                        {team.name}
-                                    </span>
-                                    {isSelected && (
-                                        <div className="absolute top-2 right-2">
-                                            <div className="w-2 h-2 rounded-full bg-amber-500 animate-ping" />
+                                )}
+                            </div>
+
+                            {isEditable ? (
+                                <div className="mt-5 space-y-4">
+                                    {isTeamSelector ? (
+                                        <div className="grid grid-cols-3 gap-3 md:grid-cols-6">
+                                            {teams.map((team) => {
+                                                const isSelected = draftValue.toUpperCase() === team.code || draftValue.toUpperCase() === team.name.toUpperCase();
+                                                return (
+                                                    <button
+                                                        key={team.code}
+                                                        type="button"
+                                                        onClick={() => updateDraft(market.id, team.code)}
+                                                        className={cn(
+                                                            "rounded-[22px] border p-3 transition-all",
+                                                            isSelected ? "border-primary bg-primary/10" : "bg-white/5 border-white/5"
+                                                        )}
+                                                    >
+                                                        <div className="mb-2 flex justify-center text-2xl">{team.flag}</div>
+                                                        <div className="text-center text-xs font-black">{team.code}</div>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-col gap-3 md:flex-row">
+                                            <input
+                                                value={draftValue}
+                                                onChange={(event) => updateDraft(market.id, event.target.value)}
+                                                placeholder={market.slug === "top_scorer" ? "Ex: Harry Kane" : "Digite sua resposta"}
+                                                className="surface-input flex-1 rounded-2xl px-4 py-4 text-sm font-bold"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => void saveMarket(market, draftValue)}
+                                                disabled={!draftValue.trim() || savingMarketId === market.id}
+                                                className="inline-flex min-w-[170px] items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-4 text-[11px] font-black uppercase tracking-[0.18em] text-black disabled:opacity-60"
+                                            >
+                                                {savingMarketId === market.id ? (
+                                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                                ) : (
+                                                    <Save className="h-4 w-4" />
+                                                )}
+                                                {savingMarketId === market.id ? "Salvando..." : "Salvar mercado"}
+                                            </button>
                                         </div>
                                     )}
-                                </motion.button>
-                            );
-                        })}
-                    </div>
 
-                    <div className="flex justify-center pt-2">
-                        <div className="flex items-center gap-2 text-[9px] font-black text-gray-600 uppercase tracking-widest bg-black/40 px-4 py-2 rounded-full border border-white/5">
-                            <ChevronDown className="w-3 h-3 animate-bounce" />
-                            SEE ALL TEAMS
-                        </div>
+                                    {isTeamSelector && (
+                                        <div className="flex justify-end">
+                                            <button
+                                                type="button"
+                                                onClick={() => void saveMarket(market, draftValue)}
+                                                disabled={!draftValue.trim() || savingMarketId === market.id}
+                                                className="inline-flex min-w-[170px] items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-4 text-[11px] font-black uppercase tracking-[0.18em] text-black disabled:opacity-60"
+                                            >
+                                                {savingMarketId === market.id ? (
+                                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                                ) : (
+                                                    <CheckCircle2 className="h-4 w-4" />
+                                                )}
+                                                {savingMarketId === market.id ? "Salvando..." : "Confirmar"}
+                                            </button>
+                                        </div>
+                                    )}
+
+                                    {savedValue && (
+                                        <div className="rounded-2xl border border-white/5 bg-black/10 p-4">
+                                            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-zinc-500">Sua aposta atual</p>
+                                            <div className="mt-3 flex items-center gap-3">
+                                                {isTeamSelector && getTeamVisual(savedValue) ? (
+                                                    <>
+                                                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-2xl">
+                                                            {getTeamVisual(savedValue)?.flag}
+                                                        </div>
+                                                        <div>
+                                                            <p className="font-black text-white">{getTeamVisual(savedValue)?.name}</p>
+                                                            <p className="text-xs text-zinc-400">{getTeamVisual(savedValue)?.code}</p>
+                                                        </div>
+                                                    </>
+                                                ) : (
+                                                    <p className="font-black text-white">{savedValue}</p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            ) : (
+                                <div className="mt-5 rounded-2xl border border-white/5 bg-black/10 p-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                                            <Trophy className="h-4 w-4" />
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-black text-white">Mercado ativo neste formato</p>
+                                            <p className="text-xs text-zinc-400">
+                                                A interface específica desse mercado entra na próxima etapa da migração do bolão.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {market.status === "resolved" && (
+                                <div className="mt-5 rounded-[24px] border border-emerald-500/20 bg-emerald-500/5 p-4">
+                                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-emerald-300">Mercado resolvido</p>
+                                    <p className="mt-2 text-sm text-zinc-300">
+                                        Resultado oficial: <span className="font-black text-white">{resolvedValue || "Sem resultado oficial"}</span>
+                                    </p>
+                                    <p className="mt-2 text-sm text-zinc-300">
+                                        Sua pontuação: <span className="font-black text-white">{prediction?.points_awarded ?? 0} pts</span>
+                                    </p>
+                                </div>
+                            )}
+
+                            {canManage && (
+                                <div className="mt-5 rounded-[24px] border border-amber-500/20 bg-amber-500/5 p-4">
+                                    <div className="mb-4 flex items-center justify-between gap-3">
+                                        <div>
+                                            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-amber-300">Resultado oficial</p>
+                                            <p className="mt-1 text-sm text-zinc-400">
+                                                Esse resultado fecha o mercado e distribui os pontos do campeonato no ranking.
+                                            </p>
+                                        </div>
+                                        <div className="rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-amber-200">
+                                            {market.status === "resolved" ? "Resolvido" : "Aguardando resultado"}
+                                        </div>
+                                    </div>
+
+                                    {isTeamSelector ? (
+                                        <div className="grid grid-cols-3 gap-3 md:grid-cols-6">
+                                            {teams.map((team) => {
+                                                const isSelected = resolutionDraftValue.toUpperCase() === team.code || resolutionDraftValue.toUpperCase() === team.name.toUpperCase();
+                                                return (
+                                                    <button
+                                                        key={`${market.id}_${team.code}_resolution`}
+                                                        type="button"
+                                                        onClick={() => updateResolutionDraft(market.id, team.code)}
+                                                        className={cn(
+                                                            "rounded-[22px] border p-3 transition-all",
+                                                            isSelected ? "border-amber-400 bg-amber-500/10" : "bg-white/5 border-white/5"
+                                                        )}
+                                                    >
+                                                        <div className="mb-2 flex justify-center text-2xl">{team.flag}</div>
+                                                        <div className="text-center text-xs font-black">{team.code}</div>
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-col gap-3 md:flex-row">
+                                            <input
+                                                value={resolutionDraftValue}
+                                                onChange={(event) => updateResolutionDraft(market.id, event.target.value)}
+                                                placeholder={market.prediction_type === "number" ? "Digite o total oficial" : "Digite o resultado oficial"}
+                                                className="surface-input flex-1 rounded-2xl px-4 py-4 text-sm font-bold"
+                                            />
+                                            <button
+                                                type="button"
+                                                onClick={() => void saveResolution(market, resolutionDraftValue)}
+                                                disabled={!resolutionDraftValue.trim() || resolvingMarketId === market.id}
+                                                className="inline-flex min-w-[190px] items-center justify-center gap-2 rounded-2xl border border-amber-400/30 bg-amber-400 px-5 py-4 text-[11px] font-black uppercase tracking-[0.18em] text-black disabled:opacity-60"
+                                            >
+                                                {resolvingMarketId === market.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trophy className="h-4 w-4" />}
+                                                {resolvingMarketId === market.id ? "Resolvendo..." : market.status === "resolved" ? "Atualizar resultado oficial" : "Confirmar resultado oficial"}
+                                            </button>
+                                        </div>
+                                    )}
+
+                                    {isTeamSelector && (
+                                        <div className="mt-4 flex justify-end">
+                                            <button
+                                                type="button"
+                                                onClick={() => void saveResolution(market, resolutionDraftValue)}
+                                                disabled={!resolutionDraftValue.trim() || resolvingMarketId === market.id}
+                                                className="inline-flex min-w-[190px] items-center justify-center gap-2 rounded-2xl border border-amber-400/30 bg-amber-400 px-5 py-4 text-[11px] font-black uppercase tracking-[0.18em] text-black disabled:opacity-60"
+                                            >
+                                                {resolvingMarketId === market.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trophy className="h-4 w-4" />}
+                                                {resolvingMarketId === market.id ? "Resolvendo..." : market.status === "resolved" ? "Atualizar resultado oficial" : "Confirmar resultado oficial"}
+                                            </button>
+                                        </div>
+                                    )}
+
+                                    {resolvedValue && (
+                                        <p className="mt-3 text-xs text-zinc-400">
+                                            Resultado atual: <span className="font-black text-white">{resolvedValue}</span>
+                                        </p>
+                                    )}
+                                </div>
+                            )}
+                        </motion.div>
+                    );
+                })}
+            </div>
+
+            {legacyExtras.length > 0 && (
+                <div className="rounded-[24px] border border-white/10 bg-white/5 p-4">
+                    <div className="flex items-center gap-2">
+                        <Star className="h-4 w-4 text-primary" />
+                        <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">Compatibilidade com dados antigos</p>
                     </div>
+                    <p className="mt-2 text-sm text-zinc-400">
+                        Este bolão ainda tem previsões legadas salvas. A tela nova já lê esses valores para evitar perda de contexto.
+                    </p>
                 </div>
-            </motion.div>
+            )}
         </motion.div>
     );
 }

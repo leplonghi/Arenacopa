@@ -37,9 +37,16 @@
         "mark_all_read": "Mark all as read",
         "description": "Check the latest news and updates.",
         "empty": "No notifications",
+        "load_error": "I couldn't load your notifications.",
         "new": "New",
         "new_count_one": "{{count}} new",
         "new_count_other": "{{count}} new"
+    },
+    "onboarding": {
+        "title": "Welcome to ArenaCopa",
+        "description": "Choose your favorite team for the 2026 World Cup.",
+        "loading": "Confirming...",
+        "confirm": "Confirm and Enter the Arena"
     },
     "status": {
         "active": "Active",

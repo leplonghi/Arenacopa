@@ -40,7 +40,19 @@ export async function ensureProfile(user: EnsureProfileUser) {
 
 export async function updateProfile(userId: string, updates: ProfileUpdateInput) {
   const docRef = doc(db, "profiles", userId);
-  await updateDoc(docRef, updates as UpdateData<ProfileRecord>);
+  const existingProfile = await getDoc(docRef);
+
+  if (!existingProfile.exists()) {
+    await setDoc(docRef, {
+      user_id: userId,
+      name: "Torcedor",
+      avatar_url: null,
+      created_at: new Date().toISOString(),
+      ...updates,
+    });
+  } else {
+    await updateDoc(docRef, updates as UpdateData<ProfileRecord>);
+  }
   
   const updatedSnap = await getDoc(docRef);
   return updatedSnap.data() as ProfileRecord | null;

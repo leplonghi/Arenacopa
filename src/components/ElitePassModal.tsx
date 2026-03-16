@@ -4,11 +4,14 @@ import { Crown, Sparkles, X, CheckCircle2, Zap, ShieldCheck, Trophy, Loader2 } f
 import { cn } from '@/lib/utils';
 import { useMonetization } from '@/contexts/MonetizationContext';
 import { useToast } from '@/hooks/use-toast';
+import { monetizationEnv } from '@/lib/env';
+import { PREMIUM_CHECKOUT_UNAVAILABLE_MESSAGE } from '@/services/monetization/stripe.service';
 
 export function ElitePassModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
     const { purchasePremium, isLoading, isPremium } = useMonetization();
     const { toast } = useToast();
     const [isHovering, setIsHovering] = useState(false);
+    const canStartPremiumCheckout = monetizationEnv.enablePremiumSimulation || monetizationEnv.premiumCheckoutEnabled;
 
     // If they already bought it, no need to show the sales pitch again
     if (isPremium) {
@@ -18,7 +21,10 @@ export function ElitePassModal({ isOpen, onClose }: { isOpen: boolean; onClose: 
 
     const handlePurchase = async () => {
         try {
-            await purchasePremium();
+            const startedCheckout = await purchasePremium();
+            if (!startedCheckout) {
+                return;
+            }
             onClose();
         } catch (e) {
             toast({
@@ -129,7 +135,7 @@ export function ElitePassModal({ isOpen, onClose }: { isOpen: boolean; onClose: 
                                         whileHover={{ scale: 1.02 }}
                                         whileTap={{ scale: 0.98 }}
                                         onClick={handlePurchase}
-                                        disabled={isLoading}
+                                        disabled={isLoading || !canStartPremiumCheckout}
                                         className="w-full relative group h-16 rounded-full flex items-center justify-center overflow-hidden"
                                     >
                                         <div className="absolute inset-0 bg-gradient-to-r from-yellow-600 via-yellow-400 to-yellow-600 bg-[length:200%_auto] animate-gradient" />
@@ -146,7 +152,9 @@ export function ElitePassModal({ isOpen, onClose }: { isOpen: boolean; onClose: 
                                         </div>
                                     </motion.button>
                                     <p className="text-[10px] text-gray-600 font-medium mt-4">
-                                        Pagamento 100% seguro via Stripe. Cancele a qualquer momento.
+                                        {canStartPremiumCheckout
+                                            ? "Pagamento 100% seguro via Stripe. Cancele a qualquer momento."
+                                            : PREMIUM_CHECKOUT_UNAVAILABLE_MESSAGE}
                                     </p>
                                 </div>
 

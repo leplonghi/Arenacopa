@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { db } from "@/integrations/firebase/client";
 import { 
     collection, 
@@ -6,17 +6,19 @@ import {
     where, 
     orderBy, 
     onSnapshot, 
-    getDocs, 
-    documentId 
+    getDocs
 } from "firebase/firestore";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
-import { Trophy, Target, Award, Crown, TrendingUp, Star, Minus, Check } from "lucide-react";
+import { Trophy, Target, Award, Crown, TrendingUp, Minus, Check } from "lucide-react";
 import { staggerContainer, staggerItem } from "../animations";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/EmptyState";
+import type { ScoringRules } from "@/types/bolao";
+import { RankingBreakdownCard, type RankingBreakdown } from "./ranking/RankingBreakdownCard";
+import { RankingLegend } from "./ranking/RankingLegend";
 
 type RankingProfile = {
     user_id: string;
@@ -31,19 +33,49 @@ type RankingRow = {
     correct_results: number;
     draws?: number;
     palpites_count?: number;
+    points_breakdown?: Partial<RankingBreakdown>;
+    match_points?: number;
+    phase_points?: number;
+    tournament_points?: number;
+    special_points?: number;
     profile?: RankingProfile;
 };
 
-export function RealtimeRankingTab({ bolaoId }: { bolaoId: string }) {
+function asNumber(value: unknown) {
+    return typeof value === "number" && Number.isFinite(value) ? value : 0;
+}
+
+function normalizeBreakdown(row: RankingRow): RankingBreakdown {
+    const nested = row.points_breakdown ?? {};
+    const match = asNumber(nested.match) || asNumber(row.match_points);
+    const phase = asNumber(nested.phase) || asNumber(row.phase_points);
+    const tournament = asNumber(nested.tournament) || asNumber(row.tournament_points);
+    const special = asNumber(nested.special) || asNumber(row.special_points);
+
+    if (match || phase || tournament || special) {
+        return { match, phase, tournament, special };
+    }
+
+    return {
+        match: row.total_points || 0,
+        phase: 0,
+        tournament: 0,
+        special: 0,
+    };
+}
+
+export function RealtimeRankingTab({ bolaoId, rules }: { bolaoId: string; rules?: ScoringRules }) {
     const { t } = useTranslation('bolao');
     const [rankings, setRankings] = useState<RankingRow[]>([]);
     const [loading, setLoading] = useState(true);
+    const [hasError, setHasError] = useState(false);
     const { user } = useAuth();
 
     // Default scoring rules for legend
-    const exactPts = 5;
-    const winnerPts = 3;
-    const drawPts = 2;
+    const exactPts = rules?.exact ?? 5;
+    const winnerPts = rules?.winner ?? 3;
+    const drawPts = rules?.draw ?? 2;
+    const myRanking = useMemo(() => rankings.find((ranking) => ranking.user_id === user?.id) ?? null, [rankings, user?.id]);
 
     useEffect(() => {
         const rankingsRef = collection(db, 'bolao_rankings');
@@ -54,6 +86,7 @@ export function RealtimeRankingTab({ bolaoId }: { bolaoId: string }) {
         );
 
         const unsubscribe = onSnapshot(q, async (snapshot) => {
+            setHasError(false);
             const rankingData = snapshot.docs.map(doc => ({ 
                 ...doc.data(), 
                 user_id: doc.id.includes('_') ? doc.id.split('_')[0] : doc.id 
@@ -68,12 +101,12 @@ export function RealtimeRankingTab({ bolaoId }: { bolaoId: string }) {
                 // Firestore "in" query limited to 30 items
                 for (let i = 0; i < userIds.length; i += 30) {
                     const chunkIds = userIds.slice(i, i + 30);
-                    const pq = query(profilesRef, where(documentId(), "in", chunkIds));
+                    const pq = query(profilesRef, where("user_id", "in", chunkIds));
                     const pSnap = await getDocs(pq);
                     pSnap.forEach(doc => {
                         const data = doc.data();
                         profileChunks.push({ 
-                            user_id: doc.id, 
+                            user_id: typeof data.user_id === "string" ? data.user_id : doc.id, 
                             name: data.displayName || data.name || null,
                             avatar_url: data.photoURL || data.avatar_url || null
                         });
@@ -82,7 +115,7 @@ export function RealtimeRankingTab({ bolaoId }: { bolaoId: string }) {
 
                 const joined = rankingData.map(d => {
                     const p = profileChunks.find(p => p.user_id === d.user_id);
-                    return { ...d, profile: p };
+                    return { ...d, profile: p, points_breakdown: normalizeBreakdown(d) };
                 });
                 
                 setRankings(joined);
@@ -92,6 +125,7 @@ export function RealtimeRankingTab({ bolaoId }: { bolaoId: string }) {
             setLoading(false);
         }, (error) => {
             console.error("Error in ranking snapshot:", error);
+            setHasError(true);
             setLoading(false);
         });
 
@@ -118,7 +152,11 @@ export function RealtimeRankingTab({ bolaoId }: { bolaoId: string }) {
     if (rankings.length === 0) {
         return (
             <div className="mt-8">
-                <EmptyState icon="🏆" title={t('ranking.empty_title')} description={t('ranking.empty_desc')} />
+                <EmptyState
+                    icon={hasError ? "⚠️" : "🏆"}
+                    title={hasError ? "Ranking indisponível agora" : t('ranking.empty_title')}
+                    description={hasError ? "Não consegui atualizar a classificação em tempo real. Tenta novamente em alguns instantes." : t('ranking.empty_desc')}
+                />
             </div>
         );
     }
@@ -248,6 +286,22 @@ export function RealtimeRankingTab({ bolaoId }: { bolaoId: string }) {
                 </div>
             )}
 
+            {myRanking && (
+                <motion.div variants={staggerItem}>
+                    <RankingBreakdownCard
+                        breakdown={normalizeBreakdown(myRanking)}
+                        title={t("ranking.breakdown_title")}
+                        description={t("ranking.breakdown_desc")}
+                        labels={{
+                            match: t("ranking.category_match"),
+                            phase: t("ranking.category_phase"),
+                            tournament: t("ranking.category_tournament"),
+                            special: t("ranking.category_special"),
+                        }}
+                    />
+                </motion.div>
+            )}
+
             <div className="flex items-center justify-between px-4">
                 <div className="flex items-center gap-3">
                     <div className="w-1.5 h-6 bg-copa-gold rounded-full" />
@@ -261,6 +315,13 @@ export function RealtimeRankingTab({ bolaoId }: { bolaoId: string }) {
                     const name = r.profile?.name || t('ranking.default_user');
                     const isTop3 = i < 3;
                     const isMe = r.user_id === user?.id;
+                    const breakdown = normalizeBreakdown(r);
+                    const breakdownItems = [
+                        { key: "match", label: t("ranking.category_match_short"), value: breakdown.match },
+                        { key: "phase", label: t("ranking.category_phase_short"), value: breakdown.phase },
+                        { key: "tournament", label: t("ranking.category_tournament_short"), value: breakdown.tournament },
+                        { key: "special", label: t("ranking.category_special_short"), value: breakdown.special },
+                    ].filter((item) => item.value > 0);
 
                     return (
                         <motion.div
@@ -330,6 +391,18 @@ export function RealtimeRankingTab({ bolaoId }: { bolaoId: string }) {
                                         {r.correct_results} <span className="text-[9px] opacity-60 font-sans tracking-normal font-medium">ACERTOS</span>
                                     </div>
                                 </div>
+                                {breakdownItems.length > 0 && (
+                                    <div className="mt-3 flex flex-wrap gap-2">
+                                        {breakdownItems.map((item) => (
+                                            <span
+                                                key={`${r.user_id}-${item.key}`}
+                                                className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[9px] font-black uppercase tracking-[0.16em] text-zinc-300"
+                                            >
+                                                {item.label}: {item.value}
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
                             </div>
 
                             <div className="text-right">
@@ -354,36 +427,24 @@ export function RealtimeRankingTab({ bolaoId }: { bolaoId: string }) {
                 })}
             </div>
 
-            <motion.div
-                variants={staggerItem}
-                className="rounded-[40px] border border-white/5 p-8 bg-gradient-to-b from-white/[0.03] to-transparent backdrop-blur-2xl relative overflow-hidden"
-            >
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-copa-gold/20 to-transparent" />
-                <div className="flex items-center gap-3 mb-8 justify-center">
-                    <div className="px-5 py-2 rounded-full bg-white/5 border border-white/10 flex items-center gap-2">
-                        <Star className="w-3.5 h-3.5 text-copa-gold" />
-                        <span className="text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400">{t('ranking.legend_rules')}</span>
-                    </div>
-                </div>
-                <div className="grid grid-cols-1 xs:grid-cols-3 gap-4">
-                    <LegendItem icon={<Target className="w-6 h-6" />} label={t('ranking.legend_exact')} points={exactPts} color="text-emerald-400" bg="bg-emerald-500/10" border="border-emerald-500/20" />
-                    <LegendItem icon={<Check className="w-6 h-6" />} label={t('ranking.legend_winner')} points={winnerPts} color="text-amber-500" bg="bg-amber-500/10" border="border-amber-500/20" />
-                    <LegendItem icon={<Minus className="w-6 h-6" />} label={t('ranking.legend_draw')} points={drawPts} color="text-blue-400" bg="bg-blue-500/10" border="border-blue-500/20" />
-                </div>
+            <motion.div variants={staggerItem}>
+                <RankingLegend
+                    exactLabel={t("ranking.legend_exact")}
+                    winnerLabel={t("ranking.legend_winner")}
+                    drawLabel={t("ranking.legend_draw")}
+                    exactPoints={exactPts}
+                    winnerPoints={winnerPts}
+                    drawPoints={drawPts}
+                    rulesTitle={t("ranking.legend_rules")}
+                    categoriesTitle={t("ranking.legend_categories")}
+                    categoryLabels={{
+                        match: t("ranking.category_match"),
+                        phase: t("ranking.category_phase"),
+                        tournament: t("ranking.category_tournament"),
+                        special: t("ranking.category_special"),
+                    }}
+                />
             </motion.div>
         </motion.div>
-    );
-}
-
-function LegendItem({ icon, label, points, color, bg, border }: { icon: React.ReactNode; label: string; points: number; color: string; bg: string; border: string }) {
-    return (
-        <div className={cn("group rounded-3xl p-6 border transition-all hover:scale-105 hover:shadow-2xl flex flex-col items-center text-center", bg, border)}>
-            <div className={cn("mb-4 transform group-hover:rotate-12 transition-transform", color)}>{icon}</div>
-            <span className="text-[9px] font-black text-zinc-500 uppercase tracking-widest mb-2 leading-tight px-2">{label}</span>
-            <div className="flex items-baseline gap-1">
-                <span className={cn("text-2xl font-black", color)}>{points}</span>
-                <span className="text-[10px] font-black text-zinc-600">PTS</span>
-            </div>
-        </div>
     );
 }

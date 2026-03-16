@@ -66,7 +66,21 @@
         "default_user": "Usuário",
         "guesses": "palpites",
         "points_abbr": "Pts",
-        "legend_rules": "Regras de Pontuação"
+        "legend_rules": "Regras de Pontuação",
+        "legend_categories": "Origem dos Pontos",
+        "legend_exact": "Placar exato",
+        "legend_winner": "Vencedor",
+        "legend_draw": "Empate",
+        "breakdown_title": "De onde vêm seus pontos",
+        "breakdown_desc": "O novo bolão separa a pontuação por jogo, fase, campeonato e especiais. Quando a liga ainda usa o modo antigo, tudo continua entrando em jogo.",
+        "category_match": "Por jogo",
+        "category_phase": "Por fase",
+        "category_tournament": "Campeonato",
+        "category_special": "Especiais",
+        "category_match_short": "Jogo",
+        "category_phase_short": "Fase",
+        "category_tournament_short": "Camp.",
+        "category_special_short": "Esp."
     },
     "common": {
         "attention": "Atenção",

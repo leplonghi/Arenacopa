@@ -20,6 +20,8 @@ import { useMonetization } from "@/contexts/MonetizationContext";
 import { useTranslation } from "react-i18next";
 import { InterstitialAd } from "@/components/InterstitialAd";
 import { useMatches } from "@/hooks/useMatches";
+import { useNavigate } from "react-router-dom";
+import { EmptyState } from "@/components/EmptyState";
 
 const getQualificationScenario = (teamCode: string, matches: Match[]) => {
     const group = groups.find(g => groupStandings[g]?.some(t => t.teamCode === teamCode));
@@ -77,6 +79,7 @@ const getQualificationScenario = (teamCode: string, matches: Match[]) => {
 
 export function CopaOverview() {
     const { t } = useTranslation('copa');
+    const navigate = useNavigate();
     const { data: matches = [], isLoading } = useMatches();
 
     const todayMatches = useMemo(() => {
@@ -119,6 +122,10 @@ export function CopaOverview() {
         } else {
             action();
         }
+    };
+
+    const openTab = (tab: "grupos" | "simulacao" | "calendario" | "sedes") => {
+        navigate(`/copa/${tab}`);
     };
 
     const scenario = useMemo(() => getQualificationScenario(selectedTeam, matches), [selectedTeam, matches]);
@@ -183,7 +190,7 @@ export function CopaOverview() {
                 {/* Groups Quick Access */}
                 <motion.div
                     variants={staggerItem}
-                    onClick={() => { document.getElementById('tab-grupos')?.click() }}
+                    onClick={() => openTab("grupos")}
                     className="glass-card p-4 relative overflow-hidden group cursor-pointer border-l-4 border-l-secondary-foreground/20 hover:border-l-primary transition-colors"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
@@ -212,7 +219,7 @@ export function CopaOverview() {
                 {/* Simulator Quick Access */}
                 <motion.div
                     variants={staggerItem}
-                    onClick={() => { document.getElementById('tab-simulacao')?.click() }}
+                    onClick={() => openTab("simulacao")}
                     className="glass-card p-4 relative overflow-hidden group cursor-pointer border-l-4 border-l-secondary-foreground/20 hover:border-l-yellow-500 transition-colors"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
@@ -230,7 +237,7 @@ export function CopaOverview() {
                 {/* Calendar Quick Access */}
                 <motion.div
                     variants={staggerItem}
-                    onClick={() => { document.getElementById('tab-calendario')?.click() }}
+                    onClick={() => openTab("calendario")}
                     className="glass-card p-4 relative overflow-hidden group cursor-pointer border-l-4 border-l-secondary-foreground/20 hover:border-l-blue-400 transition-colors"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
@@ -248,7 +255,7 @@ export function CopaOverview() {
                 {/* Map Quick Access */}
                 <motion.div
                     variants={staggerItem}
-                    onClick={() => { document.getElementById('tab-mapa')?.click() }}
+                    onClick={() => openTab("sedes")}
                     className="glass-card p-4 relative overflow-hidden group cursor-pointer border-l-4 border-l-secondary-foreground/20 hover:border-l-green-400 transition-colors"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
@@ -275,19 +282,29 @@ export function CopaOverview() {
                         {t('overview.upcoming_matches')}
                     </h2>
                     <button
-                        onClick={() => { document.getElementById('tab-calendario')?.click() }}
+                        onClick={() => openTab("calendario")}
                         className="text-xs font-bold text-primary hover:underline"
                     >
                         {t('overview.view_calendar')}
                     </button>
                 </motion.div>
-                <div className="space-y-2 md:space-y-0 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-4">
-                    {otherMatches.map((m, i) => (
-                        <motion.div key={m.id} variants={staggerItem} custom={i}>
-                            <MatchCard match={m} index={i} onClick={() => handleInteraction(() => setSelectedMatch(m))} />
-                        </motion.div>
-                    ))}
-                </div>
+                {otherMatches.length > 0 ? (
+                    <div className="space-y-2 md:space-y-0 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-4">
+                        {otherMatches.map((m, i) => (
+                            <motion.div key={m.id} variants={staggerItem} custom={i}>
+                                <MatchCard match={m} index={i} onClick={() => handleInteraction(() => setSelectedMatch(m))} />
+                            </motion.div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="glass-card rounded-[28px] p-5">
+                        <EmptyState
+                            icon="📅"
+                            title="Nenhuma partida próxima agora"
+                            description="Assim que a agenda oficial carregar os próximos jogos, eles aparecem aqui."
+                        />
+                    </div>
+                )}
             </section>
 
             {/* 5. Qualification Calculator */}
@@ -372,7 +389,7 @@ export function CopaOverview() {
             <PremiumModal
                 isOpen={showPremiumModal}
                 onClose={() => setShowPremiumModal(false)}
-                onSuccess={() => window.location.reload()}
+                onSuccess={() => undefined}
             />
 
             <InterstitialAd

@@ -1,18 +1,24 @@
-
-import { useState, useEffect } from "react";
+import { Suspense, lazy, useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-    Globe, Map as MapIcon, ScrollText,
+    Globe, ScrollText,
     List
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-import { HistoriaTab } from "@/components/copa/HistoriaTab";
-import { SedesTab } from "@/components/copa/SedesTab";
-import { GuiaTab } from "@/components/copa/GuiaTab";
+const HistoriaTab = lazy(() => import("@/components/copa/HistoriaTab").then((module) => ({ default: module.HistoriaTab })));
+const SedesTab = lazy(() => import("@/components/copa/SedesTab").then((module) => ({ default: module.SedesTab })));
+const GuiaTab = lazy(() => import("@/components/copa/GuiaTab").then((module) => ({ default: module.GuiaTab })));
 
 type GuiaViewMode = "list" | "map" | "history";
+const VALID_SUBTABS = new Set(["historia", "mapa", "estadios"]);
+
+const GuiaLoadingState = () => (
+    <div className="surface-card rounded-[28px] p-6 text-sm font-bold uppercase tracking-[0.18em] text-zinc-400">
+        Carregando guia...
+    </div>
+);
 
 export default function Guia() {
     const { subtab } = useParams<{ subtab?: string }>();
@@ -25,10 +31,20 @@ export default function Guia() {
     });
 
     useEffect(() => {
+        if (!subtab) {
+            setViewMode("list");
+            return;
+        }
+
+        if (!VALID_SUBTABS.has(subtab)) {
+            navigate("/guia", { replace: true });
+            return;
+        }
+
         if (subtab === "historia") setViewMode("history");
         else if (subtab === "mapa" || subtab === "estadios") setViewMode("map");
         else setViewMode("list");
-    }, [subtab]);
+    }, [navigate, subtab]);
 
     const handleModeToggle = (mode: GuiaViewMode) => {
         setViewMode(mode);
@@ -38,13 +54,13 @@ export default function Guia() {
     };
 
     return (
-        <div className="relative w-full h-[calc(100vh-140px)] md:h-[calc(100vh-100px)] flex flex-col overflow-hidden rounded-[2.5rem] bg-[#050505] border border-emerald-500/10 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.5)]">
+        <div className="surface-card-strong relative flex min-h-[calc(100vh-140px)] w-full flex-col rounded-[2.5rem] border-emerald-500/10 md:min-h-[calc(100vh-100px)]">
             {/* Background Texture/glow */}
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(16,185,129,0.03)_0%,transparent_70%)] pointer-events-none" />
 
             {/* Top Toggle Bar - Moved from bottom to solve overlapping */}
-            <div className="shrink-0 z-[1000] flex justify-center p-4 border-b border-white/[0.05] bg-black/20 backdrop-blur-xl">
-                <div className="flex gap-1 p-1 bg-white/5 rounded-full border border-white/10 overflow-x-auto scrollbar-none max-w-full">
+            <div className="shrink-0 z-[1000] flex justify-center border-b border-white/[0.05] bg-black/20 p-4 backdrop-blur-xl">
+                <div className="surface-card-soft flex max-w-full gap-1 overflow-x-auto rounded-full p-1 scrollbar-none">
                     <ToggleButton
                         isActive={viewMode === "list"}
                         onClick={() => handleModeToggle("list")}
@@ -69,7 +85,7 @@ export default function Guia() {
             </div>
 
             {/* Main Content Area */}
-            <div className="flex-1 relative overflow-hidden">
+            <div className="relative flex-1">
                 <AnimatePresence mode="wait">
                     {viewMode === "history" ? (
                         <motion.div
@@ -78,10 +94,12 @@ export default function Guia() {
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -10 }}
                             transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                            className="w-full h-full overflow-y-auto custom-scrollbar bg-transparent relative z-10"
+                            className="relative z-10 w-full bg-transparent"
                         >
                             <div className="container mx-auto px-6 py-6 pb-20">
-                                <HistoriaTab />
+                                <Suspense fallback={<GuiaLoadingState />}>
+                                    <HistoriaTab />
+                                </Suspense>
                             </div>
                         </motion.div>
                     ) : viewMode === "map" ? (
@@ -91,9 +109,11 @@ export default function Guia() {
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
                             transition={{ duration: 0.4 }}
-                            className="w-full h-full overflow-y-auto custom-scrollbar bg-transparent relative z-10 p-6"
+                            className="relative z-10 w-full bg-transparent p-6"
                         >
-                            <SedesTab />
+                            <Suspense fallback={<GuiaLoadingState />}>
+                                <SedesTab />
+                            </Suspense>
                         </motion.div>
                     ) : (
                         <motion.div
@@ -102,10 +122,12 @@ export default function Guia() {
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -10 }}
                             transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                            className="w-full h-full overflow-y-auto custom-scrollbar bg-transparent relative z-10"
+                            className="relative z-10 w-full bg-transparent"
                         >
                             <div className="container mx-auto px-6 py-6 pb-20">
-                                <GuiaTab />
+                                <Suspense fallback={<GuiaLoadingState />}>
+                                    <GuiaTab />
+                                </Suspense>
                             </div>
                         </motion.div>
                     )}
@@ -119,8 +141,9 @@ function ToggleButton({ isActive, onClick, icon, label }: { isActive: boolean, o
     return (
         <button
             onClick={onClick}
+            aria-pressed={isActive}
             className={cn(
-                "relative flex items-center gap-2 px-4 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all z-10 whitespace-nowrap group",
+                "relative z-10 flex items-center gap-2 whitespace-nowrap rounded-full px-4 py-2.5 text-[11px] font-black uppercase tracking-[0.16em] transition-all group",
                 isActive
                     ? "text-black"
                     : "text-white/40 hover:text-white"

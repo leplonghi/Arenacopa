@@ -2,6 +2,7 @@
 
 interface ImportMetaEnv {
     readonly VITE_ENABLE_PREMIUM_SIMULATION?: string;
+    readonly VITE_PREMIUM_CHECKOUT_ENABLED?: string;
     readonly VITE_STRIPE_PREMIUM_PRICE_LABEL?: string;
     readonly VITE_STRIPE_PREMIUM_PRODUCT_NAME?: string;
 }

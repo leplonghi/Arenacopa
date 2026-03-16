@@ -6,20 +6,32 @@ import { Flag } from "@/components/Flag";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { updateFavoriteTeam } from "@/services/profile/profile.service";
+import { setStoredFavoriteTeam } from "@/lib/favorite-team";
+import { useTranslation } from "react-i18next";
 
 export function OnboardingModal() {
+    const logoUrl = "/logo.png?v=20260316";
     const [isOpen, setIsOpen] = useState(false);
     const [selectedTeam, setSelectedTeam] = useState<string>("BRA");
     const { user } = useAuth();
     const [loading, setLoading] = useState(false);
+    const { t } = useTranslation("common");
 
     useEffect(() => {
-        // Check if seen
-        const hasSeen = localStorage.getItem("arenacopa_onboarding_done");
-        if (!hasSeen) {
-            setIsOpen(true);
+        if (!user || localStorage.getItem("demo_mode") === "true") {
+            setIsOpen(false);
+            return;
         }
-    }, []);
+
+        const hasSeen = localStorage.getItem("arenacopa_onboarding_done");
+        const hasFavoriteTeam = Boolean(localStorage.getItem("favorite_team"));
+        if (!hasSeen && !hasFavoriteTeam) {
+            setIsOpen(true);
+            return;
+        }
+
+        setIsOpen(false);
+    }, [user]);
 
     useEffect(() => {
         // Migration logic for when they create an account later
@@ -42,7 +54,7 @@ export function OnboardingModal() {
 
     const handleConfirm = async () => {
         setLoading(true);
-        localStorage.setItem("favorite_team", selectedTeam);
+        setStoredFavoriteTeam(selectedTeam);
         localStorage.setItem("arenacopa_onboarding_done", "true");
 
         if (user) {
@@ -56,10 +68,6 @@ export function OnboardingModal() {
 
         setLoading(false);
         setIsOpen(false);
-
-        // Reload page to instantly apply changes across the app, especially localStorage fallbacks 
-        // for not-logged-in users seeing the Index tab.
-        window.location.reload();
     };
 
     return (
@@ -67,13 +75,13 @@ export function OnboardingModal() {
             <DialogContent className="sm:max-w-md bg-[#0b0b0b] border-white/10 rounded-[32px] w-[92%] overflow-hidden shadow-2xl backdrop-blur-3xl">
                 <DialogHeader className="flex flex-col items-center pt-2">
                     <div className="w-20 h-20 mb-3 flex items-center justify-center p-3 rounded-[24px] bg-primary/10 border border-primary/20 shadow-2xl">
-                        <img src="/logo-mark.svg" alt="ArenaCopa Logo" className="w-full h-full object-contain drop-shadow-[0_0_12px_rgba(34,197,94,0.5)]" />
+                        <img src={logoUrl} alt="ArenaCopa Logo" className="w-full h-full object-contain drop-shadow-[0_0_12px_rgba(34,197,94,0.5)]" />
                     </div>
                     <DialogTitle className="text-2xl font-black text-center uppercase tracking-tighter text-white shadow-black drop-shadow-md">
-                        Bem-vindo à ArenaCopa
+                        {t("onboarding.title")}
                     </DialogTitle>
                     <DialogDescription className="text-center font-medium text-gray-400 mt-1.5 px-2">
-                        Escolha seu time favorito para a Copa 2026.
+                        {t("onboarding.description")}
                     </DialogDescription>
                 </DialogHeader>
 
@@ -100,7 +108,7 @@ export function OnboardingModal() {
 
                 <div className="mt-2 pb-2 px-2">
                     <Button onClick={handleConfirm} disabled={loading} className="w-full bg-primary hover:bg-primary/90 text-black font-black uppercase tracking-[0.2em] rounded-[20px] h-14 transition-all shadow-[0_0_20px_rgba(34,197,94,0.3)] hover:shadow-[0_0_30px_rgba(34,197,94,0.5)] hover:scale-[1.02] active:scale-[0.98]">
-                        {loading ? "Confirmando..." : "Confirmar e Entrar na Arena"}
+                        {loading ? t("onboarding.loading") : t("onboarding.confirm")}
                     </Button>
                 </div>
             </DialogContent>

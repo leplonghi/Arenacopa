@@ -14,8 +14,14 @@ import { ElitePassModal } from "@/components/ElitePassModal";
 import { LiveMatchCard } from "@/components/LiveMatchCard";
 import { useMonetization } from "@/contexts/MonetizationContext";
 import { useQuery } from "@tanstack/react-query";
-import { getDashboardData, type DashboardBolaoSummary, type DashboardNewsItem } from "@/services/dashboard/dashboard.service";
+import { getDashboardData, type DashboardBolaoSummary } from "@/services/dashboard/dashboard.service";
 import { useMatches } from "@/hooks/useMatches";
+import { useRealtimeNews } from "@/hooks/useRealtimeNews";
+import {
+  getStoredFavoriteTeam,
+  setStoredFavoriteTeam,
+  subscribeToFavoriteTeamUpdates,
+} from "@/lib/favorite-team";
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -32,7 +38,7 @@ const itemVariants = {
 
 const Index = () => {
   const { user } = useAuth();
-  const { i18n } = useTranslation('home');
+  const { i18n, t } = useTranslation('home');
 
   const { data: dbFavoriteTeamCode } = useQuery({
     queryKey: ['favoriteTeam', user?.id],
@@ -57,38 +63,74 @@ const Index = () => {
     enabled: !!user?.id,
   });
 
-  const favoriteTeamCode = dbFavoriteTeamCode || localStorage.getItem("favorite_team") || "BRA";
+  const [favoriteTeamOverride, setFavoriteTeamOverride] = useState<string | null>(null);
+
+  useEffect(() => {
+    return subscribeToFavoriteTeamUpdates((teamCode) => {
+      setFavoriteTeamOverride(teamCode);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (dbFavoriteTeamCode && dbFavoriteTeamCode !== getStoredFavoriteTeam()) {
+      setStoredFavoriteTeam(dbFavoriteTeamCode);
+    }
+  }, [dbFavoriteTeamCode]);
+
+  const favoriteTeamCode = favoriteTeamOverride || dbFavoriteTeamCode || getStoredFavoriteTeam() || "BRA";
   const favoriteTeam = getTeam(favoriteTeamCode);
 
   const [myBoloes, setMyBoloes] = useState<DashboardBolaoSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  const [dashboardError, setDashboardError] = useState<string | null>(null);
+  const [dashboardRefreshKey, setDashboardRefreshKey] = useState(0);
   const [profile, setProfile] = useState<{ name: string; avatar?: string } | null>(null);
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
-  const [miniNews, setMiniNews] = useState<DashboardNewsItem[]>([]);
   const [isEliteModalOpen, setIsEliteModalOpen] = useState(false);
   const { isPremium } = useMonetization();
+  const { news: realtimeNews } = useRealtimeNews({ limitCount: 3 });
+  const miniNews = useMemo(
+    () =>
+      realtimeNews.map((item) => ({
+        id: item.id,
+        title: item.title,
+        category: item.source_name || item.category || "Geral",
+        publishedAt: item.published_at,
+        imageUrl: item.url_to_image || null,
+        url: item.url,
+      })),
+    [realtimeNews]
+  );
 
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      setProfile(null);
+      setMyBoloes([]);
+      setDashboardError(null);
+      setLoading(false);
+      return;
+    }
 
     const fetchData = async () => {
       try {
+        setLoading(true);
+        setDashboardError(null);
         const dashboardData = await getDashboardData(user.id);
         setProfile({
           name: dashboardData.profile?.name || "",
           avatar: dashboardData.profile?.avatar_url || "",
         });
         setMyBoloes(dashboardData.myBoloes);
-        setMiniNews(dashboardData.news);
       } catch (error) {
         console.error("Error loading dashboard data:", error);
+        setDashboardError("Não consegui atualizar seu painel agora. Alguns blocos podem aparecer vazios.");
       } finally {
         setLoading(false);
       }
     };
 
     fetchData();
-  }, [user]);
+  }, [user, dashboardRefreshKey]);
 
   const { data: allMatches } = useMatches();
 
@@ -127,9 +169,27 @@ const Index = () => {
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="px-6 pt-8 space-y-10 relative z-10 max-w-2xl mx-auto"
+        className="relative z-10 mx-auto max-w-2xl space-y-10 px-4 pt-8 sm:px-6"
       >
         <LiveMatchCard />
+
+        {dashboardError && (
+          <motion.div variants={itemVariants} className="rounded-[28px] border border-amber-500/20 bg-amber-500/10 p-4 backdrop-blur-md">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-sm font-black uppercase tracking-[0.12em] text-amber-300">{t('dashboard_partial.title')}</h2>
+                <p className="mt-1 text-sm text-amber-100/80">{dashboardError || t('dashboard_partial.desc')}</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setDashboardRefreshKey((current) => current + 1)}
+                className="shrink-0 rounded-xl border border-amber-400/30 px-3 py-2 text-[11px] font-black uppercase tracking-[0.12em] text-amber-200 hover:bg-amber-500/10"
+              >
+                {t('dashboard_partial.retry')}
+              </button>
+            </div>
+          </motion.div>
+        )}
 
         {/* Profile Header HUD */}
         <motion.div variants={itemVariants} className="flex items-center justify-between">
@@ -149,19 +209,19 @@ const Index = () => {
             </div>
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-[10px] text-gray-500 font-black uppercase tracking-[0.2em] block">DASHBOARD CENTRAL</span>
+                <span className="block text-[11px] font-black uppercase tracking-[0.16em] text-gray-400">Dashboard central</span>
                 {!isPremium ? (
                   <button
                     onClick={() => setIsEliteModalOpen(true)}
-                    className="flex items-center gap-1.5 px-2 py-0.5 rounded-[6px] bg-gradient-to-r from-yellow-600 to-yellow-500 hover:scale-105 transition-transform"
+                    className="flex items-center gap-1.5 rounded-[8px] bg-gradient-to-r from-yellow-600 to-yellow-500 px-2.5 py-1 hover:scale-105 transition-transform"
                   >
                     <Crown className="w-2.5 h-2.5 text-black" />
-                    <span className="text-[8px] font-black text-black uppercase tracking-widest">OBTER ELITE</span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.12em] text-black">Obter Elite</span>
                   </button>
                 ) : (
-                  <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-[6px] bg-white/10">
+                  <div className="flex items-center gap-1.5 rounded-[8px] bg-white/10 px-2.5 py-1">
                     <Crown className="w-2.5 h-2.5 text-yellow-500" />
-                    <span className="text-[8px] font-black text-yellow-500 uppercase tracking-widest">MEMBRO ELITE</span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.12em] text-yellow-500">Membro Elite</span>
                   </div>
                 )}
               </div>
@@ -193,7 +253,9 @@ const Index = () => {
                   </div>
                   <div className="flex-1">
                     <h2 className="text-xl font-black text-white leading-tight uppercase tracking-tight">CUIDADO, CAPITÃO!</h2>
-                    <p className="text-[10px] text-orange-200/60 font-black mt-1 uppercase tracking-widest leading-none">VOCÊ POSSUI {totalPending} PALPITES PENDENTES</p>
+                    <p className="mt-1 text-xs font-bold uppercase tracking-[0.14em] leading-snug text-orange-100/80">
+                      Você possui {totalPending} palpite{totalPending > 1 ? "s" : ""} pendente{totalPending > 1 ? "s" : ""}
+                    </p>
                   </div>
                   <motion.div
                     whileHover={{ x: 3 }}
@@ -252,8 +314,8 @@ const Index = () => {
         ) : favoriteTeam ? (
           <motion.section variants={itemVariants} className="space-y-6">
             <SectionHeader color="bg-primary" title="MINHA SELEÇÃO" rightElement={
-              <Link to="/copa/grupos" className="text-[10px] text-gray-500 font-black uppercase tracking-[0.2em] hover:text-white transition-colors">
-                VER GRUPO {favoriteTeam.group} <ChevronRight className="w-3 h-3 inline ml-1" />
+              <Link to="/copa/grupos" className="text-[11px] text-gray-400 font-black uppercase tracking-[0.12em] hover:text-white transition-colors">
+                Ver grupo {favoriteTeam.group} <ChevronRight className="w-3 h-3 inline ml-1" />
               </Link>
             } />
 
@@ -270,9 +332,9 @@ const Index = () => {
                     </div>
                     <div>
                       <h3 className="text-3xl font-black text-white tracking-tighter leading-none mb-2 uppercase">{favoriteTeam.name}</h3>
-                      <div className="flex items-center gap-2 font-black text-[10px] uppercase tracking-widest text-primary">
+                      <div className="flex items-center gap-2 font-black text-[11px] uppercase tracking-[0.14em] text-primary">
                         <Sparkles className="w-3.5 h-3.5" />
-                        <span>NAÇÃO EM BUSCA DO HEXA</span>
+                        <span>Nação em busca do hexa</span>
                       </div>
                     </div>
                   </div>
@@ -282,10 +344,10 @@ const Index = () => {
                   {nextFavMatch ? (
                     <>
                       <div className="space-y-2">
-                        <span className="text-[9px] text-gray-500 font-black uppercase tracking-[0.3em]">PRÓXIMO DESAFIO</span>
+                        <span className="text-[11px] font-black uppercase tracking-[0.16em] text-gray-400">Próximo desafio</span>
                         <div className="flex items-center gap-3">
                           <div className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_10px_rgba(var(--primary-rgb),0.5)]" />
-                          <span className="text-lg font-black text-white tracking-widest uppercase tabular-nums">
+                          <span className="text-lg font-black uppercase tracking-[0.08em] tabular-nums text-white">
                             {(() => {
                               const date = new Date(nextFavMatch.date);
                               const today = new Date();
@@ -296,7 +358,7 @@ const Index = () => {
                         </div>
                       </div>
                       <div className="flex items-center gap-4 bg-black/40 px-6 py-3 rounded-[24px] border border-white/10 group-hover:border-primary/40 transition-colors">
-                        <span className="text-[10px] font-black text-gray-600 uppercase tracking-widest">ENFRENTA</span>
+                        <span className="text-[11px] font-black uppercase tracking-[0.14em] text-gray-400">Enfrenta</span>
                         <Flag code={nextFavMatch.homeTeam === favoriteTeam.code ? nextFavMatch.awayTeam : nextFavMatch.homeTeam} size="sm" className="w-8 h-8 rounded-lg shadow-lg" />
                       </div>
                     </>
@@ -312,8 +374,8 @@ const Index = () => {
         {/* Active Leagues - HUD Style Cards */}
         <motion.section variants={itemVariants} className="space-y-6">
           <SectionHeader color="bg-blue-500" title="MINHAS ARENAS" rightElement={
-            <Link to="/boloes" className="text-[10px] text-gray-500 font-black uppercase tracking-[0.2em] hover:text-white transition-colors">
-              GERENCIAR LIGAS <ChevronRight className="w-3 h-3 inline ml-1" />
+            <Link to="/boloes" className="text-[11px] text-gray-400 font-black uppercase tracking-[0.12em] hover:text-white transition-colors">
+              Gerenciar ligas <ChevronRight className="w-3 h-3 inline ml-1" />
             </Link>
           } />
 
@@ -370,12 +432,12 @@ const Index = () => {
                           <div className="flex items-center gap-5 mt-2.5">
                             <div className="flex items-center gap-2">
                               <Users className="w-3.5 h-3.5 text-gray-600" />
-                              <span className="text-[10px] font-black text-gray-600 uppercase tracking-widest">{bolao.memberCount} MEMBROS</span>
+                              <span className="text-[11px] font-black uppercase tracking-[0.12em] text-gray-400">{bolao.memberCount} membros</span>
                             </div>
                             {bolao.myRank && bolao.myRank > 0 && (
                               <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20">
                                 <Crown className="w-3 h-3 text-primary" />
-                                <span className="text-[9px] font-black text-primary uppercase tracking-widest">#{bolao.myRank} LUGAR</span>
+                                <span className="text-[10px] font-black uppercase tracking-[0.12em] text-primary">#{bolao.myRank} lugar</span>
                               </div>
                             )}
                           </div>
@@ -385,7 +447,7 @@ const Index = () => {
                       <div className="flex items-center gap-5 relative z-10">
                         <div className="text-right">
                           <span className="text-3xl font-black text-white tracking-tighter tabular-nums leading-none block mb-1">{bolao.myPoints}</span>
-                          <span className="text-[9px] text-gray-600 font-black uppercase tracking-widest">PONTOS</span>
+                          <span className="text-[11px] font-black uppercase tracking-[0.12em] text-gray-400">Pontos</span>
                         </div>
                         <div className="w-12 h-12 rounded-[18px] bg-white/5 border border-white/10 flex items-center justify-center text-gray-500 group-hover:bg-primary group-hover:text-black transition-all shadow-xl">
                           <ChevronRight className="w-6 h-6 stroke-[2.5px]" />
@@ -403,8 +465,8 @@ const Index = () => {
         {miniNews.length > 0 && (
           <motion.section variants={itemVariants} className="space-y-6">
             <SectionHeader color="bg-emerald-400" title="ÚLTIMAS DO FRONT" rightElement={
-              <Link to="/copas/central" className="text-[10px] text-gray-500 font-black uppercase tracking-[0.2em] hover:text-white transition-colors">
-                CENTRAL DE NOTÍCIAS <ChevronRight className="w-3 h-3 inline ml-1" />
+              <Link to="/copa/noticias" className="text-[11px] text-gray-400 font-black uppercase tracking-[0.12em] hover:text-white transition-colors">
+                Central de notícias <ChevronRight className="w-3 h-3 inline ml-1" />
               </Link>
             } />
 
@@ -417,10 +479,10 @@ const Index = () => {
                   </div>
                   <div className="flex flex-col justify-center flex-1 min-w-0">
                     <div className="flex items-center gap-4 mb-2.5">
-                      <span className="text-[8px] font-black uppercase tracking-[0.25em] text-primary bg-primary/10 px-2.5 py-1 rounded-lg border border-primary/20">
+                      <span className="rounded-lg border border-primary/20 bg-primary/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-primary">
                         {item.category}
                       </span>
-                      <span className="text-[9px] text-gray-600 font-black uppercase tracking-widest">
+                      <span className="text-[11px] font-black uppercase tracking-[0.12em] text-gray-400">
                         {new Date(item.publishedAt).toLocaleDateString(i18n.language, { day: '2-digit', month: 'short' })}
                       </span>
                     </div>
@@ -441,7 +503,7 @@ const Index = () => {
         >
           <Link
             to="/boloes"
-            className="w-full bg-white text-black font-black py-6 rounded-[28px] flex items-center justify-center gap-4 shadow-[0_30px_60px_rgba(0,0,0,0.6)] border border-white/10 hover:scale-[1.02] active:scale-[0.98] transition-all uppercase text-[11px] tracking-[0.4em] relative overflow-hidden group"
+            className="relative flex w-full items-center justify-center gap-4 overflow-hidden rounded-[28px] border border-white/10 bg-white py-6 text-[12px] font-black uppercase tracking-[0.22em] text-black shadow-[0_30px_60px_rgba(0,0,0,0.6)] transition-all hover:scale-[1.02] active:scale-[0.98] group"
           >
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-black/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
             <Dices className="w-6 h-6 stroke-[2.5px]" />
@@ -476,7 +538,7 @@ function StatCard({ icon, label, value, highlight = false, color = "text-white" 
       </div>
       <div className="mt-1 space-y-1">
         <span className={cn("text-3xl font-black tracking-tighter block leading-none tabular-nums", highlight ? "text-primary shadow-primary/20" : "text-white")}>{value}</span>
-        <span className="text-[9px] text-gray-500 font-black uppercase tracking-[0.2em]">{label}</span>
+        <span className="text-[11px] font-black uppercase tracking-[0.12em] text-gray-400">{label}</span>
       </div>
     </div>
   );

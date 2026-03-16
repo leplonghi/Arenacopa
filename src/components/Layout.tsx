@@ -23,6 +23,8 @@ import {
 import { useTranslation } from "react-i18next";
 import { getProfile } from "@/services/profile/profile.service";
 
+const logoUrl = "/logo.png?v=20260316";
+
 function Header({ className }: { className?: string }) {
   const location = useLocation();
   const navigate = useNavigate();
@@ -30,8 +32,6 @@ function Header({ className }: { className?: string }) {
 
   const { user } = useAuth();
   const [profile, setProfile] = useState<{ name: string; avatar?: string } | null>(null);
-  const logoUrl = "/logo-mark.svg";
-
   useEffect(() => {
     if (!user) return;
 
@@ -81,7 +81,7 @@ function Header({ className }: { className?: string }) {
     <header className={cn("fixed top-0 inset-x-0 z-30 backdrop-blur-md border-b border-white/[0.06] safe-top shadow-[0_4px_30px_rgba(0,0,0,0.4)] md:absolute md:w-full bg-gradient-to-r from-[#0C321A]/70 to-[#1A4D2E]/80", className)}>
       <div className="flex items-center justify-between px-4 h-14 md:h-16 max-w-7xl mx-auto w-full">
         {isSubpage ? (
-          <button onClick={() => navigate(-1)} className="p-1.5 -ml-1.5 rounded-lg hover:bg-secondary md:hidden">
+          <button aria-label="Voltar" onClick={() => navigate(-1)} className="p-1.5 -ml-1.5 rounded-lg hover:bg-secondary md:hidden">
             <ChevronLeft className="w-5 h-5" />
           </button>
         ) : (
@@ -98,7 +98,7 @@ function Header({ className }: { className?: string }) {
         {/* Desktop Title & Mobile Subpage Title */}
         <div className="flex items-center gap-3">
           {isSubpage && (
-            <button onClick={() => navigate(-1)} className="p-1.5 -ml-1.5 rounded-lg hover:bg-secondary hidden md:flex">
+            <button aria-label="Voltar" onClick={() => navigate(-1)} className="p-1.5 -ml-1.5 rounded-lg hover:bg-secondary hidden md:flex">
               <ChevronLeft className="w-5 h-5" />
             </button>
           )}
@@ -116,13 +116,13 @@ function Header({ className }: { className?: string }) {
 
         <div className="flex items-center gap-3">
           <NotificationsSheet>
-            <button className="w-10 h-10 rounded-full bg-secondary/60 border border-border/50 flex items-center justify-center relative transition-transform active:scale-95 hover:bg-secondary/80">
+            <button aria-label="Abrir notificações" className="w-10 h-10 rounded-full bg-secondary/60 border border-border/50 flex items-center justify-center relative transition-transform active:scale-95 hover:bg-secondary/80">
               <Bell className="w-5 h-5" />
               <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-copa-live rounded-full ring-2 ring-background" />
             </button>
           </NotificationsSheet>
 
-          <NavLink to="/menu" className="md:hidden">
+          <NavLink to="/menu" aria-label="Abrir menu" className="md:hidden">
             <Avatar className="h-9 w-9 border border-primary/20 transition-transform active:scale-95">
               <AvatarImage src={profile?.avatar} />
               <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
@@ -132,7 +132,7 @@ function Header({ className }: { className?: string }) {
           </NavLink>
 
           {/* Desktop Profile Menu */}
-          <NavLink to="/perfil" className="hidden md:block">
+          <NavLink to="/perfil" aria-label="Abrir perfil" className="hidden md:block">
             <div className="flex items-center gap-2 hover:bg-white/5 p-1 rounded-full pr-3 transition-colors">
               <Avatar className="h-9 w-9 border border-primary/20">
                 <AvatarImage src={profile?.avatar} />
@@ -213,14 +213,14 @@ function AppSidebar({ className }: { className?: string }) {
           <div className="p-4 flex items-center justify-center group-data-[collapsible=icon]:p-2">
             <div className="flex items-center gap-3 group-data-[collapsible=icon]:hidden">
               <div className="w-10 h-10 flex items-center justify-center">
-                <img src="/logo-mark.svg" alt="ArenaCup" className="h-8 w-8 object-contain" />
+                <img src={logoUrl} alt="ArenaCup" className="h-8 w-8 object-contain" />
               </div>
               <span className="font-black text-xl tracking-tight drop-shadow-[0_0_8px_rgba(34,197,94,0.3)]">
                 ARENA<span className="text-primary">CUP</span>
               </span>
             </div>
             <div className="hidden group-data-[collapsible=icon]:flex w-full items-center justify-center">
-              <img src="/logo-mark.svg" alt="ArenaCup" className="h-8 w-8 object-contain" />
+              <img src={logoUrl} alt="ArenaCup" className="h-8 w-8 object-contain" />
             </div>
           </div>
           <SidebarGroupContent className="mt-4">

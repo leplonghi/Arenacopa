@@ -1,10 +1,9 @@
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
 import { staggerItem, staggerContainer } from "./animations";
 import { Eye, ArrowRight, TrendingUp, Newspaper, Clock } from "lucide-react";
-import { db } from "@/integrations/firebase/client";
-import { collection, query, orderBy, limit, onSnapshot } from "firebase/firestore";
+import { useRealtimeNews } from "@/hooks/useRealtimeNews";
 
 interface NewsItemDisplay {
     id: string;
@@ -20,37 +19,24 @@ interface NewsItemDisplay {
 
 export function NewsFeed() {
     const { t } = useTranslation('bolao');
-    const [news, setNews] = useState<NewsItemDisplay[]>([]);
-    const [loading, setLoading] = useState(true);
-
-    useEffect(() => {
-        const newsRef = collection(db, "copa_news");
-        const q = query(newsRef, orderBy("published_at", "desc"), limit(6));
-
-        const unsubscribe = onSnapshot(q, (snapshot) => {
-            const mappedNews: NewsItemDisplay[] = snapshot.docs.map((doc) => {
-                const data = doc.data();
-                return {
-                    id: doc.id,
-                    title: data.title,
-                    category: data.category || data.country_filter || "Geral",
-                    time: data.published_at ? new Date(data.published_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }) : "Recent",
-                    image: data.url_to_image || "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=800",
-                    url: data.url || "#",
-                    views: data.views ? (data.views >= 1000 ? `${(data.views / 1000).toFixed(1).replace('.0', '')}k` : `${data.views}`) : `${Math.floor(Math.random() * 5) + 1}.${Math.floor(Math.random() * 9)}k`,
-                    content: data.content || data.description || undefined,
-                    source: data.source_name || undefined,
-                };
-            });
-            setNews(mappedNews);
-            setLoading(false);
-        }, (error) => {
-            console.error("Error listening to news:", error);
-            setLoading(false);
-        });
-
-        return () => unsubscribe();
-    }, []);
+    const { news: realtimeNews, isLoading: loading } = useRealtimeNews({ limitCount: 6 });
+    const news = useMemo(
+        () =>
+            realtimeNews.map((item) => ({
+                id: item.id,
+                title: item.title,
+                category: item.category || item.country_filter || "Geral",
+                time: item.published_at ? new Date(item.published_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }) : "Recent",
+                image: item.url_to_image || "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=800",
+                url: item.url || "#",
+                views: item.views
+                    ? (item.views >= 1000 ? `${(item.views / 1000).toFixed(1).replace('.0', '')}k` : `${item.views}`)
+                    : `${Math.floor(Math.random() * 5) + 1}.${Math.floor(Math.random() * 9)}k`,
+                content: item.content || item.description || undefined,
+                source: item.source_name || undefined,
+            })) satisfies NewsItemDisplay[],
+        [realtimeNews]
+    );
 
     if (loading) {
         return (

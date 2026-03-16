@@ -44,6 +44,7 @@ export function PublicPalpitesTab({ bolaoId }: { bolaoId: string }) {
                 
                 const matches = matchSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
                 if (matches.length === 0) {
+                    setPalpites([]);
                     setLoading(false);
                     return;
                 }
@@ -51,12 +52,17 @@ export function PublicPalpitesTab({ bolaoId }: { bolaoId: string }) {
 
                 // 2. Get predictions for those matches in this bolao
                 const palpitesRef = collection(db, "bolao_palpites");
-                const qPreds = query(
-                    palpitesRef, 
-                    where("bolao_id", "==", bolaoId), 
-                    where("match_id", "in", matchIds)
+                const predictionSnapshots = await Promise.all(
+                    Array.from({ length: Math.ceil(matchIds.length / 30) }, (_, index) => {
+                        const currentChunk = matchIds.slice(index * 30, (index + 1) * 30);
+                        const qPreds = query(
+                            palpitesRef,
+                            where("bolao_id", "==", bolaoId),
+                            where("match_id", "in", currentChunk)
+                        );
+                        return getDocs(qPreds);
+                    })
                 );
-                const predSnapshot = await getDocs(qPreds);
                 
                 interface RawPalpite {
                     id: string;
@@ -67,9 +73,12 @@ export function PublicPalpitesTab({ bolaoId }: { bolaoId: string }) {
                     is_exact?: boolean;
                 }
 
-                const preds = predSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as unknown as RawPalpite[];
+                const preds = predictionSnapshots
+                    .flatMap(snapshot => snapshot.docs)
+                    .map(doc => ({ id: doc.id, ...doc.data() })) as unknown as RawPalpite[];
 
                 if (preds.length === 0) {
+                    setPalpites([]);
                     setLoading(false);
                     return;
                 }

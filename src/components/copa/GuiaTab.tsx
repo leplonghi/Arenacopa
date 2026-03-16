@@ -55,7 +55,7 @@ export function GuiaTab() {
                             <h1 className="text-2xl font-display font-bold text-white tracking-tight mb-1">
                                 {t('ui.title')}
                             </h1>
-                            <p className="text-sm text-gray-400 font-medium">
+                            <p className="max-w-xl text-sm leading-relaxed text-gray-300 font-medium">
                                 {t('ui.subtitle')}
                             </p>
                         </div>
@@ -99,7 +99,7 @@ export function GuiaTab() {
                                 )}
                             />
                             <span className={cn(
-                                "text-[10px] font-black tracking-widest uppercase transition-colors",
+                                "text-[11px] font-black tracking-[0.16em] uppercase transition-colors",
                                 selectedCountryCode === country.code ? "text-emerald-400" : ""
                             )}>
                                 {country.code}
@@ -200,12 +200,12 @@ function CityCard({ city, idx, onClick, status }: { city: HostCity, idx: number,
 
             <div className="absolute inset-0 p-4 flex flex-col justify-between">
                 <div className="flex justify-between items-start">
-                    <div className="bg-black/40 backdrop-blur-sm px-2 py-1 rounded text-[9px] font-black uppercase tracking-widest text-white border border-white/10">
+                    <div className="rounded border border-white/10 bg-black/40 px-2 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-white backdrop-blur-sm">
                         {city.countryCode} Sede
                     </div>
 
                     {status && (
-                        <div className="bg-black/40 backdrop-blur-sm px-2 py-1 rounded text-[10px] font-bold text-white border border-white/10 flex items-center gap-1">
+                        <div className="flex items-center gap-1 rounded border border-white/10 bg-black/40 px-2.5 py-1 text-[11px] font-bold text-white backdrop-blur-sm">
                             <Thermometer className="w-3 h-3 text-emerald-400" />
                             {status.temperature}°C
                         </div>
@@ -218,10 +218,10 @@ function CityCard({ city, idx, onClick, status }: { city: HostCity, idx: number,
                     </h3>
 
                     <div className="flex items-center gap-4">
-                        <span className="flex items-center gap-1 text-[10px] font-bold text-gray-300">
+                        <span className="flex items-center gap-1 text-[11px] font-bold text-gray-200">
                             <Users className="w-3 h-3" /> {city.population}
                         </span>
-                        <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-400">
+                        <span className="flex items-center gap-1 text-[11px] font-bold text-emerald-400">
                             <Building2 className="w-3 h-3" /> {Math.round(city.stadiumCapacity / 1000)}k
                         </span>
                     </div>
@@ -295,6 +295,7 @@ export function CityDetailsModal({ city, dynamicStatus, onClose }: { city: HostC
 
                     <button
                         onClick={onClose}
+                        aria-label="Fechar detalhes da cidade"
                         className="absolute top-4 right-4 z-20 w-8 h-8 rounded-full bg-black/50 border border-white/10 flex items-center justify-center text-white"
                     >
                         <X className="w-4 h-4" />
@@ -328,8 +329,9 @@ export function CityDetailsModal({ city, dynamicStatus, onClose }: { city: HostC
                             <button
                                 key={tab}
                                 onClick={() => setActiveTab(tab)}
+                                aria-pressed={activeTab === tab}
                                 className={cn(
-                                    "flex-1 py-4 text-[10px] font-black uppercase tracking-widest transition-colors border-b-2",
+                                    "flex-1 py-4 text-[11px] font-black uppercase tracking-[0.16em] transition-colors border-b-2",
                                     activeTab === tab
                                         ? "text-emerald-400 border-emerald-400"
                                         : "text-gray-500 border-transparent hover:text-gray-300"
@@ -451,12 +453,15 @@ export function CityDetailsModal({ city, dynamicStatus, onClose }: { city: HostC
                             title: `ArenaCup - ${t(`cities.${city.id}.name`, { defaultValue: city.name })}`,
                             url: 'https://arenacup.app/guia',
                         })}
-                        className="col-span-1 h-12 rounded-xl bg-white/5 hover:bg-white/10 text-white text-[11px] font-black tracking-widest uppercase flex items-center justify-center transition-colors"
+                        className="col-span-1 flex h-12 items-center justify-center rounded-xl bg-white/5 text-[11px] font-black uppercase tracking-[0.16em] text-white transition-colors hover:bg-white/10"
                     >
-                        Share
+                        Compartilhar
                     </button>
-                    <button className="col-span-2 h-12 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black text-[11px] font-black tracking-widest uppercase flex items-center justify-center gap-2 transition-colors">
-                        <Plane className="w-4 h-4" /> Plano
+                    <button
+                        onClick={() => setActiveTab("turismo")}
+                        className="col-span-2 flex h-12 items-center justify-center gap-2 rounded-xl bg-emerald-500 text-[11px] font-black uppercase tracking-[0.16em] text-black transition-colors hover:bg-emerald-400"
+                    >
+                        <Plane className="w-4 h-4" /> Ver roteiro
                     </button>
                 </div>
             </motion.div>

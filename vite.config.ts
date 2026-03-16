@@ -24,7 +24,11 @@ export default defineConfig(({ mode }) => ({
         manualChunks(id) {
           if (!id.includes("node_modules")) return;
 
-          if (id.includes("@supabase") || id.includes("@tanstack")) {
+          if (id.includes("firebase")) {
+            return "firebase";
+          }
+
+          if (id.includes("@tanstack")) {
             return "data";
           }
 
@@ -32,7 +36,11 @@ export default defineConfig(({ mode }) => ({
             return "ui";
           }
 
-          if (id.includes("recharts") || id.includes("framer-motion")) {
+          if (id.includes("framer-motion")) {
+            return "motion";
+          }
+
+          if (id.includes("recharts") || id.includes("embla-carousel-react") || id.includes("html-to-image")) {
             return "visual";
           }
 
@@ -48,7 +56,7 @@ export default defineConfig(({ mode }) => ({
             return "icons";
           }
 
-          if (id.includes("@capacitor") || id.includes("@revenuecat")) {
+          if (id.includes("@capacitor")) {
             return "platform";
           }
 

@@ -1,4 +1,4 @@
-import { Settings, LogOut, User, BookOpen, HelpCircle, Bell, Compass, Shield, FileText } from "lucide-react";
+import { Settings, LogOut, User, BookOpen, HelpCircle, Bell, Shield } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
 
@@ -39,31 +39,47 @@ export default function Menu() {
                 </button>
 
                 <button
+                    onClick={() => navigate("/perfil")}
                     className="w-full p-4 glass-card-hover text-left flex items-center gap-3"
                 >
                     <Bell className="w-5 h-5 text-primary" />
-                    <span className="font-bold text-sm">Notificações</span>
+                    <div className="flex-1">
+                        <span className="font-bold text-sm">Notificações</span>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">Alertas, push e preferências</p>
+                    </div>
                 </button>
 
                 <button
+                    onClick={() => navigate("/perfil")}
                     className="w-full p-4 glass-card-hover text-left flex items-center gap-3"
                 >
                     <Settings className="w-5 h-5 text-primary" />
-                    <span className="font-bold text-sm">Configurações</span>
+                    <div className="flex-1">
+                        <span className="font-bold text-sm">Configurações</span>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">Conta, idioma e preferências</p>
+                    </div>
                 </button>
 
                 <button
+                    onClick={() => navigate("/privacidade")}
                     className="w-full p-4 glass-card-hover text-left flex items-center gap-3"
                 >
                     <Shield className="w-5 h-5 text-muted-foreground" />
-                    <span className="font-bold text-sm">Privacidade & Termos</span>
+                    <div className="flex-1">
+                        <span className="font-bold text-sm">Privacidade & Termos</span>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">Políticas e uso da plataforma</p>
+                    </div>
                 </button>
 
                 <button
+                    onClick={() => navigate("/regras")}
                     className="w-full p-4 glass-card-hover text-left flex items-center gap-3"
                 >
                     <HelpCircle className="w-5 h-5 text-muted-foreground" />
-                    <span className="font-bold text-sm">Ajuda & FAQ</span>
+                    <div className="flex-1">
+                        <span className="font-bold text-sm">Ajuda & FAQ</span>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">Regras, dúvidas e orientação rápida</p>
+                    </div>
                 </button>
 
                 <button

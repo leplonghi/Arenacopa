@@ -37,9 +37,16 @@
         "mark_all_read": "Marcar todas como lidas",
         "description": "Confira as últimas novidades e atualizações.",
         "empty": "Nenhuma notificação",
+        "load_error": "Não consegui carregar as notificações.",
         "new": "Nova",
         "new_count_one": "{{count}} nova",
         "new_count_other": "{{count}} novas"
+    },
+    "onboarding": {
+        "title": "Bem-vindo à ArenaCopa",
+        "description": "Escolha seu time favorito para a Copa 2026.",
+        "loading": "Confirmando...",
+        "confirm": "Confirmar e Entrar na Arena"
     },
     "status": {
         "active": "Ativo",

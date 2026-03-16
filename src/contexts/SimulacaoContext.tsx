@@ -1,7 +1,6 @@
 import { createContext, useContext, useState, useCallback, useMemo, useEffect, type ReactNode } from "react";
 import { groups as allGroups } from "@/data/mockData";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
 import { initMatches, calcStandings } from "@/utils/simulacaoUtils";
 import {
   type KnockoutData, type KnockoutScore, type KnockoutRound,
@@ -40,10 +39,31 @@ type PersistedSimulationData = Record<string, SimMatch[]> & {
 
 type SimulationRecord = {
   id: string;
-  name?: string;
-  selected_groups?: string[];
-  data?: PersistedSimulationData;
-  updated_at?: string;
+  name: string;
+  selectedGroups: string[];
+  matches: PersistedSimulationData;
+  updatedAt: string;
+};
+
+const getSimulationStorageKey = (userId: string) => `arenacopa_simulations_${userId}`;
+
+const parseStoredSimulations = (rawValue: string | null): Simulation[] => {
+  if (!rawValue) return [];
+
+  try {
+    const parsed = JSON.parse(rawValue) as SimulationRecord[];
+
+    return parsed.map((simulation) => ({
+      id: simulation.id,
+      name: simulation.name || "Minha Simulação",
+      selectedGroups: simulation.selectedGroups || allGroups,
+      matches: simulation.matches || {},
+      updatedAt: simulation.updatedAt || new Date().toISOString(),
+    }));
+  } catch (error) {
+    console.error("Error parsing stored simulations:", error);
+    return [];
+  }
 };
 
 interface SimulacaoContextType {
@@ -86,34 +106,30 @@ export function SimulacaoProvider({ children }: { children: ReactNode }) {
 
   // Load all simulations
   useEffect(() => {
-    if (!user) { setLoading(false); return; }
-    const fetchSimulations = async () => {
-      try {
-        const { data, error } = await supabase
-          .from("simulations")
-          .select("id, name, selected_groups, data, updated_at")
-          .eq("user_id", user.id)
-          .order("updated_at", { ascending: false });
+    if (!user?.id) {
+      setSimulations([]);
+      setCurrentSimId(null);
+      setLoading(false);
+      setLoaded(true);
+      return;
+    }
 
-        if (error) throw error;
+    const storageKey = getSimulationStorageKey(user.id);
+    const storedSimulations = parseStoredSimulations(localStorage.getItem(storageKey));
+    const sortedSimulations = storedSimulations.sort(
+      (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+    );
 
-        setSimulations(((data || []) as SimulationRecord[]).map((s) => ({
-          id: s.id,
-          name: s.name || "Minha Simulação",
-          selectedGroups: s.selected_groups || allGroups,
-          matches: s.data || {},
-          updatedAt: s.updated_at || new Date().toISOString(),
-        })));
-        setLoading(false);
-        setLoaded(true);
-      } catch (error) {
-        console.error("Error fetching simulations:", error);
-        setLoading(false);
-        setLoaded(true);
-      }
-    };
-    fetchSimulations();
+    setSimulations(sortedSimulations);
+    setLoading(false);
+    setLoaded(true);
   }, [user]);
+
+  useEffect(() => {
+    if (!user?.id || !loaded) return;
+    const storageKey = getSimulationStorageKey(user.id);
+    localStorage.setItem(storageKey, JSON.stringify(simulations));
+  }, [loaded, simulations, user?.id]);
 
   const currentSim = useMemo(() =>
     simulations.find(s => s.id === currentSimId) || null,
@@ -153,27 +169,9 @@ export function SimulacaoProvider({ children }: { children: ReactNode }) {
       if (Object.keys(knockoutScores).length > 0) {
         dataToSave.__knockout = knockoutScores;
       }
-      const autoSave = async () => {
-        try {
-          const { error } = await supabase
-            .from("simulations")
-            .update({
-            data: dataToSave,
-            updated_at: new Date().toISOString()
-            })
-            .eq("id", currentSimId);
-
-          if (error) throw error;
-
-          setSimulations(prev => prev.map(s =>
-            s.id === currentSimId ? { ...s, matches: dataToSave, updatedAt: new Date().toISOString() } : s
-          ));
-        } catch (error) {
-          console.error("Error auto-saving simulation:", error);
-        }
-      };
-
-      autoSave();
+      setSimulations(prev => prev.map(s =>
+        s.id === currentSimId ? { ...s, matches: dataToSave, updatedAt: new Date().toISOString() } : s
+      ));
     }, 1000);
     return () => clearTimeout(timeout);
   }, [allMatches, knockoutScores, user, currentSimId, loaded]);
@@ -236,60 +234,29 @@ export function SimulacaoProvider({ children }: { children: ReactNode }) {
   const goBackToList = useCallback(() => setCurrentSimId(null), []);
 
   const createSimulation = useCallback(async (name: string, selectedGroups: string[]) => {
-    if (!user) { console.error("[Simulação] No user found"); return null; }
+    if (!user) return null;
     const matchData = initMatches(selectedGroups);
-    console.log("[Simulação] Creating simulation:", { name, selectedGroups: selectedGroups.length, userId: user.id });
-    try {
-      const newSimData = {
-        user_id: user.id,
-        name,
-        selected_groups: selectedGroups,
-        data: matchData,
-        updated_at: new Date().toISOString()
-      };
-      const { data, error } = await supabase
-        .from("simulations")
-        .insert(newSimData)
-        .select("id, name, selected_groups, data, updated_at")
-        .single();
+    const id = crypto.randomUUID();
+    const newSim: Simulation = {
+      id,
+      name,
+      selectedGroups,
+      matches: matchData,
+      updatedAt: new Date().toISOString(),
+    };
 
-      if (error || !data) throw error || new Error("Falha ao criar simulação");
-
-      const newSim: Simulation = {
-        id: data.id,
-        name: data.name,
-        selectedGroups: data.selected_groups,
-        matches: data.data as PersistedSimulationData,
-        updatedAt: data.updated_at,
-      };
-      setSimulations(prev => [newSim, ...prev]);
-      setCurrentSimId(data.id);
-      return data.id;
-    } catch (error) {
-      console.error("[Simulação] Supabase insert error:", error);
-      return null;
-    }
+    setSimulations(prev => [newSim, ...prev]);
+    setCurrentSimId(id);
+    return id;
   }, [user]);
 
   const deleteSimulation = useCallback(async (id: string) => {
-    try {
-      const { error } = await supabase.from("simulations").delete().eq("id", id);
-      if (error) throw error;
-      setSimulations(prev => prev.filter(s => s.id !== id));
-      if (currentSimId === id) setCurrentSimId(null);
-    } catch (error) {
-      console.error("Error deleting simulation:", error);
-    }
+    setSimulations(prev => prev.filter(s => s.id !== id));
+    if (currentSimId === id) setCurrentSimId(null);
   }, [currentSimId]);
 
   const renameSimulation = useCallback(async (id: string, name: string) => {
-    try {
-      const { error } = await supabase.from("simulations").update({ name }).eq("id", id);
-      if (error) throw error;
-      setSimulations(prev => prev.map(s => s.id === id ? { ...s, name } : s));
-    } catch (error) {
-      console.error("Error renaming simulation:", error);
-    }
+    setSimulations(prev => prev.map(s => s.id === id ? { ...s, name, updatedAt: new Date().toISOString() } : s));
   }, []);
 
   return (

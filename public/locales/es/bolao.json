@@ -61,7 +61,21 @@
         "default_user": "Usuario",
         "guesses": "pronósticos",
         "points_abbr": "Pts",
-        "legend_rules": "Reglas de Puntuación"
+        "legend_rules": "Reglas de Puntuación",
+        "legend_categories": "Origen de los Puntos",
+        "legend_exact": "Marcador exacto",
+        "legend_winner": "Ganador",
+        "legend_draw": "Empate",
+        "breakdown_title": "De dónde vienen tus puntos",
+        "breakdown_desc": "La nueva quiniela separa los puntos por partido, fase, torneo y mercados especiales. Si la liga aún usa el modo antiguo, todo sigue entrando como puntos de partido.",
+        "category_match": "Por partido",
+        "category_phase": "Por fase",
+        "category_tournament": "Torneo",
+        "category_special": "Especiales",
+        "category_match_short": "Partido",
+        "category_phase_short": "Fase",
+        "category_tournament_short": "Torneo",
+        "category_special_short": "Esp."
     },
     "common": {
         "attention": "Atención",

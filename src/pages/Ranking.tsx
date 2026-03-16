@@ -14,6 +14,14 @@ type UserStanding = {
   points: number;
 };
 
+type ProfileSummary = {
+  user_id: string;
+  name?: string;
+  nickname?: string;
+  avatar_url?: string;
+  favorite_team?: string | null;
+};
+
 export default function Ranking() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
@@ -25,7 +33,7 @@ export default function Ranking() {
 
       try {
         const rankingsRef = collection(db, "bolao_rankings");
-        const q = query(rankingsRef, orderBy("total_points", "desc"), limit(200));
+        const q = query(rankingsRef, orderBy("total_points", "desc"));
         const querySnapshot = await getDocs(q);
         
         const rankings = querySnapshot.docs.map(doc => doc.data());
@@ -46,7 +54,7 @@ export default function Ranking() {
         // Here we'll fetch profiles in chunks if needed, but for the top 50 it's manageable.
         const profilesRef = collection(db, "profiles");
         // Simple case: fetch profiles for the users we found
-        const profileMap = new Map<string, any>();
+        const profileMap = new Map<string, ProfileSummary>();
         
         // Fetching profiles in batches of 30 due to Firestore limits
         const batches = [];
@@ -59,7 +67,7 @@ export default function Ranking() {
           const ps = await getDocs(pq);
           ps.docs.forEach(doc => {
             const data = doc.data();
-            profileMap.set(data.user_id, data);
+            profileMap.set(data.user_id, data as ProfileSummary);
           });
         }
 
@@ -146,7 +154,7 @@ export default function Ranking() {
 
       <div className="mb-6 grid gap-4 md:grid-cols-3">
         {podium.map((row, index) => (
-          <div key={row.userId} className="rounded-[28px] border border-white/10 bg-white/5 p-5">
+          <div key={row.userId} className="surface-card p-5">
             <div className="mb-3 inline-flex rounded-full bg-primary/15 p-3 text-primary">
               {index === 0 ? <Crown className="h-5 w-5" /> : index === 1 ? <Trophy className="h-5 w-5" /> : <Medal className="h-5 w-5" />}
             </div>
@@ -162,7 +170,7 @@ export default function Ranking() {
         ))}
       </div>
 
-      <div className="rounded-[32px] border border-white/10 bg-zinc-950 p-4 md:p-6">
+      <div className="surface-card-strong rounded-[32px] p-4 md:p-6">
         <div className="mb-4 flex items-center gap-2">
           <Award className="h-4 w-4 text-primary" />
           <h2 className="text-sm font-black uppercase tracking-[0.18em] text-primary">Classificação geral</h2>
@@ -172,7 +180,7 @@ export default function Ranking() {
           {globalRows.map((row, index) => (
             <div
               key={row.userId}
-              className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-white/5 px-4 py-4"
+              className="surface-card-soft flex items-center justify-between gap-4 rounded-2xl px-4 py-4"
             >
               <div className="flex items-center gap-4">
                 <div className="w-10 text-center text-lg font-black text-primary">#{index + 1}</div>

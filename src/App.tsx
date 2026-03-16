@@ -35,7 +35,7 @@ const queryClient = new QueryClient();
 function DeepLinkListener() {
   const navigate = useNavigate();
   useEffect(() => {
-    CapacitorApp.addListener('appUrlOpen', data => {
+    const listener = CapacitorApp.addListener('appUrlOpen', data => {
       console.log('App opened with URL:', data);
       const url = new URL(data.url);
       const path = url.pathname;
@@ -45,7 +45,7 @@ function DeepLinkListener() {
     });
 
     return () => {
-      CapacitorApp.removeAllListeners();
+      void listener.then((handle) => handle.remove());
     };
   }, [navigate]);
 

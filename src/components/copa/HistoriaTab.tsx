@@ -74,15 +74,15 @@ export function HistoriaTab() {
                             <Star className="w-6 h-6 text-emerald-400" />
                         </div>
                     </div>
-                    <p className="text-gray-400 max-w-lg mx-auto text-sm leading-relaxed font-bold uppercase tracking-widest opacity-80">
+                    <p className="text-gray-300 max-w-lg mx-auto text-sm leading-relaxed font-semibold tracking-[0.14em] opacity-90">
                         {t('historia.subtitle')}
                     </p>
 
                     <div className="flex justify-center gap-4 mt-6">
-                        <div className="px-4 py-1.5 rounded-full bg-white/5 backdrop-blur-md border border-white/10 text-[10px] text-white/60 font-black uppercase tracking-[0.2em]">
+                        <div className="px-4 py-1.5 rounded-full bg-white/5 backdrop-blur-md border border-white/10 text-[11px] text-white/70 font-bold uppercase tracking-[0.14em]">
                             {t('historia.period')}
                         </div>
-                        <div className="px-4 py-1.5 rounded-full bg-emerald-500/10 backdrop-blur-md border border-emerald-500/20 text-[10px] text-emerald-400 font-black uppercase tracking-[0.2em] flex items-center gap-2">
+                        <div className="px-4 py-1.5 rounded-full bg-emerald-500/10 backdrop-blur-md border border-emerald-500/20 text-[11px] text-emerald-300 font-bold uppercase tracking-[0.14em] flex items-center gap-2">
                             <Globe className="w-3 h-3" /> {t('historia.championsCount')}
                         </div>
                     </div>
@@ -100,7 +100,7 @@ export function HistoriaTab() {
                         key={tab.id}
                         onClick={() => setSection(tab.id)}
                         className={cn(
-                            "px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all shrink-0 flex items-center gap-2.5 relative group",
+                            "px-5 py-3 rounded-xl text-[11px] font-bold uppercase tracking-[0.12em] transition-all shrink-0 flex items-center gap-2.5 relative group",
                             section === tab.id
                                 ? "text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.1)]"
                                 : "text-white/30 hover:text-white/60 border border-transparent"
@@ -175,11 +175,11 @@ function EdicoesSection() {
                                 <Trophy className="w-3.5 h-3.5 text-yellow-500 shrink-0 drop-shadow-[0_0_8px_rgba(234,179,8,0.4)]" />
                             </div>
                             <div className="flex items-center gap-3">
-                                <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest flex items-center gap-1">
+                                <p className="text-[11px] text-white/50 font-semibold uppercase tracking-[0.12em] flex items-center gap-1">
                                     <MapPin className="w-3 h-3 text-emerald-400/60" /> {edition.hostCountry}
                                 </p>
                                 <span className="w-1 h-1 rounded-full bg-white/10" />
-                                <p className="text-[10px] text-white/40 font-bold uppercase tracking-widest">
+                                <p className="text-[11px] text-white/50 font-semibold uppercase tracking-[0.12em]">
                                     {edition.totalGoals} {t('historia.labels.goals')}
                                 </p>
                             </div>
@@ -226,23 +226,23 @@ function EdicoesSection() {
                                             </div>
                                             <div>
                                                 <p className="text-xs font-bold text-white">{edition.topScorerName}</p>
-                                                <p className="text-[10px] text-muted-foreground">{edition.topScorerGoals} gols • Artilheiro</p>
+                                                <p className="text-[11px] text-muted-foreground">{edition.topScorerGoals} gols • Artilheiro</p>
                                             </div>
                                         </div>
                                     </div>
 
                                     {/* Extra Info */}
-                                    <div className="flex flex-wrap gap-2 text-[10px]">
-                                        <span className="px-2 py-1 bg-secondary/50 rounded-md text-white/60 font-medium">
+                                    <div className="flex flex-wrap gap-2 text-[11px]">
+                                        <span className="px-2 py-1 bg-secondary/50 rounded-md text-white/70 font-medium">
                                             <Users className="w-3 h-3 inline mr-1" />{formatNumber(edition.totalAttendance)} espectadores
                                         </span>
                                         {edition.goldenBall && (
-                                            <span className="px-2 py-1 bg-yellow-500/10 rounded-md text-yellow-400 font-medium border border-yellow-500/20">
+                                            <span className="px-2 py-1 bg-yellow-500/10 rounded-md text-yellow-300 font-medium border border-yellow-500/20">
                                                 <Star className="w-3 h-3 inline mr-1" />Bola de Ouro: {edition.goldenBall}
                                             </span>
                                         )}
                                         {edition.mascot && edition.mascot !== "N/A" && (
-                                            <span className="px-2 py-1 bg-secondary/50 rounded-md text-white/60 font-medium">
+                                            <span className="px-2 py-1 bg-secondary/50 rounded-md text-white/70 font-medium">
                                                 Mascote: {edition.mascot}
                                             </span>
                                         )}
@@ -297,7 +297,7 @@ function TitulosSection() {
                         </div>
                         <div className="flex-1 min-w-0">
                             <p className="text-sm font-bold truncate text-white">{country.name}</p>
-                            <p className="text-[10px] text-muted-foreground">
+                            <p className="text-[11px] text-muted-foreground">
                                 {country.titleYears.length > 0 ? country.titleYears.join(", ") : country.bestResult}
                             </p>
                         </div>
@@ -324,7 +324,7 @@ function TitulosSection() {
                         <Flag code={c.code} size="xs" />
                         <div className="min-w-0">
                             <p className="text-[10px] font-bold text-white truncate">{c.name}</p>
-                            <p className="text-[9px] text-muted-foreground">
+                            <p className="text-[10px] text-muted-foreground">
                                 {c.wins}V {c.draws}E {c.losses}D • {c.goalsScored} {t('historia.labels.goals')}
                             </p>
                         </div>
@@ -372,11 +372,11 @@ function ArtilheirosSection() {
                     </div>
                     <div className="flex-1 min-w-0">
                         <p className="text-sm font-bold text-white truncate">{scorer.name}</p>
-                        <p className="text-[10px] text-muted-foreground">{scorer.country} • {scorer.editions}</p>
+                        <p className="text-[11px] text-muted-foreground">{scorer.country} • {scorer.editions}</p>
                     </div>
                     <div className="text-right shrink-0">
                         <p className={cn("text-lg font-black", idx === 0 ? "text-yellow-500" : "text-white")}>{scorer.goals}</p>
-                        <p className="text-[8px] text-muted-foreground uppercase tracking-widest">{t('historia.labels.goals')}</p>
+                        <p className="text-[10px] text-muted-foreground uppercase tracking-[0.12em]">{t('historia.labels.goals')}</p>
                     </div>
                     {/* Progress bar */}
                     <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-secondary/30">
@@ -427,7 +427,7 @@ function ParticipacoesSection() {
                     </div>
                     <div className="flex-1 min-w-0">
                         <p className="text-sm font-bold text-white truncate">{team.name}</p>
-                        <p className="text-[10px] text-muted-foreground">{team.note}</p>
+                        <p className="text-[11px] text-muted-foreground">{team.note}</p>
                     </div>
                     <div className="text-right shrink-0 w-28">
                         <div className="flex items-center gap-2">
@@ -441,7 +441,7 @@ function ParticipacoesSection() {
                             </div>
                             <span className="text-sm font-black text-blue-400 w-5 text-right">{team.participations}</span>
                         </div>
-                        <p className="text-[8px] text-muted-foreground mt-0.5">consecutivas: {team.consecutive}</p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">consecutivas: {team.consecutive}</p>
                     </div>
                 </motion.div>
             ))}
@@ -454,7 +454,7 @@ function ParticipacoesSection() {
                     </div>
                     <div>
                         <p className="text-sm font-black text-white">Brasil: Único em Todas</p>
-                        <p className="text-[10px] text-muted-foreground">A única seleção presente em todas as 22 edições da Copa do Mundo</p>
+                        <p className="text-[11px] text-muted-foreground">A única seleção presente em todas as 22 edições da Copa do Mundo</p>
                     </div>
                 </div>
             </div>
@@ -493,7 +493,7 @@ function GolsSection() {
                     </div>
                     <div className="flex-1 min-w-0">
                         <p className="text-sm font-bold text-white truncate">{team.name}</p>
-                        <p className="text-[10px] text-muted-foreground">
+                        <p className="text-[11px] text-muted-foreground">
                             {team.matches} {t('historia.labels.matches')} • {t('historia.labels.avg')}: {team.avg.toFixed(2)}
                         </p>
                     </div>
@@ -549,8 +549,8 @@ function RecordesSection() {
                                 </div>
                                 <div>
                                     <h4 className="text-sm font-bold text-white mb-0.5">{record.category}</h4>
-                                    <p className="text-xs text-muted-foreground leading-relaxed">{record.record}</p>
-                                    <span className="text-[10px] text-primary font-bold mt-1 block">{record.year}</span>
+                                    <p className="text-[13px] text-muted-foreground leading-relaxed">{record.record}</p>
+                                    <span className="text-[11px] text-primary font-bold mt-1 block">{record.year}</span>
                                 </div>
                             </div>
                         </motion.div>
@@ -570,9 +570,9 @@ function SectionHeader({ icon, title, subtitle }: { icon: React.ReactNode; title
         <div className="mb-2">
             <div className="flex items-center gap-2 mb-0.5">
                 {icon}
-                <h2 className="text-lg font-display font-bold text-white tracking-widest uppercase italic">{title}</h2>
+                <h2 className="text-lg font-display font-bold text-white tracking-[0.12em] uppercase italic">{title}</h2>
             </div>
-            <p className="text-[11px] text-muted-foreground pl-7">{subtitle}</p>
+            <p className="text-[12px] text-muted-foreground pl-7">{subtitle}</p>
         </div>
     );
 }
@@ -593,7 +593,7 @@ function ResultCard({ rank, team, code, label, color }: {
             <Flag code={code} size="xs" />
             <div className="min-w-0">
                 <p className="text-xs font-bold text-white truncate">{team}</p>
-                <p className="text-[9px] text-muted-foreground">{label}</p>
+                <p className="text-[10px] text-muted-foreground">{label}</p>
             </div>
         </div>
     );
@@ -604,7 +604,7 @@ function StatCard({ label, value, icon }: { label: string; value: string; icon: 
         <div className="bg-secondary/30 rounded-lg p-2.5 text-center border border-white/5">
             <div className="flex items-center justify-center gap-1 text-muted-foreground mb-1">
                 {icon}
-                <span className="text-[9px] uppercase tracking-wider font-bold">{label}</span>
+                <span className="text-[10px] uppercase tracking-[0.12em] font-bold">{label}</span>
             </div>
             <p className="text-xs font-bold text-white">{value}</p>
         </div>
@@ -630,7 +630,7 @@ function PodiumCard({ country, position }: { country: typeof countryRankings[0];
             <p className={cn("text-2xl font-black", isFirst ? "text-yellow-500" : "text-gray-400")}>
                 {country.titles}
             </p>
-            <p className="text-[8px] uppercase tracking-widest text-muted-foreground font-bold">
+            <p className="text-[10px] uppercase tracking-[0.12em] text-muted-foreground font-bold">
                 {t('historia.tabs.titles')}
             </p>
         </div>

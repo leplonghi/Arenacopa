@@ -31,5 +31,10 @@
         "view_all": "Ver tudo",
         "general": "Geral"
     },
+    "dashboard_partial": {
+        "title": "Painel parcial",
+        "desc": "Não consegui atualizar seu painel agora. Alguns blocos podem aparecer vazios.",
+        "retry": "Tentar de novo"
+    },
     "cta_predict": "Fazer Palpites"
 }

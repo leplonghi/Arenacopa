@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Check, Crown, Zap, Shield, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useMonetization } from "@/contexts/MonetizationContext";
+import { monetizationEnv } from "@/lib/env";
+import { PREMIUM_CHECKOUT_UNAVAILABLE_MESSAGE } from "@/services/monetization/stripe.service";
 
 interface PremiumModalProps {
     isOpen: boolean;
@@ -12,9 +14,13 @@ interface PremiumModalProps {
 
 export function PremiumModal({ isOpen, onClose, onSuccess }: PremiumModalProps) {
     const { purchasePremium, isLoading } = useMonetization();
+    const canStartPremiumCheckout = monetizationEnv.enablePremiumSimulation || monetizationEnv.premiumCheckoutEnabled;
 
     const handlePurchase = async () => {
-        await purchasePremium();
+        const startedCheckout = await purchasePremium();
+        if (!startedCheckout) {
+            return;
+        }
         onSuccess();
         onClose();
     };
@@ -89,7 +95,7 @@ export function PremiumModal({ isOpen, onClose, onSuccess }: PremiumModalProps) 
 
                             <Button
                                 onClick={handlePurchase}
-                                disabled={isLoading}
+                                disabled={isLoading || !canStartPremiumCheckout}
                                 className="w-full h-12 text-base font-bold bg-gradient-to-r from-yellow-500 to-orange-600 hover:from-yellow-400 hover:to-orange-500 text-white shadow-lg shadow-orange-500/20 rounded-xl"
                             >
                                 {isLoading ? (
@@ -104,7 +110,9 @@ export function PremiumModal({ isOpen, onClose, onSuccess }: PremiumModalProps) 
                                 )}
                             </Button>
                             <p className="text-[10px] text-center text-muted-foreground mt-3">
-                                Compra segura e criptografada. Satisfação garantida.
+                                {canStartPremiumCheckout
+                                    ? "Compra segura e criptografada. Satisfacao garantida."
+                                    : PREMIUM_CHECKOUT_UNAVAILABLE_MESSAGE}
                             </p>
                         </div>
                     </div>

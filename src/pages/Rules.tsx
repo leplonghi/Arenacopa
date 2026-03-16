@@ -27,6 +27,7 @@ export default function Rules() {
             <div className="sticky top-0 z-50 bg-black/60 backdrop-blur-xl border-b border-white/5 p-4 flex items-center gap-4">
                 <button
                     onClick={() => navigate(-1)}
+                    aria-label="Voltar"
                     className="p-2.5 -ml-2 bg-white/5 hover:bg-white/10 rounded-full transition-all border border-white/5 active:scale-90"
                 >
                     <ChevronLeft className="w-6 h-6" />
@@ -36,7 +37,7 @@ export default function Rules() {
                         <BookOpen className="w-5 h-5 text-emerald-400" />
                         Regulamento
                     </h1>
-                    <span className="text-[10px] uppercase font-bold tracking-[0.2em] text-emerald-400/60">
+                    <span className="text-[11px] uppercase font-bold tracking-[0.14em] text-emerald-400/70">
                         Arena Cup 2026 • Manual Oficial
                     </span>
                 </div>
@@ -62,7 +63,7 @@ export default function Rules() {
 
                 {/* Grid de Pontuação - Estilo Card Premium */}
                 <motion.section variants={itemVariants} className="space-y-4">
-                    <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-400 h-4 flex items-center gap-2">
+                    <h3 className="text-[11px] font-black uppercase tracking-[0.14em] text-emerald-400 h-4 flex items-center gap-2">
                         <Target className="w-3.5 h-3.5" /> Sistema de Pontos
                     </h3>
 
@@ -107,7 +108,7 @@ export default function Rules() {
 
                 {/* Regras Gerais */}
                 <motion.section variants={itemVariants} className="space-y-4">
-                    <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-400 flex items-center gap-2">
+                    <h3 className="text-[11px] font-black uppercase tracking-[0.14em] text-emerald-400 flex items-center gap-2">
                         <Shield className="w-3.5 h-3.5" /> Funcionamento
                     </h3>
                     <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-6 space-y-6">
@@ -117,7 +118,7 @@ export default function Rules() {
                             </div>
                             <div className="space-y-1">
                                 <h4 className="text-sm font-bold">Prazos de Palpite</h4>
-                                <p className="text-xs text-gray-400 leading-relaxed">
+                                <p className="text-[13px] text-gray-400 leading-relaxed">
                                     Os palpites podem ser feitos ou alterados até <strong>30 minutos</strong> antes do início de cada partida em horário local.
                                 </p>
                             </div>
@@ -129,7 +130,7 @@ export default function Rules() {
                             </div>
                             <div className="space-y-1">
                                 <h4 className="text-sm font-bold">Atualização Instantânea</h4>
-                                <p className="text-xs text-gray-400 leading-relaxed">
+                                <p className="text-[13px] text-gray-400 leading-relaxed">
                                     O ranking oficial e os pontos dos participantes são processados automaticamente no apito final de cada jogo.
                                 </p>
                             </div>
@@ -141,7 +142,7 @@ export default function Rules() {
                             </div>
                             <div className="space-y-1">
                                 <h4 className="text-sm font-bold">Responsabilidade</h4>
-                                <p className="text-xs text-gray-400 leading-relaxed">
+                                <p className="text-[13px] text-gray-400 leading-relaxed">
                                     Em grupos privados com premiação, a responsabilidade é exclusiva do organizador. O ArenaCup é apenas a plataforma de automação.
                                 </p>
                             </div>
@@ -151,31 +152,31 @@ export default function Rules() {
 
                 {/* Desempate */}
                 <motion.section variants={itemVariants} className="space-y-4">
-                    <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-400 flex items-center gap-2">
+                    <h3 className="text-[11px] font-black uppercase tracking-[0.14em] text-emerald-400 flex items-center gap-2">
                         <HelpCircle className="w-3.5 h-3.5" /> Critérios de Desempate
                     </h3>
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                         <div className="p-4 bg-white/5 border border-white/5 rounded-2xl text-center flex flex-col items-center justify-center gap-2">
                             <span className="text-xl">1️⃣</span>
-                            <span className="text-[10px] font-black uppercase text-gray-400 tracking-tighter">Mais Cravadas</span>
+                            <span className="text-[11px] font-black uppercase text-gray-300 tracking-[0.08em]">Mais Cravadas</span>
                         </div>
                         <div className="p-4 bg-white/5 border border-white/5 rounded-2xl text-center flex flex-col items-center justify-center gap-2">
                             <span className="text-xl">2️⃣</span>
-                            <span className="text-[10px] font-black uppercase text-gray-400 tracking-tighter">Última Rodada</span>
+                            <span className="text-[11px] font-black uppercase text-gray-300 tracking-[0.08em]">Última Rodada</span>
                         </div>
                         <div className="p-4 bg-white/5 border border-white/5 rounded-2xl text-center flex flex-col items-center justify-center gap-2">
                             <span className="text-xl">3️⃣</span>
-                            <span className="text-[10px] font-black uppercase text-gray-400 tracking-tighter">Antiguidade</span>
+                            <span className="text-[11px] font-black uppercase text-gray-300 tracking-[0.08em]">Antiguidade</span>
                         </div>
                     </div>
                 </motion.section>
 
                 {/* FAQ Footer */}
                 <motion.section variants={itemVariants} className="pt-8 pb-12 text-center border-t border-white/5">
-                    <p className="text-xs text-gray-500 italic mb-4">
+                    <p className="text-[13px] text-gray-500 italic mb-4">
                         Dúvidas sobre o sistema? Entre em contato com o suporte oficial via app.
                     </p>
-                    <div className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-emerald-400">
+                    <div className="inline-flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.14em] text-emerald-400">
                         Boa Sorte, Torcedor! ⚽
                     </div>
                 </motion.section>
@@ -200,11 +201,11 @@ function PointCard({ title, points, example, color, icon }: { title: string, poi
             </div>
             <div className="flex-1 min-w-0">
                 <h4 className="text-sm font-bold text-white mb-0.5">{title}</h4>
-                <p className="text-[11px] text-gray-400 truncate opacity-80">{example}</p>
+                <p className="text-[12px] text-gray-400 truncate opacity-80">{example}</p>
             </div>
             <div className="text-right">
                 <span className="text-lg font-black block leading-none">{points}</span>
-                <span className="text-[8px] uppercase tracking-widest opacity-60">pontos</span>
+                <span className="text-[10px] uppercase tracking-[0.12em] opacity-70">pontos</span>
             </div>
         </div>
     );

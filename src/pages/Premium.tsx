@@ -5,12 +5,14 @@ import { Button } from "@/components/ui/button";
 import { useMonetization } from "@/contexts/MonetizationContext";
 import { motion } from "framer-motion";
 import { monetizationEnv } from "@/lib/env";
+import { PREMIUM_CHECKOUT_UNAVAILABLE_MESSAGE } from "@/services/monetization/stripe.service";
 
 export default function Premium() {
     const navigate = useNavigate();
     const [searchParams, setSearchParams] = useSearchParams();
     const { isPremium, purchasePremium, refreshPremiumStatus, isLoading, subscriptionStatus } = useMonetization();
     const [feedback, setFeedback] = useState<string | null>(null);
+    const canStartPremiumCheckout = monetizationEnv.enablePremiumSimulation || monetizationEnv.premiumCheckoutEnabled;
 
     useEffect(() => {
         const checkoutState = searchParams.get("checkout");
@@ -53,7 +55,7 @@ export default function Premium() {
             <div className="absolute top-0 right-0 left-0 h-[400px] bg-gradient-to-b from-primary/20 via-primary/5 to-transparent pointer-events-none" />
 
             <div className="max-w-md mx-auto relative z-10">
-                <button onClick={() => navigate(-1)} className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center mb-6">
+                <button aria-label="Voltar" onClick={() => navigate(-1)} className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center mb-6">
                     <ChevronLeft className="w-5 h-5" />
                 </button>
 
@@ -118,19 +120,31 @@ export default function Premium() {
                         </div>
 
                         <Button
-                            onClick={() => {
+                            onClick={async () => {
                                 if (window.plausible) {
                                     window.plausible('Premium Click');
                                 }
-                                purchasePremium();
+                                const startedCheckout = await purchasePremium();
+                                if (!startedCheckout && !canStartPremiumCheckout) {
+                                    setFeedback(PREMIUM_CHECKOUT_UNAVAILABLE_MESSAGE);
+                                }
                             }}
-                            disabled={isLoading}
+                            disabled={isLoading || !canStartPremiumCheckout}
                             className="w-full h-14 bg-gradient-to-r from-primary to-[hsl(var(--copa-gold))] text-black font-black uppercase text-sm rounded-xl shadow-[0_0_30px_rgba(34,197,94,0.3)] hover:scale-[1.02] transition-transform"
                         >
-                            {isLoading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : `Garantir Acesso Vitalicio - ${monetizationEnv.premiumPriceLabel}`}
+                            {isLoading
+                                ? <Loader2 className="w-5 h-5 animate-spin mx-auto" />
+                                : canStartPremiumCheckout
+                                    ? `Garantir Acesso Vitalicio - ${monetizationEnv.premiumPriceLabel}`
+                                    : "Premium em preparacao"}
                         </Button>
                         <p className="text-center text-[10px] text-muted-foreground mt-4">
-                            Checkout seguro via Stripe. Status atual: {subscriptionStatus === "pending" ? "aguardando pagamento" : "pronto para compra"}.
+                            {canStartPremiumCheckout
+                                ? `Checkout seguro via Stripe. Status atual: ${subscriptionStatus === "pending" ? "aguardando pagamento" : "pronto para compra"}.`
+                                : "Checkout ainda nao liberado nesta versao do app."}
+                        </p>
+                        <p className="text-center text-[10px] text-muted-foreground mt-2">
+                            {PREMIUM_CHECKOUT_UNAVAILABLE_MESSAGE}
                         </p>
                     </>
                 )}

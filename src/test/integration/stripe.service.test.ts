@@ -3,32 +3,39 @@ import {
   activatePremiumSimulation,
   createStripeCheckoutSession,
   getPremiumStatus,
+  PREMIUM_CHECKOUT_UNAVAILABLE_MESSAGE,
   syncStripeCheckoutSession,
 } from "@/services/monetization/stripe.service";
 
-const supabaseMocks = vi.hoisted(() => {
-  const maybeSingleMock = vi.fn();
-  const limitMock = vi.fn(() => ({ maybeSingle: maybeSingleMock }));
-  const orderMock = vi.fn(() => ({ limit: limitMock }));
-  const eqMock = vi.fn(() => ({ order: orderMock }));
-  const selectMock = vi.fn(() => ({ eq: eqMock }));
-  const fromMock = vi.fn(() => ({ select: selectMock }));
-  const invokeMock = vi.fn();
+const firestoreMocks = vi.hoisted(() => {
+  const getDocsMock = vi.fn();
+  const limitMock = vi.fn();
+  const orderByMock = vi.fn();
+  const whereMock = vi.fn();
+  const queryMock = vi.fn(() => "query-ref");
+  const collectionMock = vi.fn(() => "collection-ref");
 
   return {
-    maybeSingleMock,
-    fromMock,
-    invokeMock,
+    collectionMock,
+    getDocsMock,
+    limitMock,
+    orderByMock,
+    queryMock,
+    whereMock,
   };
 });
 
-vi.mock("@/services/supabase/client", () => ({
-  supabase: {
-    from: supabaseMocks.fromMock,
-    functions: {
-      invoke: supabaseMocks.invokeMock,
-    },
-  },
+vi.mock("@/integrations/firebase/client", () => ({
+  db: {},
+}));
+
+vi.mock("firebase/firestore", () => ({
+  collection: firestoreMocks.collectionMock,
+  getDocs: firestoreMocks.getDocsMock,
+  limit: firestoreMocks.limitMock,
+  orderBy: firestoreMocks.orderByMock,
+  query: firestoreMocks.queryMock,
+  where: firestoreMocks.whereMock,
 }));
 
 describe("stripe monetization service", () => {
@@ -38,9 +45,9 @@ describe("stripe monetization service", () => {
   });
 
   it("retorna estado inativo quando nao existe assinatura", async () => {
-    supabaseMocks.maybeSingleMock.mockResolvedValue({
-      data: null,
-      error: null,
+    firestoreMocks.getDocsMock.mockResolvedValue({
+      empty: true,
+      docs: [],
     });
 
     const result = await getPremiumStatus("user-1");
@@ -54,40 +61,15 @@ describe("stripe monetization service", () => {
     });
   });
 
-  it("cria checkout session via edge function", async () => {
-    supabaseMocks.invokeMock.mockResolvedValue({
-      data: {
-        url: "https://checkout.stripe.com/pay/cs_test",
-        sessionId: "cs_test",
-      },
-      error: null,
-    });
-
-    const result = await createStripeCheckoutSession();
-
-    expect(supabaseMocks.invokeMock).toHaveBeenCalledWith("create-stripe-checkout", { body: {} });
-    expect(result.url).toContain("checkout.stripe.com");
-    expect(result.sessionId).toBe("cs_test");
+  it("explicita que o checkout esta indisponivel nesta versao", async () => {
+    await expect(createStripeCheckoutSession()).rejects.toThrow(PREMIUM_CHECKOUT_UNAVAILABLE_MESSAGE);
   });
 
-  it("sincroniza o retorno do checkout", async () => {
-    supabaseMocks.invokeMock.mockResolvedValue({
-      data: {
-        isPremium: true,
-        status: "active",
-      },
-      error: null,
-    });
-
+  it("mantem estado inativo quando o sync ainda nao esta disponivel", async () => {
     const result = await syncStripeCheckoutSession("cs_sync");
 
-    expect(supabaseMocks.invokeMock).toHaveBeenCalledWith("sync-stripe-checkout", {
-      body: {
-        checkoutSessionId: "cs_sync",
-      },
-    });
-    expect(result.isPremium).toBe(true);
-    expect(result.status).toBe("active");
+    expect(result.isPremium).toBe(false);
+    expect(result.status).toBe("inactive");
   });
 
   it("ativa o premium simulado em desenvolvimento", () => {

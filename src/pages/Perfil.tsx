@@ -5,11 +5,12 @@ import { Flag } from "@/components/Flag";
 import { cn } from "@/lib/utils";
 import { LogOut, Settings, Bell, Sparkles, Goal, Newspaper, Clock, Loader2, Languages, Target, Star, Crown, Zap, Trophy, Medal, Award, Heart, BookOpen } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { db } from "@/integrations/firebase/client";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useLanguage } from "@/i18n/useLanguage";
 import { useProfileStats } from "@/hooks/useProfileStats";
+import { deleteDoc, doc, setDoc } from "firebase/firestore";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -20,6 +21,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Flag as FlagIcon } from "lucide-react";
 import { getProfile, updateFavoriteTeam, updateProfile, uploadAvatar } from "@/services/profile/profile.service";
 import type { ProfileRecord } from "@/services/profile/profile.types";
+import { setStoredFavoriteTeam } from "@/lib/favorite-team";
 
 function urlBase64ToUint8Array(base64String: string) {
   const padding = '='.repeat((4 - base64String.length % 4) % 4);
@@ -30,6 +32,10 @@ function urlBase64ToUint8Array(base64String: string) {
     outputArray[i] = rawData.charCodeAt(i);
   }
   return outputArray;
+}
+
+function getPushSubscriptionDocId(userId: string, endpoint: string) {
+  return `${userId}_${encodeURIComponent(endpoint)}`;
 }
 
 const Perfil = () => {
@@ -89,7 +95,7 @@ const Perfil = () => {
     if (user?.id) {
       await updateFavoriteTeam(user.id, code);
     }
-    localStorage.setItem("favorite_team", code);
+    setStoredFavoriteTeam(code);
   };
 
   /* Safe access to team with fallback */
@@ -118,7 +124,7 @@ const Perfil = () => {
           )}
 
           <label className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-            <span className="text-[10px] font-bold text-white uppercase">{t('upload_photo')}</span>
+            <span className="text-[11px] font-bold text-white uppercase tracking-[0.12em]">{t('upload_photo')}</span>
             <input
               type="file"
               accept="image/*"
@@ -296,11 +302,11 @@ const Perfil = () => {
         {/* Info Cards */}
         <div className="grid grid-cols-2 gap-2 w-full mt-4">
           <div className="glass-card p-3 flex flex-col gap-1 items-center justify-center text-center">
-            <span className="text-[10px] uppercase font-bold text-muted-foreground">{t('nickname')}</span>
+            <span className="text-[11px] uppercase font-bold tracking-[0.12em] text-muted-foreground">{t('nickname')}</span>
             <span className="text-sm font-bold">{profile?.nickname || "-"}</span>
           </div>
           <div className="glass-card p-3 flex flex-col gap-1 items-center justify-center text-center">
-            <span className="text-[10px] uppercase font-bold text-muted-foreground">{t('nationality')}</span>
+            <span className="text-[11px] uppercase font-bold tracking-[0.12em] text-muted-foreground">{t('nationality')}</span>
             <div className="flex items-center gap-1.5">
               {profile?.nationality && <FlagIcon className="w-3 h-3 text-primary" />}
               <span className="text-sm font-bold">{profile?.nationality || "-"}</span>
@@ -314,7 +320,7 @@ const Perfil = () => {
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-1.5">
             <Trophy className="w-4 h-4 text-emerald-400" />
-            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-400">Desempenho da Lenda</h3>
+            <h3 className="text-[11px] font-black uppercase tracking-[0.12em] text-gray-300">Desempenho da Lenda</h3>
           </div>
         </div>
 
@@ -322,7 +328,7 @@ const Perfil = () => {
         <div className="grid grid-cols-2 gap-3 mb-4">
           <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between backdrop-blur-md">
             <div>
-              <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest mb-1">Total de Pontos</p>
+              <p className="text-[11px] text-gray-400 font-bold uppercase tracking-[0.12em] mb-1">Total de Pontos</p>
               <h4 className="text-2xl font-black text-white leading-none">{stats?.points || 0}</h4>
             </div>
             <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20">
@@ -331,7 +337,7 @@ const Perfil = () => {
           </div>
           <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between backdrop-blur-md">
             <div>
-              <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest mb-1">Aproveitamento</p>
+              <p className="text-[11px] text-gray-400 font-bold uppercase tracking-[0.12em] mb-1">Aproveitamento</p>
               <h4 className="text-2xl font-black text-white leading-none">{stats?.efficiency || 0}%</h4>
             </div>
             <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
@@ -340,7 +346,7 @@ const Perfil = () => {
           </div>
           <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between backdrop-blur-md">
             <div>
-              <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest mb-1">Placares Exatos</p>
+              <p className="text-[11px] text-gray-400 font-bold uppercase tracking-[0.12em] mb-1">Placares Exatos</p>
               <h4 className="text-2xl font-black text-white leading-none">{stats?.exactScores || 0}</h4>
             </div>
             <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
@@ -349,7 +355,7 @@ const Perfil = () => {
           </div>
           <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between backdrop-blur-md">
             <div>
-              <p className="text-[9px] text-gray-500 font-bold uppercase tracking-widest mb-1">Títulos</p>
+              <p className="text-[11px] text-gray-400 font-bold uppercase tracking-[0.12em] mb-1">Títulos</p>
               <h4 className="text-2xl font-black text-white leading-none">{stats?.titles || 0}</h4>
             </div>
             <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center border border-amber-500/20">
@@ -360,7 +366,7 @@ const Perfil = () => {
 
         {/* Achievements Horizontal Scroll */}
         <div className="space-y-2">
-          <p className="text-[10px] text-gray-400 font-bold uppercase tracking-[0.2em] px-1">Conquistas Desbloqueadas</p>
+          <p className="text-[11px] text-gray-300 font-bold uppercase tracking-[0.12em] px-1">Conquistas Desbloqueadas</p>
           <div className="flex gap-3 overflow-x-auto pb-4 snap-x hide-scrollbar">
             {[
               { id: "primeiro_palpite", title: "Chute Inicial", desc: "Deu seu primeiro palpite", icon: <Goal className="w-6 h-6 text-primary" />, color: "primary", unlocked: (stats?.totalPredictions || 0) > 0 },
@@ -385,7 +391,7 @@ const Perfil = () => {
                   {ach.icon}
                 </div>
                 <span className="text-xs font-black text-white mb-1 leading-tight">{ach.title}</span>
-                <span className="text-[9px] text-gray-400 font-medium leading-tight">{ach.unlocked ? ach.desc : "Bloqueado"}</span>
+                <span className="text-[10px] text-gray-400 font-medium leading-tight">{ach.unlocked ? ach.desc : "Bloqueado"}</span>
               </div>
             ))}
             {/* spacer for scroll */}
@@ -399,9 +405,13 @@ const Perfil = () => {
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-1.5">
             <Settings className="w-3.5 h-3.5 text-primary" />
-            <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{t('my_team')}</h3>
+            <h3 className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">{t('my_team')}</h3>
           </div>
-          <button onClick={() => setShowTeamPicker(!showTeamPicker)} className="text-xs text-primary font-semibold">
+          <button
+            onClick={() => setShowTeamPicker(!showTeamPicker)}
+            aria-expanded={showTeamPicker}
+            className="text-sm text-primary font-semibold"
+          >
             {t('edit_team')}
           </button>
         </div>
@@ -416,12 +426,13 @@ const Perfil = () => {
           </div>
 
           <div className="pt-3">
-            <span className="text-[9px] font-bold uppercase tracking-widest text-muted-foreground block mb-2">{t('quick_switch')}</span>
+            <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground block mb-2">{t('quick_switch')}</span>
             <div className="flex gap-2">
               {teams.slice(0, 4).map(t => (
                 <button
                   key={t.code}
                   onClick={() => setFavoriteTeam(t.code)}
+                  aria-label={`Escolher ${t.name} como time favorito`}
                   className={cn(
                     "w-11 h-11 rounded-full overflow-hidden transition-all",
                     favoriteTeam === t.code && "ring-2 ring-primary"
@@ -432,6 +443,7 @@ const Perfil = () => {
               ))}
               <button
                 onClick={() => setShowTeamPicker(true)}
+                aria-label="Abrir seletor completo de times"
                 className="w-11 h-11 rounded-full bg-secondary flex items-center justify-center text-lg text-muted-foreground"
               >
                 +
@@ -456,7 +468,7 @@ const Perfil = () => {
                   )}
                 >
                   <Flag code={t.code} size="sm" />
-                  <span className="text-[8px] font-bold">{t.code}</span>
+                  <span className="text-[10px] font-bold">{t.code}</span>
                 </button>
               ))}
             </div>
@@ -468,10 +480,10 @@ const Perfil = () => {
       <section>
         <div className="flex items-center gap-1.5 mb-3">
           <Languages className="w-3.5 h-3.5 text-primary" />
-          <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{t('language')}</h3>
+          <h3 className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">{t('language')}</h3>
         </div>
         <div className="glass-card p-4">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-3">{t('language_choose')}</p>
+          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground mb-3">{t('language_choose')}</p>
           <div className="grid grid-cols-3 gap-2">
             {[
               { code: 'pt-BR' as const, name: 'Português', flag: 'BRA' },
@@ -489,7 +501,7 @@ const Perfil = () => {
                 )}
               >
                 <Flag code={lang.flag} size="sm" />
-                <span className="text-[10px] font-bold">{lang.name}</span>
+                <span className="text-[11px] font-bold">{lang.name}</span>
               </button>
             ))}
           </div>
@@ -515,6 +527,8 @@ const Perfil = () => {
               await updateProfile(user.id, { fun_mode: newVal });
             }
           }}
+          aria-pressed={Boolean(profile?.fun_mode)}
+          aria-label={profile?.fun_mode ? "Desativar modo diversão" : "Ativar modo diversão"}
           className={cn(
             "w-12 h-7 rounded-full transition-colors relative shrink-0",
             profile?.fun_mode ? "bg-background/30" : "bg-background/10"
@@ -531,27 +545,32 @@ const Perfil = () => {
       <section>
         <div className="flex items-center gap-1.5 mb-3">
           <Crown className="w-3.5 h-3.5 text-copa-gold" />
-          <h3 className="text-[10px] font-bold uppercase tracking-widest text-copa-gold">Copa Premium</h3>
+          <h3 className="text-[11px] font-bold uppercase tracking-[0.12em] text-copa-gold">Copa Premium</h3>
         </div>
-        <div className="relative glass-card p-5 border-copa-gold/30 hover:border-copa-gold/60 transition-colors overflow-hidden group cursor-pointer" onClick={() => navigate('/premium')}>
+        <button
+          type="button"
+          aria-label="Abrir página do ArenaCopa Premium"
+          onClick={() => navigate('/premium')}
+          className="relative glass-card p-5 border-copa-gold/30 hover:border-copa-gold/60 transition-colors overflow-hidden group cursor-pointer w-full text-left"
+        >
           <div className="absolute -right-4 -top-4 w-24 h-24 bg-copa-gold/10 rounded-full blur-2xl group-hover:bg-copa-gold/20 transition-colors"></div>
           <div className="flex items-center justify-between relative z-10">
             <div>
               <h4 className="font-black text-lg text-white mb-1">Desbloqueie o ArenaCopa</h4>
-              <p className="text-xs text-muted-foreground w-4/5">Bolões ilimitados, sem anúncios e badge exclusivo.</p>
+              <p className="text-[13px] text-muted-foreground w-4/5">Bolões ilimitados, sem anúncios e badge exclusivo.</p>
             </div>
             <div className="w-10 h-10 rounded-full bg-copa-gold/10 flex items-center justify-center shrink-0 border border-copa-gold/30 text-copa-gold group-hover:scale-110 transition-transform">
               <Star className="w-5 h-5 text-copa-gold" />
             </div>
           </div>
-        </div>
+        </button>
       </section>
 
       {/* Notifications */}
       <section>
         <div className="flex items-center gap-1.5 mb-3">
           <Bell className="w-3.5 h-3.5 text-primary" />
-          <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{t('notifications_title')}</h3>
+          <h3 className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">{t('notifications_title')}</h3>
         </div>
         <div className="glass-card divide-y divide-border/30">
           {[
@@ -565,7 +584,7 @@ const Perfil = () => {
               </div>
               <div className="flex-1">
                 <span className="text-sm font-bold block">{n.label}</span>
-                <span className="text-[10px] text-muted-foreground">{n.desc}</span>
+                <span className="text-[11px] text-muted-foreground">{n.desc}</span>
               </div>
               <button
                 onClick={async () => {
@@ -596,12 +615,14 @@ const Perfil = () => {
 
                         if (subscription) {
                           const subData = JSON.parse(JSON.stringify(subscription));
-                          await supabase.from('push_subscriptions').upsert({
+                          await setDoc(doc(db, 'push_subscriptions', getPushSubscriptionDocId(user.id, subscription.endpoint)), {
                             user_id: user.id,
                             endpoint: subscription.endpoint,
                             auth: subData.keys?.auth,
-                            p256dh: subData.keys?.p256dh
-                          }, { onConflict: 'user_id,endpoint' });
+                            p256dh: subData.keys?.p256dh,
+                            created_at: new Date().toISOString(),
+                            updated_at: new Date().toISOString(),
+                          }, { merge: true });
                         }
                       } catch (e) {
                         console.error("Push sub error", e);
@@ -611,22 +632,24 @@ const Perfil = () => {
                       return; // Do not turn it on if denied
                     }
                   } else if (n.key === "notifications_goals" && !targetState) {
-                    try {
-                      // Remove sub when disabling
-                      const registration = await navigator.serviceWorker.ready;
-                      const subscription = await registration.pushManager.getSubscription();
-                      if (subscription) {
-                        await subscription.unsubscribe();
-                        await supabase.from('push_subscriptions').delete().eq('endpoint', subscription.endpoint);
-                      }
-                    } catch (e) {
-                      console.error("Push unsub error", e);
+                      try {
+                        // Remove sub when disabling
+                        const registration = await navigator.serviceWorker.ready;
+                        const subscription = await registration.pushManager.getSubscription();
+                        if (subscription) {
+                          await subscription.unsubscribe();
+                          await deleteDoc(doc(db, 'push_subscriptions', getPushSubscriptionDocId(user.id, subscription.endpoint)));
+                        }
+                      } catch (e) {
+                        console.error("Push unsub error", e);
                     }
                   }
 
                   setProfile(prev => prev ? { ...prev, [n.key]: targetState } : null);
                   await updateProfile(user.id, { [n.key]: targetState });
                 }}
+                aria-pressed={Boolean(profile?.[n.key])}
+                aria-label={`${profile?.[n.key] ? "Desativar" : "Ativar"} ${n.label}`}
                 className={cn(
                   "w-12 h-7 rounded-full transition-colors relative shrink-0",
                   profile?.[n.key] ? "bg-primary" : "bg-secondary"
@@ -646,10 +669,10 @@ const Perfil = () => {
       <section>
         <div className="flex items-center gap-1.5 mb-3">
           <Heart className="w-3.5 h-3.5 text-primary" />
-          <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Apoie o ArenaCopa</h3>
+          <h3 className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">Apoie o ArenaCopa</h3>
         </div>
         <div className="glass-card p-4 text-center space-y-3">
-          <p className="text-[11px] text-muted-foreground">O app é grátis! Se curtiu, considere apoiar o desenvolvimento.</p>
+          <p className="text-[12px] text-muted-foreground">O app é grátis! Se curtiu, considere apoiar o desenvolvimento.</p>
           <button
             onClick={() => {
               navigator.clipboard.writeText("suporte@arenacopa.com"); // Reemplazar con clave PIX real
@@ -666,7 +689,7 @@ const Perfil = () => {
       <section>
         <div className="flex items-center gap-1.5 mb-3">
           <BookOpen className="w-3.5 h-3.5 text-primary" />
-          <h3 className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Informações Legais</h3>
+          <h3 className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">Informações Legais</h3>
         </div>
         <div className="glass-card divide-y divide-border/30 flex flex-col">
           <button onClick={() => navigate('/termos')} className="p-4 text-left text-sm font-bold hover:bg-white/5 transition-colors">Termos de Uso</button>

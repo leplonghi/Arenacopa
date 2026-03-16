@@ -2,8 +2,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { ExternalLink, Newspaper, Sparkles } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { db } from "@/integrations/firebase/client";
-import { collection, query, orderBy, limit, getDocs } from "firebase/firestore";
+import { getStoredFavoriteTeam, subscribeToFavoriteTeamUpdates } from "@/lib/favorite-team";
+import { useRealtimeNews } from "@/hooks/useRealtimeNews";
 
 type NewsItem = {
   id: string;
@@ -19,60 +19,32 @@ type NewsItem = {
 
 const categories = ["all", "general", "matches", "teams", "travel", "tickets"];
 
-interface NewsDocument {
-  title: string;
-  description?: string;
-  url: string;
-  url_to_image?: string;
-  country_filter?: string;
-  published_at: string;
-  source_name: string;
-}
-
 export function NoticiasTab() {
   const { user } = useAuth();
-  const [news, setNews] = useState<NewsItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { news: realtimeNews, isLoading: loading } = useRealtimeNews({ limitCount: 30 });
   const [activeCategory, setActiveCategory] = useState("all");
-  const [favoriteTeam, setFavoriteTeam] = useState<string | null>(null);
+  const [favoriteTeam, setFavoriteTeam] = useState<string | null>(() => getStoredFavoriteTeam());
 
   useEffect(() => {
-    setFavoriteTeam(localStorage.getItem("favorite_team"));
+    setFavoriteTeam(getStoredFavoriteTeam());
+    return subscribeToFavoriteTeamUpdates(setFavoriteTeam);
   }, [user?.id]);
 
-  useEffect(() => {
-    const loadNews = async () => {
-      setLoading(true);
-      try {
-        const newsRef = collection(db, "copa_news");
-        const q = query(newsRef, orderBy("published_at", "desc"), limit(30));
-        const querySnapshot = await getDocs(q);
-
-        const items = querySnapshot.docs.map(docSnapshot => {
-            const item = docSnapshot.data() as NewsDocument;
-            return {
-              id: docSnapshot.id,
-              title: item.title,
-              summary: item.description || (item as any).content || undefined,
-              category: (item as any).category || (item.country_filter ? "teams" : "general"),
-              external_url: item.url,
-              image_url: item.url_to_image || undefined,
-              teams: item.country_filter ? [item.country_filter] : [],
-              published_at: item.published_at,
-              source_name: item.source_name,
-            };
-        }) satisfies NewsItem[];
-
-        setNews(items);
-      } catch (error) {
-        console.error("Erro ao carregar notícias", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadNews();
-  }, []);
+  const news = useMemo(
+    () =>
+      realtimeNews.map((item) => ({
+        id: item.id,
+        title: item.title,
+        summary: item.description || item.content || undefined,
+        category: item.category || (item.country_filter ? "teams" : "general"),
+        external_url: item.url,
+        image_url: item.url_to_image || undefined,
+        teams: item.country_filter ? [item.country_filter] : [],
+        published_at: item.published_at,
+        source_name: item.source_name,
+      })) satisfies NewsItem[],
+    [realtimeNews]
+  );
 
   const prioritizedNews = useMemo(() => {
     const normalizedFav = favoriteTeam?.toUpperCase() || null;

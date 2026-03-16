@@ -61,7 +61,21 @@
         "default_user": "User",
         "guesses": "predictions",
         "points_abbr": "Pts",
-        "legend_rules": "Scoring Rules"
+        "legend_rules": "Scoring Rules",
+        "legend_categories": "Point Sources",
+        "legend_exact": "Exact score",
+        "legend_winner": "Winner",
+        "legend_draw": "Draw",
+        "breakdown_title": "Where your points come from",
+        "breakdown_desc": "The new pool separates points by match, phase, tournament and special markets. If a league still uses the legacy mode, all points continue under match scoring.",
+        "category_match": "Per match",
+        "category_phase": "Per phase",
+        "category_tournament": "Tournament",
+        "category_special": "Specials",
+        "category_match_short": "Match",
+        "category_phase_short": "Phase",
+        "category_tournament_short": "Tour.",
+        "category_special_short": "Spec."
     },
     "common": {
         "attention": "Attention",

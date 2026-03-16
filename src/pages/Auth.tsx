@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Mail, Lock, User, Eye, EyeOff, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -9,6 +9,7 @@ import { signInWithGoogle, signInWithPassword, signUpWithPassword } from "@/serv
 import { acceptTerms, ensureProfile, updateProfile } from "@/services/profile/profile.service";
 
 const Auth = () => {
+  const logoUrl = "/logo.png?v=20260316";
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -80,8 +81,22 @@ const Auth = () => {
     setLoading(true);
     try {
       localStorage.removeItem("demo_mode");
-      const redirectTo = `${window.location.origin}${redirectPath}`;
-      await signInWithGoogle();
+      const googleUser = await signInWithGoogle();
+      await ensureProfile({
+        id: googleUser.uid,
+        email: googleUser.email ?? null,
+        user_metadata: {
+          full_name: googleUser.displayName || undefined,
+          name: googleUser.displayName || undefined,
+          avatar_url: googleUser.photoURL || undefined,
+        },
+      });
+
+      await updateProfile(googleUser.uid, {
+        name: googleUser.displayName || googleUser.email?.split("@")[0] || "Torcedor",
+      });
+
+      navigate(redirectPath);
     } catch (error) {
       console.error("Erro no login com Google:", error);
       const message = error instanceof Error ? error.message : t('login.error_google');
@@ -121,8 +136,8 @@ const Auth = () => {
 
       {/* ── Content ── */}
       <div className="relative z-10 flex flex-col items-center mb-10">
-        <div className="w-32 h-32 p-2 mb-4 drop-shadow-[0_0_30px_rgba(251,191,36,0.2)] transition-transform hover:scale-105 duration-500">
-          <img src="/images/logo-premium.png" alt="ArenaCup" className="w-full h-full object-contain brightness-110" />
+        <div className="w-32 h-32 p-4 mb-4 rounded-[32px] border border-primary/20 bg-primary/10 drop-shadow-[0_0_30px_rgba(34,197,94,0.2)] transition-transform hover:scale-105 duration-500">
+          <img src={logoUrl} alt="ArenaCup" className="w-full h-full object-contain brightness-110" />
         </div>
         <h1 className="font-black text-3xl tracking-tighter uppercase italic drop-shadow-lg">
           ARENA<span className="text-primary not-italic">CUP</span>
@@ -214,6 +229,7 @@ const Auth = () => {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
+              aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
               className="absolute right-4 top-1/2 -translate-y-1/2 hover:text-primary transition-colors p-1"
             >
               {showPassword ? <EyeOff className="w-4 h-4 text-muted-foreground" /> : <Eye className="w-4 h-4 text-muted-foreground" />}
@@ -231,9 +247,9 @@ const Auth = () => {
               />
               <label htmlFor="terms" className="text-[10px] text-muted-foreground leading-snug">
                 Li e concordo com os{" "}
-                <a href="/termos" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-bold">Termos de Uso</a>
+                <Link to="/termos" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-bold">Termos de Uso</Link>
                 {" "}e a{" "}
-                <a href="/privacidade" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-bold">Política de Privacidade</a>
+                <Link to="/privacidade" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-bold">Política de Privacidade</Link>
               </label>
             </div>
           )}

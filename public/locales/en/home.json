@@ -31,5 +31,10 @@
         "view_all": "View all",
         "general": "General"
     },
+    "dashboard_partial": {
+        "title": "Partial dashboard",
+        "desc": "I couldn't refresh your dashboard right now. Some sections may appear empty.",
+        "retry": "Try again"
+    },
     "cta_predict": "Make Predictions"
 }

@@ -6,19 +6,30 @@ import { getProfile, updatePreferredLanguage } from '@/services/profile/profile.
 
 export type Language = 'pt-BR' | 'en' | 'es';
 
+function normalizeLanguage(lang?: string | null): Language {
+    const normalized = lang?.toLowerCase().trim() || '';
+
+    if (normalized.startsWith('pt')) return 'pt-BR';
+    if (normalized.startsWith('es')) return 'es';
+
+    return 'en';
+}
+
 export function useLanguage() {
     const { i18n } = useTranslation();
     const { user } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
+    const isDemoMode = localStorage.getItem("demo_mode") === "true";
 
     useEffect(() => {
-        if (!user) return;
+        if (!user || isDemoMode) return;
 
         const syncLanguage = async () => {
             try {
                 const profile = await getProfile(user.id);
-                if (profile?.preferred_language && profile.preferred_language !== i18n.language) {
-                    await i18n.changeLanguage(profile.preferred_language);
+                const preferredLanguage = normalizeLanguage(profile?.preferred_language);
+                if (profile?.preferred_language && preferredLanguage !== normalizeLanguage(i18n.language)) {
+                    await i18n.changeLanguage(preferredLanguage);
                 }
             } catch (err) {
                 console.error('Error syncing language:', err);
@@ -26,15 +37,17 @@ export function useLanguage() {
         };
 
         syncLanguage();
-    }, [user, i18n]);
+    }, [i18n, isDemoMode, user]);
 
     const changeLanguage = async (lang: Language) => {
         setIsLoading(true);
         try {
-            await i18n.changeLanguage(lang);
+            const normalizedLanguage = normalizeLanguage(lang);
+            await i18n.changeLanguage(normalizedLanguage);
+            localStorage.setItem("i18nextLng", normalizedLanguage);
 
-            if (user) {
-                await updatePreferredLanguage(user.id, lang);
+            if (user && !isDemoMode) {
+                await updatePreferredLanguage(user.id, normalizedLanguage);
             }
 
             // Helper message for demo purpose or feedback
@@ -44,7 +57,7 @@ export function useLanguage() {
                 'es': 'Idioma cambiado a Español'
             };
 
-            toast.success(messages[lang]);
+            toast.success(messages[normalizedLanguage]);
         } catch (error) {
             console.error('Error changing language:', error);
             toast.error('Erro ao alterar idioma');
@@ -54,7 +67,7 @@ export function useLanguage() {
     };
 
     return {
-        language: i18n.language as Language,
+        language: normalizeLanguage(i18n.language),
         changeLanguage,
         isLoading
     };
