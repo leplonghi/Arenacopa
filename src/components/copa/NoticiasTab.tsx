@@ -53,8 +53,8 @@ export function NoticiasTab() {
             return {
               id: docSnapshot.id,
               title: item.title,
-              summary: item.description || undefined,
-              category: item.country_filter ? "teams" : "general",
+              summary: item.description || (item as any).content || undefined,
+              category: (item as any).category || (item.country_filter ? "teams" : "general"),
               external_url: item.url,
               image_url: item.url_to_image || undefined,
               teams: item.country_filter ? [item.country_filter] : [],

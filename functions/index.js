@@ -20,8 +20,11 @@ exports.onMatchResultUpdated = functions.firestore
         const previousValue = change.before.data();
 
         // Check if status changed to finished or home_score/away_score changed while finished
-        const statusChangedToFinished = newValue.status === 'finished' && previousValue.status !== 'finished';
-        const scoreChangedWhileFinished = newValue.status === 'finished' && 
+        const newStatus = newValue.status ? newValue.status.toUpperCase() : '';
+        const prevStatus = previousValue ? (previousValue.status ? previousValue.status.toUpperCase() : '') : '';
+        
+        const statusChangedToFinished = newStatus === 'FINISHED' && prevStatus !== 'FINISHED';
+        const scoreChangedWhileFinished = newStatus === 'FINISHED' && 
             (newValue.home_score !== previousValue.home_score || newValue.away_score !== previousValue.away_score);
 
         if (statusChangedToFinished || scoreChangedWhileFinished) {

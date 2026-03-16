@@ -30,7 +30,7 @@ function Header({ className }: { className?: string }) {
 
   const { user } = useAuth();
   const [profile, setProfile] = useState<{ name: string; avatar?: string } | null>(null);
-  const logoUrl = "/logo.png";
+  const logoUrl = "/logo-mark.svg";
 
   useEffect(() => {
     if (!user) return;
@@ -213,23 +213,28 @@ function AppSidebar({ className }: { className?: string }) {
           <div className="p-4 flex items-center justify-center group-data-[collapsible=icon]:p-2">
             <div className="flex items-center gap-3 group-data-[collapsible=icon]:hidden">
               <div className="w-10 h-10 flex items-center justify-center">
-                <img src="/logo.png" alt="ArenaCup" className="h-8 w-8 object-contain rounded-lg" />
+                <img src="/logo-mark.svg" alt="ArenaCup" className="h-8 w-8 object-contain" />
               </div>
               <span className="font-black text-xl tracking-tight drop-shadow-[0_0_8px_rgba(34,197,94,0.3)]">
                 ARENA<span className="text-primary">CUP</span>
               </span>
             </div>
             <div className="hidden group-data-[collapsible=icon]:flex w-full items-center justify-center">
-              <img src="/logo.png" alt="ArenaCup" className="h-8 w-8 object-contain rounded-lg" />
+              <img src="/logo-mark.svg" alt="ArenaCup" className="h-8 w-8 object-contain" />
             </div>
           </div>
           <SidebarGroupContent className="mt-4">
             <SidebarMenu>
               {tabs.map((tab) => (
                 <SidebarMenuItem key={tab.path}>
-                  <SidebarMenuButton asChild isActive={location.pathname === tab.path || (tab.path !== "/" && location.pathname.startsWith(tab.path))} tooltip={tab.label} className="h-12 hover:bg-white/5 active:bg-white/10 transition-colors">
+                  <SidebarMenuButton 
+                    asChild 
+                    isActive={location.pathname === tab.path || (tab.path !== "/" && location.pathname.startsWith(tab.path))} 
+                    tooltip={tab.label} 
+                    className="h-12 hover:bg-white/5 active:bg-white/10 transition-colors"
+                  >
                     <NavLink to={tab.path}>
-                      {tab.icon ? <tab.icon /> : <Dices className="text-primary" />}
+                      {tab.icon ? <tab.icon className={cn(location.pathname === tab.path ? "text-primary" : "text-muted-foreground")} /> : <Dices className="text-primary" />}
                       <span className="font-medium">{tab.label}</span>
                     </NavLink>
                   </SidebarMenuButton>
@@ -240,7 +245,7 @@ function AppSidebar({ className }: { className?: string }) {
         </SidebarGroup>
       </SidebarContent>
     </Sidebar>
-  )
+  );
 }
 
 import { CookieBanner } from "@/components/CookieBanner";
