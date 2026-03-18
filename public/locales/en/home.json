@@ -36,5 +36,31 @@
         "desc": "I couldn't refresh your dashboard right now. Some sections may appear empty.",
         "retry": "Try again"
     },
+    "hero": {
+        "kicker": "Central dashboard",
+        "get_elite": "Get Elite",
+        "elite_member": "Elite member"
+    },
+    "quick_panel": {
+        "section_title": "Your pace",
+        "view_ranking": "View ranking",
+        "kicker": "Quick season view",
+        "title": "Your competitive panel",
+        "description": "See your overall position, track the evolution of your pools and jump into the full ranking whenever you want.",
+        "best_rank": "Best rank",
+        "points": "Points",
+        "pools": "Pools"
+    },
+    "upcoming": {
+        "title": "Upcoming matches",
+        "view_calendar": "View calendar",
+        "empty": "There are no upcoming matches loaded to show here yet.",
+        "favorite_team": "Your team: {{team}}",
+        "next_round": "Next round"
+    },
+    "news": {
+        "title": "Latest updates",
+        "view_all": "News center"
+    },
     "cta_predict": "Make Predictions"
 }

@@ -134,7 +134,7 @@ const Perfil = () => {
                 if (!file || !user) return;
 
                 try {
-                  toast({ title: "Enviando...", description: "Atualizando sua foto de perfil." });
+                  toast({ title: t('common:common.loading'), description: t('avatar_uploading') });
                   const publicUrl = await uploadAvatar(user.id, file);
 
                   setProfile(prev => prev ? { ...prev, avatar_url: publicUrl } : null);
@@ -320,7 +320,7 @@ const Perfil = () => {
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-1.5">
             <Trophy className="w-4 h-4 text-emerald-400" />
-            <h3 className="text-[11px] font-black uppercase tracking-[0.12em] text-gray-300">Desempenho da Lenda</h3>
+            <h3 className="text-[11px] font-black uppercase tracking-[0.12em] text-gray-300">{t('performance_title')}</h3>
           </div>
         </div>
 
@@ -328,7 +328,7 @@ const Perfil = () => {
         <div className="grid grid-cols-2 gap-3 mb-4">
           <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between backdrop-blur-md">
             <div>
-              <p className="text-[11px] text-gray-400 font-bold uppercase tracking-[0.12em] mb-1">Total de Pontos</p>
+              <p className="text-[11px] text-gray-400 font-bold uppercase tracking-[0.12em] mb-1">{t('stat_total_points')}</p>
               <h4 className="text-2xl font-black text-white leading-none">{stats?.points || 0}</h4>
             </div>
             <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20">
@@ -337,7 +337,7 @@ const Perfil = () => {
           </div>
           <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between backdrop-blur-md">
             <div>
-              <p className="text-[11px] text-gray-400 font-bold uppercase tracking-[0.12em] mb-1">Aproveitamento</p>
+              <p className="text-[11px] text-gray-400 font-bold uppercase tracking-[0.12em] mb-1">{t('stat_efficiency')}</p>
               <h4 className="text-2xl font-black text-white leading-none">{stats?.efficiency || 0}%</h4>
             </div>
             <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
@@ -346,7 +346,7 @@ const Perfil = () => {
           </div>
           <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between backdrop-blur-md">
             <div>
-              <p className="text-[11px] text-gray-400 font-bold uppercase tracking-[0.12em] mb-1">Placares Exatos</p>
+              <p className="text-[11px] text-gray-400 font-bold uppercase tracking-[0.12em] mb-1">{t('stat_exact_scores')}</p>
               <h4 className="text-2xl font-black text-white leading-none">{stats?.exactScores || 0}</h4>
             </div>
             <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
@@ -355,7 +355,7 @@ const Perfil = () => {
           </div>
           <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between backdrop-blur-md">
             <div>
-              <p className="text-[11px] text-gray-400 font-bold uppercase tracking-[0.12em] mb-1">Títulos</p>
+              <p className="text-[11px] text-gray-400 font-bold uppercase tracking-[0.12em] mb-1">{t('stat_titles')}</p>
               <h4 className="text-2xl font-black text-white leading-none">{stats?.titles || 0}</h4>
             </div>
             <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center border border-amber-500/20">
@@ -366,7 +366,7 @@ const Perfil = () => {
 
         {/* Achievements Horizontal Scroll */}
         <div className="space-y-2">
-          <p className="text-[11px] text-gray-300 font-bold uppercase tracking-[0.12em] px-1">Conquistas Desbloqueadas</p>
+          <p className="text-[11px] text-gray-300 font-bold uppercase tracking-[0.12em] px-1">{t('achievements_title')}</p>
           <div className="flex gap-3 overflow-x-auto pb-4 snap-x hide-scrollbar">
             {[
               { id: "primeiro_palpite", title: "Chute Inicial", desc: "Deu seu primeiro palpite", icon: <Goal className="w-6 h-6 text-primary" />, color: "primary", unlocked: (stats?.totalPredictions || 0) > 0 },
@@ -545,7 +545,7 @@ const Perfil = () => {
       <section>
         <div className="flex items-center gap-1.5 mb-3">
           <Crown className="w-3.5 h-3.5 text-copa-gold" />
-          <h3 className="text-[11px] font-bold uppercase tracking-[0.12em] text-copa-gold">Copa Premium</h3>
+          <h3 className="text-[11px] font-bold uppercase tracking-[0.12em] text-copa-gold">{t('premium_title')}</h3>
         </div>
         <button
           type="button"
@@ -556,8 +556,8 @@ const Perfil = () => {
           <div className="absolute -right-4 -top-4 w-24 h-24 bg-copa-gold/10 rounded-full blur-2xl group-hover:bg-copa-gold/20 transition-colors"></div>
           <div className="flex items-center justify-between relative z-10">
             <div>
-              <h4 className="font-black text-lg text-white mb-1">Desbloqueie o ArenaCopa</h4>
-              <p className="text-[13px] text-muted-foreground w-4/5">Bolões ilimitados, sem anúncios e badge exclusivo.</p>
+              <h4 className="font-black text-lg text-white mb-1">{t('premium_card_title')}</h4>
+              <p className="text-[13px] text-muted-foreground w-4/5">{t('premium_card_desc')}</p>
             </div>
             <div className="w-10 h-10 rounded-full bg-copa-gold/10 flex items-center justify-center shrink-0 border border-copa-gold/30 text-copa-gold group-hover:scale-110 transition-transform">
               <Star className="w-5 h-5 text-copa-gold" />
@@ -594,7 +594,7 @@ const Perfil = () => {
 
                   if (n.key === "notifications_goals" && targetState) {
                     if (!("Notification" in window)) {
-                      toast({ title: t('bolao:common.error_title'), description: "Seu navegador não suporta notificações", variant: "destructive" });
+                      toast({ title: t('bolao:common.error_title'), description: t('browser_notifications_unsupported'), variant: "destructive" });
                       return;
                     }
 
@@ -628,7 +628,7 @@ const Perfil = () => {
                         console.error("Push sub error", e);
                       }
                     } else {
-                      toast({ title: "Permissão negada", description: "Ative as notificações do navegador para receber alertas de gol", variant: "destructive" });
+                      toast({ title: t('notifications_denied_title'), description: t('notifications_denied_desc'), variant: "destructive" });
                       return; // Do not turn it on if denied
                     }
                   } else if (n.key === "notifications_goals" && !targetState) {
@@ -669,18 +669,18 @@ const Perfil = () => {
       <section>
         <div className="flex items-center gap-1.5 mb-3">
           <Heart className="w-3.5 h-3.5 text-primary" />
-          <h3 className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">Apoie o ArenaCopa</h3>
+          <h3 className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">{t('support_title')}</h3>
         </div>
         <div className="glass-card p-4 text-center space-y-3">
-          <p className="text-[12px] text-muted-foreground">O app é grátis! Se curtiu, considere apoiar o desenvolvimento.</p>
+          <p className="text-[12px] text-muted-foreground">{t('support_desc')}</p>
           <button
             onClick={() => {
               navigator.clipboard.writeText("suporte@arenacopa.com"); // Reemplazar con clave PIX real
-              toast({ title: "Chave copiada!", description: "A chave PIX foi copiada para sua área de transferência." });
+              toast({ title: t('support_copied_title'), description: t('support_copied_desc') });
             }}
             className="w-full bg-copa-live/10 text-copa-live border border-copa-live/20 font-bold text-sm py-2.5 rounded-xl hover:bg-copa-live/20 transition-colors flex items-center justify-center gap-2"
           >
-            Fazer PIX
+            {t('support_action')}
           </button>
         </div>
       </section>
@@ -689,11 +689,12 @@ const Perfil = () => {
       <section>
         <div className="flex items-center gap-1.5 mb-3">
           <BookOpen className="w-3.5 h-3.5 text-primary" />
-          <h3 className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">Informações Legais</h3>
+          <h3 className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">{t('help_title')}</h3>
         </div>
         <div className="glass-card divide-y divide-border/30 flex flex-col">
-          <button onClick={() => navigate('/termos')} className="p-4 text-left text-sm font-bold hover:bg-white/5 transition-colors">Termos de Uso</button>
-          <button onClick={() => navigate('/privacidade')} className="p-4 text-left text-sm font-bold hover:bg-white/5 transition-colors">Política de Privacidade</button>
+          <button onClick={() => navigate('/regras')} className="p-4 text-left text-sm font-bold hover:bg-white/5 transition-colors">{t('help_rules')}</button>
+          <button onClick={() => navigate('/termos')} className="p-4 text-left text-sm font-bold hover:bg-white/5 transition-colors">{t('help_terms')}</button>
+          <button onClick={() => navigate('/privacidade')} className="p-4 text-left text-sm font-bold hover:bg-white/5 transition-colors">{t('help_privacy')}</button>
         </div>
       </section>
 

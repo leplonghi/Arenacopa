@@ -94,7 +94,7 @@ export function ElitePassModal({ isOpen, onClose }: { isOpen: boolean; onClose: 
                                 <div className="px-8 pb-8 space-y-4">
                                     {[
                                         { icon: <Zap className="text-yellow-500" />, title: "Poder do Capitão", desc: "1 Palpite vale O DOBRO por rodada" },
-                                        { icon: <Trophy className="text-blue-400" />, title: "Ligas Privadas Ilimitadas", desc: "Crie quantas ligas quiser" },
+                                        { icon: <Trophy className="text-blue-400" />, title: "Bolões Privados Ilimitados", desc: "Crie quantos bolões quiser" },
                                         { icon: <ShieldCheck className="text-emerald-400" />, title: "Acesso Livre de Anúncios", desc: "Experiência 100% limpa e focada" },
                                     ].map((benefit, i) => (
                                         <motion.div

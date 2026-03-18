@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { CheckCircle2, Loader2, Save, Sparkles, Target } from "lucide-react";
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import { teams } from "@/data/mockData";
 import { Flag } from "@/components/Flag";
 import { cn } from "@/lib/utils";
@@ -52,6 +53,7 @@ export function SpecialMarketsTab({
     phaseMarkets?: BolaoMarket[];
     canManage?: boolean;
 }) {
+    const { t } = useTranslation("bolao");
     const { toast } = useToast();
     const [drafts, setDrafts] = useState<Record<string, string>>({});
     const [resolutionDrafts, setResolutionDrafts] = useState<Record<string, string>>({});
@@ -94,14 +96,14 @@ export function SpecialMarketsTab({
             });
 
             toast({
-                title: "Mercado especial salvo.",
-                description: `${market.title} atualizado com sucesso.`,
+                title: t("markets.special_saved_title"),
+                description: t("markets.market_saved_desc", { title: market.title }),
                 className: "bg-emerald-500 border-emerald-600 text-white font-black",
             });
         } catch (error) {
             console.error("Erro ao salvar mercado especial:", error);
             toast({
-                title: "Não consegui salvar esse mercado agora.",
+                title: t("markets.save_market_error"),
                 variant: "destructive",
             });
         } finally {
@@ -132,14 +134,14 @@ export function SpecialMarketsTab({
             });
 
             toast({
-                title: "Resultado oficial salvo.",
-                description: `${market.title} foi resolvido para o ranking da liga.`,
+                title: t("markets.official_saved_title"),
+                description: t("markets.official_saved_desc", { title: market.title }),
                 className: "bg-emerald-500 border-emerald-600 text-white font-black",
             });
         } catch (error) {
             console.error("Erro ao resolver mercado especial:", error);
             toast({
-                title: "Não consegui salvar o resultado oficial agora.",
+                title: t("markets.save_official_error"),
                 variant: "destructive",
             });
         } finally {
@@ -150,9 +152,9 @@ export function SpecialMarketsTab({
     if (markets.length === 0) {
         return (
             <div className="rounded-[28px] border border-white/10 bg-white/5 p-6 text-center">
-                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">Sem mercados especiais</p>
+                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">{t("markets.special_title")}</p>
                 <p className="mt-3 text-sm text-zinc-400">
-                    Power play, confidence, survivor e outros formatos especiais aparecem aqui quando forem ativados.
+                    {t("markets.special_desc")}
                 </p>
             </div>
         );
@@ -166,9 +168,9 @@ export function SpecialMarketsTab({
                         <Sparkles className="h-5 w-5" />
                     </div>
                     <div>
-                        <h3 className="text-xl font-black text-white">Mercados especiais</h3>
+                        <h3 className="text-xl font-black text-white">{t("markets.special_title")}</h3>
                         <p className="text-sm text-zinc-400">
-                            Estes formatos deixam a liga mais estratégica, com decisões que vão além do placar tradicional.
+                            {t("markets.special_desc")}
                         </p>
                     </div>
                 </div>
@@ -230,14 +232,14 @@ export function SpecialMarketsTab({
                                                     predictionValue,
                                                 });
                                                 toast({
-                                                    title: "Bracket salvo.",
-                                                    description: `${market.title} atualizado com sucesso.`,
+                                                    title: t("markets.special_saved_title"),
+                                                    description: t("markets.market_saved_desc", { title: market.title }),
                                                     className: "bg-emerald-500 border-emerald-600 text-white font-black",
                                                 });
                                             } catch (error) {
                                                 console.error("Erro ao salvar bracket:", error);
                                                 toast({
-                                                    title: "Não consegui salvar esse bracket agora.",
+                                                    title: t("markets.save_market_error"),
                                                     variant: "destructive",
                                                 });
                                             } finally {
@@ -253,14 +255,14 @@ export function SpecialMarketsTab({
                                                     resolutionValue,
                                                 });
                                                 toast({
-                                                    title: "Bracket oficial salvo.",
-                                                    description: `${market.title} foi resolvido para o ranking da liga.`,
+                                                    title: t("markets.official_saved_title"),
+                                                    description: t("markets.official_saved_desc", { title: market.title }),
                                                     className: "bg-emerald-500 border-emerald-600 text-white font-black",
                                                 });
                                             } catch (error) {
                                                 console.error("Erro ao resolver bracket:", error);
                                                 toast({
-                                                    title: "Não consegui salvar o bracket oficial agora.",
+                                                    title: t("markets.save_official_error"),
                                                     variant: "destructive",
                                                 });
                                             } finally {
@@ -302,7 +304,7 @@ export function SpecialMarketsTab({
                                     {market.slug === "confidence_pick" && (
                                         <div className="rounded-[22px] border border-white/5 bg-black/10 p-4">
                                             <label className="text-[10px] font-black uppercase tracking-[0.18em] text-zinc-500">
-                                                Peso de confiança
+                                                {t("markets.weight_label")}
                                             </label>
                                             <div className="mt-3 flex items-center gap-3">
                                                 <input
@@ -320,7 +322,7 @@ export function SpecialMarketsTab({
                                                 </div>
                                             </div>
                                             <p className="mt-3 text-xs text-zinc-400">
-                                                Quanto maior o peso, maior o impacto desse palpite no ranking quando a regra da liga considerar confidence.
+                                                {t("markets.weight_desc")}
                                             </p>
                                         </div>
                                     )}
@@ -328,8 +330,8 @@ export function SpecialMarketsTab({
                                     {market.slug === "power_play" && (
                                         <div className="grid gap-2">
                                             {[
-                                                { value: "enabled", label: "Ativar para a próxima rodada" },
-                                                { value: "disabled", label: "Guardar para depois" },
+                                                { value: "enabled", label: t("markets.next_round_enable") },
+                                                { value: "disabled", label: t("markets.save_for_later") },
                                             ].map((option) => {
                                                 const isSelected = draftValue === option.value;
                                                 return (
@@ -366,19 +368,19 @@ export function SpecialMarketsTab({
                                         className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-4 text-[11px] font-black uppercase tracking-[0.18em] text-black disabled:opacity-60"
                                     >
                                         {savingMarketId === market.id ? <Loader2 className="h-4 w-4 animate-spin" /> : savedValue ? <CheckCircle2 className="h-4 w-4" /> : <Save className="h-4 w-4" />}
-                                        {savingMarketId === market.id ? "Salvando..." : "Salvar mercado"}
+                                        {savingMarketId === market.id ? t("markets.saving") : t("markets.save_market")}
                                     </button>
                                 </div>
                             )}
 
                             {market.status === "resolved" && !isBracket && (
                                 <div className="mt-5 rounded-[24px] border border-emerald-500/20 bg-emerald-500/5 p-4">
-                                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-emerald-300">Mercado resolvido</p>
+                                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-emerald-300">{t("markets.resolved")}</p>
                                     <p className="mt-2 text-sm text-zinc-300">
-                                        Resultado oficial: <span className="font-black text-white">{resolvedValue || "Sem resultado oficial"}</span>
+                                        {t("markets.official_result")}: <span className="font-black text-white">{resolvedValue || t("markets.no_official_result")}</span>
                                     </p>
                                     <p className="mt-2 text-sm text-zinc-300">
-                                        Sua pontuação: <span className="font-black text-white">{prediction?.points_awarded ?? 0} pts</span>
+                                        {t("markets.your_points")}: <span className="font-black text-white">{prediction?.points_awarded ?? 0} pts</span>
                                     </p>
                                 </div>
                             )}
@@ -387,13 +389,13 @@ export function SpecialMarketsTab({
                                 <div className="mt-5 rounded-[24px] border border-amber-500/20 bg-amber-500/5 p-4">
                                     <div className="mb-4 flex items-center justify-between gap-3">
                                         <div>
-                                            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-amber-300">Resultado oficial</p>
+                                            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-amber-300">{t("markets.official_result")}</p>
                                             <p className="mt-1 text-sm text-zinc-400">
-                                                Use este bloco para definir o resultado válido desse mercado especial.
+                                                {t("markets.official_result_desc")}
                                             </p>
                                         </div>
                                         <div className="rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-amber-200">
-                                            {market.status === "resolved" ? "Resolvido" : "Pendente"}
+                                            {market.status === "resolved" ? t("markets.resolved") : t("markets.waiting_result")}
                                         </div>
                                     </div>
 
@@ -427,7 +429,7 @@ export function SpecialMarketsTab({
                                     {market.slug === "confidence_pick" && (
                                         <div className="rounded-[22px] border border-white/5 bg-black/10 p-4">
                                             <label className="text-[10px] font-black uppercase tracking-[0.18em] text-zinc-500">
-                                                Faixa oficial
+                                                {t("markets.official_band")}
                                             </label>
                                             <div className="mt-3 flex items-center gap-3">
                                                 <input
@@ -449,8 +451,8 @@ export function SpecialMarketsTab({
                                     {market.slug === "power_play" && (
                                         <div className="grid gap-2">
                                             {[
-                                                { value: "enabled", label: "Ativado oficialmente" },
-                                                { value: "disabled", label: "Não ativado" },
+                                                { value: "enabled", label: t("markets.officially_enabled") },
+                                                { value: "disabled", label: t("markets.officially_disabled") },
                                             ].map((option) => {
                                                 const isSelected = resolutionDraftValue === option.value;
                                                 return (
@@ -474,7 +476,7 @@ export function SpecialMarketsTab({
 
                                     {resolvedValue && (
                                         <p className="mt-3 text-xs text-zinc-400">
-                                            Resultado atual: <span className="font-black text-white">{resolvedValue}</span>
+                                            {t("markets.current_result")}: <span className="font-black text-white">{resolvedValue}</span>
                                         </p>
                                     )}
 
@@ -485,7 +487,7 @@ export function SpecialMarketsTab({
                                         className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-amber-400/30 bg-amber-400 px-5 py-4 text-[11px] font-black uppercase tracking-[0.18em] text-black disabled:opacity-60"
                                     >
                                         {resolvingMarketId === market.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Target className="h-4 w-4" />}
-                                        {resolvingMarketId === market.id ? "Resolvendo..." : market.status === "resolved" ? "Atualizar resultado oficial" : "Confirmar resultado oficial"}
+                                        {resolvingMarketId === market.id ? t("markets.resolving") : market.status === "resolved" ? t("markets.update_official_result") : t("markets.confirm_official_result")}
                                     </button>
                                 </div>
                             )}

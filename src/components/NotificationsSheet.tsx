@@ -33,23 +33,22 @@ interface Notification {
     link?: string;
 }
 
-const MOCK_NOTIFICATIONS: Notification[] = [
-    {
-        id: "1",
-        title: "Welcome to ArenaCup!",
-        message: "Prepare seus palpites e divirta-se com seus amigos.",
-        created_at: new Date().toISOString(),
-        type: "info",
-        read: false,
-    },
-];
-
 export function NotificationsSheet({ children }: { children: React.ReactNode }) {
     const { user } = useAuth();
     const queryClient = useQueryClient();
     const navigate = useNavigate();
     const isDemo = localStorage.getItem("demo_mode") === "true";
     const { t, i18n } = useTranslation('common');
+    const demoNotifications: Notification[] = [
+        {
+            id: "1",
+            title: t('notifications.demo_title'),
+            message: t('notifications.demo_message'),
+            created_at: new Date().toISOString(),
+            type: "info",
+            read: false,
+        },
+    ];
 
     const localeMap: Record<string, Locale> = {
         'pt-BR': ptBR,
@@ -60,7 +59,7 @@ export function NotificationsSheet({ children }: { children: React.ReactNode }) 
     const { data: notifications = [], isLoading, isError } = useQuery({
         queryKey: ["notifications", user?.id],
         queryFn: async () => {
-            if (isDemo) return MOCK_NOTIFICATIONS;
+            if (isDemo) return demoNotifications;
             if (!user) return [];
 
             try {

@@ -1,5 +1,5 @@
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { Home, Trophy, BarChart2, Bell, ChevronLeft, Dices, Compass } from "lucide-react";
+import { Home, Trophy, Bell, ChevronLeft, Dices, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useState } from "react";
@@ -71,7 +71,6 @@ function Header({ className }: { className?: string }) {
     if (path === "/boloes/criar") return t('header.titles.create_bolao');
     if (path.startsWith("/boloes/")) return t('header.titles.bolao_detail');
     if (path === "/perfil") return t('header.titles.profile');
-    if (path === "/menu") return t('header.titles.menu');
     return null;
   };
 
@@ -122,7 +121,7 @@ function Header({ className }: { className?: string }) {
             </button>
           </NotificationsSheet>
 
-          <NavLink to="/menu" aria-label="Abrir menu" className="md:hidden">
+          <NavLink to="/perfil" aria-label="Abrir conta" className="md:hidden">
             <Avatar className="h-9 w-9 border border-primary/20 transition-transform active:scale-95">
               <AvatarImage src={profile?.avatar} />
               <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
@@ -132,7 +131,7 @@ function Header({ className }: { className?: string }) {
           </NavLink>
 
           {/* Desktop Profile Menu */}
-          <NavLink to="/perfil" aria-label="Abrir perfil" className="hidden md:block">
+          <NavLink to="/perfil" aria-label="Abrir conta" className="hidden md:block">
             <div className="flex items-center gap-2 hover:bg-white/5 p-1 rounded-full pr-3 transition-colors">
               <Avatar className="h-9 w-9 border border-primary/20">
                 <AvatarImage src={profile?.avatar} />
@@ -153,29 +152,36 @@ function BottomTabs({ className }: { className?: string }) {
   const { t } = useTranslation('common');
   const location = useLocation();
 
+  const isTabActive = (path: string) => {
+    if (path === "/") return location.pathname === "/";
+    if (path === "/copa") {
+      return location.pathname === "/copa" || location.pathname.startsWith("/copa/");
+    }
+    return location.pathname === path || location.pathname.startsWith(`${path}/`);
+  };
+
   const tabs = [
     { path: "/", icon: Home, label: t('nav.home') },
     { path: "/copa", icon: Trophy, label: t('nav.copa') },
     { path: "/boloes", icon: Dices, label: t('nav.bolao'), isFab: true },
-    { path: "/guia", icon: Compass, label: t('nav.guia') },
-    { path: "/ranking", icon: BarChart2, label: t('nav.ranking') },
+    { path: "/perfil", icon: User, label: t('nav.profile') },
   ];
 
   return (
     <nav className={cn("fixed bottom-0 inset-x-0 z-30 backdrop-blur-md border-t border-white/[0.06] safe-bottom shadow-[0_-4px_30px_rgba(0,0,0,0.4)] bg-gradient-to-r from-[#0C321A]/80 to-[#1A4D2E]/75", className)}>
-      <div className="flex items-center justify-around h-16 max-w-lg mx-auto relative">
+      <div className="mx-auto grid h-[72px] max-w-md grid-cols-4 items-center px-2">
         {tabs.map((tab) => {
           if (tab.isFab) {
-            return <FabWithPending key={tab.path} className={tab.path} isActive={location.pathname === tab.path} />;
+            return <FabWithPending key={tab.path} isActive={isTabActive(tab.path)} />;
           }
           return (
             <NavLink
               key={tab.path}
               to={tab.path}
-              end={tab.path === "/" || tab.path === "/copa"}
+              end={tab.path === "/"}
               className={({ isActive }) =>
                 cn(
-                  "flex flex-col items-center gap-0.5 px-3 py-1.5 transition-colors min-w-[56px]",
+                  "flex h-full min-w-0 flex-col items-center justify-center gap-1 rounded-[22px] px-2 py-2 text-center transition-colors",
                   isActive ? "text-primary" : "text-muted-foreground"
                 )
               }
@@ -183,7 +189,7 @@ function BottomTabs({ className }: { className?: string }) {
               {({ isActive }) => (
                 <>
                   {tab.icon && <tab.icon className="w-5 h-5" strokeWidth={isActive ? 2.5 : 1.8} />}
-                  <span className={cn("text-[10px]", isActive ? "font-bold" : "font-medium")}>{tab.label}</span>
+                  <span className={cn("text-[10px] leading-none", isActive ? "font-bold" : "font-medium")}>{tab.label}</span>
                 </>
               )}
             </NavLink>
@@ -202,8 +208,7 @@ function AppSidebar({ className }: { className?: string }) {
     { path: "/", icon: Home, label: t('nav.home') },
     { path: "/copa", icon: Trophy, label: t('nav.copa') },
     { path: "/boloes", icon: Dices, label: t('nav.bolao'), isFab: true },
-    { path: "/guia", icon: Compass, label: t('nav.guia') },
-    { path: "/ranking", icon: BarChart2, label: t('nav.ranking') },
+    { path: "/perfil", icon: User, label: t('nav.profile') },
   ];
 
   return (
@@ -229,7 +234,13 @@ function AppSidebar({ className }: { className?: string }) {
                 <SidebarMenuItem key={tab.path}>
                   <SidebarMenuButton 
                     asChild 
-                    isActive={location.pathname === tab.path || (tab.path !== "/" && location.pathname.startsWith(tab.path))} 
+                    isActive={
+                      tab.path === "/"
+                        ? location.pathname === "/"
+                        : tab.path === "/copa"
+                          ? location.pathname === "/copa" || location.pathname.startsWith("/copa/")
+                          : location.pathname === tab.path || location.pathname.startsWith(`${tab.path}/`)
+                    } 
                     tooltip={tab.label} 
                     className="h-12 hover:bg-white/5 active:bg-white/10 transition-colors"
                   >

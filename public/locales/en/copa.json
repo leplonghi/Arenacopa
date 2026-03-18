@@ -5,7 +5,9 @@
         "groups": "Groups",
         "bracket": "Bracket",
         "simulator": "Simulator",
-        "news": "News"
+        "news": "News",
+        "hosts": "Host cities",
+        "history": "History"
     },
     "groups": {
         "table": {

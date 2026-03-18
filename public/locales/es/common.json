@@ -2,19 +2,20 @@
     "nav": {
         "home": "Inicio",
         "copa": "Copa",
-        "bolao": "Quiniela",
+        "bolao": "Quinielas",
+        "simulator": "Simulador",
         "guia": "Guía",
         "ranking": "Ranking",
-        "profile": "Perfil",
-        "menu": "Menú"
+        "profile": "Cuenta",
+        "menu": "Cuenta"
     },
     "header": {
         "titles": {
             "boloes": "Quinielas",
             "create_bolao": "Crear Quiniela",
             "bolao_detail": "Quiniela",
-            "profile": "Perfil",
-            "menu": "Menú"
+            "profile": "Cuenta",
+            "menu": "Cuenta"
         }
     },
     "common": {
@@ -38,9 +39,16 @@
         "description": "Consulta las últimas novedades y actualizaciones.",
         "empty": "Sin notificaciones",
         "load_error": "No pude cargar tus notificaciones.",
+        "demo_title": "Nueva invitación",
+        "demo_message": "Una quiniela abrió un lugar para que pruebes la experiencia completa.",
         "new": "Nueva",
         "new_count_one": "{{count}} nueva",
         "new_count_other": "{{count}} nuevas"
+    },
+    "pwa": {
+        "title": "Instala la app",
+        "description": "Ten ArenaCopa en tu pantalla de inicio para una experiencia móvil más fluida.",
+        "install": "Instalar ahora"
     },
     "onboarding": {
         "title": "Bienvenido a ArenaCopa",

@@ -91,7 +91,7 @@ export default function Premium() {
                                 </div>
                                 <div>
                                     <h3 className="font-bold text-sm">Bolões Ilimitados</h3>
-                                    <p className="text-[11px] text-muted-foreground mt-1">Crie e participe de quantas ligas quiser. (Limite Free: 2 ligas)</p>
+                                    <p className="text-[11px] text-muted-foreground mt-1">Crie e participe de quantos bolões quiser. (Limite Free: 2 bolões)</p>
                                 </div>
                                 <CheckCircle2 className="w-5 h-5 text-primary ml-auto mt-2" />
                             </div>

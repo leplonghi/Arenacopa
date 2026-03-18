@@ -296,8 +296,8 @@ export function OverviewTab({ bolao, members, palpites, markets, marketPredictio
                     >
                         <div className="flex items-center justify-between gap-3">
                             <div>
-                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Pulso da liga</p>
-                                <h3 className="mt-2 text-xl font-black text-white">Mercados mais quentes</h3>
+                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">{t('overview.market_pulse_kicker')}</p>
+                                <h3 className="mt-2 text-xl font-black text-white">{t('overview.market_pulse_title')}</h3>
                             </div>
                             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                                 <Activity className="w-5 h-5" />
@@ -331,8 +331,8 @@ export function OverviewTab({ bolao, members, palpites, markets, marketPredictio
                                             />
                                         </div>
                                         <div className="mt-2 flex items-center justify-between text-xs text-zinc-400">
-                                            <span>{savedCount} palpites salvos</span>
-                                            <span>{members.length} membros na arena</span>
+                                            <span>{t('overview.saved_predictions', { count: savedCount })}</span>
+                                            <span>{t('overview.members_in_bolao', { count: members.length })}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -346,8 +346,8 @@ export function OverviewTab({ bolao, members, palpites, markets, marketPredictio
                     >
                         <div className="flex items-center justify-between gap-3">
                             <div>
-                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Tempo real</p>
-                                <h3 className="mt-2 text-xl font-black text-white">Atividade da liga</h3>
+                                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">{t('overview.live_kicker')}</p>
+                                <h3 className="mt-2 text-xl font-black text-white">{t('overview.activity_title')}</h3>
                             </div>
                             <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                                 <Users className="w-5 h-5" />
@@ -377,7 +377,7 @@ export function OverviewTab({ bolao, members, palpites, markets, marketPredictio
                                 </div>
                             )) : (
                                 <div className="rounded-[24px] border border-dashed border-white/10 bg-black/10 p-6 text-sm text-zinc-400">
-                                    Assim que a liga começar a receber palpites, entradas e resultados oficiais, a atividade aparece aqui em tempo real.
+                                    {t('overview.activity_empty')}
                                 </div>
                             )}
                         </div>

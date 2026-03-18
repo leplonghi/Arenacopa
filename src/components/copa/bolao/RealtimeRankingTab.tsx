@@ -154,8 +154,8 @@ export function RealtimeRankingTab({ bolaoId, rules }: { bolaoId: string; rules?
             <div className="mt-8">
                 <EmptyState
                     icon={hasError ? "⚠️" : "🏆"}
-                    title={hasError ? "Ranking indisponível agora" : t('ranking.empty_title')}
-                    description={hasError ? "Não consegui atualizar a classificação em tempo real. Tenta novamente em alguns instantes." : t('ranking.empty_desc')}
+                    title={hasError ? t('ranking.unavailable_title') : t('ranking.empty_title')}
+                    description={hasError ? t('ranking.unavailable_desc') : t('ranking.empty_desc')}
                 />
             </div>
         );

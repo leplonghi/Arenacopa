@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Flag } from "@/components/Flag";
-import { getTeam, matches, formatMatchTime, formatMatchDate, type Match } from "@/data/mockData";
-import { Users, Trophy, ChevronRight, AlertTriangle, Dices, Zap, Bell, Crown, Settings, Sparkles } from "lucide-react";
+import { getTeam, formatMatchTime, formatMatchDate, type Match } from "@/data/mockData";
+import { Users, Trophy, ChevronRight, AlertTriangle, Dices, Zap, Bell, Crown, Settings, CalendarDays, BarChart3 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
@@ -134,10 +134,13 @@ const Index = () => {
 
   const { data: allMatches } = useMatches();
 
-  const nextFavMatch = useMemo(() =>
-    allMatches?.find(
-      m => (m.homeTeam === favoriteTeamCode || m.awayTeam === favoriteTeamCode) && m.status !== "finished"
-    ), [favoriteTeamCode, allMatches]);
+  const upcomingMatches = useMemo(
+    () =>
+      (allMatches || [])
+        .filter((match) => match.status !== "finished")
+        .slice(0, 3),
+    [allMatches]
+  );
 
   const displayName = profile?.name || user?.email?.split("@")[0] || "Torcedor";
   const totalPoints = myBoloes.reduce((acc, curr) => acc + (curr.myPoints || 0), 0);
@@ -209,19 +212,19 @@ const Index = () => {
             </div>
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <span className="block text-[11px] font-black uppercase tracking-[0.16em] text-gray-400">Dashboard central</span>
+                <span className="block text-[11px] font-black uppercase tracking-[0.16em] text-gray-400">{t('hero.kicker')}</span>
                 {!isPremium ? (
                   <button
                     onClick={() => setIsEliteModalOpen(true)}
                     className="flex items-center gap-1.5 rounded-[8px] bg-gradient-to-r from-yellow-600 to-yellow-500 px-2.5 py-1 hover:scale-105 transition-transform"
                   >
                     <Crown className="w-2.5 h-2.5 text-black" />
-                    <span className="text-[10px] font-black uppercase tracking-[0.12em] text-black">Obter Elite</span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.12em] text-black">{t('hero.get_elite')}</span>
                   </button>
                 ) : (
                   <div className="flex items-center gap-1.5 rounded-[8px] bg-white/10 px-2.5 py-1">
                     <Crown className="w-2.5 h-2.5 text-yellow-500" />
-                    <span className="text-[10px] font-black uppercase tracking-[0.12em] text-yellow-500">Membro Elite</span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.12em] text-yellow-500">{t('hero.elite_member')}</span>
                   </div>
                 )}
               </div>
@@ -269,113 +272,97 @@ const Index = () => {
           </motion.div>
         )}
 
-        {/* Stats Grid - High Tech Stat Blocks */}
-        <motion.div variants={itemVariants} className="grid grid-cols-3 gap-4">
-          <StatCard
-            icon={<Trophy className="w-5 h-5" />}
-            label="MELHOR RANK"
-            value={bestRank === 999 ? "-" : `${bestRank}º`}
-            color="text-yellow-500"
-          />
-          <StatCard
-            icon={<Zap className="w-5 h-5" />}
-            label="PONTOS GERAIS"
-            value={totalPoints}
-            highlight
-            color="text-primary"
-          />
-          <StatCard
-            icon={<Users className="w-5 h-5" />}
-            label="LIGAS ATIVAS"
-            value={myBoloes.length}
-            color="text-blue-400"
-          />
-        </motion.div>
-
-        {/* Favorite Team Focus */}
-        {!user ? (
-          <motion.section variants={itemVariants} className="space-y-6">
-            <SectionHeader color="bg-primary" title="MINHA SELEÇÃO" rightElement={null} />
-            <Link to="/auth" className="block group">
-              <div className="relative overflow-hidden rounded-[48px] p-8 border border-white/10 group-hover:border-primary/50 bg-black/70 transition-all shadow-2xl flex flex-col items-center justify-center text-center gap-4">
-                <div className="w-20 h-20 rounded-[28px] bg-primary/10 flex items-center justify-center border border-primary/20 shadow-2xl group-hover:scale-110 group-hover:rotate-6 transition-all duration-700 pointer-events-none relative overflow-hidden">
-                  <Trophy className="absolute w-8 h-8 text-primary shadow-2xl z-10" />
-                </div>
-                <div>
-                  <h3 className="text-2xl font-black text-white tracking-tighter leading-none mb-2 uppercase">Junte-se à Torcida!</h3>
-                  <p className="text-sm font-medium text-gray-400">Crie sua conta gratuita, escolha sua seleção do coração e entre oficialmente no clima da Copa de 2026.</p>
-                </div>
-                <div className="mt-2 px-8 py-4 rounded-[24px] bg-white text-black font-black uppercase tracking-widest text-[11px] shadow-2xl group-hover:bg-primary transition-colors flex items-center gap-2">
-                  CRIAR CONTA <ChevronRight className="w-4 h-4" />
-                </div>
-              </div>
+        <motion.section variants={itemVariants} className="space-y-6">
+          <SectionHeader color="bg-primary" title={t('quick_panel.section_title')} rightElement={
+            <Link to="/ranking" className="text-[11px] text-gray-400 font-black uppercase tracking-[0.12em] hover:text-white transition-colors">
+              {t('quick_panel.view_ranking')} <ChevronRight className="w-3 h-3 inline ml-1" />
             </Link>
-          </motion.section>
-        ) : favoriteTeam ? (
-          <motion.section variants={itemVariants} className="space-y-6">
-            <SectionHeader color="bg-primary" title="MINHA SELEÇÃO" rightElement={
-              <Link to="/copa/grupos" className="text-[11px] text-gray-400 font-black uppercase tracking-[0.12em] hover:text-white transition-colors">
-                Ver grupo {favoriteTeam.group} <ChevronRight className="w-3 h-3 inline ml-1" />
-              </Link>
-            } />
+          } />
 
-            <Link to={`/team/${favoriteTeam.code}`} className="block group">
-              <div className="relative overflow-hidden rounded-[48px] p-8 bg-white/[0.03] border border-white/10 group-hover:bg-white/[0.05] transition-all shadow-2xl backdrop-blur-3xl group">
-                <div className="absolute -top-10 -right-10 opacity-5 group-hover:opacity-10 transition-all rotate-12 group-hover:rotate-6 scale-150 duration-700 pointer-events-none">
-                  <Flag code={favoriteTeam.code} size="lg" className="w-64 h-64 blur-[2px]" />
-                </div>
-
-                <div className="flex items-center justify-between mb-10 relative z-10">
-                  <div className="flex items-center gap-6">
-                    <div className="w-20 h-20 rounded-[28px] bg-white/5 p-1.5 border border-white/10 overflow-hidden shadow-2xl group-hover:scale-110 group-hover:rotate-6 transition-all duration-700">
-                      <Flag code={favoriteTeam.code} size="md" className="w-full h-full object-cover rounded-[20px]" />
-                    </div>
-                    <div>
-                      <h3 className="text-3xl font-black text-white tracking-tighter leading-none mb-2 uppercase">{favoriteTeam.name}</h3>
-                      <div className="flex items-center gap-2 font-black text-[11px] uppercase tracking-[0.14em] text-primary">
-                        <Sparkles className="w-3.5 h-3.5" />
-                        <span>Nação em busca do hexa</span>
-                      </div>
-                    </div>
+          <Link to="/ranking" className="block group">
+            <div className="surface-card-strong rounded-[40px] p-6 transition-all group-hover:border-primary/30">
+              <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.14em] text-primary">
+                    <BarChart3 className="w-4 h-4" />
+                    {t('quick_panel.kicker')}
                   </div>
+                  <h2 className="text-2xl font-black text-white tracking-tight">{t('quick_panel.title')}</h2>
+                  <p className="text-sm text-zinc-400">
+                    {t('quick_panel.description')}
+                  </p>
                 </div>
 
-                <div className="relative z-10 pt-6 border-t border-white/10 flex items-center justify-between">
-                  {nextFavMatch ? (
-                    <>
-                      <div className="space-y-2">
-                        <span className="text-[11px] font-black uppercase tracking-[0.16em] text-gray-400">Próximo desafio</span>
-                        <div className="flex items-center gap-3">
-                          <div className="w-2 h-2 rounded-full bg-primary animate-pulse shadow-[0_0_10px_rgba(var(--primary-rgb),0.5)]" />
-                          <span className="text-lg font-black uppercase tracking-[0.08em] tabular-nums text-white">
-                            {(() => {
-                              const date = new Date(nextFavMatch.date);
-                              const today = new Date();
-                              const isToday = date.toDateString() === today.toDateString();
-                              return isToday ? formatMatchTime(nextFavMatch.date, i18n.language) : formatMatchDate(nextFavMatch.date, i18n.language);
-                            })()}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-4 bg-black/40 px-6 py-3 rounded-[24px] border border-white/10 group-hover:border-primary/40 transition-colors">
-                        <span className="text-[11px] font-black uppercase tracking-[0.14em] text-gray-400">Enfrenta</span>
-                        <Flag code={nextFavMatch.homeTeam === favoriteTeam.code ? nextFavMatch.awayTeam : nextFavMatch.homeTeam} size="sm" className="w-8 h-8 rounded-lg shadow-lg" />
-                      </div>
-                    </>
-                  ) : (
-                    <span className="text-sm text-gray-500 font-black uppercase tracking-widest">CALENDÁRIO EM DEFINIÇÃO</span>
-                  )}
+                <div className="grid grid-cols-3 gap-3 md:min-w-[320px]">
+                  <CompactStat label={t('quick_panel.best_rank')} value={bestRank === 999 ? "-" : `${bestRank}º`} />
+                  <CompactStat label={t('quick_panel.points')} value={totalPoints} highlight />
+                  <CompactStat label={t('quick_panel.pools')} value={myBoloes.length} />
                 </div>
               </div>
+            </div>
+          </Link>
+        </motion.section>
+
+        <motion.section variants={itemVariants} className="space-y-6">
+          <SectionHeader color="bg-primary" title={t('upcoming.title')} rightElement={
+            <Link to="/copa/calendario" className="text-[11px] text-gray-400 font-black uppercase tracking-[0.12em] hover:text-white transition-colors">
+              {t('upcoming.view_calendar')} <ChevronRight className="w-3 h-3 inline ml-1" />
             </Link>
-          </motion.section>
-        ) : null}
+          } />
+
+          {upcomingMatches.length === 0 ? (
+            <div className="surface-card rounded-[32px] p-6 text-center text-sm text-zinc-400">
+              {t('upcoming.empty')}
+            </div>
+          ) : (
+            <div className="grid gap-4">
+              {upcomingMatches.map((match) => {
+                const isFavoriteMatch = match.homeTeam === favoriteTeamCode || match.awayTeam === favoriteTeamCode;
+                const isToday = new Date(match.date).toDateString() === new Date().toDateString();
+
+                return (
+                  <button
+                    key={match.id}
+                    type="button"
+                    onClick={() => setSelectedMatch(match)}
+                    className={cn(
+                      "surface-card-soft w-full rounded-[30px] p-5 text-left transition-all hover:border-white/20 hover:bg-white/[0.06]",
+                      isFavoriteMatch && "border-primary/30 bg-primary/[0.08]"
+                    )}
+                  >
+                    <div className="mb-4 flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.14em] text-zinc-400">
+                        <CalendarDays className="w-4 h-4 text-primary" />
+                        {isFavoriteMatch && favoriteTeam ? t('upcoming.favorite_team', { team: favoriteTeam.name }) : t('upcoming.next_round')}
+                      </div>
+                      <span className="text-[11px] font-black uppercase tracking-[0.14em] text-primary">
+                        {isToday ? formatMatchTime(match.date, i18n.language) : formatMatchDate(match.date, i18n.language)}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <Flag code={match.homeTeam} size="md" className="shadow-md" />
+                        <span className="text-sm font-black text-white">{match.homeTeam}</span>
+                      </div>
+                      <span className="text-xs font-black uppercase tracking-[0.2em] text-zinc-500">vs</span>
+                      <div className="flex items-center gap-3">
+                        <span className="text-sm font-black text-white">{match.awayTeam}</span>
+                        <Flag code={match.awayTeam} size="md" className="shadow-md" />
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </motion.section>
 
         {/* Active Leagues - HUD Style Cards */}
         <motion.section variants={itemVariants} className="space-y-6">
-          <SectionHeader color="bg-blue-500" title="MINHAS ARENAS" rightElement={
+          <SectionHeader color="bg-blue-500" title={t('my_pools.title')} rightElement={
             <Link to="/boloes" className="text-[11px] text-gray-400 font-black uppercase tracking-[0.12em] hover:text-white transition-colors">
-              Gerenciar ligas <ChevronRight className="w-3 h-3 inline ml-1" />
+              {t('my_pools.manage')} <ChevronRight className="w-3 h-3 inline ml-1" />
             </Link>
           } />
 
@@ -391,15 +378,15 @@ const Index = () => {
                   <Trophy className="w-12 h-12 text-primary" />
                 </div>
                 <div className="space-y-2">
-                  <h3 className="text-2xl font-black text-white uppercase tracking-tight">CRIAR SUA LIGA</h3>
-                  <p className="text-sm text-gray-500 font-medium max-w-[280px] leading-relaxed mx-auto">Chame seus amigos e comece a maior competição privarda da Copa 2026.</p>
+                  <h3 className="text-2xl font-black text-white uppercase tracking-tight">{t('my_pools.join_title')}</h3>
+                  <p className="text-sm text-gray-500 font-medium max-w-[280px] leading-relaxed mx-auto">{t('my_pools.join_desc')}</p>
                 </div>
                 <motion.span
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   className="px-12 py-5 rounded-[24px] bg-white text-black text-[11px] font-black uppercase tracking-[0.3em] shadow-2xl"
                 >
-                  INICIAR AGORA
+                  {t('my_pools.start_now')}
                 </motion.span>
               </div>
             </Link>
@@ -464,9 +451,9 @@ const Index = () => {
         {/* Global News Section */}
         {miniNews.length > 0 && (
           <motion.section variants={itemVariants} className="space-y-6">
-            <SectionHeader color="bg-emerald-400" title="ÚLTIMAS DO FRONT" rightElement={
-              <Link to="/copa/noticias" className="text-[11px] text-gray-400 font-black uppercase tracking-[0.12em] hover:text-white transition-colors">
-                Central de notícias <ChevronRight className="w-3 h-3 inline ml-1" />
+          <SectionHeader color="bg-emerald-400" title={t('news.title')} rightElement={
+            <Link to="/copa/noticias" className="text-[11px] text-gray-400 font-black uppercase tracking-[0.12em] hover:text-white transition-colors">
+                {t('news.view_all')} <ChevronRight className="w-3 h-3 inline ml-1" />
               </Link>
             } />
 
@@ -507,7 +494,7 @@ const Index = () => {
           >
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-black/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
             <Dices className="w-6 h-6 stroke-[2.5px]" />
-            LANÇAR PALPITES
+            {t('cta_predict')}
           </Link>
         </motion.div>
       </motion.div>
@@ -517,29 +504,18 @@ const Index = () => {
 
 /* --- Refined UI Components --- */
 
-function StatCard({ icon, label, value, highlight = false, color = "text-white" }: { icon: React.ReactNode; label: string; value: string | number; highlight?: boolean; color?: string }) {
+function CompactStat({ label, value, highlight = false }: { label: string; value: string | number; highlight?: boolean }) {
   return (
     <div
       className={cn(
-        "p-6 rounded-[32px] border flex flex-col items-center justify-center text-center gap-3 transition-all shadow-2xl backdrop-blur-3xl group relative overflow-hidden",
+        "rounded-[24px] border p-4 text-center transition-all backdrop-blur-xl",
         highlight
-          ? "bg-primary/10 border-primary/40 shadow-primary/5"
-          : "bg-white/[0.04] border-white/10 hover:border-white/20"
+          ? "bg-primary/10 border-primary/30"
+          : "bg-white/[0.04] border-white/10"
       )}
     >
-      {highlight && (
-        <div className="absolute top-0 left-0 w-full h-[2px] bg-primary/40 group-hover:bg-primary transition-colors" />
-      )}
-      <div className={cn(
-        "w-12 h-12 rounded-[18px] flex items-center justify-center shadow-inner transition-transform group-hover:scale-110 group-hover:rotate-6",
-        highlight ? "bg-primary text-black" : "bg-white/5 text-gray-400 group-hover:text-white"
-      )}>
-        {icon}
-      </div>
-      <div className="mt-1 space-y-1">
-        <span className={cn("text-3xl font-black tracking-tighter block leading-none tabular-nums", highlight ? "text-primary shadow-primary/20" : "text-white")}>{value}</span>
-        <span className="text-[11px] font-black uppercase tracking-[0.12em] text-gray-400">{label}</span>
-      </div>
+      <span className={cn("block text-2xl font-black tracking-tighter leading-none tabular-nums", highlight ? "text-primary" : "text-white")}>{value}</span>
+      <span className="mt-2 block text-[11px] font-black uppercase tracking-[0.12em] text-gray-400">{label}</span>
     </div>
   );
 }

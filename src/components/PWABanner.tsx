@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Download, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface BeforeInstallPromptEvent extends Event {
     prompt: () => Promise<void>;
@@ -7,6 +8,7 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 export function PWABanner() {
+    const { t } = useTranslation("common");
     const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
     const [showBanner, setShowBanner] = useState(false);
 
@@ -50,18 +52,18 @@ export function PWABanner() {
                 <Download className="w-5 h-5 text-primary" />
             </div>
             <div className="flex-1">
-                <h4 className="text-sm font-bold text-white">Instalar App</h4>
-                <p className="text-[11px] text-muted-foreground">Instale o ArenaCopa para acesso rápido e offline.</p>
+                <h4 className="text-sm font-bold text-white">{t('pwa.title')}</h4>
+                <p className="text-[11px] text-muted-foreground">{t('pwa.description')}</p>
             </div>
             <div className="flex flex-col gap-2">
                 <button
                     onClick={handleInstallClick}
                     className="bg-primary text-primary-foreground text-xs font-bold px-3 py-1.5 rounded-lg active:scale-95 transition-transform"
                 >
-                    Instalar
+                    {t('pwa.install')}
                 </button>
             </div>
-            <button onClick={() => setShowBanner(false)} className="absolute top-2 right-2 text-muted-foreground p-1">
+            <button aria-label={t('common.close')} onClick={() => setShowBanner(false)} className="absolute top-2 right-2 text-muted-foreground p-1">
                 <X className="w-4 h-4" />
             </button>
         </div>

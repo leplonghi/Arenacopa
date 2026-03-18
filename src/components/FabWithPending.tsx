@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { Clock } from "lucide-react";
+import { Clock, Dices } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { db } from "@/integrations/firebase/client";
 import { cn } from "@/lib/utils";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Flag } from "@/components/Flag";
 import { collection, getDocs, onSnapshot, orderBy, query, where } from "firebase/firestore";
+import { useTranslation } from "react-i18next";
 
 type PendingMatch = {
   id: string;
@@ -52,11 +53,13 @@ export function FabWithPending({
 }) {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation("bolao");
   const [pendingItems, setPendingItems] = useState<PendingPredictionItem[]>([]);
   const [isOpen, setIsOpen] = useState(false);
+  const isDemoMode = localStorage.getItem("demo_mode") === "true";
 
   const fetchPending = useCallback(async () => {
-    if (!user?.id) {
+    if (!user?.id || isDemoMode) {
       setPendingItems([]);
       return;
     }
@@ -133,10 +136,13 @@ export function FabWithPending({
       console.error("Error loading pending predictions:", error);
       setPendingItems([]);
     }
-  }, [user?.id]);
+  }, [isDemoMode, user?.id]);
 
   useEffect(() => {
-    if (!user?.id) return;
+    if (!user?.id || isDemoMode) {
+      setPendingItems([]);
+      return;
+    }
 
     void fetchPending();
 
@@ -164,7 +170,7 @@ export function FabWithPending({
       unsubscribeMatches();
       window.clearInterval(intervalId);
     };
-  }, [fetchPending, user?.id]);
+  }, [fetchPending, isDemoMode, user?.id]);
 
   const totalMissingPredictions = useMemo(
     () => pendingItems.reduce((acc, item) => acc + item.bolaoIds.length, 0),
@@ -180,16 +186,22 @@ export function FabWithPending({
   const fabButton = (
     <div
       className={cn(
-        "relative flex h-14 w-14 items-center justify-center rounded-full border border-primary/30 bg-primary text-black shadow-[0_10px_30px_rgba(34,197,94,0.35)]",
-        "transition-transform hover:scale-105"
+        "relative flex h-full min-w-0 flex-col items-center justify-center gap-1 rounded-[22px] px-2 py-2 text-center",
+        isActive ? "text-primary" : "text-muted-foreground"
       )}
     >
-      <span className="text-xl">⚽</span>
-      {totalMissingPredictions > 0 && (
-        <span className="absolute -right-1 -top-1 min-w-6 rounded-full bg-red-500 px-1.5 py-0.5 text-center text-[10px] font-black text-white">
-          {totalMissingPredictions}
-        </span>
-      )}
+      <div className="relative flex h-5 w-5 items-center justify-center">
+        <Dices
+          className={cn("h-5 w-5", isActive ? "text-primary" : "text-muted-foreground")}
+          strokeWidth={isActive ? 2.5 : 1.8}
+        />
+        {totalMissingPredictions > 0 && (
+          <span className="absolute -right-1 -top-1 min-w-6 rounded-full bg-red-500 px-1.5 py-0.5 text-center text-[10px] font-black text-white">
+            {totalMissingPredictions}
+          </span>
+        )}
+      </div>
+      <span className={cn("text-[10px] leading-none", isActive ? "font-bold" : "font-medium")}>{t('page.kicker')}</span>
     </div>
   );
 
@@ -198,7 +210,7 @@ export function FabWithPending({
       <NavLink
         to="/boloes"
         className={cn(
-          "inline-flex items-center justify-center",
+          "inline-flex h-full items-center justify-center",
           isActive ? "opacity-100" : "opacity-95",
           className
         )}
@@ -211,11 +223,11 @@ export function FabWithPending({
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
-        <button className={cn("inline-flex items-center justify-center", className)}>{fabButton}</button>
+        <button className={cn("inline-flex h-full items-center justify-center", className)}>{fabButton}</button>
       </SheetTrigger>
       <SheetContent side="bottom" className="border-white/10 bg-zinc-950 text-white">
         <SheetHeader>
-          <SheetTitle className="text-left text-white">Palpites pendentes</SheetTitle>
+          <SheetTitle className="text-left text-white">{t('fab.pending_title')}</SheetTitle>
         </SheetHeader>
 
         <div className="mt-4 space-y-3">
@@ -234,7 +246,7 @@ export function FabWithPending({
                 <div className="mb-2 flex items-center justify-between gap-3">
                   <div>
                     <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">
-                      {item.match.stage || "Fase de grupos"}
+                      {item.match.stage || t('fab.group_stage')}
                     </p>
                     <p className="mt-1 flex items-center gap-2 text-sm text-zinc-300">
                       <Clock className="h-4 w-4" />
@@ -242,7 +254,7 @@ export function FabWithPending({
                     </p>
                   </div>
                   <div className="rounded-full bg-primary/15 px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-primary">
-                    {item.bolaoIds.length} pendência{item.bolaoIds.length > 1 ? "s" : ""}
+                    {t('fab.pending_count', { count: item.bolaoIds.length })}
                   </div>
                 </div>
 
@@ -262,7 +274,7 @@ export function FabWithPending({
                   onClick={() => handleOpenPrediction(item)}
                   className="mt-3 w-full rounded-xl border border-primary/30 bg-primary/20 px-4 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-primary transition-colors hover:bg-primary/30"
                 >
-                  Ir para palpites
+                  {t('fab.go_to_predictions')}
                 </button>
               </div>
             );

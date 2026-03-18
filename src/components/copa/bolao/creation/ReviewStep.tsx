@@ -1,4 +1,5 @@
 import { Flag } from "@/components/Flag";
+import { useTranslation } from "react-i18next";
 import { getBolaoFormat } from "@/services/boloes/bolao-format.service";
 import { getBolaoMarketTemplate } from "@/services/boloes/bolao-market.service";
 import { cn } from "@/lib/utils";
@@ -31,6 +32,7 @@ export function ReviewStep({
     onChampionSelect,
     teams,
 }: ReviewStepProps) {
+    const { t } = useTranslation("bolao");
     const format = getBolaoFormat(formatId);
     const selectedMarkets = selectedMarketIds
         .map((marketId) => getBolaoMarketTemplate(marketId))
@@ -39,10 +41,10 @@ export function ReviewStep({
     return (
         <div className="space-y-6">
             <div>
-                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">Etapa 5 de 5</p>
-                <h2 className="mt-1 text-2xl font-black">Revisão final</h2>
+                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">{t("creation.step_label", { current: 5 })}</p>
+                <h2 className="mt-1 text-2xl font-black">{t("creation.review_title")}</h2>
                 <p className="mt-2 text-sm text-zinc-400">
-                    Confira a identidade da liga, os mercados ativos e a aposta inicial antes de publicar.
+                    {t("creation.review_desc")}
                 </p>
             </div>
 
@@ -53,9 +55,9 @@ export function ReviewStep({
                     </div>
                     <div className="flex-1">
                         <div className="flex flex-wrap items-center gap-2">
-                            <h3 className="text-2xl font-black">{name || "Sua arena"}</h3>
+                            <h3 className="text-2xl font-black">{name || t("creation.fallback_name")}</h3>
                             <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-zinc-300">
-                                {category === "public" ? "Público" : "Privado"}
+                                {category === "public" ? t("creation.public") : t("creation.private")}
                             </span>
                             {format && (
                                 <span className="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-primary">
@@ -63,14 +65,14 @@ export function ReviewStep({
                                 </span>
                             )}
                         </div>
-                        <p className="mt-2 text-sm text-zinc-400">{description || "Sem descrição extra. A disputa fica toda no ranking."}</p>
+                        <p className="mt-2 text-sm text-zinc-400">{description || t("creation.fallback_description")}</p>
                     </div>
                 </div>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">
                 <div className="surface-card-soft rounded-[28px] p-5">
-                    <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">Mercados ativos</p>
+                    <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">{t("creation.active_markets")}</p>
                     <div className="mt-4 flex flex-wrap gap-2">
                         {selectedMarkets.map((market) => (
                             <span
@@ -84,22 +86,22 @@ export function ReviewStep({
                 </div>
 
                 <div className="surface-card-soft rounded-[28px] p-5">
-                    <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">Pontuação base</p>
+                    <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">{t("creation.base_scoring")}</p>
                     <div className="mt-4 grid gap-3 text-sm text-zinc-300 sm:grid-cols-2">
                         <div className="rounded-2xl border border-white/5 bg-black/10 p-3">
-                            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-zinc-500">Exato</p>
+                            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-zinc-500">{t("creation.score_exact")}</p>
                             <p className="mt-2 text-lg font-black">{scoringRules.exact} pts</p>
                         </div>
                         <div className="rounded-2xl border border-white/5 bg-black/10 p-3">
-                            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-zinc-500">Resultado</p>
+                            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-zinc-500">{t("creation.score_result")}</p>
                             <p className="mt-2 text-lg font-black">{scoringRules.winner} pts</p>
                         </div>
                         <div className="rounded-2xl border border-white/5 bg-black/10 p-3">
-                            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-zinc-500">Empate</p>
+                            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-zinc-500">{t("creation.score_draw")}</p>
                             <p className="mt-2 text-lg font-black">{scoringRules.draw} pts</p>
                         </div>
                         <div className="rounded-2xl border border-white/5 bg-black/10 p-3">
-                            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-zinc-500">Participação</p>
+                            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-zinc-500">{t("creation.score_participation")}</p>
                             <p className="mt-2 text-lg font-black">{scoringRules.participation ?? 0} pt</p>
                         </div>
                     </div>
@@ -108,9 +110,9 @@ export function ReviewStep({
 
             {championEnabled && (
                 <div className="surface-card-soft rounded-[28px] p-5">
-                    <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">Aposta inicial de campeão</p>
+                    <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">{t("creation.champion_title")}</p>
                     <p className="mt-2 text-sm text-zinc-400">
-                        Se este mercado estiver ativo, já vale sair da criação com um campeão da casa.
+                        {t("creation.champion_desc")}
                     </p>
 
                     <div className="mt-4 grid grid-cols-3 gap-3 md:grid-cols-6">

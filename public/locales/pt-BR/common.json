@@ -2,19 +2,20 @@
     "nav": {
         "home": "Início",
         "copa": "Copa",
-        "bolao": "Bolão",
+        "bolao": "Bolões",
+        "simulator": "Simulador",
         "guia": "Guia",
         "ranking": "Ranking",
-        "profile": "Perfil",
-        "menu": "Menu"
+        "profile": "Conta",
+        "menu": "Conta"
     },
     "header": {
         "titles": {
             "boloes": "Bolões",
             "create_bolao": "Criar Bolão",
             "bolao_detail": "Bolão",
-            "profile": "Perfil",
-            "menu": "Menu"
+            "profile": "Conta",
+            "menu": "Conta"
         }
     },
     "common": {
@@ -38,9 +39,16 @@
         "description": "Confira as últimas novidades e atualizações.",
         "empty": "Nenhuma notificação",
         "load_error": "Não consegui carregar as notificações.",
+        "demo_title": "Novo convite",
+        "demo_message": "Um bolão abriu vaga para você testar a experiência completa.",
         "new": "Nova",
         "new_count_one": "{{count}} nova",
         "new_count_other": "{{count}} novas"
+    },
+    "pwa": {
+        "title": "Instale o app",
+        "description": "Tenha a ArenaCopa na tela inicial e receba uma experiência mais fluida no celular.",
+        "install": "Instalar agora"
     },
     "onboarding": {
         "title": "Bem-vindo à ArenaCopa",

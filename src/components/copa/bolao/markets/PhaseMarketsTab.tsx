@@ -1,6 +1,7 @@
 import { useMemo, useState, type Dispatch, type SetStateAction } from "react";
 import { CheckCircle2, Layers3, Loader2, Lock, Save, Trophy } from "lucide-react";
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import { teams } from "@/data/mockData";
 import { Flag } from "@/components/Flag";
 import { cn } from "@/lib/utils";
@@ -11,13 +12,13 @@ import { staggerContainer, staggerItem } from "../../animations";
 import { MarketTooltip } from "./MarketTooltip";
 import type { BolaoMarket, BolaoPrediction, PredictionValue } from "@/types/bolao";
 
-function formatDeadline(value?: string | null) {
-    if (!value) return "Sem corte definido";
+function formatDeadline(value?: string | null, locale = "pt-BR", fallback = "Sem corte definido") {
+    if (!value) return fallback;
 
     const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return "Sem corte definido";
+    if (Number.isNaN(date.getTime())) return fallback;
 
-    return date.toLocaleString("pt-BR", {
+    return date.toLocaleString(locale, {
         day: "2-digit",
         month: "2-digit",
         hour: "2-digit",
@@ -25,15 +26,15 @@ function formatDeadline(value?: string | null) {
     });
 }
 
-function phaseLabel(value?: string | null) {
-    if (!value) return "Torneio";
+function phaseLabel(value: string | null | undefined, t: (key: string) => string) {
+    if (!value) return t("markets.phase_tournament");
 
     const normalized = value.toLowerCase();
-    if (normalized.includes("group")) return "Fase de grupos";
-    if (normalized.includes("16")) return "Oitavas";
-    if (normalized.includes("quarter")) return "Quartas";
-    if (normalized.includes("semi")) return "Semifinal";
-    if (normalized.includes("final")) return "Final";
+    if (normalized.includes("group")) return t("markets.phase_group_stage");
+    if (normalized.includes("16")) return t("markets.phase_round16");
+    if (normalized.includes("quarter")) return t("markets.phase_quarters");
+    if (normalized.includes("semi")) return t("markets.phase_semi");
+    if (normalized.includes("final")) return t("markets.phase_final");
     return value;
 }
 
@@ -94,6 +95,7 @@ export function PhaseMarketsTab({
     predictions: BolaoPrediction[];
     canManage?: boolean;
 }) {
+    const { t, i18n } = useTranslation("bolao");
     const { toast } = useToast();
     const [drafts, setDrafts] = useState<Record<string, string[]>>({});
     const [resolutionDrafts, setResolutionDrafts] = useState<Record<string, string[]>>({});
@@ -162,14 +164,14 @@ export function PhaseMarketsTab({
             });
 
             toast({
-                title: "Palpite de fase salvo.",
-                description: `${market.title} atualizado com sucesso.`,
+                title: t("markets.phase_saved_title"),
+                description: t("markets.market_saved_desc", { title: market.title }),
                 className: "bg-emerald-500 border-emerald-600 text-white font-black",
             });
         } catch (error) {
             console.error("Erro ao salvar mercado de fase:", error);
             toast({
-                title: "Não consegui salvar esse mercado agora.",
+                title: t("markets.save_market_error"),
                 variant: "destructive",
             });
         } finally {
@@ -196,14 +198,14 @@ export function PhaseMarketsTab({
             });
 
             toast({
-                title: "Resultado oficial salvo.",
-                description: `${market.title} foi resolvido para o ranking da liga.`,
+                title: t("markets.official_saved_title"),
+                description: t("markets.official_saved_desc", { title: market.title }),
                 className: "bg-emerald-500 border-emerald-600 text-white font-black",
             });
         } catch (error) {
             console.error("Erro ao resolver mercado de fase:", error);
             toast({
-                title: "Não consegui resolver esse mercado agora.",
+                title: t("markets.resolve_market_error"),
                 variant: "destructive",
             });
         } finally {
@@ -214,9 +216,9 @@ export function PhaseMarketsTab({
     if (markets.length === 0) {
         return (
             <div className="rounded-[28px] border border-white/10 bg-white/5 p-6 text-center">
-                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">Sem mercados por fase</p>
+                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">{t("markets.no_phase_title")}</p>
                 <p className="mt-3 text-sm text-zinc-400">
-                    Quando este bolão ativar classificações, finalistas ou escolhas por fase, elas aparecem aqui.
+                    {t("markets.no_phase_desc")}
                 </p>
             </div>
         );
@@ -230,9 +232,9 @@ export function PhaseMarketsTab({
                         <Layers3 className="h-5 w-5" />
                     </div>
                     <div>
-                        <h3 className="text-xl font-black text-white">Mercados por fase</h3>
+                        <h3 className="text-xl font-black text-white">{t("markets.phase_title")}</h3>
                         <p className="text-sm text-zinc-400">
-                            Aqui ficam as apostas de classificados, semifinalistas, finalistas e outros marcos do torneio.
+                            {t("markets.phase_desc")}
                         </p>
                     </div>
                 </div>
@@ -265,31 +267,31 @@ export function PhaseMarketsTab({
                                 </div>
 
                                 <div className="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-primary">
-                                    {phaseLabel(market.phase_id)}
+                                    {phaseLabel(market.phase_id, t)}
                                 </div>
                             </div>
 
                             <div className="mt-5 grid gap-3 md:grid-cols-3">
                                 <div className="rounded-2xl border border-white/5 bg-black/10 p-4">
-                                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-zinc-500">Pontuação</p>
+                                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-zinc-500">{t("markets.score_label")}</p>
                                     <p className="mt-2 text-lg font-black text-white">{market.points_exact} pts</p>
                                     <p className="text-xs text-zinc-400">
-                                        {market.points_partial > 0 ? `${market.points_partial} pts por acerto parcial` : "Sem pontuação parcial"}
+                                        {market.points_partial > 0 ? t("markets.partial_points", { count: market.points_partial }) : t("markets.no_partial_points")}
                                     </p>
                                 </div>
                                 <div className="rounded-2xl border border-white/5 bg-black/10 p-4">
-                                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-zinc-500">Prazo</p>
-                                    <p className="mt-2 text-sm font-black text-white">{formatDeadline(market.closes_at)}</p>
-                                    <p className="text-xs text-zinc-400">O mercado fecha quando a fase começar ou na data definida pela liga.</p>
+                                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-zinc-500">{t("markets.deadline_label")}</p>
+                                    <p className="mt-2 text-sm font-black text-white">{formatDeadline(market.closes_at, i18n.language, t("markets.deadline_none"))}</p>
+                                    <p className="text-xs text-zinc-400">{t("markets.market_closes_desc")}</p>
                                 </div>
                                 <div className="rounded-2xl border border-white/5 bg-black/10 p-4">
-                                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-zinc-500">Status</p>
+                                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-zinc-500">{t("markets.status_label")}</p>
                                     <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-zinc-300">
                                         {market.status === "open" ? <Trophy className="h-3.5 w-3.5 text-primary" /> : <Lock className="h-3.5 w-3.5 text-zinc-500" />}
-                                        {market.status === "open" ? "Aberto para palpites" : market.status === "closed" ? "Encerrado" : "Resolvido"}
+                                        {market.status === "open" ? t("markets.open_for_predictions") : market.status === "closed" ? t("markets.closed") : t("markets.resolved_status")}
                                     </div>
                                     <p className="mt-2 text-xs text-zinc-400">
-                                        {selectionLimit === 1 ? "Escolha uma seleção." : `Escolha até ${selectionLimit} seleções.`}
+                                        {selectionLimit === 1 ? t("markets.select_one_team") : t("markets.select_up_to", { count: selectionLimit })}
                                     </p>
                                 </div>
                             </div>
@@ -297,11 +299,9 @@ export function PhaseMarketsTab({
                             <div className="mt-5 rounded-[24px] border border-white/5 bg-black/10 p-4">
                                 <div className="mb-4 flex items-center justify-between gap-3">
                                     <div>
-                                        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">Sua seleção</p>
+                                        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">{t("markets.your_selection")}</p>
                                         <p className="mt-1 text-sm text-zinc-400">
-                                            {selectionLimit === 1
-                                                ? "Escolha a seleção que você acredita que cumpre este mercado."
-                                                : `Escolha até ${selectionLimit} seleções para este mercado.`}
+                                            {selectionLimit === 1 ? t("markets.select_single_desc") : t("markets.select_multi_desc", { count: selectionLimit })}
                                         </p>
                                     </div>
                                     <div className="rounded-full border border-white/10 bg-white/5 px-3 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-zinc-300">
@@ -312,7 +312,7 @@ export function PhaseMarketsTab({
                                 <div className="space-y-4">
                                     {teamsByGroup.map(([groupCode, groupedTeams]) => (
                                         <div key={groupCode}>
-                                            <p className="mb-2 text-[10px] font-black uppercase tracking-[0.18em] text-zinc-500">Grupo {groupCode}</p>
+                                            <p className="mb-2 text-[10px] font-black uppercase tracking-[0.18em] text-zinc-500">{t("markets.group_label", { group: groupCode })}</p>
                                             <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
                                                 {groupedTeams.map((team) => {
                                                     const isSelected = selectedTeams.includes(team.code);
@@ -344,10 +344,10 @@ export function PhaseMarketsTab({
                                 </div>
 
                                 <div className="mt-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                                    <p className="text-xs text-zinc-400">
-                                        {savedTeams.length > 0
-                                            ? `Salvo: ${savedTeams.join(", ")}`
-                                            : "Nenhuma seleção salva ainda para este mercado."}
+                                        <p className="text-xs text-zinc-400">
+                                            {savedTeams.length > 0
+                                            ? t("markets.saved_now", { teams: savedTeams.join(", ") })
+                                            : t("markets.nothing_saved_yet")}
                                     </p>
                                     <button
                                         type="button"
@@ -356,19 +356,19 @@ export function PhaseMarketsTab({
                                         className="inline-flex min-w-[190px] items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-4 text-[11px] font-black uppercase tracking-[0.18em] text-black disabled:opacity-60"
                                     >
                                         {savingMarketId === market.id ? <Loader2 className="h-4 w-4 animate-spin" /> : market.status === "resolved" ? <CheckCircle2 className="h-4 w-4" /> : <Save className="h-4 w-4" />}
-                                        {savingMarketId === market.id ? "Salvando..." : "Salvar mercado"}
+                                        {savingMarketId === market.id ? t("markets.saving") : t("markets.save_market")}
                                     </button>
                                 </div>
                             </div>
 
                             {market.status === "resolved" && (
                                 <div className="mt-5 rounded-[24px] border border-emerald-500/20 bg-emerald-500/5 p-4">
-                                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-emerald-300">Mercado resolvido</p>
+                                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-emerald-300">{t("markets.resolved")}</p>
                                     <p className="mt-2 text-sm text-zinc-300">
-                                        Resultado oficial: <span className="font-black text-white">{resolvedTeams.join(", ") || "Sem resultado oficial"}</span>
+                                        {t("markets.official_result")}: <span className="font-black text-white">{resolvedTeams.join(", ") || t("markets.no_official_result")}</span>
                                     </p>
                                     <p className="mt-2 text-sm text-zinc-300">
-                                        Sua pontuação: <span className="font-black text-white">{prediction?.points_awarded ?? 0} pts</span>
+                                        {t("markets.your_points")}: <span className="font-black text-white">{prediction?.points_awarded ?? 0} pts</span>
                                     </p>
                                 </div>
                             )}
@@ -377,20 +377,20 @@ export function PhaseMarketsTab({
                                 <div className="mt-5 rounded-[24px] border border-amber-500/20 bg-amber-500/5 p-4">
                                     <div className="mb-4 flex items-center justify-between gap-3">
                                         <div>
-                                            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-amber-300">Resultado oficial</p>
+                                            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-amber-300">{t("markets.official_result")}</p>
                                             <p className="mt-1 text-sm text-zinc-400">
-                                                Como criador, você define aqui o resultado que fecha esse mercado e alimenta o ranking.
+                                                {t("markets.manage_result_desc")}
                                             </p>
                                         </div>
                                         <div className="rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-amber-200">
-                                            {market.status === "resolved" ? "Resolvido" : "Pendente de resolução"}
+                                            {market.status === "resolved" ? t("markets.resolved_status") : t("markets.resolved_pending")}
                                         </div>
                                     </div>
 
                                     <div className="space-y-4">
                                         {teamsByGroup.map(([groupCode, groupedTeams]) => (
                                             <div key={`${market.id}_${groupCode}_resolution`}>
-                                                <p className="mb-2 text-[10px] font-black uppercase tracking-[0.18em] text-zinc-500">Grupo {groupCode}</p>
+                                                <p className="mb-2 text-[10px] font-black uppercase tracking-[0.18em] text-zinc-500">{t("markets.group_label", { group: groupCode })}</p>
                                                 <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
                                                     {groupedTeams.map((team) => {
                                                         const isSelected = adminSelection.includes(team.code);
@@ -424,8 +424,8 @@ export function PhaseMarketsTab({
                                     <div className="mt-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                                         <p className="text-xs text-zinc-400">
                                             {resolvedTeams.length > 0
-                                                ? `Resultado atual: ${resolvedTeams.join(", ")}`
-                                                : "Esse mercado ainda não recebeu resultado oficial."}
+                                                ? t("markets.current_result") + ": " + resolvedTeams.join(", ")
+                                                : t("markets.no_official_result")}
                                         </p>
                                         <button
                                             type="button"
@@ -434,7 +434,7 @@ export function PhaseMarketsTab({
                                             className="inline-flex min-w-[220px] items-center justify-center gap-2 rounded-2xl border border-amber-400/30 bg-amber-400 px-5 py-4 text-[11px] font-black uppercase tracking-[0.18em] text-black disabled:opacity-60"
                                         >
                                             {resolvingMarketId === market.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trophy className="h-4 w-4" />}
-                                            {resolvingMarketId === market.id ? "Resolvendo..." : market.status === "resolved" ? "Atualizar resultado oficial" : "Confirmar resultado oficial"}
+                                            {resolvingMarketId === market.id ? t("markets.resolving") : market.status === "resolved" ? t("markets.update_official_result") : t("markets.confirm_official_result")}
                                         </button>
                                     </div>
                                 </div>

@@ -5,7 +5,9 @@
         "groups": "Grupos",
         "bracket": "Fase Final",
         "simulator": "Simulador",
-        "news": "Noticias"
+        "news": "Noticias",
+        "hosts": "Sedes",
+        "history": "Historia"
     },
     "overview": {
         "featured": "Destacado",

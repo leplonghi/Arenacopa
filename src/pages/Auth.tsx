@@ -114,14 +114,14 @@ const Auth = () => {
     try {
       await loginAsDemo();
       toast({
-        title: "Modo Demo Ativado",
-        description: "Você entrou no modo de demonstração.",
+        title: t('login.demo_mode_title'),
+        description: t('login.demo_mode_desc'),
       });
       navigate(redirectPath);
     } catch (error) {
       console.error("Erro no login demo:", error);
       toast({
-        title: "Erro Demo",
+        title: t('login.error_demo_title'),
         description: t('login.error_demo'),
         variant: "destructive",
       });
@@ -229,7 +229,7 @@ const Auth = () => {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+              aria-label={showPassword ? t('login.hide_password') : t('login.show_password')}
               className="absolute right-4 top-1/2 -translate-y-1/2 hover:text-primary transition-colors p-1"
             >
               {showPassword ? <EyeOff className="w-4 h-4 text-muted-foreground" /> : <Eye className="w-4 h-4 text-muted-foreground" />}
@@ -246,10 +246,10 @@ const Auth = () => {
                 className="mt-1 flex-shrink-0 w-4 h-4 rounded border-white/10 bg-black/40 text-primary focus:ring-primary/50"
               />
               <label htmlFor="terms" className="text-[10px] text-muted-foreground leading-snug">
-                Li e concordo com os{" "}
-                <Link to="/termos" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-bold">Termos de Uso</Link>
-                {" "}e a{" "}
-                <Link to="/privacidade" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-bold">Política de Privacidade</Link>
+                {t('terms.read_prefix')}{" "}
+                <Link to="/termos" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-bold">{t('terms.use_terms')}</Link>
+                {" "}{t('terms.and')}{" "}
+                <Link to="/privacidade" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-bold">{t('terms.privacy_policy')}</Link>
               </label>
             </div>
           )}

@@ -2,19 +2,20 @@
     "nav": {
         "home": "Home",
         "copa": "Cup",
-        "bolao": "Pool",
+        "bolao": "Pools",
+        "simulator": "Simulator",
         "guia": "Guide",
         "ranking": "Ranking",
-        "profile": "Profile",
-        "menu": "Menu"
+        "profile": "Account",
+        "menu": "Account"
     },
     "header": {
         "titles": {
             "boloes": "Pools",
             "create_bolao": "Create Pool",
             "bolao_detail": "Pool",
-            "profile": "Profile",
-            "menu": "Menu"
+            "profile": "Account",
+            "menu": "Account"
         }
     },
     "common": {
@@ -38,9 +39,16 @@
         "description": "Check the latest news and updates.",
         "empty": "No notifications",
         "load_error": "I couldn't load your notifications.",
+        "demo_title": "New invite",
+        "demo_message": "A pool just opened a spot so you can try the full experience.",
         "new": "New",
         "new_count_one": "{{count}} new",
         "new_count_other": "{{count}} new"
+    },
+    "pwa": {
+        "title": "Install the app",
+        "description": "Keep ArenaCopa on your home screen for a smoother mobile experience.",
+        "install": "Install now"
     },
     "onboarding": {
         "title": "Welcome to ArenaCopa",

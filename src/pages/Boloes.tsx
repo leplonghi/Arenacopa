@@ -19,6 +19,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { EmptyState } from "@/components/EmptyState";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useTranslation } from "react-i18next";
 
 type BolaoRow = {
   id: string;
@@ -67,9 +68,10 @@ function chunkValues<T>(values: T[], chunkSize: number) {
 }
 
 export default function Boloes() {
-  const { user } = useAuth();
+  const { user, session } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { t } = useTranslation('bolao');
 
   const [boloes, setBoloes] = useState<BolaoRow[]>([]);
   const [publicBoloes, setPublicBoloes] = useState<PublicBolaoRow[]>([]);
@@ -80,11 +82,47 @@ export default function Boloes() {
   const [showJoin, setShowJoin] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [publicBoloesUnavailable, setPublicBoloesUnavailable] = useState(false);
+  const isDemoMode = localStorage.getItem("demo_mode") === "true";
 
   const loadData = useCallback(async () => {
     if (!user) return;
     setLoading(true);
     setPublicBoloesUnavailable(false);
+
+    if (isDemoMode || !session) {
+      setBoloes([
+        {
+          id: "demo-bolao-1",
+          name: t("page.demo_1_name"),
+          description: t("page.demo_1_desc"),
+          creator_id: user.id,
+          invite_code: "DEMO26",
+          created_at: new Date().toISOString(),
+          avatar_url: null,
+          category: "private",
+          status: "active",
+          memberCount: 12,
+          isCreator: true,
+        },
+        {
+          id: "demo-bolao-2",
+          name: t("page.demo_2_name"),
+          description: t("page.demo_2_desc"),
+          creator_id: "demo-friend",
+          invite_code: "ARENA7",
+          created_at: new Date(Date.now() - 86_400_000).toISOString(),
+          avatar_url: null,
+          category: "public",
+          status: "open",
+          memberCount: 27,
+          isCreator: false,
+        },
+      ]);
+      setPublicBoloes([]);
+      setLoading(false);
+      return;
+    }
+
     let membershipIds: string[] = [];
 
     try {
@@ -143,8 +181,8 @@ export default function Boloes() {
     } catch (error) {
       console.error(error);
       toast({
-        title: "Não foi possível carregar seus bolões.",
-        description: "Tenta novamente em alguns segundos.",
+        title: t('page.load_error_title'),
+        description: t('page.load_error_desc'),
         variant: "destructive",
       });
     } finally {
@@ -211,7 +249,7 @@ export default function Boloes() {
       setPublicBoloes([]);
       setPublicBoloesUnavailable(true);
     }
-  }, [toast, user]);
+  }, [isDemoMode, session, t, toast, user]);
 
   useEffect(() => {
     loadData();
@@ -231,8 +269,8 @@ export default function Boloes() {
       });
 
       toast({
-        title: "Você entrou na arena.",
-        description: "Agora é só palpitar e subir no ranking.",
+        title: t('page.join_success_title'),
+        description: t('page.join_success_desc'),
         className: "bg-emerald-500 text-white font-black",
       });
 
@@ -243,8 +281,8 @@ export default function Boloes() {
       if (!message.toLowerCase().includes("duplicate")) {
         console.error("Error joining bolao:", error);
         toast({
-          title: "Erro ao entrar no bolão.",
-          description: "Confere o código e tenta de novo.",
+          title: t('page.join_error_title'),
+          description: t('page.join_error_desc'),
           variant: "destructive",
         });
       }
@@ -276,7 +314,7 @@ export default function Boloes() {
       const memberSnap = await getDoc(doc(db, "bolao_members", memberId));
 
       if (memberSnap.exists()) {
-        toast({ title: "Você já está neste bolão." });
+        toast({ title: t('page.already_joined') });
         setJoining(false);
         return;
       }
@@ -286,8 +324,8 @@ export default function Boloes() {
       setShowJoin(false);
     } catch (error) {
       toast({
-        title: "Não consegui entrar com esse código.",
-        description: error instanceof Error ? error.message : "Código inválido ou expirado.",
+        title: t('page.invalid_code_title'),
+        description: error instanceof Error ? error.message : t('page.invalid_code_desc'),
         variant: "destructive",
       });
     } finally {
@@ -319,10 +357,10 @@ export default function Boloes() {
     <div className="mx-auto max-w-5xl px-4 pb-28 pt-6 text-white">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">Ligas</p>
-          <h1 className="mt-1 text-3xl font-black">Bolões</h1>
+          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">{t('page.kicker')}</p>
+          <h1 className="mt-1 text-3xl font-black">{t('page.kicker')}</h1>
           <p className="mt-2 max-w-2xl text-sm text-zinc-400">
-            Crie sua arena, entre por convite ou explore ligas públicas sem bagunçar o fluxo principal.
+            {t('page.description')}
           </p>
         </div>
 
@@ -331,21 +369,21 @@ export default function Boloes() {
           className="inline-flex items-center gap-2 rounded-2xl bg-primary px-5 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-black"
         >
           <Plus className="h-4 w-4" />
-          Criar bolão
+          {t('page.create')}
         </Link>
       </div>
 
       <div className="surface-card mb-6 p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-zinc-400">Entrada rápida</p>
-            <h2 className="mt-1 text-lg font-black">Entrar com código</h2>
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-zinc-400">{t('page.quick_join_kicker')}</p>
+            <h2 className="mt-1 text-lg font-black">{t('page.quick_join_title')}</h2>
           </div>
           <button
             onClick={() => setShowJoin((prev) => !prev)}
             className="surface-chip rounded-2xl px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em]"
           >
-            {showJoin ? "Fechar" : "Usar convite"}
+            {showJoin ? t('page.close_join') : t('page.use_invite')}
           </button>
         </div>
 
@@ -354,7 +392,7 @@ export default function Boloes() {
             <input
               value={joinCode}
               onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-              placeholder="Ex: AX7T9Q"
+              placeholder={t('page.code_placeholder')}
               className="surface-input flex-1 rounded-2xl px-4 py-3 text-lg font-black uppercase"
             />
             <button
@@ -363,7 +401,7 @@ export default function Boloes() {
               className="inline-flex min-w-[180px] items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-black disabled:opacity-60"
             >
               {joining ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
-              {joining ? "Entrando..." : "Entrar no bolão"}
+              {joining ? t('page.joining') : t('page.join_action')}
             </button>
           </div>
         )}
@@ -375,7 +413,7 @@ export default function Boloes() {
           <input
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Pesquisar minhas ligas..."
+            placeholder={t('page.search_placeholder')}
             className="surface-input w-full rounded-3xl py-4 pl-12 pr-4 text-sm"
           />
         </div>
@@ -389,8 +427,8 @@ export default function Boloes() {
         </div>
       ) : boloes.length === 0 && publicBoloes.length === 0 ? (
         <EmptyState
-          title="Nenhuma liga encontrada"
-          description="Crie sua própria arena ou participe usando um código de convite."
+          title={t('page.empty_title')}
+          description={t('page.empty_desc')}
         />
       ) : (
         <div className="space-y-8">
@@ -398,7 +436,7 @@ export default function Boloes() {
             <section>
               <div className="mb-3 flex items-center gap-2">
                 <Trophy className="h-4 w-4 text-primary" />
-                <h2 className="text-sm font-black uppercase tracking-[0.18em] text-primary">Minhas arenas</h2>
+                <h2 className="text-sm font-black uppercase tracking-[0.18em] text-primary">{t('page.section_created')}</h2>
               </div>
               <div className="grid gap-4">
                 {myBoloes.map((b) => (
@@ -412,7 +450,7 @@ export default function Boloes() {
             <section>
               <div className="mb-3 flex items-center gap-2">
                 <Users className="h-4 w-4 text-primary" />
-                <h2 className="text-sm font-black uppercase tracking-[0.18em] text-primary">Participando</h2>
+                <h2 className="text-sm font-black uppercase tracking-[0.18em] text-primary">{t('page.section_participating')}</h2>
               </div>
               <div className="grid gap-4">
                 {joinedBoloes.map((b) => (
@@ -426,7 +464,7 @@ export default function Boloes() {
             <section>
               <div className="mb-3 flex items-center gap-2">
                 <Compass className="h-4 w-4 text-primary" />
-                <h2 className="text-sm font-black uppercase tracking-[0.18em] text-primary">Explorar bolões públicos</h2>
+                <h2 className="text-sm font-black uppercase tracking-[0.18em] text-primary">{t('page.section_explore')}</h2>
               </div>
               <div className="grid gap-4">
                 {publicBoloes.map((b) => (
@@ -442,20 +480,18 @@ export default function Boloes() {
                           </div>
                           <div>
                             <h3 className="text-lg font-black">{b.name}</h3>
-                            <p className="text-sm text-zinc-400">{b.description || "Sem descrição."}</p>
+                            <p className="text-sm text-zinc-400">{b.description || t("page.no_description")}</p>
                           </div>
                         </div>
                       </div>
-                      <div className="rounded-full bg-primary/15 px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-primary">
-                        Público
-                      </div>
+                      <div className="rounded-full bg-primary/15 px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-primary">{t('page.public_label')}</div>
                     </div>
 
                     <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
                       <div className="flex flex-wrap gap-3 text-sm text-zinc-300">
-                        <span>{b.memberCount} membros</span>
+                        <span>{t('page.members_count', { count: b.memberCount })}</span>
                         <span>•</span>
-                        <span>Líder: {b.leader_score} pts</span>
+                        <span>{t('page.leader_score', { points: b.leader_score })}</span>
                       </div>
 
                       <button
@@ -464,7 +500,7 @@ export default function Boloes() {
                         className="inline-flex min-w-[150px] items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-black disabled:opacity-60"
                       >
                         {joiningPublicBolaoId === b.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
-                        {joiningPublicBolaoId === b.id ? "Entrando..." : "Entrar agora"}
+                        {joiningPublicBolaoId === b.id ? t('page.joining') : t('page.join_now')}
                       </button>
                     </div>
                   </article>
@@ -477,10 +513,10 @@ export default function Boloes() {
             <section>
               <div className="surface-card-soft p-5 text-sm text-zinc-300">
                 <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">
-                  Explorar bolões públicos indisponível no momento
+                  {t('page.public_unavailable_title')}
                 </p>
                 <p className="mt-2 text-sm text-zinc-400">
-                  Suas arenas continuam funcionando normalmente. Tente novamente em alguns instantes.
+                  {t('page.public_unavailable_desc')}
                 </p>
               </div>
             </section>
@@ -492,6 +528,8 @@ export default function Boloes() {
 }
 
 function BolaoCard({ bolao, href }: { bolao: BolaoRow; href: string }) {
+  const { t } = useTranslation('bolao');
+
   return (
     <Link
       to={href}
@@ -504,18 +542,18 @@ function BolaoCard({ bolao, href }: { bolao: BolaoRow; href: string }) {
           </div>
           <div>
             <h3 className="text-lg font-black">{bolao.name}</h3>
-            <p className="text-sm text-zinc-400">{bolao.description || "Sem descrição."}</p>
+            <p className="text-sm text-zinc-400">{bolao.description || t("page.no_description")}</p>
           </div>
         </div>
         <div className="surface-chip rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-zinc-300">
-          {bolao.category === "public" ? "Público" : "Privado"}
+          {bolao.category === "public" ? t('page.public_label') : t('page.private_label')}
         </div>
       </div>
 
       <div className="mt-4 flex flex-wrap gap-3 text-sm text-zinc-300">
-        <span>{bolao.memberCount} membros</span>
+        <span>{t('page.members_count', { count: bolao.memberCount })}</span>
         <span>•</span>
-        <span>Código: {bolao.invite_code}</span>
+        <span>{t('page.code_label', { code: bolao.invite_code })}</span>
       </div>
     </Link>
   );

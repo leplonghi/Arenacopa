@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { collection, doc, getDocs, query, serverTimestamp, setDoc, where } from "firebase/firestore";
 import { CheckCircle2, Loader2, Save, Sparkles, Star, Trophy } from "lucide-react";
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import { db } from "@/integrations/firebase/client";
 import { useToast } from "@/hooks/use-toast";
 import { teams } from "@/data/mockData";
@@ -49,6 +50,7 @@ function getTeamVisual(teamValue: string) {
 }
 
 export function ExtrasTab({ bolaoId, userId, markets, predictions, canManage = false }: ExtrasTabProps) {
+    const { t } = useTranslation("bolao");
     const { toast } = useToast();
     const [legacyExtras, setLegacyExtras] = useState<ExtraBet[]>([]);
     const [loadingLegacy, setLoadingLegacy] = useState(true);
@@ -147,14 +149,14 @@ export function ExtrasTab({ bolaoId, userId, markets, predictions, canManage = f
                 return next;
             });
             toast({
-                title: "Mercado salvo.",
-                description: `${market.title} atualizado com sucesso.`,
+                title: t("markets.special_saved_title"),
+                description: t("markets.market_saved_desc", { title: market.title }),
                 className: "bg-emerald-500 border-emerald-600 text-white font-black",
             });
         } catch (error) {
             console.error("Erro ao salvar mercado extra:", error);
             toast({
-                title: "Não consegui salvar esse mercado agora.",
+                title: t("markets.save_market_error"),
                 variant: "destructive",
             });
         } finally {
@@ -180,14 +182,14 @@ export function ExtrasTab({ bolaoId, userId, markets, predictions, canManage = f
                 return next;
             });
             toast({
-                title: "Resultado oficial salvo.",
-                description: `${market.title} foi resolvido no bolão.`,
+                title: t("markets.official_saved_title"),
+                description: t("markets.official_saved_desc", { title: market.title }),
                 className: "bg-emerald-500 border-emerald-600 text-white font-black",
             });
         } catch (error) {
             console.error("Erro ao salvar resolução do mercado:", error);
             toast({
-                title: "Não consegui salvar o resultado oficial agora.",
+                title: t("markets.save_official_error"),
                 variant: "destructive",
             });
         } finally {
@@ -199,7 +201,7 @@ export function ExtrasTab({ bolaoId, userId, markets, predictions, canManage = f
         return (
             <div className="flex flex-col items-center justify-center p-20 gap-4">
                 <div className="h-12 w-12 animate-spin rounded-full border-4 border-primary/20 border-t-primary" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">Carregando extras...</span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">{t("markets.loading_extras")}</span>
             </div>
         );
     }
@@ -207,9 +209,9 @@ export function ExtrasTab({ bolaoId, userId, markets, predictions, canManage = f
     if (extraMarkets.length === 0 && legacyExtras.length === 0) {
         return (
             <div className="rounded-[28px] border border-white/10 bg-white/5 p-6 text-center">
-                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">Sem extras ativos</p>
+                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">{t("markets.no_extras_title")}</p>
                 <p className="mt-3 text-sm text-zinc-400">
-                    Este bolão ainda não ativou mercados de campeonato ou especiais. Quando eles existirem, aparecem aqui.
+                    {t("markets.no_extras_desc")}
                 </p>
             </div>
         );
@@ -223,9 +225,9 @@ export function ExtrasTab({ bolaoId, userId, markets, predictions, canManage = f
                         <Sparkles className="h-5 w-5" />
                     </div>
                     <div>
-                        <h3 className="text-xl font-black text-white">Mercados extras</h3>
+                        <h3 className="text-xl font-black text-white">{t("markets.extras_title")}</h3>
                         <p className="text-sm text-zinc-400">
-                            Aqui ficam os mercados de campeonato e especiais que dão personalidade ao bolão.
+                            {t("markets.extras_desc")}
                         </p>
                     </div>
                 </div>
@@ -255,7 +257,7 @@ export function ExtrasTab({ bolaoId, userId, markets, predictions, canManage = f
                                         <h4 className="text-lg font-black text-white">{market.title}</h4>
                                         <MarketTooltip title={market.title} description={market.help_text || market.description} />
                                         <span className="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-primary">
-                                            Campeonato
+                                            {t("markets.championship_badge")}
                                         </span>
                                     </div>
                                     <p className="mt-2 text-sm text-zinc-400">{market.description}</p>
@@ -266,7 +268,7 @@ export function ExtrasTab({ bolaoId, userId, markets, predictions, canManage = f
 
                                 {savedValue && (
                                     <div className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-emerald-400">
-                                        Salvo
+                                        {t("markets.saved_badge")}
                                     </div>
                                 )}
                             </div>
@@ -298,7 +300,7 @@ export function ExtrasTab({ bolaoId, userId, markets, predictions, canManage = f
                                             <input
                                                 value={draftValue}
                                                 onChange={(event) => updateDraft(market.id, event.target.value)}
-                                                placeholder={market.slug === "top_scorer" ? "Ex: Harry Kane" : "Digite sua resposta"}
+                                                placeholder={market.slug === "top_scorer" ? "Ex: Harry Kane" : ""}
                                                 className="surface-input flex-1 rounded-2xl px-4 py-4 text-sm font-bold"
                                             />
                                             <button
@@ -312,7 +314,7 @@ export function ExtrasTab({ bolaoId, userId, markets, predictions, canManage = f
                                                 ) : (
                                                     <Save className="h-4 w-4" />
                                                 )}
-                                                {savingMarketId === market.id ? "Salvando..." : "Salvar mercado"}
+                                                {savingMarketId === market.id ? t("markets.saving") : t("markets.save_market")}
                                             </button>
                                         </div>
                                     )}
@@ -330,14 +332,14 @@ export function ExtrasTab({ bolaoId, userId, markets, predictions, canManage = f
                                                 ) : (
                                                     <CheckCircle2 className="h-4 w-4" />
                                                 )}
-                                                {savingMarketId === market.id ? "Salvando..." : "Confirmar"}
+                                                {savingMarketId === market.id ? t("markets.saving") : t("markets.confirm")}
                                             </button>
                                         </div>
                                     )}
 
                                     {savedValue && (
                                         <div className="rounded-2xl border border-white/5 bg-black/10 p-4">
-                                            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-zinc-500">Sua aposta atual</p>
+                                            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-zinc-500">{t("markets.current_result")}</p>
                                             <div className="mt-3 flex items-center gap-3">
                                                 {isTeamSelector && getTeamVisual(savedValue) ? (
                                                     <>
@@ -363,9 +365,9 @@ export function ExtrasTab({ bolaoId, userId, markets, predictions, canManage = f
                                             <Trophy className="h-4 w-4" />
                                         </div>
                                         <div>
-                                            <p className="text-sm font-black text-white">Mercado ativo neste formato</p>
+                                            <p className="text-sm font-black text-white">{t("markets.active_market_title")}</p>
                                             <p className="text-xs text-zinc-400">
-                                                A interface específica desse mercado entra na próxima etapa da migração do bolão.
+                                                {t("markets.active_market_desc")}
                                             </p>
                                         </div>
                                     </div>
@@ -374,12 +376,12 @@ export function ExtrasTab({ bolaoId, userId, markets, predictions, canManage = f
 
                             {market.status === "resolved" && (
                                 <div className="mt-5 rounded-[24px] border border-emerald-500/20 bg-emerald-500/5 p-4">
-                                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-emerald-300">Mercado resolvido</p>
+                                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-emerald-300">{t("markets.resolved")}</p>
                                     <p className="mt-2 text-sm text-zinc-300">
-                                        Resultado oficial: <span className="font-black text-white">{resolvedValue || "Sem resultado oficial"}</span>
+                                        {t("markets.official_result")}: <span className="font-black text-white">{resolvedValue || t("markets.no_official_result")}</span>
                                     </p>
                                     <p className="mt-2 text-sm text-zinc-300">
-                                        Sua pontuação: <span className="font-black text-white">{prediction?.points_awarded ?? 0} pts</span>
+                                        {t("markets.your_points")}: <span className="font-black text-white">{prediction?.points_awarded ?? 0} pts</span>
                                     </p>
                                 </div>
                             )}
@@ -388,13 +390,13 @@ export function ExtrasTab({ bolaoId, userId, markets, predictions, canManage = f
                                 <div className="mt-5 rounded-[24px] border border-amber-500/20 bg-amber-500/5 p-4">
                                     <div className="mb-4 flex items-center justify-between gap-3">
                                         <div>
-                                            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-amber-300">Resultado oficial</p>
+                                            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-amber-300">{t("markets.official_result")}</p>
                                             <p className="mt-1 text-sm text-zinc-400">
-                                                Esse resultado fecha o mercado e distribui os pontos do campeonato no ranking.
+                                                {t("markets.official_result_desc")}
                                             </p>
                                         </div>
                                         <div className="rounded-full border border-amber-500/20 bg-amber-500/10 px-3 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-amber-200">
-                                            {market.status === "resolved" ? "Resolvido" : "Aguardando resultado"}
+                                            {market.status === "resolved" ? t("markets.resolved") : t("markets.waiting_result")}
                                         </div>
                                     </div>
 
@@ -423,7 +425,7 @@ export function ExtrasTab({ bolaoId, userId, markets, predictions, canManage = f
                                             <input
                                                 value={resolutionDraftValue}
                                                 onChange={(event) => updateResolutionDraft(market.id, event.target.value)}
-                                                placeholder={market.prediction_type === "number" ? "Digite o total oficial" : "Digite o resultado oficial"}
+                                                placeholder=""
                                                 className="surface-input flex-1 rounded-2xl px-4 py-4 text-sm font-bold"
                                             />
                                             <button
@@ -433,7 +435,7 @@ export function ExtrasTab({ bolaoId, userId, markets, predictions, canManage = f
                                                 className="inline-flex min-w-[190px] items-center justify-center gap-2 rounded-2xl border border-amber-400/30 bg-amber-400 px-5 py-4 text-[11px] font-black uppercase tracking-[0.18em] text-black disabled:opacity-60"
                                             >
                                                 {resolvingMarketId === market.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trophy className="h-4 w-4" />}
-                                                {resolvingMarketId === market.id ? "Resolvendo..." : market.status === "resolved" ? "Atualizar resultado oficial" : "Confirmar resultado oficial"}
+                                                {resolvingMarketId === market.id ? t("markets.resolving") : market.status === "resolved" ? t("markets.update_official_result") : t("markets.confirm_official_result")}
                                             </button>
                                         </div>
                                     )}
@@ -447,14 +449,14 @@ export function ExtrasTab({ bolaoId, userId, markets, predictions, canManage = f
                                                 className="inline-flex min-w-[190px] items-center justify-center gap-2 rounded-2xl border border-amber-400/30 bg-amber-400 px-5 py-4 text-[11px] font-black uppercase tracking-[0.18em] text-black disabled:opacity-60"
                                             >
                                                 {resolvingMarketId === market.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trophy className="h-4 w-4" />}
-                                                {resolvingMarketId === market.id ? "Resolvendo..." : market.status === "resolved" ? "Atualizar resultado oficial" : "Confirmar resultado oficial"}
+                                                {resolvingMarketId === market.id ? t("markets.resolving") : market.status === "resolved" ? t("markets.update_official_result") : t("markets.confirm_official_result")}
                                             </button>
                                         </div>
                                     )}
 
                                     {resolvedValue && (
                                         <p className="mt-3 text-xs text-zinc-400">
-                                            Resultado atual: <span className="font-black text-white">{resolvedValue}</span>
+                                            {t("markets.current_result")}: <span className="font-black text-white">{resolvedValue}</span>
                                         </p>
                                     )}
                                 </div>
@@ -468,10 +470,10 @@ export function ExtrasTab({ bolaoId, userId, markets, predictions, canManage = f
                 <div className="rounded-[24px] border border-white/10 bg-white/5 p-4">
                     <div className="flex items-center gap-2">
                         <Star className="h-4 w-4 text-primary" />
-                        <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">Compatibilidade com dados antigos</p>
+                        <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">{t("markets.legacy_title")}</p>
                     </div>
                     <p className="mt-2 text-sm text-zinc-400">
-                        Este bolão ainda tem previsões legadas salvas. A tela nova já lê esses valores para evitar perda de contexto.
+                        {t("markets.legacy_desc")}
                     </p>
                 </div>
             )}

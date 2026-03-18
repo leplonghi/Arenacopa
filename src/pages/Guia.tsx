@@ -2,17 +2,20 @@ import { Suspense, lazy, useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-    Globe, ScrollText,
-    List
+    Globe,
+    List,
+    ScrollText,
+    Newspaper
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-const HistoriaTab = lazy(() => import("@/components/copa/HistoriaTab").then((module) => ({ default: module.HistoriaTab })));
 const SedesTab = lazy(() => import("@/components/copa/SedesTab").then((module) => ({ default: module.SedesTab })));
 const GuiaTab = lazy(() => import("@/components/copa/GuiaTab").then((module) => ({ default: module.GuiaTab })));
+const HistoriaTab = lazy(() => import("@/components/copa/HistoriaTab").then((module) => ({ default: module.HistoriaTab })));
+const NoticiasTab = lazy(() => import("@/components/copa/NoticiasTab").then((module) => ({ default: module.NoticiasTab })));
 
-type GuiaViewMode = "list" | "map" | "history";
-const VALID_SUBTABS = new Set(["historia", "mapa", "estadios"]);
+type GuiaViewMode = "list" | "map" | "historia" | "noticias";
+const VALID_SUBTABS = new Set(["mapa", "estadios", "historia", "noticias"]);
 
 const GuiaLoadingState = () => (
     <div className="surface-card rounded-[28px] p-6 text-sm font-bold uppercase tracking-[0.18em] text-zinc-400">
@@ -25,8 +28,9 @@ export default function Guia() {
     const navigate = useNavigate();
 
     const [viewMode, setViewMode] = useState<GuiaViewMode>(() => {
-        if (subtab === "historia") return "history";
         if (subtab === "mapa" || subtab === "estadios") return "map";
+        if (subtab === "historia") return "historia";
+        if (subtab === "noticias") return "noticias";
         return "list";
     });
 
@@ -41,15 +45,17 @@ export default function Guia() {
             return;
         }
 
-        if (subtab === "historia") setViewMode("history");
-        else if (subtab === "mapa" || subtab === "estadios") setViewMode("map");
+        if (subtab === "mapa" || subtab === "estadios") setViewMode("map");
+        else if (subtab === "historia") setViewMode("historia");
+        else if (subtab === "noticias") setViewMode("noticias");
         else setViewMode("list");
     }, [navigate, subtab]);
 
     const handleModeToggle = (mode: GuiaViewMode) => {
         setViewMode(mode);
-        if (mode === "history") navigate("/guia/historia");
-        else if (mode === "map") navigate("/guia/mapa");
+        if (mode === "map") navigate("/guia/mapa");
+        else if (mode === "historia") navigate("/guia/historia");
+        else if (mode === "noticias") navigate("/guia/noticias");
         else navigate("/guia");
     };
 
@@ -75,34 +81,13 @@ export default function Guia() {
                         label="Mapa"
                     />
 
-                    <ToggleButton
-                        isActive={viewMode === "history"}
-                        onClick={() => handleModeToggle("history")}
-                        icon={<ScrollText className="w-3.5 h-3.5" />}
-                        label="História da Copa"
-                    />
                 </div>
             </div>
 
             {/* Main Content Area */}
             <div className="relative flex-1">
                 <AnimatePresence mode="wait">
-                    {viewMode === "history" ? (
-                        <motion.div
-                            key="history"
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -10 }}
-                            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                            className="relative z-10 w-full bg-transparent"
-                        >
-                            <div className="container mx-auto px-6 py-6 pb-20">
-                                <Suspense fallback={<GuiaLoadingState />}>
-                                    <HistoriaTab />
-                                </Suspense>
-                            </div>
-                        </motion.div>
-                    ) : viewMode === "map" ? (
+                    {viewMode === "map" ? (
                         <motion.div
                             key="map"
                             initial={{ opacity: 0 }}

@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { tabContentVariants } from "@/components/copa/animations";
 import { SimulacaoProvider } from "@/contexts/SimulacaoContext";
-import { LayoutGrid, CalendarDays, Trophy, GitBranch, Calculator, Newspaper, MapPin } from "lucide-react";
+import { LayoutGrid, CalendarDays, Trophy, GitBranch, Calculator } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 const CalendarioTab = lazy(() => import("@/components/copa/CalendarioTab").then((module) => ({ default: module.CalendarioTab })));
@@ -12,15 +12,12 @@ const GruposTab = lazy(() => import("@/components/copa/GruposTab").then((module)
 const ChavesTab = lazy(() => import("@/components/copa/ChavesTab").then((module) => ({ default: module.ChavesTab })));
 const SimulacaoTab = lazy(() => import("@/components/copa/SimulacaoTab").then((module) => ({ default: module.SimulacaoTab })));
 const CopaOverview = lazy(() => import("@/components/copa/CopaOverview").then((module) => ({ default: module.CopaOverview })));
-const NoticiasTab = lazy(() => import("@/components/copa/NoticiasTab").then((module) => ({ default: module.NoticiasTab })));
-const SedesTab = lazy(() => import("@/components/copa/SedesTab").then((module) => ({ default: module.SedesTab })));
-
-type CopaTab = "overview" | "calendario" | "grupos" | "chaves" | "simulacao" | "sedes" | "noticias";
-const VALID_TABS: CopaTab[] = ["overview", "calendario", "grupos", "chaves", "simulacao", "sedes", "noticias"];
+type CopaTab = "overview" | "calendario" | "grupos" | "chaves" | "simulacao";
+const VALID_TABS: CopaTab[] = ["overview", "calendario", "grupos", "chaves", "simulacao"];
 
 const TabLoadingState = () => (
   <div className="surface-card rounded-[28px] p-6 text-sm font-bold uppercase tracking-[0.18em] text-zinc-400">
-    Carregando painel...
+    Loading...
   </div>
 );
 
@@ -62,14 +59,13 @@ const Copa = () => {
     { id: "grupos", label: t('tabs.groups'), icon: <Trophy className="w-3.5 h-3.5" /> },
     { id: "chaves", label: t('tabs.bracket'), icon: <GitBranch className="w-3.5 h-3.5" /> },
     { id: "simulacao", label: t('tabs.simulator'), icon: <Calculator className="w-3.5 h-3.5" /> },
-    { id: "sedes", label: "Sedes", icon: <MapPin className="w-3.5 h-3.5" /> },
-    { id: "noticias", label: t('tabs.news'), icon: <Newspaper className="w-3.5 h-3.5" /> },
   ];
 
   return (
     <SimulacaoProvider>
       <div>
-        <div className="flex gap-2 px-4 py-3 scrollbar-hide sticky top-14 md:top-16 z-20 backdrop-blur-xl overflow-x-auto bg-background/95">
+        <div className="sticky top-14 z-20 bg-background/95 px-4 py-3 backdrop-blur-xl md:top-16">
+          <div className="flex gap-2 overflow-x-auto scrollbar-none pb-1">
           {tabs.map(t => (
             <button
               key={t.id}
@@ -77,7 +73,7 @@ const Copa = () => {
               onClick={() => handleTabChange(t.id)}
               aria-current={tab === t.id ? "page" : undefined}
               className={cn(
-                "px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-colors shrink-0 relative flex items-center gap-2",
+                "relative flex min-h-[46px] items-center justify-center gap-2 rounded-2xl px-4 py-2 text-center text-[11px] font-bold transition-colors",
                 tab === t.id
                   ? "text-primary-foreground"
                   : "bg-secondary text-secondary-foreground"
@@ -96,6 +92,7 @@ const Copa = () => {
               </span>
             </button>
           ))}
+          </div>
         </div>
 
         <div className="px-4 pt-2 pb-4">
@@ -114,8 +111,7 @@ const Copa = () => {
                 {tab === "grupos" && <GruposTab />}
                 {tab === "chaves" && <ChavesTab />}
                 {tab === "simulacao" && <SimulacaoTab />}
-                {tab === "sedes" && <SedesTab />}
-                {tab === "noticias" && <NoticiasTab />}
+
               </Suspense>
             </motion.div>
           </AnimatePresence>

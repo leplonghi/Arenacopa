@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CheckCircle2, ChevronLeft, ChevronRight, Crown, Globe, Loader2, Lock, Share2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Haptics, ImpactStyle } from "@capacitor/haptics";
 import { Share } from "@capacitor/share";
 import { db } from "@/integrations/firebase/client";
@@ -41,6 +42,7 @@ const emojisList = ["🏆", "⚽", "🔥", "👑", "🎯", "🌎", "⭐", "🥇"
 type Category = "private" | "public";
 
 export default function CriarBolao() {
+  const { t } = useTranslation("bolao");
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
@@ -213,8 +215,8 @@ export default function CriarBolao() {
       await batch.commit();
 
       toast({
-        title: "Bolão criado.",
-        description: "Agora chama a tropa e começa a brincadeira.",
+        title: t("create_bolao.review.success_title"),
+        description: t("create_bolao.review.success_desc"),
         className: "bg-emerald-500 text-white border-none font-black",
       });
 
@@ -228,8 +230,8 @@ export default function CriarBolao() {
     } catch (error) {
       console.error("Erro ao criar bolão:", error);
       toast({
-        title: "Erro ao criar bolão",
-        description: error instanceof Error ? error.message : "Revisa os dados e tenta de novo.",
+        title: t("create_bolao.review.error_title"),
+        description: error instanceof Error ? error.message : t("create_bolao.review.error_desc"),
         variant: "destructive",
       });
     } finally {
@@ -259,15 +261,15 @@ export default function CriarBolao() {
           <div className="mb-4 inline-flex rounded-full bg-primary/15 p-3 text-primary">
             <Crown className="h-6 w-6" />
           </div>
-          <h1 className="text-2xl font-black">Limite atingido</h1>
+          <h1 className="text-2xl font-black">{t("profile.premium_limit_title", { defaultValue: "Limite atingido" })}</h1>
           <p className="mt-2 text-sm text-zinc-400">
-            O plano gratuito permite criar até 2 bolões. O Premium libera ligas ilimitadas e ainda remove anúncios.
+            {t("profile.premium_limit_desc", { defaultValue: "O plano gratuito permite criar até 2 bolões. O Premium libera bolões ilimitados e ainda remove anúncios." })}
           </p>
 
           <div className="surface-card-soft mt-5 space-y-3 rounded-2xl p-4 text-sm">
-            <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-primary" /> Bolões ilimitados</div>
-            <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-primary" /> Sem anúncios</div>
-            <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-primary" /> Badge Torcedor Oficial</div>
+            <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-primary" /> {t("profile.premium_benefit_unlimited", { defaultValue: "Bolões ilimitados" })}</div>
+            <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-primary" /> {t("profile.premium_benefit_no_ads", { defaultValue: "Sem anúncios" })}</div>
+            <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-primary" /> {t("profile.premium_benefit_badge", { defaultValue: "Badge Torcedor Oficial" })}</div>
           </div>
 
           <div className="mt-6 grid gap-3">
@@ -279,7 +281,7 @@ export default function CriarBolao() {
               className="inline-flex h-14 items-center justify-center gap-2 rounded-2xl bg-primary px-5 text-[11px] font-black uppercase tracking-[0.18em] text-black disabled:opacity-60"
             >
               {isPurchasing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Crown className="h-4 w-4" />}
-              {isPurchasing ? "Processando..." : canStartPremiumCheckout ? "Desbloquear Premium - R$ 9,90" : "Premium em preparação"}
+              {isPurchasing ? t("common.loading") : canStartPremiumCheckout ? t("profile.unlock_premium", { defaultValue: "Desbloquear Premium - R$ 9,90" }) : t("profile.premium_coming_soon", { defaultValue: "Premium em preparação" })}
             </button>
             {!canStartPremiumCheckout && (
               <p className="text-center text-xs text-zinc-500">{PREMIUM_CHECKOUT_UNAVAILABLE_MESSAGE}</p>
@@ -288,7 +290,7 @@ export default function CriarBolao() {
               onClick={() => navigate(-1)}
               className="surface-input h-12 rounded-2xl bg-transparent text-sm font-bold text-zinc-300"
             >
-              Voltar
+              {t("common.back")}
             </button>
           </div>
         </div>
@@ -323,30 +325,30 @@ export default function CriarBolao() {
           <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-primary/15 text-4xl text-primary">
             {emoji}
           </div>
-          <p className="text-[11px] font-black uppercase tracking-[0.22em] text-primary">Arena criada</p>
+          <p className="text-[11px] font-black uppercase tracking-[0.22em] text-primary">{t("create_bolao.review.success_title")}</p>
           <h1 className="mt-2 text-3xl font-black">{name}</h1>
-          <p className="mt-3 text-sm text-zinc-400">Sem premiação em dinheiro. Só orgulho, zoeira e glória esportiva.</p>
+          <p className="mt-3 text-sm text-zinc-400">{t("create_bolao.free_label")}</p>
 
           <div className="mt-6 grid gap-3 md:grid-cols-2">
             <button
               onClick={handleWhatsApp}
               className="rounded-2xl bg-primary px-5 py-4 text-[11px] font-black uppercase tracking-[0.18em] text-black"
             >
-              Compartilhar no WhatsApp
+              {t("share.whatsapp")}
             </button>
             <button
               onClick={handleShareNative}
               className="surface-card-soft inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-4 text-[11px] font-black uppercase tracking-[0.18em]"
             >
               <Share2 className="h-4 w-4" />
-              Mais opções
+              {t("share.btn_share", { defaultValue: "Mais opções" })}
             </button>
           </div>
 
           <button
             onClick={() => {
               navigator.clipboard.writeText(inviteUrl);
-              toast({ title: "Link copiado." });
+              toast({ title: t("share.copied") });
             }}
             className="surface-card-soft mt-3 w-full truncate rounded-2xl px-4 py-4 text-xs font-bold text-zinc-300"
           >
@@ -357,7 +359,7 @@ export default function CriarBolao() {
             onClick={() => navigate(`/boloes/${createdBolaoId}`)}
             className="mt-6 w-full rounded-[24px] bg-primary px-6 py-5 text-[11px] font-black uppercase tracking-[0.2em] text-black"
           >
-            Acessar bolão
+            {t("page.join_action")}
           </button>
         </div>
       </div>
@@ -368,15 +370,15 @@ export default function CriarBolao() {
     <div className="mx-auto max-w-3xl px-4 pb-28 pt-6 text-white">
       <div className="mb-6 flex items-center gap-3">
         <button
-          aria-label="Voltar"
+          aria-label={t("common.back")}
           onClick={() => navigate(-1)}
           className="surface-card-soft flex h-12 w-12 items-center justify-center rounded-[20px]"
         >
           <ChevronLeft className="h-5 w-5" />
         </button>
         <div>
-          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">Novo bolão</p>
-          <h1 className="text-3xl font-black">Monte sua arena</h1>
+          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">{t("create_bolao.title")}</p>
+          <h1 className="text-3xl font-black">{t("create_bolao.subtitle")}</h1>
         </div>
       </div>
 
@@ -391,13 +393,13 @@ export default function CriarBolao() {
         {step === 0 && (
           <div className="space-y-6">
             <div>
-              <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">Etapa 1 de 5</p>
-              <h2 className="mt-1 text-2xl font-black">Identidade</h2>
-              <p className="mt-2 text-sm text-zinc-400">Nome, clima e privacidade. Sem burocracia desnecessária.</p>
+              <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">{t("creation.step_label", { current: 1 })}</p>
+              <h2 className="mt-1 text-2xl font-black">{t("create_bolao.steps.details")}</h2>
+              <p className="mt-2 text-sm text-zinc-400">{t("create_bolao.details.desc_placeholder")}</p>
             </div>
 
             <div>
-              <p className="mb-3 text-sm font-bold">Emoji da liga</p>
+              <p className="mb-3 text-sm font-bold">Emoji</p>
               <div className="flex flex-wrap gap-3">
                 {emojisList.map((e) => (
                   <button
@@ -415,27 +417,27 @@ export default function CriarBolao() {
             </div>
 
             <div>
-              <p className="mb-3 text-sm font-bold">Nome da liga</p>
+              <p className="mb-3 text-sm font-bold">{t("create_bolao.details.name_label")}</p>
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Ex: Arena da Firma"
+                placeholder={t("create_bolao.details.name_placeholder")}
                 className="surface-input w-full rounded-[24px] px-5 py-4 text-xl font-black"
               />
             </div>
 
             <div>
-              <p className="mb-3 text-sm font-bold">Descrição</p>
+              <p className="mb-3 text-sm font-bold">{t("create_bolao.details.desc_label")}</p>
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Ex: Bolão oficial dos amigos, sem premiação, só resenha."
+                placeholder={t("create_bolao.details.desc_placeholder")}
                 className="surface-input min-h-[110px] w-full rounded-[24px] px-5 py-4 text-sm"
               />
             </div>
 
             <div>
-              <p className="mb-3 text-sm font-bold">Privacidade</p>
+              <p className="mb-3 text-sm font-bold">{t("create_bolao.steps.category")}</p>
               <div className="grid gap-3 md:grid-cols-2">
                 <button
                   onClick={() => setCategory("private")}
@@ -445,8 +447,8 @@ export default function CriarBolao() {
                   )}
                 >
                   <Lock className="mb-3 h-5 w-5 text-primary" />
-                  <p className="font-black">Privado</p>
-                  <p className="mt-1 text-sm text-zinc-400">Só entra quem tiver código ou link.</p>
+                  <p className="font-black">{t("create_bolao.category.private.title")}</p>
+                  <p className="mt-1 text-sm text-zinc-400">{t("create_bolao.category.private.desc")}</p>
                 </button>
                 <button
                   onClick={() => setCategory("public")}
@@ -456,8 +458,8 @@ export default function CriarBolao() {
                   )}
                 >
                   <Globe className="mb-3 h-5 w-5 text-primary" />
-                  <p className="font-black">Público</p>
-                  <p className="mt-1 text-sm text-zinc-400">Aparece em explorar bolões públicos.</p>
+                  <p className="font-black">{t("create_bolao.category.public.title")}</p>
+                  <p className="mt-1 text-sm text-zinc-400">{t("create_bolao.category.public.desc")}</p>
                 </button>
               </div>
             </div>
@@ -501,7 +503,7 @@ export default function CriarBolao() {
 
         <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
           <div className="text-xs text-zinc-500">
-            {createdCount} bolão{createdCount === 1 ? "" : "ões"} criados na conta
+            {createdCount} {t("page.kicker").toLowerCase()} {createdCount === 1 ? "" : ""} criados na conta
           </div>
 
           <div className="flex gap-3">
@@ -511,7 +513,7 @@ export default function CriarBolao() {
                 className="surface-card-soft inline-flex h-12 items-center gap-2 rounded-2xl px-5 text-[11px] font-black uppercase tracking-[0.18em]"
               >
                 <ChevronLeft className="h-4 w-4" />
-                Voltar
+                {t("common.back")}
               </button>
             )}
 
@@ -521,7 +523,7 @@ export default function CriarBolao() {
                 disabled={!canProceed}
                 className="inline-flex h-12 items-center gap-2 rounded-2xl bg-primary px-5 text-[11px] font-black uppercase tracking-[0.18em] text-black disabled:opacity-60"
               >
-                Continuar
+                {t("create_bolao.actions.continue")}
                 <ChevronRight className="h-4 w-4" />
               </button>
             ) : (
@@ -531,7 +533,7 @@ export default function CriarBolao() {
                 className="inline-flex h-12 items-center gap-2 rounded-2xl bg-primary px-5 text-[11px] font-black uppercase tracking-[0.18em] text-black disabled:opacity-60"
               >
                 {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-                {creating ? "Criando..." : "Criar bolão"}
+                {creating ? t("create_bolao.actions.creating") : t("page.create")}
               </button>
             )}
           </div>

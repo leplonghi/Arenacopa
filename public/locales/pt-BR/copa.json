@@ -5,7 +5,9 @@
         "groups": "Grupos",
         "bracket": "Mata-mata",
         "simulator": "Simulador",
-        "news": "Notícias"
+        "news": "Notícias",
+        "hosts": "Sedes",
+        "history": "História"
     },
     "groups": {
         "mode": {

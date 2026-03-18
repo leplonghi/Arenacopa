@@ -1,4 +1,5 @@
 import { CheckCircle2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { listBolaoFormats } from "@/services/boloes/bolao-format.service";
 import type { BolaoFormatSlug } from "@/types/bolao";
@@ -9,15 +10,16 @@ interface FormatStepProps {
 }
 
 export function FormatStep({ selectedFormatId, onSelect }: FormatStepProps) {
+    const { t } = useTranslation("bolao");
     const formats = listBolaoFormats();
 
     return (
         <div className="space-y-6">
             <div>
-                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">Etapa 2 de 5</p>
-                <h2 className="mt-1 text-2xl font-black">Formato do bolão</h2>
+                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">{t("creation.step_label", { current: 2 })}</p>
+                <h2 className="mt-1 text-2xl font-black">{t("creation.format_title")}</h2>
                 <p className="mt-2 text-sm text-zinc-400">
-                    Escolha a experiência base da liga. Você ainda pode ajustar os mercados no próximo passo.
+                    {t("creation.format_desc")}
                 </p>
             </div>
 
@@ -49,7 +51,7 @@ export function FormatStep({ selectedFormatId, onSelect }: FormatStepProps) {
                                         </div>
                                         <p className="mt-2 text-sm text-zinc-400">{format.description}</p>
                                         <p className="mt-3 text-[11px] font-black uppercase tracking-[0.18em] text-primary">
-                                            {format.defaultMarketIds.length} mercados padrão
+                                            {t("creation.default_markets", { count: format.defaultMarketIds.length })}
                                         </p>
                                     </div>
                                 </div>

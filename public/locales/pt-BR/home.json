@@ -36,5 +36,31 @@
         "desc": "Não consegui atualizar seu painel agora. Alguns blocos podem aparecer vazios.",
         "retry": "Tentar de novo"
     },
+    "hero": {
+        "kicker": "Dashboard central",
+        "get_elite": "Obter Elite",
+        "elite_member": "Membro Elite"
+    },
+    "quick_panel": {
+        "section_title": "Seu ritmo",
+        "view_ranking": "Ver ranking",
+        "kicker": "Visão rápida da temporada",
+        "title": "Seu painel competitivo",
+        "description": "Veja sua posição geral, acompanhe a evolução dos seus bolões e entre no ranking completo quando quiser.",
+        "best_rank": "Melhor rank",
+        "points": "Pontos",
+        "pools": "Bolões"
+    },
+    "upcoming": {
+        "title": "Próximos jogos",
+        "view_calendar": "Ver calendário",
+        "empty": "Ainda não há partidas futuras carregadas para exibir aqui.",
+        "favorite_team": "Seu time: {{team}}",
+        "next_round": "Próxima rodada"
+    },
+    "news": {
+        "title": "Últimas do front",
+        "view_all": "Central de notícias"
+    },
     "cta_predict": "Fazer Palpites"
 }

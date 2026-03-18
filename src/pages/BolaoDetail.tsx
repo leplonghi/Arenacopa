@@ -441,20 +441,20 @@ export default function BolaoDetail() {
   const tabs = useMemo(
     () => {
       const baseTabs = [
-        { id: "overview", label: "Visão Geral" },
+        { id: "overview", label: "Resumo" },
         { id: "ranking", label: "Ranking" },
-        { id: "jogos", label: highlightedMatch ? "Palpite pendente" : "Seus palpites" },
+        { id: "jogos", label: highlightedMatch ? "Pendente" : "Jogos" },
       ];
 
       if (phaseMarkets.length > 0) {
-        baseTabs.push({ id: "fase", label: "Por fase" });
+        baseTabs.push({ id: "fase", label: "Fase" });
       }
 
-      baseTabs.push({ id: "palpites", label: "Palpites rivais" });
+      baseTabs.push({ id: "palpites", label: "Rivais" });
       baseTabs.push({ id: "membros", label: "Membros" });
 
       if (tournamentMarkets.length > 0 || bolaoMarkets.length === 0) {
-        baseTabs.push({ id: "extras", label: tournamentMarkets.length > 0 ? "Campeonato" : "Extras" });
+        baseTabs.push({ id: "extras", label: tournamentMarkets.length > 0 ? "Camp." : "Extras" });
       }
 
       if (specialMarkets.length > 0) {
@@ -575,13 +575,13 @@ export default function BolaoDetail() {
         )}
       </div>
 
-      <div className="mb-8 flex space-x-2 overflow-x-auto pb-2 scrollbar-hide">
+      <div className="mb-8 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:flex lg:flex-wrap lg:gap-3">
         {tabs.map((tab) => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
             className={cn(
-              "whitespace-nowrap rounded-2xl px-6 py-3 text-[11px] font-black uppercase tracking-[0.18em] transition-all",
+              "min-h-[52px] rounded-2xl px-4 py-3 text-[11px] font-black uppercase tracking-[0.14em] transition-all",
               activeTab === tab.id
                 ? "bg-white text-black shadow-[0_0_20px_rgba(255,255,255,0.3)]"
                 : "surface-card-soft text-zinc-400 hover:text-white"
@@ -690,7 +690,7 @@ export default function BolaoDetail() {
       <Dialog open={infoOpen} onOpenChange={setInfoOpen}>
         <DialogContent className="surface-dialog sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Regras da arena</DialogTitle>
+            <DialogTitle>Regras do bolão</DialogTitle>
           </DialogHeader>
 
           <div className="surface-card-soft space-y-3 rounded-2xl p-4 text-sm">

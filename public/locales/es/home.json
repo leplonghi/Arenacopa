@@ -36,5 +36,31 @@
         "desc": "No pude actualizar tu panel ahora. Algunos bloques pueden aparecer vacíos.",
         "retry": "Intentar de nuevo"
     },
+    "hero": {
+        "kicker": "Panel central",
+        "get_elite": "Obtener Elite",
+        "elite_member": "Miembro Elite"
+    },
+    "quick_panel": {
+        "section_title": "Tu ritmo",
+        "view_ranking": "Ver ranking",
+        "kicker": "Vista rápida del torneo",
+        "title": "Tu panel competitivo",
+        "description": "Mira tu posición general, sigue la evolución de tus quinielas y entra al ranking completo cuando quieras.",
+        "best_rank": "Mejor puesto",
+        "points": "Puntos",
+        "pools": "Quinielas"
+    },
+    "upcoming": {
+        "title": "Próximos partidos",
+        "view_calendar": "Ver calendario",
+        "empty": "Todavía no hay partidos futuros cargados para mostrar aquí.",
+        "favorite_team": "Tu equipo: {{team}}",
+        "next_round": "Próxima jornada"
+    },
+    "news": {
+        "title": "Últimas noticias",
+        "view_all": "Centro de noticias"
+    },
     "cta_predict": "Hacer Pronósticos"
 }

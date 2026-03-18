@@ -19,7 +19,6 @@ const CriarBolao = lazy(() => import("./pages/CriarBolao"));
 const BolaoDetail = lazy(() => import("./pages/BolaoDetail"));
 const Perfil = lazy(() => import("./pages/Perfil"));
 const Ranking = lazy(() => import("./pages/Ranking"));
-const Menu = lazy(() => import("./pages/Menu"));
 const Rules = lazy(() => import("./pages/Rules"));
 const TeamDetails = lazy(() => import("./pages/TeamDetails"));
 const Auth = lazy(() => import("./pages/Auth"));
@@ -31,6 +30,51 @@ const Privacidade = lazy(() => import("./pages/Privacidade"));
 const Termos = lazy(() => import("./pages/Termos"));
 
 const queryClient = new QueryClient();
+
+const legacyCopaMap: Record<string, string> = {
+  overview: "",
+  today: "",
+  calendar: "calendario",
+  groups: "grupos",
+  bracket: "chaves",
+  simulator: "simulacao",
+  hosts: "sedes",
+  news: "noticias",
+  history: "historia",
+};
+
+const legacyGuiaMap: Record<string, string> = {
+  map: "mapa",
+  cities: "",
+  city: "",
+  stadiums: "estadios",
+  hosts: "estadios",
+};
+
+function LegacyRedirect({ to }: { to: string }) {
+  return <Navigate to={to} replace />;
+}
+
+function LegacyCopaRedirect() {
+  const location = useLocation();
+  const slug = location.pathname.split("/").filter(Boolean)[1] ?? "";
+  const mapped = legacyCopaMap[slug] ?? "";
+  return <Navigate to={mapped ? `/copa/${mapped}` : "/copa"} replace />;
+}
+
+function LegacyGuiaRedirect() {
+  const location = useLocation();
+  const slug = location.pathname.split("/").filter(Boolean)[1] ?? "";
+  const mapped = legacyGuiaMap[slug] ?? "";
+  return <Navigate to={mapped ? `/guia/${mapped}` : "/guia"} replace />;
+}
+
+function LegacyPoolDetailRedirect() {
+  const location = useLocation();
+  const segments = location.pathname.split("/").filter(Boolean);
+  const poolId = segments[1];
+  return <Navigate to={poolId ? `/boloes/${poolId}` : "/boloes"} replace />;
+}
 
 function DeepLinkListener() {
   const navigate = useNavigate();
@@ -88,19 +132,35 @@ const AppRoutes = () => (
     <Route path="/b/:inviteCode" element={<PublicInvite />} />
     <Route path="/privacidade" element={<Privacidade />} />
     <Route path="/termos" element={<Termos />} />
+    <Route path="/privacy" element={<LegacyRedirect to="/privacidade" />} />
+    <Route path="/terms" element={<LegacyRedirect to="/termos" />} />
     <Route path="/" element={<ProtectedRoute><Layout><Index /></Layout></ProtectedRoute>} />
     <Route path="/copa" element={<ProtectedRoute><Layout><Copa /></Layout></ProtectedRoute>} />
     <Route path="/copa/:subtab" element={<ProtectedRoute><Layout><Copa /></Layout></ProtectedRoute>} />
+    <Route path="/cup" element={<ProtectedRoute><LegacyRedirect to="/copa" /></ProtectedRoute>} />
+    <Route path="/cup/:subtab" element={<ProtectedRoute><LegacyCopaRedirect /></ProtectedRoute>} />
+    <Route path="/simulator" element={<ProtectedRoute><LegacyRedirect to="/copa/simulacao" /></ProtectedRoute>} />
+    <Route path="/copas/central" element={<ProtectedRoute><LegacyRedirect to="/copa" /></ProtectedRoute>} />
     <Route path="/boloes" element={<ProtectedRoute><Layout><Boloes /></Layout></ProtectedRoute>} />
     <Route path="/boloes/criar" element={<ProtectedRoute><Layout><CriarBolao /></Layout></ProtectedRoute>} />
     <Route path="/boloes/:id" element={<ProtectedRoute><Layout><BolaoDetail /></Layout></ProtectedRoute>} />
+    <Route path="/criar-bolao" element={<ProtectedRoute><LegacyRedirect to="/boloes/criar" /></ProtectedRoute>} />
+    <Route path="/pools" element={<ProtectedRoute><LegacyRedirect to="/boloes" /></ProtectedRoute>} />
+    <Route path="/pools/create" element={<ProtectedRoute><LegacyRedirect to="/boloes/criar" /></ProtectedRoute>} />
+    <Route path="/pools/:id" element={<ProtectedRoute><LegacyPoolDetailRedirect /></ProtectedRoute>} />
     <Route path="/guia" element={<ProtectedRoute><Layout><Guia /></Layout></ProtectedRoute>} />
     <Route path="/guia/:subtab" element={<ProtectedRoute><Layout><Guia /></Layout></ProtectedRoute>} />
+    <Route path="/guide" element={<ProtectedRoute><LegacyRedirect to="/guia" /></ProtectedRoute>} />
+    <Route path="/guide/:subtab" element={<ProtectedRoute><LegacyGuiaRedirect /></ProtectedRoute>} />
     <Route path="/team/:code" element={<ProtectedRoute><Layout><TeamDetails /></Layout></ProtectedRoute>} />
     <Route path="/perfil" element={<ProtectedRoute><Layout><Perfil /></Layout></ProtectedRoute>} />
+    <Route path="/profile" element={<ProtectedRoute><LegacyRedirect to="/perfil" /></ProtectedRoute>} />
+    <Route path="/account" element={<ProtectedRoute><LegacyRedirect to="/perfil" /></ProtectedRoute>} />
+    <Route path="/conta" element={<ProtectedRoute><LegacyRedirect to="/perfil" /></ProtectedRoute>} />
     <Route path="/ranking" element={<ProtectedRoute><Layout><Ranking /></Layout></ProtectedRoute>} />
-    <Route path="/menu" element={<ProtectedRoute><Layout><Menu /></Layout></ProtectedRoute>} />
+    <Route path="/menu" element={<ProtectedRoute><Navigate to="/perfil" replace /></ProtectedRoute>} />
     <Route path="/regras" element={<ProtectedRoute><Layout><Rules /></Layout></ProtectedRoute>} />
+    <Route path="/rules" element={<ProtectedRoute><LegacyRedirect to="/regras" /></ProtectedRoute>} />
     <Route path="/premium" element={<ProtectedRoute><Layout><Premium /></Layout></ProtectedRoute>} />
     <Route path="*" element={<NotFound />} />
   </Routes>
