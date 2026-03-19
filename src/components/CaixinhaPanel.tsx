@@ -1,0 +1,175 @@
+import { useState } from "react";
+import { doc, updateDoc } from "firebase/firestore";
+import { db } from "@/integrations/firebase/client";
+import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
+import { DollarSign, MessageSquare } from "lucide-react";
+
+interface BolaoData {
+  id: string;
+  name: string;
+  prize_type?: string;
+  prize_description?: string;
+  pix_key?: string;
+  caixinha_enabled?: boolean;
+  caixinha_value_per_person?: number | null;
+}
+
+interface Props {
+  bolao: BolaoData;
+  isCreator: boolean;
+}
+
+const PRIZE_TYPES = [
+  { id: "money",  emoji: "💰", label: "Dinheiro" },
+  { id: "beer",   emoji: "🍺", label: "Cerveja" },
+  { id: "food",   emoji: "🍖", label: "Churrasco" },
+  { id: "task",   emoji: "📝", label: "Tarefa" },
+  { id: "glory",  emoji: "🏅", label: "Glória" },
+  { id: "custom", emoji: "✏️", label: "Personalizado" },
+];
+
+export function CaixinhaPanel({ bolao, isCreator }: Props) {
+  const { toast } = useToast();
+  const [prizeType, setPrizeType] = useState(bolao.prize_type ?? "glory");
+  const [prizeDesc, setPrizeDesc] = useState(bolao.prize_description ?? "");
+  const [pixKey, setPixKey] = useState(bolao.pix_key ?? "");
+  const [caixinha, setCaixinha] = useState(bolao.caixinha_enabled ?? false);
+  const [valuePerPerson, setValuePerPerson] = useState<string>(String(bolao.caixinha_value_per_person ?? ""));
+  const [saving, setSaving] = useState(false);
+  const [pixError, setPixError] = useState<string | null>(null);
+
+  // ── PIX key validation ──────────────────────────────────────────────
+  const validatePixKey = (key: string): string | null => {
+    if (!key.trim()) return "Chave PIX obrigatória para receber via transferência.";
+    const raw = key.replace(/[\s.\/\-]/g, "");
+    if (/^\d{11}$/.test(raw) || /^\d{14}$/.test(raw)) return null;   // CPF / CNPJ
+    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(key.trim())) return null; // e-mail
+    if (/^(\+55)?[\s\-]?\(?\d{2}\)?[\s\-]?9?\d{4}[\s\-]?\d{4}$/.test(key.trim())) return null; // fone
+    if (/^[0-9a-fA-F\-]{32,36}$/.test(key.trim())) return null;       // UUID aleatório
+    return "Formato inválido. Use CPF, CNPJ, e-mail, telefone ou chave aleatória.";
+  };
+
+  const handleSave = async () => {
+    if (prizeType === "money" && pixKey) {
+      const err = validatePixKey(pixKey);
+      if (err) { setPixError(err); return; }
+    }
+    setPixError(null);
+    setSaving(true);
+    try {
+      await updateDoc(doc(db, "boloes", bolao.id), {
+        prize_type: prizeType,
+        prize_description: prizeDesc || null,
+        pix_key: pixKey || null,
+        caixinha_enabled: caixinha,
+        caixinha_value_per_person: caixinha && valuePerPerson ? Number(valuePerPerson) : null,
+        updated_at: new Date().toISOString(),
+      });
+      toast({ title: "Caixinha atualizada!", className: "bg-emerald-500 text-white font-black" });
+    } catch (e) {
+      toast({ title: "Erro ao salvar", variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleWhatsApp = () => {
+    const val = valuePerPerson ? `R$${valuePerPerson}` : "o combinado";
+    const pix = pixKey ? ` PIX: ${pixKey}` : "";
+    const msg = `Galera do bolão "${bolao.name}" — cada um manda ${val}${pix}. Prêmio: ${prizeDesc || prizeType}. Bora! 🏆`;
+    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
+  };
+
+  // Read-only view for participants
+  if (!isCreator) {
+    const type = PRIZE_TYPES.find(p => p.id === prizeType);
+    return (
+      <div className="space-y-3">
+        {prizeType && prizeType !== "glory" && (
+          <div className="flex items-center gap-3 rounded-2xl bg-primary/10 border border-primary/20 px-4 py-3">
+            <span className="text-2xl">{type?.emoji}</span>
+            <div>
+              <p className="text-xs font-black uppercase tracking-widest text-primary">Prêmio</p>
+              <p className="text-sm font-bold">{prizeDesc || type?.label}</p>
+            </div>
+          </div>
+        )}
+        {caixinha && valuePerPerson && (
+          <div className="flex items-center gap-3 rounded-2xl bg-white/5 px-4 py-3">
+            <DollarSign className="h-5 w-5 text-primary" />
+            <p className="text-sm font-bold">Caixinha: R${valuePerPerson} por pessoa</p>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Admin editor
+  return (
+    <div className="space-y-6">
+      <div>
+        <p className="mb-1 text-xs font-black uppercase tracking-widest text-zinc-400">Tipo de Prêmio</p>
+        <div className="grid grid-cols-3 gap-2 sm:grid-cols-6">
+          {PRIZE_TYPES.map((p) => (
+            <button key={p.id} onClick={() => setPrizeType(p.id)}
+              className={cn("rounded-2xl border p-3 text-center transition-all",
+                prizeType === p.id ? "border-primary bg-primary/10" : "surface-card-soft")}>
+              <div className="text-2xl">{p.emoji}</div>
+              <p className="mt-1 text-xs font-bold">{p.label}</p>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <p className="mb-2 text-xs font-black uppercase tracking-widest text-zinc-400">Descrição do Prêmio</p>
+        <input value={prizeDesc} onChange={(e) => setPrizeDesc(e.target.value)}
+          placeholder="Ex: 1 caixa de cerveja, janta no rodízio..."
+          className="surface-input w-full rounded-2xl px-4 py-3 text-sm" />
+      </div>
+
+      {prizeType === "money" && (
+        <div>
+          <p className="mb-2 text-xs font-black uppercase tracking-widest text-zinc-400">Chave PIX</p>
+          <input value={pixKey} onChange={(e) => { setPixKey(e.target.value); setPixError(null); }}
+            placeholder="CPF, e-mail, telefone ou chave aleatória"
+            className="surface-input w-full rounded-2xl px-4 py-3 text-sm" />
+          {pixError && <p className="mt-1.5 px-1 text-xs text-red-400">{pixError}</p>}
+        </div>
+      )}
+
+      <div className="flex items-center justify-between rounded-2xl bg-white/5 px-4 py-3">
+        <div>
+          <p className="text-sm font-black">Habilitar Caixinha</p>
+          <p className="text-xs text-zinc-400">Controle quem pagou</p>
+        </div>
+        <button onClick={() => setCaixinha(!caixinha)}
+          className={cn("h-7 w-14 rounded-full transition-all", caixinha ? "bg-primary" : "bg-white/20")}>
+          <span className={cn("block h-5 w-5 rounded-full bg-white shadow transition-all mx-1", caixinha ? "translate-x-7" : "translate-x-0")} />
+        </button>
+      </div>
+
+      {caixinha && (
+        <div>
+          <p className="mb-2 text-xs font-black uppercase tracking-widest text-zinc-400">Valor por pessoa (R$)</p>
+          <input type="number" value={valuePerPerson} onChange={(e) => setValuePerPerson(e.target.value)}
+            placeholder="Ex: 10" className="surface-input w-full rounded-2xl px-4 py-3 text-sm" />
+        </div>
+      )}
+
+      <div className="flex gap-3">
+        <button onClick={handleSave} disabled={saving}
+          className="flex-1 rounded-2xl bg-primary py-3 text-[11px] font-black uppercase tracking-widest text-black disabled:opacity-60">
+          {saving ? "Salvando..." : "Salvar"}
+        </button>
+        {(caixinha || prizeType === "money") && (
+          <button onClick={handleWhatsApp}
+            className="flex items-center gap-2 rounded-2xl bg-white/10 px-4 py-3 text-sm font-bold hover:bg-white/20 transition-colors">
+            <MessageSquare className="h-4 w-4 text-primary" /> WhatsApp
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}

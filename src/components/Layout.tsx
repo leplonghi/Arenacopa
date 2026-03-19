@@ -1,5 +1,5 @@
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { Home, Trophy, Bell, ChevronLeft, Dices, User } from "lucide-react";
+import { Home, Trophy, Bell, ChevronLeft, Dices, User, Users2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useState } from "react";
@@ -70,6 +70,8 @@ function Header({ className }: { className?: string }) {
     if (path === "/boloes") return t('header.titles.boloes');
     if (path === "/boloes/criar") return t('header.titles.create_bolao');
     if (path.startsWith("/boloes/")) return t('header.titles.bolao_detail');
+    if (path === "/grupos") return "Meus Grupos";
+    if (path.startsWith("/grupos/")) return "Grupo";
     if (path === "/perfil") return t('header.titles.profile');
     return null;
   };
@@ -164,12 +166,13 @@ function BottomTabs({ className }: { className?: string }) {
     { path: "/", icon: Home, label: t('nav.home') },
     { path: "/copa", icon: Trophy, label: t('nav.copa') },
     { path: "/boloes", icon: Dices, label: t('nav.bolao'), isFab: true },
+    { path: "/grupos", icon: Users2, label: "Grupos" },
     { path: "/perfil", icon: User, label: t('nav.profile') },
   ];
 
   return (
     <nav className={cn("fixed bottom-0 inset-x-0 z-30 backdrop-blur-md border-t border-white/[0.06] safe-bottom shadow-[0_-4px_30px_rgba(0,0,0,0.4)] bg-gradient-to-r from-[#0C321A]/80 to-[#1A4D2E]/75", className)}>
-      <div className="mx-auto grid h-[72px] max-w-md grid-cols-4 items-center px-2">
+      <div className="mx-auto grid h-[68px] max-w-md grid-cols-5 items-center px-1">
         {tabs.map((tab) => {
           if (tab.isFab) {
             return <FabWithPending key={tab.path} isActive={isTabActive(tab.path)} />;
@@ -188,8 +191,8 @@ function BottomTabs({ className }: { className?: string }) {
             >
               {({ isActive }) => (
                 <>
-                  {tab.icon && <tab.icon className="w-5 h-5" strokeWidth={isActive ? 2.5 : 1.8} />}
-                  <span className={cn("text-[10px] leading-none", isActive ? "font-bold" : "font-medium")}>{tab.label}</span>
+                  {tab.icon && <tab.icon className="w-[18px] h-[18px]" strokeWidth={isActive ? 2.5 : 1.8} />}
+                  <span className={cn("hidden min-[320px]:inline-block text-[9px] leading-none truncate", isActive ? "font-bold" : "font-medium")}>{tab.label}</span>
                 </>
               )}
             </NavLink>
@@ -208,6 +211,7 @@ function AppSidebar({ className }: { className?: string }) {
     { path: "/", icon: Home, label: t('nav.home') },
     { path: "/copa", icon: Trophy, label: t('nav.copa') },
     { path: "/boloes", icon: Dices, label: t('nav.bolao'), isFab: true },
+    { path: "/grupos", icon: Users2, label: "Grupos" },
     { path: "/perfil", icon: User, label: t('nav.profile') },
   ];
 

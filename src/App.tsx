@@ -26,6 +26,8 @@ const Guia = lazy(() => import("./pages/Guia"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Premium = lazy(() => import("./pages/Premium"));
 const PublicInvite = lazy(() => import("./pages/PublicInvite"));
+const Grupos = lazy(() => import("./pages/Grupos"));
+const GrupoDetail = lazy(() => import("./pages/GrupoDetail"));
 const Privacidade = lazy(() => import("./pages/Privacidade"));
 const Termos = lazy(() => import("./pages/Termos"));
 
@@ -136,6 +138,9 @@ const AppRoutes = () => (
     <Route path="/terms" element={<LegacyRedirect to="/termos" />} />
     <Route path="/" element={<ProtectedRoute><Layout><Index /></Layout></ProtectedRoute>} />
     <Route path="/copa" element={<ProtectedRoute><Layout><Copa /></Layout></ProtectedRoute>} />
+    <Route path="/copa/sedes" element={<ProtectedRoute><Navigate to="/guia/mapa" replace /></ProtectedRoute>} />
+    <Route path="/copa/historia" element={<ProtectedRoute><Navigate to="/guia/historia" replace /></ProtectedRoute>} />
+    <Route path="/copa/noticias" element={<ProtectedRoute><Navigate to="/guia/noticias" replace /></ProtectedRoute>} />
     <Route path="/copa/:subtab" element={<ProtectedRoute><Layout><Copa /></Layout></ProtectedRoute>} />
     <Route path="/cup" element={<ProtectedRoute><LegacyRedirect to="/copa" /></ProtectedRoute>} />
     <Route path="/cup/:subtab" element={<ProtectedRoute><LegacyCopaRedirect /></ProtectedRoute>} />
@@ -148,6 +153,8 @@ const AppRoutes = () => (
     <Route path="/pools" element={<ProtectedRoute><LegacyRedirect to="/boloes" /></ProtectedRoute>} />
     <Route path="/pools/create" element={<ProtectedRoute><LegacyRedirect to="/boloes/criar" /></ProtectedRoute>} />
     <Route path="/pools/:id" element={<ProtectedRoute><LegacyPoolDetailRedirect /></ProtectedRoute>} />
+    <Route path="/grupos" element={<ProtectedRoute><Layout><Grupos /></Layout></ProtectedRoute>} />
+    <Route path="/grupos/:grupoId" element={<ProtectedRoute><Layout><GrupoDetail /></Layout></ProtectedRoute>} />
     <Route path="/guia" element={<ProtectedRoute><Layout><Guia /></Layout></ProtectedRoute>} />
     <Route path="/guia/:subtab" element={<ProtectedRoute><Layout><Guia /></Layout></ProtectedRoute>} />
     <Route path="/guide" element={<ProtectedRoute><LegacyRedirect to="/guia" /></ProtectedRoute>} />
@@ -158,7 +165,6 @@ const AppRoutes = () => (
     <Route path="/account" element={<ProtectedRoute><LegacyRedirect to="/perfil" /></ProtectedRoute>} />
     <Route path="/conta" element={<ProtectedRoute><LegacyRedirect to="/perfil" /></ProtectedRoute>} />
     <Route path="/ranking" element={<ProtectedRoute><Layout><Ranking /></Layout></ProtectedRoute>} />
-    <Route path="/menu" element={<ProtectedRoute><Navigate to="/perfil" replace /></ProtectedRoute>} />
     <Route path="/regras" element={<ProtectedRoute><Layout><Rules /></Layout></ProtectedRoute>} />
     <Route path="/rules" element={<ProtectedRoute><LegacyRedirect to="/regras" /></ProtectedRoute>} />
     <Route path="/premium" element={<ProtectedRoute><Layout><Premium /></Layout></ProtectedRoute>} />

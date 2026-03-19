@@ -20,11 +20,13 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { teams } from "@/data/mockData";
 import { Flag } from "@/components/Flag";
 import { cn } from "@/lib/utils";
 import { JogosTab } from "@/components/copa/bolao/JogosTab";
 import { RealtimeRankingTab } from "@/components/copa/bolao/RealtimeRankingTab";
+import { CaixinhaPanel } from "@/components/CaixinhaPanel";
 import { PublicPalpitesTab } from "@/components/copa/bolao/PublicPalpitesTab";
 import { OverviewTab } from "@/components/copa/bolao/OverviewTab";
 import { MembrosTab } from "@/components/copa/bolao/MembrosTab";
@@ -406,7 +408,7 @@ export default function BolaoDetail() {
 
   const handleBolaoIntroToPredictions = useCallback(() => {
     void persistBolaoIntroState({ seen_markets: true });
-    setActiveTab("jogos");
+    setActiveTab("palpitar");
     setShowBolaoIntro(false);
   }, [persistBolaoIntroState]);
 
@@ -439,36 +441,20 @@ export default function BolaoDetail() {
   }, [activeTourTab, persistBolaoIntroState]);
 
   const tabs = useMemo(
-    () => {
-      const baseTabs = [
-        { id: "overview", label: "Resumo" },
-        { id: "ranking", label: "Ranking" },
-        { id: "jogos", label: highlightedMatch ? "Pendente" : "Jogos" },
-      ];
-
-      if (phaseMarkets.length > 0) {
-        baseTabs.push({ id: "fase", label: "Fase" });
-      }
-
-      baseTabs.push({ id: "palpites", label: "Rivais" });
-      baseTabs.push({ id: "membros", label: "Membros" });
-
-      if (tournamentMarkets.length > 0 || bolaoMarkets.length === 0) {
-        baseTabs.push({ id: "extras", label: tournamentMarkets.length > 0 ? "Camp." : "Extras" });
-      }
-
-      if (specialMarkets.length > 0) {
-        baseTabs.push({ id: "especiais", label: "Especiais" });
-      }
-
-      return baseTabs;
-    },
-    [highlightedMatch, phaseMarkets.length, specialMarkets.length, tournamentMarkets.length, bolaoMarkets.length]
+    () => [
+      { id: "palpitar", label: highlightedMatch ? "Palpitar (pendente)" : "Palpitar" },
+      { id: "ranking",  label: "Ranking" },
+      { id: "galera",   label: "A Galera" },
+      { id: "config",   label: "Config" },
+    ],
+    [highlightedMatch]
   );
+
+  const [galeraView, setGaleraView] = useState("rivais");
 
   useEffect(() => {
     if (highlightedMatch) {
-      setActiveTab("jogos");
+      setActiveTab("palpitar");
     }
   }, [highlightedMatch]);
 
@@ -478,7 +464,7 @@ export default function BolaoDetail() {
       return;
     }
 
-    setActiveTab("ranking");
+    setActiveTab("palpitar");
   }, [initialTab, validTabs]);
 
   if (loading) return <BolaoDetailSkeleton />;
@@ -594,66 +580,84 @@ export default function BolaoDetail() {
 
       <div className="surface-card-strong rounded-[32px] p-4 md:p-6">
         {activeTourTab && <BolaoTour tab={activeTourTab} onDismiss={dismissTour} />}
-        {activeTab === "overview" && bolao && (
-          <OverviewTab 
-            bolao={bolao} 
-            members={members} 
-            palpites={myPalpites} 
-            userId={user!.id} 
-            isCreator={isCreator}
-            markets={bolaoMarkets}
-            marketPredictions={allMarketPredictions}
-            activityFeed={activityFeed}
-            onShare={handleShareInvite} 
-          />
+
+        {/* ── Palpitar: jogos + fases collapsíveis ── */}
+        {activeTab === "palpitar" && (
+          <div className="space-y-4">
+            <JogosTab bolaoId={bolao.id} highlightedMatchId={highlightedMatch || undefined} markets={bolaoMarkets} predictions={myMarketPredictions} />
+            {(phaseMarkets.length > 0 || tournamentMarkets.length > 0 || bolaoMarkets.length === 0 || specialMarkets.length > 0) && (
+              <Accordion type="multiple" className="space-y-2">
+                {phaseMarkets.length > 0 && (
+                  <AccordionItem value="fase" className="rounded-2xl border-0 bg-white/5 overflow-hidden">
+                    <AccordionTrigger className="px-4 py-3 text-sm font-black uppercase tracking-widest text-zinc-400 hover:no-underline hover:text-zinc-200 [&>svg]:hidden">
+                      <span className="flex items-center justify-between w-full">
+                        Fase de grupos <ChevronDown className="w-4 h-4 transition-transform duration-200 [[data-state=open]_&]:rotate-180" />
+                      </span>
+                    </AccordionTrigger>
+                    <AccordionContent className="px-0 pb-0">
+                      <PhaseMarketsTab bolaoId={bolao.id} userId={user!.id} markets={phaseMarkets} predictions={myMarketPredictions} canManage={isCreator} />
+                    </AccordionContent>
+                  </AccordionItem>
+                )}
+                {(tournamentMarkets.length > 0 || bolaoMarkets.length === 0) && (
+                  <AccordionItem value="campeonato" className="rounded-2xl border-0 bg-white/5 overflow-hidden">
+                    <AccordionTrigger className="px-4 py-3 text-sm font-black uppercase tracking-widest text-zinc-400 hover:no-underline hover:text-zinc-200 [&>svg]:hidden">
+                      <span className="flex items-center justify-between w-full">
+                        Campeonato <ChevronDown className="w-4 h-4 transition-transform duration-200 [[data-state=open]_&]:rotate-180" />
+                      </span>
+                    </AccordionTrigger>
+                    <AccordionContent className="px-0 pb-0">
+                      <ExtrasTab bolaoId={bolao.id} userId={user!.id} markets={bolaoMarkets} predictions={myMarketPredictions} canManage={isCreator} />
+                    </AccordionContent>
+                  </AccordionItem>
+                )}
+                {specialMarkets.length > 0 && (
+                  <AccordionItem value="especiais" className="rounded-2xl border-0 bg-white/5 overflow-hidden">
+                    <AccordionTrigger className="px-4 py-3 text-sm font-black uppercase tracking-widest text-zinc-400 hover:no-underline hover:text-zinc-200 [&>svg]:hidden">
+                      <span className="flex items-center justify-between w-full">
+                        Especiais <ChevronDown className="w-4 h-4 transition-transform duration-200 [[data-state=open]_&]:rotate-180" />
+                      </span>
+                    </AccordionTrigger>
+                    <AccordionContent className="px-0 pb-0">
+                      <SpecialMarketsTab bolaoId={bolao.id} userId={user!.id} markets={specialMarkets} predictions={myMarketPredictions} phaseMarkets={phaseMarkets} canManage={isCreator} />
+                    </AccordionContent>
+                  </AccordionItem>
+                )}
+              </Accordion>
+            )}
+          </div>
         )}
+
+        {/* ── Ranking ── */}
         {activeTab === "ranking" && <RealtimeRankingTab bolaoId={bolao.id} rules={bolao.scoring_rules} />}
-        {activeTab === "jogos" && (
-          <JogosTab
-            bolaoId={bolao.id}
-            highlightedMatchId={highlightedMatch || undefined}
-            markets={bolaoMarkets}
-            predictions={myMarketPredictions}
-          />
+
+        {/* ── A Galera: Rivais + Membros ── */}
+        {activeTab === "galera" && (
+          <div>
+            <div className="mb-4 flex gap-2">
+              <button onClick={() => setGaleraView("rivais")}
+                className={cn("rounded-2xl px-4 py-2 text-sm font-black transition-all", galeraView === "rivais" ? "bg-white text-black" : "surface-card-soft text-zinc-400")}>
+                Rivais
+              </button>
+              <button onClick={() => setGaleraView("membros")}
+                className={cn("rounded-2xl px-4 py-2 text-sm font-black transition-all", galeraView === "membros" ? "bg-white text-black" : "surface-card-soft text-zinc-400")}>
+                Membros
+              </button>
+            </div>
+            {galeraView === "rivais" && <PublicPalpitesTab bolaoId={bolao.id} />}
+            {galeraView === "membros" && <MembrosTab members={members} userId={user!.id} bolaoId={bolao.id} isCreator={isCreator} isPaid={isPaid} onRefresh={() => {}} />}
+          </div>
         )}
-        {activeTab === "fase" && (
-          <PhaseMarketsTab
-            bolaoId={bolao.id}
-            userId={user!.id}
-            markets={phaseMarkets}
-            predictions={myMarketPredictions}
-            canManage={isCreator}
-          />
-        )}
-        {activeTab === "palpites" && <PublicPalpitesTab bolaoId={bolao.id} />}
-        {activeTab === "membros" && (
-          <MembrosTab 
-            members={members} 
-            userId={user!.id} 
-            bolaoId={bolao.id} 
-            isCreator={isCreator} 
-            isPaid={isPaid}
-            onRefresh={() => {}} 
-          />
-        )}
-        {activeTab === "extras" && (
-          <ExtrasTab
-            bolaoId={bolao.id}
-            userId={user!.id}
-            markets={bolaoMarkets}
-            predictions={myMarketPredictions}
-            canManage={isCreator}
-          />
-        )}
-        {activeTab === "especiais" && (
-          <SpecialMarketsTab
-            bolaoId={bolao.id}
-            userId={user!.id}
-            markets={specialMarkets}
-            predictions={myMarketPredictions}
-            phaseMarkets={phaseMarkets}
-            canManage={isCreator}
-          />
+
+        {/* ── Config: Overview + Caixinha ── */}
+        {activeTab === "config" && bolao && (
+          <div className="space-y-6">
+            <OverviewTab bolao={bolao} members={members} palpites={myPalpites} userId={user!.id} isCreator={isCreator} markets={bolaoMarkets} marketPredictions={allMarketPredictions} activityFeed={activityFeed} onShare={handleShareInvite} />
+            <div className="border-t border-white/10 pt-6">
+              <p className="mb-4 text-xs font-black uppercase tracking-widest text-zinc-400">Caixinha &amp; Prêmio</p>
+              <CaixinhaPanel bolao={bolao} isCreator={isCreator} />
+            </div>
+          </div>
         )}
       </div>
 

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Compass, Loader2, Plus, Search, Trophy, UserPlus, Users } from "lucide-react";
+import { Compass, Loader2, Plus, Search, Trophy, UserPlus, Users, Users2, Zap } from "lucide-react";
+import { BolaoExpressSheet } from "@/components/BolaoExpressSheet";
 import { db } from "@/integrations/firebase/client";
 import { 
   collection, 
@@ -82,6 +83,7 @@ export default function Boloes() {
   const [showJoin, setShowJoin] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [publicBoloesUnavailable, setPublicBoloesUnavailable] = useState(false);
+  const [expressOpen, setExpressOpen] = useState(false);
   const isDemoMode = localStorage.getItem("demo_mode") === "true";
 
   const loadData = useCallback(async () => {
@@ -364,14 +366,35 @@ export default function Boloes() {
           </p>
         </div>
 
-        <Link
-          to="/boloes/criar"
-          className="inline-flex items-center gap-2 rounded-2xl bg-primary px-5 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-black"
-        >
-          <Plus className="h-4 w-4" />
-          {t('page.create')}
-        </Link>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setExpressOpen(true)}
+            className="inline-flex items-center gap-2 rounded-2xl bg-white/10 border border-white/10 px-4 py-3 text-[11px] font-black uppercase tracking-[0.18em] hover:bg-white/20 transition-colors"
+          >
+            <Zap className="h-4 w-4 text-primary" />
+            Express
+          </button>
+          <Link
+            to="/boloes/criar"
+            className="inline-flex items-center gap-2 rounded-2xl bg-primary px-5 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-black"
+          >
+            <Plus className="h-4 w-4" />
+            {t('page.create')}
+          </Link>
+        </div>
       </div>
+
+      {/* Grupos banner */}
+      <Link to="/grupos" className="mb-6 flex items-center justify-between gap-3 rounded-[24px] border border-primary/20 bg-primary/5 px-5 py-4 transition-all hover:bg-primary/10">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/15 text-xl">👥</div>
+          <div>
+            <p className="text-sm font-black">Grupos</p>
+            <p className="text-xs text-zinc-400">Reúna seus bolões em um grupo e veja o ranking geral</p>
+          </div>
+        </div>
+        <Users2 className="h-5 w-5 text-primary/60 shrink-0" />
+      </Link>
 
       <div className="surface-card mb-6 p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -523,6 +546,8 @@ export default function Boloes() {
           )}
         </div>
       )}
+
+      <BolaoExpressSheet open={expressOpen} onClose={() => setExpressOpen(false)} />
     </div>
   );
 }
