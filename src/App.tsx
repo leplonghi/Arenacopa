@@ -107,7 +107,7 @@ const LoadingScreen = () => (
   <div className="flex h-screen w-full items-center justify-center bg-[#082016] text-white">
     <div className="flex flex-col items-center gap-4">
       <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-      <p className="animate-pulse font-medium text-primary">Loading ArenaCup...</p>
+      <p className="animate-pulse font-medium text-primary">Carregando ArenaCopa...</p>
     </div>
   </div>
 );

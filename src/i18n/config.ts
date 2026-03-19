@@ -12,7 +12,7 @@ const normalizeLanguage = (language?: string | null) => {
     if (normalized.startsWith('es')) return 'es';
     if (normalized.startsWith('en')) return 'en';
 
-    return 'en';
+    return 'pt-BR'; // padrão para usuários sem idioma definido
 };
 
 i18n
@@ -20,7 +20,7 @@ i18n
     .use(LanguageDetector)
     .use(initReactI18next)
     .init({
-        fallbackLng: 'en',
+        fallbackLng: 'pt-BR', // sempre cai para português se a chave faltar
         supportedLngs: ['pt-BR', 'en', 'es'],
         load: 'currentOnly',
         debug: import.meta.env.DEV, // Enable debug only in development

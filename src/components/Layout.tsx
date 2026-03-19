@@ -39,7 +39,7 @@ function Header({ className }: { className?: string }) {
       // Demo Mode Check
       const isDemo = localStorage.getItem("demo_mode") === "true";
       if (isDemo) {
-        setProfile({ name: "Demo User", avatar: "https://github.com/shadcn.png" });
+        setProfile({ name: "Usuário Demo", avatar: "https://github.com/shadcn.png" });
         return;
       }
 
