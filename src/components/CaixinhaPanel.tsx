@@ -77,9 +77,16 @@ export function CaixinhaPanel({ bolao, isCreator }: Props) {
   };
 
   const handleWhatsApp = () => {
-    const val = valuePerPerson ? `R$${valuePerPerson}` : "o combinado";
-    const pix = pixKey ? ` PIX: ${pixKey}` : "";
-    const msg = `Galera do bolão "${bolao.name}" — cada um manda ${val}${pix}. Prêmio: ${prizeDesc || prizeType}. Bora! 🏆`;
+    const val = valuePerPerson ? `${t('caixinha.currency_symbol')}${valuePerPerson}` : t('caixinha.value_combined');
+    const pix = pixKey ? t('caixinha.pix_text', { key: pixKey }) : "";
+    const prize = prizeDesc || (PRIZE_TYPE_DEFS.find(p => p.id === prizeType) ? t(`caixinha.prize_types.${prizeType}`) : prizeType);
+    
+    const msg = t('caixinha.whatsapp_msg', {
+      name: bolao.name,
+      value: val,
+      pix: pix,
+      prize: prize
+    });
     window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
   };
 
@@ -100,7 +107,7 @@ export function CaixinhaPanel({ bolao, isCreator }: Props) {
         {caixinha && valuePerPerson && (
           <div className="flex items-center gap-3 rounded-2xl bg-white/5 px-4 py-3">
             <DollarSign className="h-5 w-5 text-primary" />
-            <p className="text-sm font-bold">{t('caixinha.fund_label')} R${valuePerPerson} {t('caixinha.fund_per_person')}</p>
+            <p className="text-sm font-bold">{t('caixinha.fund_label')} {t('caixinha.currency_symbol')}{valuePerPerson} {t('caixinha.fund_per_person')}</p>
           </div>
         )}
       </div>

@@ -82,7 +82,9 @@
       "calendar_title": "Calendar",
       "calendar_desc": "All tournament matches",
       "map_title": "Map",
-      "map_desc": "Stadiums and host cities"
+      "map_desc": "Stadiums and host cities",
+      "guide_title": "Guide",
+      "guide_desc": "Hosts, map and history"
     },
     "upcoming_matches": "Upcoming Matches",
     "view_calendar": "View calendar",
@@ -190,7 +192,17 @@
     "empty_title": "No games here yet",
     "empty_desc": "The calendar will appear once matches are loaded.",
     "prev_day": "Previous day",
-    "next_day": "Next day"
+    "next_day": "Next day",
+    "countdown_title": "World Cup 2026",
+    "countdown_desc": "The schedule will be published soon. Countdown to the opening whistle:",
+    "countdown_debut": "Opening: June 11, 2026 · Estadio Azteca, Mexico City",
+    "days": "days",
+    "hours": "hours",
+    "minutes": "min",
+    "seconds": "sec",
+    "game": "match",
+    "games": "matches",
+    "day_label": "Day {{current}}/{{total}}"
   },
   "bracket": {
     "third_place": "Third Place Match"

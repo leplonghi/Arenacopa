@@ -25,7 +25,9 @@
       "calendar_title": "Calendario",
       "calendar_desc": "Todos los partidos del torneo",
       "map_title": "Mapa",
-      "map_desc": "Estadios y ciudades sede"
+      "map_desc": "Estadios y ciudades sede",
+      "guide_title": "Guia",
+      "guide_desc": "Sedes, mapa e historia"
     },
     "upcoming_matches": "Próximos Partidos",
     "view_calendar": "Ver calendario",
@@ -158,7 +160,17 @@
     "empty_title": "Ningún partido aquí",
     "empty_desc": "El calendario aparecerá cuando se carguen los partidos.",
     "prev_day": "Día anterior",
-    "next_day": "Siguiente día"
+    "next_day": "Siguiente día",
+    "countdown_title": "Copa del Mundo 2026",
+    "countdown_desc": "El calendario se publicará pronto. Cuenta regresiva para el silbatazo inicial:",
+    "countdown_debut": "Inicio: 11 de junio de 2026 · Estadio Azteca, Ciudad de México",
+    "days": "días",
+    "hours": "horas",
+    "minutes": "min",
+    "seconds": "seg",
+    "game": "partido",
+    "games": "partidos",
+    "day_label": "Día {{current}}/{{total}}"
   },
   "bracket": {
     "third_place": "Disputa por el 3er Lugar"

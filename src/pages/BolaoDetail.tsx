@@ -93,7 +93,7 @@ export default function BolaoDetail() {
     ? ({
         classic: t('bolao_detail.format_classic'),
         detailed: t('bolao_detail.format_detailed'),
-        knockout: "Mata-mata",
+        knockout: t('bolao_detail.format_knockout'),
         tournament: t('bolao_detail.format_tournament'),
         strategic: t('bolao_detail.format_strategic'),
       } as const)[bolao.format_id] ?? bolao.format_id
@@ -125,7 +125,7 @@ export default function BolaoDetail() {
         return;
       }
 
-      if (!bolaoSnap.exists()) throw new Error("Bolão não encontrado");
+      if (!bolaoSnap.exists()) throw new Error(t('bolao_detail.not_found'));
 
       const bData = bolaoSnap.data();
       setBolao({
@@ -479,8 +479,8 @@ export default function BolaoDetail() {
     setActiveTab("palpitar");
   }, [initialTab, validTabs]);
 
-  if (loading) return <BolaoDetailSkeleton />;
-  if (!bolao) return <EmptyState icon="🏆" title="Bolão não encontrado" description="Confira o link ou volte para a lista." />;
+  if (loading) return <BolaoDetailSkeleton t={t} />;
+  if (!bolao) return <EmptyState icon="🏆" title={t('bolao_detail.not_found_title')} description={t('bolao_detail.not_found_desc')} />;
 
   return (
     <div className="mx-auto max-w-6xl px-4 pb-28 pt-6 text-white">
@@ -499,7 +499,7 @@ export default function BolaoDetail() {
       <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
         <div className="flex items-start gap-3">
           <button
-            aria-label="Voltar para bolões"
+            aria-label={t('bolao_detail.back_button_aria')}
             onClick={() => navigate("/boloes")}
             className="surface-card-soft flex h-12 w-12 items-center justify-center rounded-[20px]"
           >
@@ -508,7 +508,7 @@ export default function BolaoDetail() {
 
           <div>
             <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">
-              {bolao.category === "public" ? "Bolão público" : "Bolão privado"}
+              {bolao.category === "public" ? t('bolao_detail.category_public') : t('bolao_detail.category_private')}
             </p>
             <div className="mt-2 flex items-center gap-3">
               <div className="surface-card-soft flex h-14 w-14 items-center justify-center rounded-[22px] text-2xl">
@@ -529,19 +529,19 @@ export default function BolaoDetail() {
               className="inline-flex h-12 items-center gap-2 rounded-[20px] bg-primary px-4 text-[11px] font-black uppercase tracking-[0.18em] text-black"
             >
               <Crown className="h-4 w-4" />
-              Apostar campeão
+              {t('bolao_detail.bet_champion_btn')}
             </button>
           )}
 
           {championMarket && myChampion && (
             <div className="inline-flex h-12 items-center gap-2 rounded-[20px] border border-primary/30 bg-primary/10 px-4 text-[11px] font-black uppercase tracking-[0.18em] text-primary">
               <Trophy className="h-4 w-4" />
-              Meu campeão: {myChampion}
+              {t('bolao_detail.my_champion_label', { champion: myChampion })}
             </div>
           )}
 
           <button
-            aria-label="Abrir informações do bolão"
+            aria-label={t('bolao_detail.info_button_aria')}
             onClick={() => setInfoOpen(true)}
             className="surface-card-soft flex h-12 w-12 items-center justify-center rounded-[20px]"
           >
@@ -553,22 +553,22 @@ export default function BolaoDetail() {
       <div className="mb-6 flex flex-wrap gap-3 text-sm text-zinc-300">
         <div className="surface-chip rounded-full px-4 py-2">
           <Users className="h-4 w-4 text-primary" />
-          {memberCount} membros
+          {t('bolao_detail.members_count', { count: memberCount })}
         </div>
         <div className="surface-chip rounded-full px-4 py-2">
           <Share2 className="h-4 w-4 text-primary" />
-          Código: {bolao.invite_code}
+          {t('bolao_detail.invite_code_label', { code: bolao.invite_code })}
         </div>
         {formatLabel && (
           <div className="surface-chip rounded-full px-4 py-2">
             <Trophy className="h-4 w-4 text-primary" />
-            Formato: {formatLabel}
+            {t('bolao_detail.format_label', { format: formatLabel })}
           </div>
         )}
         {bolaoMarkets.length > 0 && (
           <div className="surface-chip rounded-full px-4 py-2">
             <Info className="h-4 w-4 text-primary" />
-            {bolaoMarkets.length} mercados ativos
+            {t('bolao_detail.active_markets_count', { count: bolaoMarkets.length })}
           </div>
         )}
       </div>
@@ -603,7 +603,7 @@ export default function BolaoDetail() {
                   <AccordionItem value="fase" className="rounded-2xl border-0 bg-white/5 overflow-hidden">
                     <AccordionTrigger className="px-4 py-3 text-sm font-black uppercase tracking-widest text-zinc-400 hover:no-underline hover:text-zinc-200 [&>svg]:hidden">
                       <span className="flex items-center justify-between w-full">
-                        Fase de grupos <ChevronDown className="w-4 h-4 transition-transform duration-200 [[data-state=open]_&]:rotate-180" />
+                        {t('bolao_detail.group_stage_label')} <ChevronDown className="w-4 h-4 transition-transform duration-200 [[data-state=open]_&]:rotate-180" />
                       </span>
                     </AccordionTrigger>
                     <AccordionContent className="px-0 pb-0">
@@ -615,7 +615,7 @@ export default function BolaoDetail() {
                   <AccordionItem value="campeonato" className="rounded-2xl border-0 bg-white/5 overflow-hidden">
                     <AccordionTrigger className="px-4 py-3 text-sm font-black uppercase tracking-widest text-zinc-400 hover:no-underline hover:text-zinc-200 [&>svg]:hidden">
                       <span className="flex items-center justify-between w-full">
-                        Campeonato <ChevronDown className="w-4 h-4 transition-transform duration-200 [[data-state=open]_&]:rotate-180" />
+                        {t('bolao_detail.championship_label')} <ChevronDown className="w-4 h-4 transition-transform duration-200 [[data-state=open]_&]:rotate-180" />
                       </span>
                     </AccordionTrigger>
                     <AccordionContent className="px-0 pb-0">
@@ -627,7 +627,7 @@ export default function BolaoDetail() {
                   <AccordionItem value="especiais" className="rounded-2xl border-0 bg-white/5 overflow-hidden">
                     <AccordionTrigger className="px-4 py-3 text-sm font-black uppercase tracking-widest text-zinc-400 hover:no-underline hover:text-zinc-200 [&>svg]:hidden">
                       <span className="flex items-center justify-between w-full">
-                        Especiais <ChevronDown className="w-4 h-4 transition-transform duration-200 [[data-state=open]_&]:rotate-180" />
+                        {t('bolao_detail.specials_label')} <ChevronDown className="w-4 h-4 transition-transform duration-200 [[data-state=open]_&]:rotate-180" />
                       </span>
                     </AccordionTrigger>
                     <AccordionContent className="px-0 pb-0">
@@ -649,11 +649,11 @@ export default function BolaoDetail() {
             <div className="mb-4 flex gap-2">
               <button onClick={() => setGaleraView("rivais")}
                 className={cn("rounded-2xl px-4 py-2 text-sm font-black transition-all", galeraView === "rivais" ? "bg-white text-black" : "surface-card-soft text-zinc-400")}>
-                Rivais
+                {t('bolao_detail.rivals_tab')}
               </button>
               <button onClick={() => setGaleraView("membros")}
                 className={cn("rounded-2xl px-4 py-2 text-sm font-black transition-all", galeraView === "membros" ? "bg-white text-black" : "surface-card-soft text-zinc-400")}>
-                Membros
+                {t('bolao_detail.members_tab')}
               </button>
             </div>
             {galeraView === "rivais" && <PublicPalpitesTab bolaoId={bolao.id} />}
@@ -666,7 +666,7 @@ export default function BolaoDetail() {
           <div className="space-y-6">
             <OverviewTab bolao={bolao} members={members} palpites={myPalpites} userId={user!.id} isCreator={isCreator} markets={bolaoMarkets} marketPredictions={allMarketPredictions} activityFeed={activityFeed} onShare={handleShareInvite} />
             <div className="border-t border-white/10 pt-6">
-              <p className="mb-4 text-xs font-black uppercase tracking-widest text-zinc-400">Caixinha &amp; Prêmio</p>
+               <p className="mb-4 text-xs font-black uppercase tracking-widest text-zinc-400">{t('bolao_detail.caixinha_header')}</p>
               <CaixinhaPanel bolao={bolao} isCreator={isCreator} />
             </div>
           </div>
@@ -676,7 +676,7 @@ export default function BolaoDetail() {
       <Dialog open={championOpen} onOpenChange={setChampionOpen}>
         <DialogContent className="surface-dialog sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Quem será o campeão?</DialogTitle>
+            <DialogTitle>{t('bolao_detail.who_is_champion_title')}</DialogTitle>
           </DialogHeader>
           <div className="grid grid-cols-4 gap-2 py-4">
             {teams.map((team) => (
@@ -698,7 +698,7 @@ export default function BolaoDetail() {
             disabled={!championSelection}
             className="w-full rounded-2xl bg-primary py-4 text-sm font-black uppercase tracking-widest text-black disabled:opacity-50"
           >
-            Confirmar palpite
+            {t('bolao_detail.confirm_bet_btn')}
           </button>
         </DialogContent>
       </Dialog>
@@ -706,18 +706,18 @@ export default function BolaoDetail() {
       <Dialog open={infoOpen} onOpenChange={setInfoOpen}>
         <DialogContent className="surface-dialog sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Regras do bolão</DialogTitle>
+            <DialogTitle>{t('bolao_detail.rules_modal_title')}</DialogTitle>
           </DialogHeader>
 
           <div className="surface-card-soft space-y-3 rounded-2xl p-4 text-sm">
-            {formatLabel && <div className="flex justify-between gap-4"><span>Formato</span><strong>{formatLabel}</strong></div>}
-            {bolaoMarkets.length > 0 && <div className="flex justify-between gap-4"><span>Mercados ativos</span><strong>{bolaoMarkets.length}</strong></div>}
-            {bolao.visibility_mode && <div className="flex justify-between gap-4"><span>Visibilidade</span><strong>{bolao.visibility_mode}</strong></div>}
-            {bolao.cutoff_mode && <div className="flex justify-between gap-4"><span>Fechamento</span><strong>{bolao.cutoff_mode}</strong></div>}
-            <div className="flex justify-between gap-4"><span>Placar exato</span><strong>{bolao.scoring_rules?.exact ?? 0} pts</strong></div>
-            <div className="flex justify-between gap-4"><span>Resultado (vitória/empate/derrota)</span><strong>{bolao.scoring_rules?.winner ?? 0} pts</strong></div>
-            <div className="flex justify-between gap-4"><span>Empate</span><strong>{bolao.scoring_rules?.draw ?? 0} pts</strong></div>
-            <div className="flex justify-between gap-4"><span>Participação</span><strong>{bolao.scoring_rules?.participation ?? 0} pt</strong></div>
+            {formatLabel && <div className="flex justify-between gap-4"><span>{t('bolao_detail.rule_format')}</span><strong>{formatLabel}</strong></div>}
+            {bolaoMarkets.length > 0 && <div className="flex justify-between gap-4"><span>{t('bolao_detail.rule_active_markets')}</span><strong>{bolaoMarkets.length}</strong></div>}
+            {bolao.visibility_mode && <div className="flex justify-between gap-4"><span>{t('bolao_detail.rule_visibility')}</span><strong>{bolao.visibility_mode}</strong></div>}
+            {bolao.cutoff_mode && <div className="flex justify-between gap-4"><span>{t('bolao_detail.rule_cutoff')}</span><strong>{bolao.cutoff_mode}</strong></div>}
+            <div className="flex justify-between gap-4"><span>{t('bolao_detail.rule_exact_score')}</span><strong>{bolao.scoring_rules?.exact ?? 0} {t('bolao_detail.points')}</strong></div>
+            <div className="flex justify-between gap-4"><span>{t('bolao_detail.rule_winner_result')}</span><strong>{bolao.scoring_rules?.winner ?? 0} {t('bolao_detail.points')}</strong></div>
+            <div className="flex justify-between gap-4"><span>{t('bolao_detail.rule_draw')}</span><strong>{bolao.scoring_rules?.draw ?? 0} {t('bolao_detail.points')}</strong></div>
+            <div className="flex justify-between gap-4"><span>{t('bolao_detail.rule_participation')}</span><strong>{bolao.scoring_rules?.participation ?? 0} {t('bolao_detail.points')}</strong></div>
           </div>
         </DialogContent>
       </Dialog>
@@ -725,7 +725,7 @@ export default function BolaoDetail() {
   );
 }
 
-function BolaoDetailSkeleton() {
+function BolaoDetailSkeleton({ t }: { t: any }) {
   return (
     <div className="mx-auto max-w-5xl px-4 py-6">
       <Skeleton className="mb-4 h-16 rounded-3xl bg-white/10" />

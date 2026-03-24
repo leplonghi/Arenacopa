@@ -12,6 +12,7 @@ import { useTranslation } from "react-i18next";
 const COPA_START = new Date("2026-06-12T00:00:00Z");
 
 function CopaCounting() {
+  const { t } = useTranslation('copa');
   const [timeLeft, setTimeLeft] = useState(() => {
     const diff = COPA_START.getTime() - Date.now();
     return Math.max(0, diff);
@@ -37,19 +38,19 @@ function CopaCounting() {
       <div className="flex flex-col items-center gap-2">
         <span className="text-5xl">⚽</span>
         <h2 className="text-xl font-black uppercase tracking-tight text-white text-center">
-          Copa do Mundo 2026
+          {t('calendario.countdown_title')}
         </h2>
         <p className="text-sm text-muted-foreground text-center max-w-xs">
-          O calendário será publicado em breve. A contagem regressiva para o apito inicial:
+          {t('calendario.countdown_desc')}
         </p>
       </div>
 
       <div className="grid grid-cols-4 gap-3">
         {[
-          { value: days,    label: "dias"    },
-          { value: hours,   label: "horas"   },
-          { value: minutes, label: "min"     },
-          { value: seconds, label: "seg"     },
+          { value: days,    label: t('calendario.days')    },
+          { value: hours,   label: t('calendario.hours')   },
+          { value: minutes, label: t('calendario.minutes') },
+          { value: seconds, label: t('calendario.seconds') },
         ].map(({ value, label }) => (
           <motion.div
             key={label}
@@ -62,7 +63,7 @@ function CopaCounting() {
               transition={{ duration: 0.25 }}
               className="text-2xl font-black text-primary tabular-nums"
             >
-              {label === "dias" ? String(value) : pad(value)}
+              {label === t('calendario.days') ? String(value) : pad(value)}
             </motion.span>
             <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{label}</span>
           </motion.div>
@@ -70,7 +71,7 @@ function CopaCounting() {
       </div>
 
       <p className="text-xs text-muted-foreground/60 text-center">
-        Estreia: 11 de junho de 2026 · Estádio Azteca, Cidade do México
+        {t('calendario.countdown_debut')}
       </p>
     </div>
   );
@@ -133,8 +134,9 @@ export function CalendarioTab() {
     return <CopaCounting />;
   }
 
+  const { i18n } = useTranslation();
   const dateObj = new Date(currentDay.date + "T12:00:00");
-  const dateLabel = dateObj.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  const dateLabel = dateObj.toLocaleDateString(i18n.language, { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 
   return (
     <div className="space-y-4">
@@ -156,7 +158,7 @@ export function CalendarioTab() {
         >
           <h2 className="text-base font-black capitalize">{dateLabel}</h2>
           <span className="text-[10px] font-bold text-muted-foreground">
-            {currentDay.matches.length} {currentDay.matches.length === 1 ? "jogo" : "jogos"} • Dia {dayIndex + 1}/{matchDays.length}
+            {currentDay.matches.length} {currentDay.matches.length === 1 ? t('calendario.game') : t('calendario.games')} • {t('calendario.day_label', { current: dayIndex + 1, total: matchDays.length })}
           </span>
         </motion.div>
         <button

@@ -450,7 +450,11 @@
       "task": "Tarea",
       "glory": "Gloria",
       "custom": "Personalizado"
-    }
+    },
+    "whatsapp_msg": "Gente de la quiniela \"{{name}}\" — cada uno envía {{value}}{{pix}}. Premio: {{prize}}. ¡Vamos! 🏆",
+    "value_combined": "lo acordado",
+    "pix_text": " Pago: {{key}}",
+    "currency_symbol": "$"
   },
   "grupos": {
     "created": "¡Grupo creado!",
@@ -480,7 +484,42 @@
     "tab_palpitar_pending": "Pronosticar (pendiente)",
     "tab_ranking": "Ranking",
     "tab_galera": "El grupo",
-    "tab_config": "Config"
+    "tab_config": "Config",
+    "format_classic": "Clásico",
+    "format_detailed": "Detallado",
+    "format_knockout": "Eliminación",
+    "format_tournament": "Torneo",
+    "format_strategic": "Estratégico",
+    "back_button_aria": "Volver a las quinielas",
+    "category_public": "Quiniela pública",
+    "category_private": "Quiniela privada",
+    "bet_champion_btn": "Apostar campeón",
+    "my_champion_label": "Mi campeón: {{champion}}",
+    "info_button_aria": "Abrir reglas",
+    "members_count": "{{count}} miembros",
+    "invite_code_label": "Código: {{code}}",
+    "format_label": "Formato: {{format}}",
+    "active_markets_count": "{{count}} mercados activos",
+    "group_stage_label": "Fase de grupos",
+    "championship_label": "Campeonato",
+    "specials_label": "Especiales",
+    "rivals_tab": "Rivales",
+    "members_tab": "Miembros",
+    "caixinha_header": "Fondo del Premio",
+    "who_is_champion_title": "¿Quién será el campeón?",
+    "confirm_bet_btn": "Confirmar pronóstico",
+    "rules_modal_title": "Regras de la quiniela",
+    "rule_format": "Formato",
+    "rule_active_markets": "Mercados activos",
+    "rule_visibility": "Visibilidad",
+    "rule_cutoff": "Cierre",
+    "rule_exact_score": "Marcador exacto",
+    "rule_winner_result": "Resultado (ganador/empate/derrota)",
+    "rule_draw": "Empate",
+    "rule_participation": "Participación",
+    "not_found_title": "Quiniela no encontrada",
+    "not_found_desc": "Revisa el enlace o vuelve a la lista.",
+    "points": "pts"
   },
   "special_markets": {
     "status_resolved": "Puntuado",
@@ -507,6 +546,8 @@
     "confirm_official": "Confirmar cuadro oficial"
   },
   "express": {
+    "title": "Quiniela Express",
+    "subtitle": "Un solo juego – crea en 10 segundos",
     "no_matches": "Ningún partido programado"
   }
 }

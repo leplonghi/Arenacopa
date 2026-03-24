@@ -118,7 +118,9 @@
       "calendar_title": "Calendário",
       "calendar_desc": "Todos os jogos do torneio",
       "map_title": "Mapa",
-      "map_desc": "Estádios e cidades-sede"
+      "map_desc": "Estádios e cidades-sede",
+      "guide_title": "Guia",
+      "guide_desc": "Sedes, mapa e história"
     },
     "upcoming_matches": "Próximos Jogos",
     "view_calendar": "Ver calendário",
@@ -226,7 +228,17 @@
     "empty_title": "Nenhum jogo por aqui",
     "empty_desc": "O calendário aparece assim que os jogos forem carregados.",
     "prev_day": "Dia anterior",
-    "next_day": "Próximo dia"
+    "next_day": "Próximo dia",
+    "countdown_title": "Copa do Mundo 2026",
+    "countdown_desc": "O calendário será publicado em breve. A contagem regressiva para o apito inicial:",
+    "countdown_debut": "Estreia: 11 de junho de 2026 · Estádio Azteca, Cidade do México",
+    "days": "dias",
+    "hours": "horas",
+    "minutes": "min",
+    "seconds": "seg",
+    "game": "jogo",
+    "games": "jogos",
+    "day_label": "Dia {{current}}/{{total}}"
   },
   "grupos": {
     "no_games": "Nenhum jogo encontrado para este grupo."

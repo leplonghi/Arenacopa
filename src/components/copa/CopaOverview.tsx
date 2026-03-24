@@ -249,13 +249,13 @@ export function CopaOverview() {
                     whileTap={{ scale: 0.98 }}
                 >
                     <div className="flex items-center justify-between mb-2">
-                        <h3 className="text-sm font-black leading-none">Guia</h3>
+                        <h3 className="text-sm font-black leading-none">{t('overview.quick_access.guide_title')}</h3>
                         <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-green-400 transition-colors" />
                     </div>
                     <div className="space-y-2 mt-3 flex items-center justify-center py-1">
                         <span className="text-2xl">🏙️</span>
                     </div>
-                    <p className="text-[10px] text-muted-foreground mt-3 font-medium text-center">Sedes, mapa e história</p>
+                    <p className="text-[10px] text-muted-foreground mt-3 font-medium text-center">{t('overview.quick_access.guide_desc')}</p>
                 </motion.div>
             </section>
 
@@ -287,7 +287,7 @@ export function CopaOverview() {
                         <EmptyState
                             icon="📅"
                             title={t('overview.no_upcoming')}
-                            description="Assim que a agenda oficial carregar os próximos jogos, eles aparecem aqui."
+                            description={t('overview.no_upcoming_desc')}
                         />
                     </div>
                 )}
