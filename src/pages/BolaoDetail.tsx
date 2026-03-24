@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { ArrowLeft, Crown, Info, Share2, Trophy, Users } from "lucide-react";
+import { ArrowLeft, ChevronDown, Crown, Info, Share2, Trophy, Users } from "lucide-react";
 import confetti from "canvas-confetti";
 import { db } from "@/integrations/firebase/client";
 import {
@@ -51,7 +51,7 @@ export default function BolaoDetail() {
   const initialTab = searchParams.get("tab") || "ranking";
   const highlightedMatch = searchParams.get("match");
   const validTabs = useMemo(
-    () => new Set(["overview", "ranking", "jogos", "fase", "palpites", "membros", "extras", "especiais"]),
+    () => new Set(["palpitar", "ranking", "galera", "config"]),
     []
   );
 
@@ -277,6 +277,8 @@ export default function BolaoDetail() {
       })) as BolaoActivity[];
 
       setActivityFeed(rows);
+    }, (error) => {
+      console.error("Activity feed subscription error (check index needs):", error);
     });
 
     const onboardingRef = doc(db, "bolao_onboarding_state", `${user.id}_${id}`);
@@ -431,11 +433,8 @@ export default function BolaoDetail() {
       return "ranking" as const;
     }
 
-    if (
-      (activeTab === "jogos" || activeTab === "fase" || activeTab === "extras" || activeTab === "especiais") &&
-      !onboardingState?.seen_markets
-    ) {
-      return activeTab;
+    if (activeTab === "palpitar" && !onboardingState?.seen_markets) {
+      return "jogos" as const;
     }
 
     return null;

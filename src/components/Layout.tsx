@@ -304,7 +304,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <AppSidebar className="hidden md:flex z-40" />
         <SidebarInset className="bg-transparent flex flex-col h-svh w-full overflow-hidden">
           <Header className="w-full shrink-0" />
-          <main className="flex-1 overflow-y-auto pt-14 md:pt-20 px-4 pb-24 md:pb-8 w-full max-w-7xl mx-auto scrollbar-hide flex flex-col">
+          <main className={cn(
+            "flex-1 overflow-y-auto px-4 w-full max-w-7xl mx-auto scrollbar-hide flex flex-col pt-[calc(3.5rem+var(--safe-area-top,0px))] md:pt-20 pb-[calc(7.5rem+var(--safe-area-bottom,0px))] md:pb-12"
+          )}>
             <div className="flex-1">
               {children}
             </div>

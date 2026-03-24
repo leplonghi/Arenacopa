@@ -50,19 +50,19 @@ function ActionOfDay({ totalPending, hasAnyBolao, hasTodayMatch, firstBolaoWithP
     const s = totalPending > 1 ? "s" : "";
     return (
       <Link to={firstBolaoWithPending ? `/boloes/${firstBolaoWithPending}` : "/boloes"}>
-        <div className="flex items-center gap-4 rounded-[22px] bg-gradient-to-r from-primary/20 to-primary/5 border border-primary/30 px-5 py-4 hover:from-primary/30 transition-all active:scale-[0.98]">
-          <div className="w-10 h-10 rounded-[14px] bg-primary/20 flex items-center justify-center shrink-0">
-            <Target className="w-5 h-5 text-primary" strokeWidth={2.5} />
+        <div className="flex items-center gap-4 rounded-[24px] bg-gradient-to-r from-copa-orange/20 to-copa-orange/5 border border-copa-orange/30 px-5 py-4 hover:from-copa-orange/30 transition-all active:scale-[0.98] backdrop-blur-md">
+          <div className="w-10 h-10 rounded-xl bg-copa-orange/20 flex items-center justify-center shrink-0">
+            <Target className="w-5 h-5 text-copa-orange" strokeWidth={2.5} />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-black uppercase tracking-[0.14em] text-primary/80">
+            <p className="text-xs font-black uppercase tracking-[0.14em] text-copa-orange/80">
               {t('action_of_day.pending_title')}
             </p>
             <p className="text-sm font-bold text-white leading-snug truncate">
               {t('action_of_day.pending_desc', { count: totalPending, s })}
             </p>
           </div>
-          <ChevronRight className="w-4 h-4 text-primary shrink-0" />
+          <ChevronRight className="w-4 h-4 text-copa-orange shrink-0" />
         </div>
       </Link>
     );
@@ -71,19 +71,19 @@ function ActionOfDay({ totalPending, hasAnyBolao, hasTodayMatch, firstBolaoWithP
   if (!hasAnyBolao) {
     return (
       <Link to="/boloes/criar">
-        <div className="flex items-center gap-4 rounded-[22px] bg-gradient-to-r from-blue-500/15 to-blue-500/5 border border-blue-500/25 px-5 py-4 hover:from-blue-500/25 transition-all active:scale-[0.98]">
-          <div className="w-10 h-10 rounded-[14px] bg-blue-500/20 flex items-center justify-center shrink-0">
-            <Dices className="w-5 h-5 text-blue-400" strokeWidth={2} />
+        <div className="flex items-center gap-4 rounded-[24px] bg-gradient-to-r from-copa-blue/20 to-copa-blue/5 border border-copa-blue/30 px-5 py-4 hover:from-copa-blue/30 transition-all active:scale-[0.98] backdrop-blur-md">
+          <div className="w-10 h-10 rounded-xl bg-copa-blue/20 flex items-center justify-center shrink-0">
+            <Dices className="w-5 h-5 text-copa-blue" strokeWidth={2} />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-black uppercase tracking-[0.14em] text-blue-400/80">
+            <p className="text-xs font-black uppercase tracking-[0.14em] text-copa-blue/80">
               {t('action_of_day.no_bolao_title')}
             </p>
             <p className="text-sm font-bold text-white leading-snug">
               {t('action_of_day.no_bolao_desc')}
             </p>
           </div>
-          <ChevronRight className="w-4 h-4 text-blue-400 shrink-0" />
+          <ChevronRight className="w-4 h-4 text-copa-blue shrink-0" />
         </div>
       </Link>
     );
@@ -92,19 +92,19 @@ function ActionOfDay({ totalPending, hasAnyBolao, hasTodayMatch, firstBolaoWithP
   if (hasTodayMatch) {
     return (
       <Link to="/copa/calendario">
-        <div className="flex items-center gap-4 rounded-[22px] bg-gradient-to-r from-orange-500/15 to-orange-500/5 border border-orange-500/25 px-5 py-4 hover:from-orange-500/25 transition-all active:scale-[0.98]">
-          <div className="w-10 h-10 rounded-[14px] bg-orange-500/20 flex items-center justify-center shrink-0">
-            <Flame className="w-5 h-5 text-orange-400" strokeWidth={2} />
+        <div className="flex items-center gap-4 rounded-[24px] bg-gradient-to-r from-primary/20 to-primary/5 border border-primary/30 px-5 py-4 hover:from-primary/30 transition-all active:scale-[0.98] backdrop-blur-md">
+          <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center shrink-0">
+            <Flame className="w-5 h-5 text-primary" strokeWidth={2} />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-black uppercase tracking-[0.14em] text-orange-400/80">
+            <p className="text-xs font-black uppercase tracking-[0.14em] text-primary/80">
               {t('action_of_day.today_match_title')}
             </p>
             <p className="text-sm font-bold text-white leading-snug">
               {t('action_of_day.today_match_desc')}
             </p>
           </div>
-          <ChevronRight className="w-4 h-4 text-orange-400 shrink-0" />
+          <ChevronRight className="w-4 h-4 text-primary shrink-0" />
         </div>
       </Link>
     );
@@ -113,19 +113,19 @@ function ActionOfDay({ totalPending, hasAnyBolao, hasTodayMatch, firstBolaoWithP
   // Fallback: convide amigos ou explore a Copa
   return (
     <Link to="/boloes/criar">
-      <div className="flex items-center gap-4 rounded-[22px] bg-gradient-to-r from-purple-500/15 to-purple-500/5 border border-purple-500/25 px-5 py-4 hover:from-purple-500/25 transition-all active:scale-[0.98]">
-        <div className="w-10 h-10 rounded-[14px] bg-purple-500/20 flex items-center justify-center shrink-0">
-          <Users className="w-5 h-5 text-purple-400" strokeWidth={2} />
+      <div className="flex items-center gap-4 rounded-[24px] bg-gradient-to-r from-copa-gold/20 to-copa-gold/5 border border-copa-gold/30 px-5 py-4 hover:from-copa-gold/30 transition-all active:scale-[0.98] backdrop-blur-md">
+        <div className="w-10 h-10 rounded-xl bg-copa-gold/20 flex items-center justify-center shrink-0">
+          <Users className="w-5 h-5 text-copa-gold" strokeWidth={2} />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-black uppercase tracking-[0.14em] text-purple-400/80">
+          <p className="text-xs font-black uppercase tracking-[0.14em] text-copa-gold/80">
             Convide seus amigos
           </p>
           <p className="text-sm font-bold text-white leading-snug">
             Crie um bolão e dispute com a galera 🏆
           </p>
         </div>
-        <ChevronRight className="w-4 h-4 text-purple-400 shrink-0" />
+        <ChevronRight className="w-4 h-4 text-copa-gold shrink-0" />
       </div>
     </Link>
   );
@@ -372,12 +372,12 @@ const Index = () => {
         {totalPending > 0 && (
           <motion.div variants={itemVariants}>
             <Link to="/boloes">
-              <div className="flex items-center gap-3 px-5 py-3.5 rounded-2xl bg-orange-500/15 border border-orange-500/25 hover:bg-orange-500/20 transition-colors">
-                <AlertTriangle className="w-4 h-4 text-orange-400 shrink-0" />
+              <div className="flex items-center gap-3 px-5 py-3.5 rounded-xl bg-copa-orange/15 border border-copa-orange/25 hover:bg-copa-orange/20 transition-colors backdrop-blur-md">
+                <AlertTriangle className="w-4 h-4 text-copa-orange shrink-0" />
                 <span className="text-sm font-bold text-orange-200 flex-1">
                   {t('pending.title', { count: totalPending })}
                 </span>
-                <ChevronRight className="w-4 h-4 text-orange-400" />
+                <ChevronRight className="w-4 h-4 text-copa-orange" />
               </div>
             </Link>
           </motion.div>
@@ -430,7 +430,7 @@ const Index = () => {
                     aria-label={t('upcoming.match_aria', { home: match.homeTeam, away: match.awayTeam })}
                     onClick={() => setSelectedMatch(match)}
                     className={cn(
-                      "surface-card-soft w-full rounded-[30px] p-5 text-left transition-all hover:border-white/20 hover:bg-white/[0.06]",
+                      "surface-card-soft w-full rounded-[24px] p-5 text-left transition-all hover:border-white/20 hover:bg-white/[0.06]",
                       isFavoriteMatch && "border-primary/30 bg-primary/[0.08]"
                     )}
                   >
@@ -464,7 +464,7 @@ const Index = () => {
 
         {/* Real-time News — tabbed Copa 2026 / Meu Time */}
         <motion.section variants={itemVariants} className="space-y-4">
-          <SectionHeader color="bg-emerald-400" title={t('news.title')} rightElement={
+          <SectionHeader color="bg-copa-green" title={t('news.title')} rightElement={
             <Link to="/noticias" className="text-[11px] text-gray-400 font-black uppercase tracking-[0.12em] hover:text-white transition-colors">
               {t('news.view_all')} <ChevronRight className="w-3 h-3 inline ml-1" />
             </Link>
@@ -477,7 +477,7 @@ const Index = () => {
               className={cn(
                 "rounded-full px-4 py-1.5 text-[11px] font-black uppercase tracking-[0.16em] transition-all",
                 newsTab === "copa"
-                  ? "bg-emerald-400 text-black"
+                  ? "bg-copa-green text-white"
                   : "border border-white/10 bg-white/5 text-zinc-400 hover:text-white"
               )}
             >
@@ -599,7 +599,7 @@ const Index = () => {
                             "rounded px-1.5 py-0.5 text-[10px] font-black uppercase tracking-[0.14em]",
                             newsTab === "team"
                               ? "bg-primary/15 border border-primary/25 text-primary"
-                              : "bg-emerald-400/10 border border-emerald-400/20 text-emerald-400"
+                              : "bg-copa-green/10 border border-copa-green/20 text-copa-green-light"
                           )}>
                             {item.category}
                           </span>
@@ -621,7 +621,7 @@ const Index = () => {
 
         {/* Active Leagues - HUD Style Cards */}
         <motion.section variants={itemVariants} className="space-y-6">
-          <SectionHeader color="bg-blue-500" title={t('my_pools.title')} rightElement={
+          <SectionHeader color="bg-copa-blue" title={t('my_pools.title')} rightElement={
             <Link to="/boloes" className="text-[11px] text-gray-400 font-black uppercase tracking-[0.12em] hover:text-white transition-colors">
               {t('my_pools.manage')} <ChevronRight className="w-3 h-3 inline ml-1" />
             </Link>
@@ -655,10 +655,10 @@ const Index = () => {
             <div className="grid gap-5">
               {myBoloes.map((bolao) => (
                 <Link key={bolao.id} to={`/boloes/${bolao.id}`} className="group relative">
-                  <div className="p-[1.5px] rounded-[40px] bg-gradient-to-br from-white/10 to-transparent group-hover:from-primary/50 transition-all duration-500 shadow-2xl">
-                    <div className="bg-white/[0.04] backdrop-blur-xl rounded-[39px] p-6 flex items-center justify-between group-hover:bg-white/[0.07] transition-all overflow-hidden relative border border-white/[0.06]">
+            <div className="p-[1.5px] rounded-[32px] bg-gradient-to-br from-white/10 to-transparent group-hover:from-primary/50 transition-all duration-500 shadow-2xl">
+                    <div className="bg-white/[0.04] backdrop-blur-xl rounded-[31px] p-6 flex items-center justify-between group-hover:bg-white/[0.07] transition-all overflow-hidden relative border border-white/[0.06]">
                       {/* Interactive background pulse */}
-                      {(bolao.pendingCount ?? 0) > 0 && <div className="absolute inset-0 bg-orange-500/5 animate-pulse pointer-events-none" />}
+                      {(bolao.pendingCount ?? 0) > 0 && <div className="absolute inset-0 bg-copa-orange/10 animate-pulse pointer-events-none" />}
 
                       <div className="flex items-center gap-6 relative z-10">
                         <div className="w-16 h-16 rounded-[24px] bg-white/5 flex items-center justify-center text-3xl shadow-inner relative group-hover:scale-110 group-hover:rotate-6 transition-all duration-700 border border-white/5">
@@ -668,7 +668,7 @@ const Index = () => {
                               <motion.div
                                 initial={{ scale: 0, rotate: -45 }}
                                 animate={{ scale: 1, rotate: 0 }}
-                                className="absolute -top-2 -right-2 w-7 h-7 bg-orange-500 rounded-xl text-[11px] font-black text-white flex items-center justify-center shadow-2xl border-2 border-[#0b0b0b]"
+                                className="absolute -top-2 -right-2 w-7 h-7 bg-copa-orange rounded-xl text-[11px] font-black text-white flex items-center justify-center shadow-2xl border-2 border-[#0b0b0b]"
                               >
                                 {bolao.pendingCount}
                               </motion.div>
@@ -714,11 +714,11 @@ const Index = () => {
         {/* Floating Strategic CTA */}
         <motion.div
           variants={itemVariants}
-          className="pt-4 sticky bottom-8 left-0 right-0"
+          className="pt-4 sticky bottom-[calc(5rem+var(--safe-area-bottom,0px))] md:bottom-8 left-0 right-0 z-20"
         >
           <Link
             to="/boloes"
-            className="relative flex w-full items-center justify-center gap-4 overflow-hidden rounded-[28px] border border-white/10 bg-white py-6 text-[12px] font-black uppercase tracking-[0.22em] text-black shadow-[0_30px_60px_rgba(0,0,0,0.6)] transition-all hover:scale-[1.02] active:scale-[0.98] group"
+            className="relative flex w-full items-center justify-center gap-4 overflow-hidden rounded-[24px] border border-white/10 bg-gradient-to-br from-white/95 to-white py-6 text-[12px] font-black uppercase tracking-[0.22em] text-black shadow-[0_30px_60px_rgba(0,0,0,0.6)] transition-all hover:scale-[1.02] active:scale-[0.98] group"
           >
             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-black/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
             <Dices className="w-6 h-6 stroke-[2.5px]" />

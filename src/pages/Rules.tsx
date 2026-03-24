@@ -24,7 +24,7 @@ export default function Rules() {
     return (
         <div className="min-h-screen bg-[#060606] text-white pb-32 overflow-x-hidden">
             {/* Header com Glassmorphism */}
-            <div className="sticky top-0 z-50 bg-black/60 backdrop-blur-xl border-b border-white/5 p-4 flex items-center gap-4">
+            <div className="sticky top-[calc(3.5rem+var(--safe-area-top,0px))] md:top-16 z-20 bg-black/60 backdrop-blur-xl border-b border-white/5 p-4 flex items-center gap-4">
                 <button
                     onClick={() => navigate(-1)}
                     aria-label="Voltar"

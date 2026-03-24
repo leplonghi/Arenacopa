@@ -44,7 +44,7 @@ export function PremiumModal({ isOpen, onClose, onSuccess }: PremiumModalProps) 
                     onClick={(e) => e.stopPropagation()}
                 >
                     {/* Header Image / Gradient */}
-                    <div className="h-32 bg-gradient-to-br from-yellow-400 via-orange-500 to-red-600 relative flex items-center justify-center overflow-hidden">
+                    <div className="h-32 bg-gradient-to-br from-yellow-400 via-copa-orange to-red-600 relative flex items-center justify-center overflow-hidden">
                         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20 mix-blend-overlay"></div>
                         <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-transparent to-black/60"></div>
 
@@ -96,7 +96,7 @@ export function PremiumModal({ isOpen, onClose, onSuccess }: PremiumModalProps) 
                             <Button
                                 onClick={handlePurchase}
                                 disabled={isLoading || !canStartPremiumCheckout}
-                                className="w-full h-12 text-base font-bold bg-gradient-to-r from-yellow-500 to-orange-600 hover:from-yellow-400 hover:to-orange-500 text-white shadow-lg shadow-orange-500/20 rounded-xl"
+                                className="w-full h-12 text-base font-bold bg-gradient-to-r from-yellow-500 to-copa-orange hover:from-yellow-400 hover:to-copa-orange/90 text-white shadow-lg shadow-copa-orange/20 rounded-xl"
                             >
                                 {isLoading ? (
                                     <span className="flex items-center gap-2">

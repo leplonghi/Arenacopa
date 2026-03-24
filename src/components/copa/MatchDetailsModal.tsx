@@ -50,7 +50,7 @@ export function MatchDetailsModal({ match, isOpen, onClose }: MatchDetailsModalP
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden bg-black/60 backdrop-blur-xl border-white/10 shadow-2xl">
+            <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden bg-black/60 backdrop-blur-xl border-white/10 shadow-2xl rounded-[32px]">
                 <DialogTitle className="sr-only">
                     {t('match_details.sr_title', { home: home.name, away: away.name })}
                 </DialogTitle>
@@ -90,7 +90,7 @@ export function MatchDetailsModal({ match, isOpen, onClose }: MatchDetailsModalP
 
                             <div className="px-6 -mt-12 relative z-20 space-y-6 pb-8">
                                 {/* Matchup Card */}
-                                <div className="glass-card p-6 border-white/10 shadow-xl bg-card/50">
+                                <div className="glass-card p-6 border-white/10 shadow-xl bg-card/50 rounded-[24px]">
                                     <div className="flex items-center justify-between">
                                         <div
                                             className="flex flex-col items-center gap-2 w-1/3 cursor-pointer hover:opacity-80 transition-opacity"
@@ -145,7 +145,7 @@ export function MatchDetailsModal({ match, isOpen, onClose }: MatchDetailsModalP
                                         <h3 className="text-sm font-bold uppercase tracking-wider">{t('match_details.location_title')}</h3>
                                     </div>
 
-                                    <div className="glass-card p-4 space-y-3">
+                                    <div className="glass-card p-4 space-y-3 rounded-[24px]">
                                         <div className="flex justify-between items-start">
                                             <div>
                                                 <h4 className="font-black text-lg">{stadium?.name}</h4>
@@ -181,8 +181,8 @@ export function MatchDetailsModal({ match, isOpen, onClose }: MatchDetailsModalP
 
                                     <div className="space-y-2">
                                         {news.map((item) => (
-                                            <div key={item.id} className="glass-card p-2 flex gap-3 hover:bg-white/5 transition-colors cursor-pointer group">
-                                                <div className="w-20 h-20 rounded-md overflow-hidden shrink-0 relative">
+                                            <div key={item.id} className="glass-card p-2 flex gap-3 hover:bg-white/5 transition-colors cursor-pointer group rounded-[24px]">
+                                                <div className="w-20 h-20 rounded-xl overflow-hidden shrink-0 relative">
                                                     <img src={item.image} alt={item.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                                                 </div>
                                                 <div className="flex flex-col justify-center gap-1">
@@ -221,7 +221,7 @@ export function MatchDetailsModal({ match, isOpen, onClose }: MatchDetailsModalP
                                     <div className="flex justify-between items-center text-xs text-muted-foreground uppercase tracking-wider font-bold px-2">
                                         <span>{t('match_details.comparison.titles')}</span>
                                     </div>
-                                    <div className="glass-card p-3 flex items-center justify-between">
+                                    <div className="glass-card p-3 flex items-center justify-between rounded-[24px]">
                                         <div className="font-black text-lg w-12 text-center">{home.stats?.titles || 0}</div>
                                         <h4 className="text-xs text-muted-foreground text-center flex-1">{t('match_details.comparison.titles_label')}</h4>
                                         <div className="font-black text-lg w-12 text-center">{away.stats?.titles || 0}</div>
@@ -233,7 +233,7 @@ export function MatchDetailsModal({ match, isOpen, onClose }: MatchDetailsModalP
                                     <div className="flex justify-between items-center text-xs text-muted-foreground uppercase tracking-wider font-bold px-2">
                                         <span>{t('match_details.comparison.ranking')}</span>
                                     </div>
-                                    <div className="glass-card p-3 flex items-center justify-between">
+                                    <div className="glass-card p-3 flex items-center justify-between rounded-[24px]">
                                         <div className="font-black text-lg w-12 text-center">#{home.fifaRanking}</div>
                                         <h4 className="text-xs text-muted-foreground text-center flex-1">{t('match_details.comparison.ranking_label')}</h4>
                                         <div className="font-black text-lg w-12 text-center">#{away.fifaRanking}</div>
@@ -241,12 +241,12 @@ export function MatchDetailsModal({ match, isOpen, onClose }: MatchDetailsModalP
                                     {/* Progress bar comparison */}
                                     <div className="flex gap-1 h-1.5 mt-1">
                                         <div className="h-full bg-primary rounded-full" style={{ width: `${(100 - (home.fifaRanking || 100))}%` }} />
-                                        <div className="h-full bg-blue-500 rounded-full ml-auto" style={{ width: `${(100 - (away.fifaRanking || 100))}%` }} />
+                                        <div className="h-full bg-copa-blue rounded-full ml-auto" style={{ width: `${(100 - (away.fifaRanking || 100))}%` }} />
                                     </div>
                                 </div>
 
                                 {/* Appearances & Best Result */}
-                                <div className="glass-card p-4 space-y-4">
+                                <div className="glass-card p-4 space-y-4 rounded-[24px]">
                                     <div className="grid grid-cols-3 items-center text-center text-sm">
                                         <div className="font-bold">{home.stats?.appearances || '-'}</div>
                                         <div className="text-xs text-muted-foreground uppercase">{t('match_details.comparison.appearances_label')}</div>
@@ -261,7 +261,7 @@ export function MatchDetailsModal({ match, isOpen, onClose }: MatchDetailsModalP
                                 </div>
 
                                 {/* General Stats */}
-                                <div className="glass-card p-0 overflow-hidden">
+                                <div className="glass-card p-0 overflow-hidden rounded-[24px]">
                                     <div className="p-2 bg-white/5 text-center text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{t('match_details.comparison.demographics_title')}</div>
                                     <div className="divide-y divide-white/5">
                                         <div className="grid grid-cols-3 items-center p-3 text-xs">

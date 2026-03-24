@@ -64,6 +64,14 @@ export default {
             DEFAULT: 'hsl(var(--copa-gold))',
             light: 'hsl(var(--copa-gold-light))'
           },
+          blue: {
+            DEFAULT: 'hsl(210, 100%, 50%)',
+            soft: 'rgba(59, 130, 246, 0.15)',
+          },
+          orange: {
+            DEFAULT: 'hsl(25, 100%, 50%)',
+            soft: 'rgba(249, 115, 22, 0.15)',
+          },
           live: 'hsl(var(--copa-live))',
           success: 'hsl(var(--copa-success))',
           surface: 'hsl(var(--copa-surface))'

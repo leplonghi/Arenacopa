@@ -65,7 +65,7 @@ const Copa = () => {
   return (
     <SimulacaoProvider>
       <div>
-        <div className="sticky top-14 z-20 bg-[#03100a]/60 px-4 py-3 backdrop-blur-xl md:top-16 border-b border-white/[0.1] shadow-lg">
+        <div className="sticky top-[calc(3.5rem+var(--safe-area-top,0px))] z-20 bg-[#03100a]/60 px-4 py-3 backdrop-blur-xl md:top-16 border-b border-white/[0.1] shadow-lg">
           <div className="grid grid-cols-5 gap-1">
           {tabs.map(tabItem => (
             <button
