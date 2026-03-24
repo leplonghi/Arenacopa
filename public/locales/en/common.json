@@ -1,65 +1,66 @@
 {
-    "nav": {
-        "home": "Home",
-        "copa": "Cup",
-        "bolao": "Pools",
-        "simulator": "Simulator",
-        "guia": "Guide",
-        "ranking": "Ranking",
-        "profile": "Account",
-        "menu": "Account"
-    },
-    "header": {
-        "titles": {
-            "boloes": "Pools",
-            "create_bolao": "Create Pool",
-            "bolao_detail": "Pool",
-            "profile": "Account",
-            "menu": "Account"
-        }
-    },
-    "common": {
-        "loading": "Loading...",
-        "error": "An error occurred",
-        "save": "Save",
-        "cancel": "Cancel",
-        "back": "Back",
-        "next": "Next",
-        "confirm": "Confirm",
-        "search": "Search",
-        "filter": "Filter",
-        "close": "Close",
-        "error_title": "Oops! Something went wrong",
-        "error_desc": "Could not load data. Please try again.",
-        "retry": "Try again"
-    },
-    "notifications": {
-        "title": "Notifications",
-        "mark_all_read": "Mark all as read",
-        "description": "Check the latest news and updates.",
-        "empty": "No notifications",
-        "load_error": "I couldn't load your notifications.",
-        "demo_title": "New invite",
-        "demo_message": "A pool just opened a spot so you can try the full experience.",
-        "new": "New",
-        "new_count_one": "{{count}} new",
-        "new_count_other": "{{count}} new"
-    },
-    "pwa": {
-        "title": "Install the app",
-        "description": "Keep ArenaCopa on your home screen for a smoother mobile experience.",
-        "install": "Install now"
-    },
-    "onboarding": {
-        "title": "Welcome to ArenaCopa",
-        "description": "Choose your favorite team for the 2026 World Cup.",
-        "loading": "Confirming...",
-        "confirm": "Confirm and Enter the Arena"
-    },
-    "status": {
-        "active": "Active",
-        "finished": "Finished",
-        "live": "Live",
-        "scheduled": "Scheduled"
+  "nav": {
+    "home": "Home",
+    "copa": "Cup",
+    "bolao": "Pools",
+    "simulator": "Simulator",
+    "guia": "Guide",
+    "ranking": "Ranking",
+    "profile": "Account",
+    "menu": "Account"
+  },
+  "header": {
+    "titles": {
+      "boloes": "Pools",
+      "create_bolao": "Create Pool",
+      "bolao_detail": "Pool",
+      "profile": "Account",
+      "menu": "Account"
     }
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "An error occurred",
+    "save": "Save",
+    "cancel": "Cancel",
+    "back": "Back",
+    "next": "Next",
+    "confirm": "Confirm",
+    "search": "Search",
+    "filter": "Filter",
+    "close": "Close",
+    "error_title": "Oops! Something went wrong",
+    "error_desc": "Could not load data. Please try again.",
+    "retry": "Try again"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "mark_all_read": "Mark all as read",
+    "description": "Check the latest news and updates.",
+    "empty": "No notifications",
+    "load_error": "I couldn't load your notifications.",
+    "demo_title": "New invite",
+    "demo_message": "A pool just opened a spot so you can try the full experience.",
+    "new": "New",
+    "new_count_one": "{{count}} new",
+    "new_count_other": "{{count}} new"
+  },
+  "pwa": {
+    "title": "Install the app",
+    "description": "Keep ArenaCUP on your home screen for a smoother mobile experience.",
+    "install": "Install now"
+  },
+  "onboarding": {
+    "title": "Welcome to ArenaCUP",
+    "description": "Choose your favorite team for the 2026 World Cup.",
+    "loading": "Confirming...",
+    "confirm": "Confirm and Enter the Arena"
+  },
+  "status": {
+    "active": "Active",
+    "finished": "Finished",
+    "live": "Live",
+    "scheduled": "Scheduled"
+  },
+  "app_loading": "Loading ArenaCUP..."
 }

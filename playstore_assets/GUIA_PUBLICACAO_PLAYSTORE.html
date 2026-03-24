@@ -1,0 +1,1441 @@
+﻿<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Guia de Publicação — ArenaCopa 2026 no Google Play</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #060f09;
+  --surface: #0d2018;
+  --card: #112819;
+  --card2: #162f1e;
+  --green: #2d7a45;
+  --green-light: #3ca05a;
+  --gold: #d4970d;
+  --gold-light: #e8b840;
+  --text: #e8f5ee;
+  --muted: #7a9e87;
+  --border: rgba(45,122,69,0.25);
+  --red: #dc3232;
+}
+body {
+  font-family: 'Segoe UI', system-ui, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 0 0 100px;
+  line-height: 1.7;
+}
+
+/* HERO */
+.hero {
+  background: linear-gradient(160deg, #0a2016 0%, #122a1c 50%, #0d1f14 100%);
+  border-bottom: 1px solid var(--border);
+  padding: 56px 40px 48px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute;
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, rgba(45,122,69,0.12) 0%, transparent 70%);
+  top: -150px; right: -100px;
+  border-radius: 50%;
+}
+.hero-badge {
+  display: inline-block;
+  background: rgba(212,151,13,0.15);
+  border: 1px solid rgba(212,151,13,0.35);
+  color: var(--gold-light);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 5px 18px;
+  border-radius: 20px;
+  margin-bottom: 20px;
+}
+.hero h1 {
+  font-size: 38px;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1.2;
+  margin-bottom: 12px;
+}
+.hero h1 span { color: var(--gold-light); }
+.hero p { color: var(--muted); font-size: 16px; max-width: 560px; margin: 0 auto 28px; }
+.hero-stats {
+  display: flex;
+  justify-content: center;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+.stat { text-align: center; }
+.stat-n { font-size: 28px; font-weight: 800; color: var(--gold-light); }
+.stat-l { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+/* PROGRESS BAR */
+.progress-bar {
+  display: flex;
+  padding: 0 40px;
+  margin: 32px 0 0;
+  gap: 0;
+  overflow-x: auto;
+}
+.progress-step {
+  flex: 1;
+  min-width: 100px;
+  text-align: center;
+  position: relative;
+  padding-bottom: 16px;
+}
+.progress-step::after {
+  content: '';
+  position: absolute;
+  top: 17px; left: 50%;
+  width: 100%; height: 2px;
+  background: var(--border);
+}
+.progress-step:last-child::after { display: none; }
+.step-dot {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: var(--card2);
+  border: 2px solid var(--green);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700;
+  color: var(--green-light);
+  margin: 0 auto 8px;
+  position: relative; z-index: 1;
+}
+.step-dot.done { background: var(--green); color: white; border-color: var(--green); }
+.step-dot.ready { background: var(--gold); color: #060f09; border-color: var(--gold); }
+.progress-step .step-label { font-size: 11px; color: var(--muted); }
+
+/* SECTIONS */
+.section { padding: 40px 40px 0; }
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+}
+.step-num {
+  min-width: 44px; height: 44px;
+  background: linear-gradient(135deg, var(--green), #1e5c32);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; font-weight: 800;
+  color: white;
+}
+.step-num.gold { background: linear-gradient(135deg, var(--gold), #a87209); }
+.step-num.done { background: linear-gradient(135deg, #2a6b40, #1a4228); color: #6fcf97; }
+.section-header h2 { font-size: 22px; font-weight: 700; color: var(--text); }
+.section-header .tag {
+  margin-left: auto;
+  font-size: 11px;
+  padding: 3px 12px;
+  border-radius: 20px;
+  font-weight: 600;
+}
+.tag.done { background: rgba(45,122,69,0.2); color: #6fcf97; border: 1px solid rgba(45,122,69,0.4); }
+.tag.todo { background: rgba(212,151,13,0.15); color: var(--gold-light); border: 1px solid rgba(212,151,13,0.35); }
+.tag.now  { background: rgba(220,50,50,0.15); color: #ff6b6b; border: 1px solid rgba(220,50,50,0.35); }
+
+/* CARDS */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px 24px;
+  margin-bottom: 16px;
+}
+.card-title { font-size: 13px; font-weight: 700; color: var(--gold-light); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+.card p { font-size: 14px; color: var(--muted); margin-bottom: 6px; }
+.card p strong { color: var(--text); }
+
+/* PATH BOX */
+.path-box {
+  background: #060f09;
+  border: 1px solid rgba(45,122,69,0.35);
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-family: 'Consolas', 'Courier New', monospace;
+  font-size: 13px;
+  color: var(--gold-light);
+  margin: 10px 0;
+  word-break: break-all;
+}
+.path-box .path-label { font-family: 'Segoe UI', sans-serif; font-size: 11px; color: var(--muted); margin-bottom: 4px; font-style: normal; display: block; }
+
+/* FILE LIST */
+.file-list { list-style: none; }
+.file-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+}
+.file-list li:last-child { border-bottom: none; }
+.file-icon { font-size: 20px; min-width: 28px; }
+.file-name { font-family: 'Consolas', monospace; color: var(--gold-light); font-size: 13px; }
+.file-desc { color: var(--muted); font-size: 13px; margin-top: 2px; }
+.file-size { margin-left: auto; font-size: 12px; color: var(--muted); white-space: nowrap; padding-left: 8px; }
+
+/* TEXT BLOCKS */
+.text-block {
+  background: #060f09;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--gold);
+  border-radius: 0 8px 8px 0;
+  padding: 14px 18px;
+  font-size: 14px;
+  color: var(--text);
+  white-space: pre-wrap;
+  line-height: 1.7;
+  margin: 10px 0;
+}
+.text-meta { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.text-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+.char-count { font-size: 11px; color: var(--green-light); }
+
+/* STEPS LIST */
+.steps-list { list-style: none; counter-reset: steps; }
+.steps-list li {
+  counter-increment: steps;
+  display: flex;
+  gap: 14px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+  align-items: flex-start;
+  font-size: 14px;
+}
+.steps-list li:last-child { border-bottom: none; }
+.steps-list li::before {
+  content: counter(steps);
+  min-width: 28px; height: 28px;
+  background: var(--card2);
+  border: 1px solid var(--green);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700;
+  color: var(--green-light);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.steps-list li strong { color: var(--text); display: block; margin-bottom: 2px; }
+.steps-list li span { color: var(--muted); font-size: 13px; }
+
+/* ALERT */
+.alert {
+  border-radius: 10px;
+  padding: 14px 18px;
+  margin: 16px 0;
+  font-size: 14px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.alert-icon { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
+.alert.gold { background: rgba(212,151,13,0.1); border: 1px solid rgba(212,151,13,0.3); color: #f0d080; }
+.alert.green { background: rgba(45,122,69,0.15); border: 1px solid rgba(45,122,69,0.35); color: #6fcf97; }
+.alert.red { background: rgba(220,50,50,0.1); border: 1px solid rgba(220,50,50,0.25); color: #ff8080; }
+.alert p { margin: 0; line-height: 1.6; }
+.alert p strong { color: inherit; }
+
+/* CHECKLIST */
+.checklist { list-style: none; }
+.checklist li {
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 14px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+.checklist li:last-child { border-bottom: none; }
+.check-box {
+  width: 20px; height: 20px;
+  border: 2px solid var(--green);
+  border-radius: 4px;
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.check-box.done { background: var(--green); border-color: var(--green); color: white; font-size: 12px; }
+.check-box.done::after { content: '✓'; }
+.checklist li .cl-text { color: var(--text); }
+.checklist li .cl-sub { color: var(--muted); font-size: 12px; display: block; margin-top: 2px; }
+
+/* LINK */
+a { color: var(--gold-light); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+/* DIVIDER */
+.divider { height: 1px; background: var(--border); margin: 40px 40px 0; }
+
+/* FINAL CARD */
+.final-card {
+  margin: 40px;
+  background: linear-gradient(135deg, #162f1e 0%, #0e2318 100%);
+  border: 1px solid rgba(212,151,13,0.3);
+  border-radius: 18px;
+  padding: 32px 36px;
+  text-align: center;
+}
+.final-card h2 { font-size: 24px; color: var(--gold-light); margin-bottom: 10px; }
+.final-card p { color: var(--muted); font-size: 15px; max-width: 480px; margin: 0 auto; }
+
+/* IMAGE GRID */
+.img-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin: 16px 0;
+}
+.img-card {
+  background: var(--card2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 14px;
+  text-align: center;
+  font-size: 12px;
+}
+.img-card .img-icon { font-size: 28px; margin-bottom: 8px; }
+.img-card .img-name { font-family: monospace; color: var(--gold-light); font-size: 11px; word-break: break-all; }
+.img-card .img-spec { color: var(--muted); margin-top: 4px; font-size: 11px; }
+
+/* RESPONSIVE */
+@media (max-width: 640px) {
+  .hero { padding: 36px 20px 32px; }
+  .hero h1 { font-size: 26px; }
+  .section { padding: 30px 20px 0; }
+  .img-grid { grid-template-columns: repeat(2, 1fr); }
+  .progress-bar { padding: 0 20px; }
+}
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge">Guia Completo de Publicação</div>
+  <h1>⚽ <span>ArenaCopa 2026</span><br>no Google Play Store</h1>
+  <p>Tudo que você precisa fazer, passo a passo, com endereços exatos de pasta e textos prontos para copiar.</p>
+  <div class="hero-stats">
+    <div class="stat"><div class="stat-n">10</div><div class="stat-l">Passos totais</div></div>
+    <div class="stat"><div class="stat-n">3</div><div class="stat-l">Já concluídos</div></div>
+    <div class="stat"><div class="stat-n">10</div><div class="stat-l">Arquivos prontos</div></div>
+    <div class="stat"><div class="stat-n">1–3</div><div class="stat-l">Dias para aprovação</div></div>
+  </div>
+</div>
+
+<!-- BARRA DE PROGRESSO -->
+<div class="progress-bar">
+  <div class="progress-step">
+    <div class="step-dot done">✓</div>
+    <div class="step-label">AAB<br>Gerado</div>
+  </div>
+  <div class="progress-step">
+    <div class="step-dot done">✓</div>
+    <div class="step-label">Imagens<br>Criadas</div>
+  </div>
+  <div class="progress-step">
+    <div class="step-dot done">✓</div>
+    <div class="step-label">Textos<br>Prontos</div>
+  </div>
+  <div class="progress-step">
+    <div class="step-dot ready">4</div>
+    <div class="step-label">Política<br>Publicar</div>
+  </div>
+  <div class="progress-step">
+    <div class="step-dot">5</div>
+    <div class="step-label">Conta<br>Dev</div>
+  </div>
+  <div class="progress-step">
+    <div class="step-dot">6</div>
+    <div class="step-label">Criar<br>App</div>
+  </div>
+  <div class="progress-step">
+    <div class="step-dot">7</div>
+    <div class="step-label">Preencher<br>Ficha</div>
+  </div>
+  <div class="progress-step">
+    <div class="step-dot">8</div>
+    <div class="step-label">Upload<br>AAB</div>
+  </div>
+  <div class="progress-step">
+    <div class="step-dot">9</div>
+    <div class="step-label">Testar<br>Interno</div>
+  </div>
+  <div class="progress-step">
+    <div class="step-dot">10</div>
+    <div class="step-label">Enviar<br>Revisão</div>
+  </div>
+</div>
+
+<!-- PASSO 1 — ARQUIVOS JÁ PRONTOS -->
+<div class="section">
+  <div class="section-header">
+    <div class="step-num done">✓</div>
+    <h2>Passo 1 — Seus arquivos já estão prontos</h2>
+    <span class="tag done">✓ Concluído</span>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📁 Pasta dos Assets (Imagens + Textos)</div>
+    <div class="path-box">
+      <span class="path-label">Windows Explorer — copie e cole na barra de endereço:</span>
+      C:\Users\eduar\OneDrive\Desktop\Antigravity\ArenaCopa\Arenacopa\playstore_assets
+    </div>
+    <ul class="file-list">
+      <li>
+        <span class="file-icon">🖼️</span>
+        <div>
+          <div class="file-name">01_icon_512x512.png</div>
+          <div class="file-desc">Ícone da loja — fundo verde sólido, sem transparência</div>
+        </div>
+        <span class="file-size">266 KB</span>
+      </li>
+      <li>
+        <span class="file-icon">🎨</span>
+        <div>
+          <div class="file-name">02_feature_graphic_1024x500.png</div>
+          <div class="file-desc">Banner principal que aparece no topo da página do app</div>
+        </div>
+        <span class="file-size">91 KB</span>
+      </li>
+      <li>
+        <span class="file-icon">📱</span>
+        <div>
+          <div class="file-name">03_screenshot_1_jogos.png</div>
+          <div class="file-desc">Tela 1 — Jogos ao vivo com placares em tempo real</div>
+        </div>
+        <span class="file-size">68 KB</span>
+      </li>
+      <li>
+        <span class="file-icon">📱</span>
+        <div>
+          <div class="file-name">04_screenshot_2_grupos.png</div>
+          <div class="file-desc">Tela 2 — Tabela dos 12 grupos da Copa 2026</div>
+        </div>
+        <span class="file-size">61 KB</span>
+      </li>
+      <li>
+        <span class="file-icon">📱</span>
+        <div>
+          <div class="file-name">05_screenshot_3_noticias.png</div>
+          <div class="file-desc">Tela 3 — Feed de notícias (BBC, UOL, Google News)</div>
+        </div>
+        <span class="file-size">133 KB</span>
+      </li>
+      <li>
+        <span class="file-icon">📱</span>
+        <div>
+          <div class="file-name">06_screenshot_4_detalhe.png</div>
+          <div class="file-desc">Tela 4 — Detalhe de partida ao vivo com estatísticas</div>
+        </div>
+        <span class="file-size">75 KB</span>
+      </li>
+      <li>
+        <span class="file-icon">📱</span>
+        <div>
+          <div class="file-name">07_screenshot_5_bolao.png</div>
+          <div class="file-desc">Tela 5 — Bolão com ranking de amigos</div>
+        </div>
+        <span class="file-size">92 KB</span>
+      </li>
+      <li>
+        <span class="file-icon">📱</span>
+        <div>
+          <div class="file-name">08_screenshot_6_ranking.png</div>
+          <div class="file-desc">Tela 6 — Classificação geral das 48 seleções</div>
+        </div>
+        <span class="file-size">75 KB</span>
+      </li>
+      <li>
+        <span class="file-icon">📄</span>
+        <div>
+          <div class="file-name">09_textos_playstore.html</div>
+          <div class="file-desc">Todos os textos prontos para copiar (nome, descrições, notas)</div>
+        </div>
+        <span class="file-size">6 KB</span>
+      </li>
+      <li>
+        <span class="file-icon">🔒</span>
+        <div>
+          <div class="file-name">10_politica_privacidade.html</div>
+          <div class="file-desc">Política de Privacidade — precisa ser publicada online</div>
+        </div>
+        <span class="file-size">7 KB</span>
+      </li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="card-title">📦 AAB Assinado (Bundle para upload)</div>
+    <div class="path-box">
+      <span class="path-label">Arquivo que você vai fazer upload no Play Console:</span>
+      C:\Users\eduar\OneDrive\Desktop\Antigravity\ArenaCopa\Arenacopa\android\app\build\outputs\bundle\release\app-release.aab
+    </div>
+    <p>Tamanho: <strong>16.23 MB</strong> &nbsp;|&nbsp; Assinado com: <strong>arena-cup-release.keystore</strong> &nbsp;|&nbsp; Gerado em: <strong>22/03/2026</strong></p>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- PASSO 2 — KEYSTORE -->
+<div class="section">
+  <div class="section-header">
+    <div class="step-num done">✓</div>
+    <h2>Passo 2 — Guarde sua Keystore com segurança</h2>
+    <span class="tag done">✓ Criada</span>
+  </div>
+
+  <div class="alert red">
+    <div class="alert-icon">🚨</div>
+    <p><strong>ATENÇÃO CRÍTICA:</strong> Se você perder a keystore, jamais poderá atualizar o app na Play Store. Faça backup agora no Google Drive, Dropbox e pendrive.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-title">🔑 Localização da Keystore</div>
+    <div class="path-box">
+      <span class="path-label">Arquivo (faça backup IMEDIATAMENTE):</span>
+      C:\Users\eduar\arena-cup-release.keystore
+    </div>
+    <p>Alias: <strong>arena-cup-key</strong></p>
+    <p>Senha: <strong>ArenaCup2026!</strong></p>
+    <p>Validade: <strong>10.000 dias (~27 anos)</strong></p>
+    <div class="alert gold" style="margin-top:12px">
+      <div class="alert-icon">💡</div>
+      <p>Guarde a senha em um local seguro também (ex: gerenciador de senhas ou papel guardado). <strong>Você vai precisar dela em toda futura atualização do app.</strong></p>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- PASSO 3 — PUBLICAR POLÍTICA DE PRIVACIDADE -->
+<div class="section">
+  <div class="section-header">
+    <div class="step-num gold">4</div>
+    <h2>Passo 3 — Publicar a Política de Privacidade online</h2>
+    <span class="tag now">🔴 Fazer agora</span>
+  </div>
+
+  <p style="color:var(--muted);font-size:14px;margin-bottom:16px">O Google Play exige uma URL pública para a Política de Privacidade. Use o Firebase Hosting do seu próprio projeto (grátis e já está configurado).</p>
+
+  <div class="card">
+    <div class="card-title">Método 1 — Firebase Hosting (recomendado, 5 minutos)</div>
+    <ol class="steps-list">
+      <li>
+        <strong>Abra o terminal na pasta do projeto</strong>
+        <span>Pressione Win+R → digite cmd → OK. Depois:</span>
+        <div class="path-box" style="margin-top:8px">cd C:\Users\eduar\OneDrive\Desktop\Antigravity\ArenaCopa\Arenacopa</div>
+      </li>
+      <li>
+        <strong>Copie o arquivo HTML para a pasta public/</strong>
+        <div class="path-box" style="margin-top:8px">copy playstore_assets\10_politica_privacidade.html public\privacidade.html</div>
+      </li>
+      <li>
+        <strong>Faça o deploy</strong>
+        <div class="path-box" style="margin-top:8px">firebase deploy --only hosting</div>
+      </li>
+      <li>
+        <strong>Sua URL ficará disponível em:</strong>
+        <div class="path-box" style="margin-top:8px">https://SEU-PROJETO.web.app/privacidade.html</div>
+        <span>Substitua SEU-PROJETO pelo ID do seu projeto Firebase (veja no arquivo .firebaserc)</span>
+      </li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Método 2 — GitHub Pages (alternativa, 10 minutos)</div>
+    <ol class="steps-list">
+      <li><strong>Crie um repositório público no GitHub</strong><span>Acesse github.com → New repository → Nome: "arenacopa-privacy" → Public → Create</span></li>
+      <li><strong>Faça upload do arquivo</strong><span>Clique em "uploading an existing file" → arraste o arquivo 10_politica_privacidade.html → Commit changes</span></li>
+      <li><strong>Ative o GitHub Pages</strong><span>Settings → Pages → Branch: main → / (root) → Save</span></li>
+      <li><strong>URL disponível em:</strong><div class="path-box" style="margin-top:8px">https://SEU-USUARIO.github.io/arenacopa-privacy/10_politica_privacidade.html</div></li>
+    </ol>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- PASSO 4 — CONTA DEVELOPER -->
+<div class="section">
+  <div class="section-header">
+    <div class="step-num">5</div>
+    <h2>Passo 4 — Criar conta Google Play Developer</h2>
+    <span class="tag todo">Fazer uma vez</span>
+  </div>
+
+  <div class="alert gold">
+    <div class="alert-icon">💳</div>
+    <p><strong>Custo único: US$ 25</strong> (taxa de registro, paga apenas uma vez para sempre). Use cartão de crédito ou débito internacional.</p>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Como criar sua conta</div>
+    <ol class="steps-list">
+      <li>
+        <strong>Acesse o Play Console</strong>
+        <span><a href="https://play.google.com/console" target="_blank">https://play.google.com/console</a> → Entre com sua conta Google</span>
+      </li>
+      <li>
+        <strong>Clique em "Começar"</strong>
+        <span>Preencha: Nome do desenvolvedor → <strong>Antigravity</strong> (ou seu nome)</span>
+      </li>
+      <li>
+        <strong>Pague a taxa de US$ 25</strong>
+        <span>Use qualquer cartão. O pagamento é processado pelo Google Play e é imediato.</span>
+      </li>
+      <li>
+        <strong>Conta ativada!</strong>
+        <span>Aguarde aprovação (geralmente instantânea, máximo 48h)</span>
+      </li>
+    </ol>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- PASSO 5 — CRIAR O APP NO CONSOLE -->
+<div class="section">
+  <div class="section-header">
+    <div class="step-num">6</div>
+    <h2>Passo 5 — Criar o app no Play Console</h2>
+    <span class="tag todo">Próximo</span>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Sequência no Play Console</div>
+    <ol class="steps-list">
+      <li><strong>Clique em "Criar app"</strong><span>No painel principal do Play Console → botão azul no canto superior direito</span></li>
+      <li>
+        <strong>Preencha os dados iniciais</strong>
+        <span>
+          Nome do app: <strong>ArenaCopa 2026</strong><br>
+          Idioma padrão: <strong>Português (Brasil)</strong><br>
+          App ou jogo: <strong>App</strong><br>
+          Gratuito ou pago: <strong>Gratuito</strong>
+        </span>
+      </li>
+      <li><strong>Aceite as políticas</strong><span>Marque as caixas de declarações e clique em "Criar app"</span></li>
+    </ol>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- PASSO 6 — PREENCHER A FICHA DO APP -->
+<div class="section">
+  <div class="section-header">
+    <div class="step-num">7</div>
+    <h2>Passo 6 — Preencher a ficha da loja</h2>
+    <span class="tag todo">Próximo</span>
+  </div>
+
+  <p style="color:var(--muted);font-size:14px;margin-bottom:16px">No Play Console → <strong>Presença na Play Store → Ficha principal da loja</strong>. Preencha com os textos abaixo:</p>
+
+  <div class="card">
+    <div class="card-title">Nome do App</div>
+    <div class="text-meta">
+      <span class="text-label">Título</span>
+      <span class="char-count">14 / 30 caracteres</span>
+    </div>
+    <div class="text-block">ArenaCopa 2026</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Descrição Curta (Short Description)</div>
+    <div class="text-meta">
+      <span class="text-label">Aparece nos resultados de busca</span>
+      <span class="char-count">79 / 80 caracteres</span>
+    </div>
+    <div class="text-block">Acompanhe a Copa do Mundo 2026 ao vivo: jogos, grupos, notícias e bolões ⚽🏆</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Descrição Longa (Full Description)</div>
+    <div class="text-meta">
+      <span class="text-label">Página completa do app</span>
+      <span class="char-count">~1.750 / 4.000 caracteres</span>
+    </div>
+    <div class="text-block">🏆 ArenaCopa 2026 — Sua Copa do Mundo no bolso
+
+O aplicativo definitivo para acompanhar a Copa do Mundo FIFA 2026 em tempo real. Com o ArenaCopa, você nunca perde um gol, uma notícia ou um resultado do seu time favorito.
+
+⚽ JOGOS EM TEMPO REAL
+• Placares ao vivo atualizados automaticamente
+• Cronômetro da partida, eventos e cartões
+• Notificações para gols do seu time favorito
+• Calendário completo das 104 partidas
+
+📊 GRUPOS E CLASSIFICAÇÃO
+• Tabela completa dos 12 grupos da Copa 2026
+• Classificação atualizada após cada rodada
+• Histórico de confrontos entre seleções
+• Estatísticas detalhadas de cada equipe
+
+📰 NOTÍCIAS DIRETO DA FONTE
+• Notícias em tempo real via BBC Sport, UOL Esporte e Google News
+• Filtre por seleção do seu interesse
+• Cobertura em português e inglês
+• Atualizado a cada 30 minutos automaticamente
+
+🎯 BOLÕES E PALPITES
+• Crie bolões com seus amigos e família
+• Dê palpites para cada partida
+• Ranking em tempo real do seu grupo
+• Sistema de pontuação justo e transparente
+
+🌎 COPA 2026 — O MAIOR TORNEIO DA HISTÓRIA
+A Copa do Mundo 2026 será realizada nos Estados Unidos, Canadá e México com 48 seleções — o maior formato já realizado na história do torneio.
+
+📱 DESIGN MODERNO E INTUITIVO
+• Interface elegante no tema verde e dourado da Copa
+• Modo escuro nativo • Otimizado para Android
+• Carregamento rápido e navegação fluida
+
+🔔 NOTIFICAÇÕES INTELIGENTES
+• Receba alertas de gols do seu time
+• Lembrete antes do início das partidas
+• Resultados finais instantâneos
+
+Desenvolvido por Antigravity para todos os fãs de futebol do Brasil e do mundo. Torça, acompanhe e celebre cada momento da Copa 2026 com o ArenaCopa!
+
+#Copa2026 #FIFAWorldCup #Futebol #Brasil #ArenaCopa</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Imagens — Faça upload nesta ordem</div>
+    <div class="img-grid">
+      <div class="img-card">
+        <div class="img-icon">🖼️</div>
+        <div class="img-name">01_icon_512x512.png</div>
+        <div class="img-spec">512×512 px · PNG</div>
+        <div class="img-spec" style="color:var(--gold-light);margin-top:4px">Ícone da loja</div>
+      </div>
+      <div class="img-card">
+        <div class="img-icon">🎨</div>
+        <div class="img-name">02_feature_graphic...</div>
+        <div class="img-spec">1024×500 px · PNG</div>
+        <div class="img-spec" style="color:var(--gold-light);margin-top:4px">Feature Graphic</div>
+      </div>
+      <div class="img-card">
+        <div class="img-icon">📱</div>
+        <div class="img-name">03 ao 08</div>
+        <div class="img-spec">1080×1920 px · PNG</div>
+        <div class="img-spec" style="color:var(--gold-light);margin-top:4px">6 Screenshots</div>
+      </div>
+    </div>
+    <div class="alert green" style="margin-top:8px">
+      <div class="alert-icon">💡</div>
+      <p>No Play Console, vá em <strong>Ficha principal da loja → Recursos gráficos</strong>. Arraste os arquivos da pasta playstore_assets diretamente.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Outras configurações da ficha</div>
+    <ul class="checklist">
+      <li><div class="check-box"></div><div><span class="cl-text">Categoria</span><span class="cl-sub">Selecione: <strong>Esportes</strong></span></div></li>
+      <li><div class="check-box"></div><div><span class="cl-text">Tags</span><span class="cl-sub">futebol, copa do mundo, world cup 2026, FIFA 2026, soccer</span></div></li>
+      <li><div class="check-box"></div><div><span class="cl-text">Email de suporte</span><span class="cl-sub">luis.longhi@undb.edu.br</span></div></li>
+      <li><div class="check-box"></div><div><span class="cl-text">Política de Privacidade</span><span class="cl-sub">Cole a URL onde você hospedou o arquivo 10_politica_privacidade.html</span></div></li>
+      <li><div class="check-box"></div><div><span class="cl-text">Contém anúncios?</span><span class="cl-sub">Responda: <strong>Não</strong></span></div></li>
+    </ul>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- PASSO 7 — CLASSIFICAÇÃO DE CONTEÚDO -->
+<div class="section">
+  <div class="section-header">
+    <div class="step-num">7</div>
+    <h2>Passo 7 — Classificação de conteúdo</h2>
+    <span class="tag todo">5 minutos</span>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Play Console → Classificação de conteúdo → Iniciar questionário</div>
+    <ol class="steps-list">
+      <li><strong>Categoria do app</strong><span>Selecione: <strong>Utilitário, produtividade, comunicação, notícias ou referência</strong></span></li>
+      <li>
+        <strong>Responda o questionário</strong>
+        <span>
+          Violência: <strong>Não</strong> &nbsp;|&nbsp;
+          Conteúdo sexual: <strong>Não</strong> &nbsp;|&nbsp;
+          Linguagem: <strong>Não</strong><br>
+          Jogo de azar: <strong>Não</strong> &nbsp;|&nbsp;
+          Interação com usuários: <strong>Sim</strong> (bolões)<br>
+          Compras: <strong>Não</strong>
+        </span>
+      </li>
+      <li><strong>Resultado esperado</strong><span>Classificação: <strong>LIVRE (Everyone / L)</strong> — sem restrição de idade</span></li>
+    </ol>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- PASSO 8 — UPLOAD DO AAB -->
+<div class="section">
+  <div class="section-header">
+    <div class="step-num">8</div>
+    <h2>Passo 8 — Upload do AAB assinado</h2>
+    <span class="tag todo">Próximo</span>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Play Console → Produção (ou Testes internos) → Criar nova versão</div>
+    <ol class="steps-list">
+      <li>
+        <strong>Vá em "Testes internos" primeiro</strong>
+        <span>Caminho: Play Console → seu app → Testes → Testes internos → Criar nova versão</span>
+      </li>
+      <li>
+        <strong>Faça upload do AAB</strong>
+        <span>Clique em "Fazer upload" e selecione o arquivo:</span>
+        <div class="path-box" style="margin-top:8px">...\android\app\build\outputs\bundle\release\app-release.aab</div>
+      </li>
+      <li>
+        <strong>Preencha as notas de versão</strong>
+        <span>Cole o texto abaixo no campo "O que há de novo nesta versão":</span>
+        <div class="text-block" style="margin-top:8px">Versão 1.0 — Lançamento oficial!
+
+• Jogos ao vivo com placares em tempo real
+• Tabela dos 12 grupos da Copa 2026
+• Notícias de fontes confiáveis (BBC, UOL, Google News)
+• Sistema de bolões com ranking
+• Classificação geral das 48 seleções
+• Notificações de gols e resultados</div>
+      </li>
+      <li><strong>Clique em "Salvar" e depois "Analisar versão"</strong><span>O Google vai verificar se tudo está OK. Se aparecer alertas amarelos, pode ignorar. Erros vermelhos precisam ser corrigidos.</span></li>
+    </ol>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- PASSO 9 — TESTE INTERNO -->
+<div class="section">
+  <div class="section-header">
+    <div class="step-num">9</div>
+    <h2>Passo 9 — Testar antes de publicar</h2>
+    <span class="tag todo">Recomendado</span>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Teste Interno (instale no seu próprio celular)</div>
+    <ol class="steps-list">
+      <li><strong>Publique para Teste Interno</strong><span>Play Console → Testes internos → Criar versão → Publicar (sem revisão do Google, imediato)</span></li>
+      <li><strong>Adicione seu e-mail como testador</strong><span>Testadores → Gerenciar lista → adicione: luis.longhi@undb.edu.br</span></li>
+      <li><strong>Instale no celular</strong><span>Você receberá um link. Abra no celular Android, aceite ser testador e instale o app.</span></li>
+      <li><strong>Teste todas as funcionalidades</strong><span>Verifique: login, jogos ao vivo, notícias, grupos, bolão, notificações</span></li>
+      <li><strong>Se estiver tudo OK</strong><span>Vá para o Passo 10 — enviar para Produção</span></li>
+    </ol>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- PASSO 10 — PUBLICAR EM PRODUÇÃO -->
+<div class="section">
+  <div class="section-header">
+    <div class="step-num gold">10</div>
+    <h2>Passo 10 — Enviar para Produção</h2>
+    <span class="tag todo">Lançamento!</span>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Checklist final antes de enviar para revisão</div>
+    <ul class="checklist">
+      <li><div class="check-box"></div><div><span class="cl-text">Ícone 512×512 enviado</span></div></li>
+      <li><div class="check-box"></div><div><span class="cl-text">Feature Graphic 1024×500 enviado</span></div></li>
+      <li><div class="check-box"></div><div><span class="cl-text">Mínimo 2 screenshots enviadas</span><span class="cl-sub">(temos 6 prontas)</span></div></li>
+      <li><div class="check-box"></div><div><span class="cl-text">Descrição curta preenchida</span></div></li>
+      <li><div class="check-box"></div><div><span class="cl-text">Descrição longa preenchida</span></div></li>
+      <li><div class="check-box"></div><div><span class="cl-text">Categoria: Esportes selecionada</span></div></li>
+      <li><div class="check-box"></div><div><span class="cl-text">Classificação de conteúdo preenchida</span></div></li>
+      <li><div class="check-box"></div><div><span class="cl-text">Política de Privacidade com URL pública</span></div></li>
+      <li><div class="check-box"></div><div><span class="cl-text">AAB assinado enviado</span></div></li>
+      <li><div class="check-box"></div><div><span class="cl-text">Notas de versão preenchidas</span></div></li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Como enviar para Produção</div>
+    <ol class="steps-list">
+      <li><strong>Vá em Produção → Criar nova versão</strong><span>Play Console → seu app → Produção → Criar nova versão</span></li>
+      <li><strong>Selecione o AAB já enviado</strong><span>Você pode reutilizar o AAB enviado nos testes internos</span></li>
+      <li><strong>Clique em "Analisar versão"</strong><span>O Play Console vai verificar se a ficha está completa. Corrija qualquer erro vermelho.</span></li>
+      <li><strong>Clique em "Iniciar lançamento para Produção"</strong><span>Confirme. O app entra em fila de revisão do Google.</span></li>
+      <li>
+        <strong>Aguarde a aprovação</strong>
+        <span>Prazo: <strong>1 a 3 dias úteis</strong> (normalmente menos de 24h). Você receberá um e-mail quando aprovado ou se precisar de correções.</span>
+      </li>
+    </ol>
+  </div>
+
+  <div class="alert green">
+    <div class="alert-icon">🎉</div>
+    <p><strong>Quando aprovado:</strong> o ArenaCopa 2026 estará disponível para download em toda a Play Store do Brasil e do mundo! Seu link ficará em: <strong>https://play.google.com/store/apps/details?id=com.antigravity.arenacopa</strong></p>
+  </div>
+</div>
+
+
+
+<div class="divider"></div>
+
+<!-- SECAO: CONTEUDO DO APP - 11 TAREFAS -->
+<div class="step-section">
+  <div class="step-header">
+    <div class="step-number">ðŸ“‹</div>
+    <div>
+      <div class="step-label">Play Console â†’ ConteÃºdo do app</div>
+      <h2 class="step-title">As 11 Tarefas do Painel â€” Passo a Passo Completo</h2>
+    </div>
+  </div>
+  <div class="step-body">
+    <div class="alert green" style="margin-bottom:24px">
+      <div class="alert-icon">ðŸ“</div>
+      <p>Acesse: <strong>Play Console â†’ seu app â†’ ConteÃºdo do app</strong>. Todas as 11 tarefas abaixo devem estar concluÃ­das antes de enviar para revisÃ£o.</p>
+    </div>
+
+    <!-- TAREFA 1 -->
+    <div style="border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:16px">
+      <div style="background:rgba(45,122,69,0.15);padding:14px 20px;display:flex;align-items:center;gap:12px">
+        <span style="background:var(--green);color:white;font-weight:800;font-size:13px;padding:3px 10px;border-radius:20px">âœ… 1</span>
+        <strong style="font-size:16px">Definir PolÃ­tica de Privacidade</strong>
+        <span style="margin-left:auto;background:rgba(45,122,69,0.3);color:var(--green-light);font-size:11px;padding:2px 10px;border-radius:10px;font-weight:700">JÃ CONCLUÃDO</span>
+      </div>
+      <div style="padding:16px 20px">
+        <p style="color:var(--muted);font-size:14px;margin-bottom:8px">Cole o link abaixo no campo solicitado:</p>
+        <code style="display:block;background:rgba(255,255,255,0.06);padding:10px 14px;border-radius:8px;font-size:13px;color:var(--gold-light);word-break:break-all">https://arenacopa-web-2026.web.app/privacidade</code>
+      </div>
+    </div>
+
+    <!-- TAREFA 2 -->
+    <div style="border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:16px">
+      <div style="background:var(--card2);padding:14px 20px;display:flex;align-items:center;gap:12px">
+        <span style="background:var(--gold);color:black;font-weight:800;font-size:13px;padding:3px 10px;border-radius:20px">2</span>
+        <strong style="font-size:16px">Acesso de apps</strong>
+        <span style="margin-left:auto;color:var(--muted);font-size:12px">Requer login?</span>
+      </div>
+      <div style="padding:16px 20px">
+        <p style="font-size:14px;margin-bottom:12px">O ArenaCUP exige login via Google para acessar. VocÃª precisa fornecer uma conta de teste para os revisores do Google.</p>
+        <div style="background:rgba(212,151,13,0.08);border:1px solid rgba(212,151,13,0.25);border-radius:10px;padding:14px;font-size:13px">
+          <strong style="color:var(--gold-light);display:block;margin-bottom:8px">ðŸ“ Como preencher:</strong>
+          Selecione: <strong>"Todo o app estÃ¡ protegido por login"</strong><br><br>
+          Clique em <strong>"Adicionar instruÃ§Ã£o de login"</strong> e preencha:<br>
+          â€¢ <strong>Nome de usuÃ¡rio/e-mail:</strong> <code style="background:rgba(255,255,255,0.08);padding:1px 6px;border-radius:4px">teste@arenacup.app</code><br>
+          â€¢ <strong>Senha:</strong> <code style="background:rgba(255,255,255,0.08);padding:1px 6px;border-radius:4px">ArenaCUP2026#</code><br>
+          â€¢ <strong>ObservaÃ§Ãµes:</strong> FaÃ§a login com Google usando esta conta. O app usa autenticaÃ§Ã£o Google OAuth.<br><br>
+          <strong style="color:var(--gold-light)">âš ï¸ Importante:</strong> Crie esta conta Google de teste antes de preencher. Ela deve ter acesso real ao app.
+        </div>
+      </div>
+    </div>
+
+    <!-- TAREFA 3 -->
+    <div style="border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:16px">
+      <div style="background:var(--card2);padding:14px 20px;display:flex;align-items:center;gap:12px">
+        <span style="background:var(--gold);color:black;font-weight:800;font-size:13px;padding:3px 10px;border-radius:20px">3</span>
+        <strong style="font-size:16px">AnÃºncios</strong>
+      </div>
+      <div style="padding:16px 20px">
+        <p style="font-size:14px;margin-bottom:12px">O Google quer saber se seu app exibe anÃºncios de terceiros (ex: Google AdMob, banners, intersticiais).</p>
+        <div style="background:rgba(45,122,69,0.08);border:1px solid rgba(45,122,69,0.25);border-radius:10px;padding:14px;font-size:13px">
+          <strong style="color:var(--green-light);display:block;margin-bottom:6px">âœ… Resposta para o ArenaCUP:</strong>
+          Selecione <strong>"NÃ£o, o app nÃ£o contÃ©m anÃºncios"</strong><br><br>
+          <em style="color:var(--muted)">Se no futuro vocÃª integrar o AdMob, volte aqui e mude para "Sim" â€” caso contrÃ¡rio o Google pode remover o app por declaraÃ§Ã£o falsa.</em>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAREFA 4 -->
+    <div style="border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:16px">
+      <div style="background:var(--card2);padding:14px 20px;display:flex;align-items:center;gap:12px">
+        <span style="background:var(--gold);color:black;font-weight:800;font-size:13px;padding:3px 10px;border-radius:20px">4</span>
+        <strong style="font-size:16px">ClassificaÃ§Ã£o de conteÃºdo</strong>
+      </div>
+      <div style="padding:16px 20px">
+        <p style="font-size:14px;margin-bottom:12px">QuestionÃ¡rio IARC que gera a classificaÃ§Ã£o etÃ¡ria automÃ¡tica (como o ESRB/PEGI). VocÃª responde sobre o conteÃºdo â€” o sistema classifica.</p>
+        <div style="background:rgba(212,151,13,0.08);border:1px solid rgba(212,151,13,0.25);border-radius:10px;padding:14px;font-size:13px;margin-bottom:12px">
+          <strong style="color:var(--gold-light);display:block;margin-bottom:8px">ðŸ“ Como preencher o questionÃ¡rio:</strong>
+          <strong>Categoria do app:</strong> UtilitÃ¡rios/ReferÃªncia ou Esportes (escolha Esportes)<br><br>
+          Nas perguntas sobre conteÃºdo, responda:<br>
+          â€¢ ViolÃªncia: <strong>NÃ£o</strong><br>
+          â€¢ Linguagem adulta: <strong>NÃ£o</strong><br>
+          â€¢ ConteÃºdo sexual: <strong>NÃ£o</strong><br>
+          â€¢ SubstÃ¢ncias ilegais: <strong>NÃ£o</strong><br>
+          â€¢ Jogos de azar com dinheiro real: <strong>NÃ£o</strong> (bolÃµes sem dinheiro real)<br>
+          â€¢ Compras dentro do app: <strong>Sim</strong> (se tiver premium)<br><br>
+          <strong style="color:var(--green-light)">Resultado esperado:</strong> ClassificaÃ§Ã£o <strong>Livre / 10+</strong> (sem restriÃ§Ãµes de pÃºblico)
+        </div>
+      </div>
+    </div>
+
+    <!-- TAREFA 5 -->
+    <div style="border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:16px">
+      <div style="background:var(--card2);padding:14px 20px;display:flex;align-items:center;gap:12px">
+        <span style="background:var(--gold);color:black;font-weight:800;font-size:13px;padding:3px 10px;border-radius:20px">5</span>
+        <strong style="font-size:16px">PÃºblico-alvo</strong>
+      </div>
+      <div style="padding:16px 20px">
+        <p style="font-size:14px;margin-bottom:12px">Define se o app Ã© destinado a crianÃ§as. <strong style="color:var(--red)">AtenÃ§Ã£o:</strong> se declarar que o app inclui crianÃ§as, regras COPPA entram em vigor e hÃ¡ restriÃ§Ãµes severas de dados.</p>
+        <div style="background:rgba(45,122,69,0.08);border:1px solid rgba(45,122,69,0.25);border-radius:10px;padding:14px;font-size:13px">
+          <strong style="color:var(--green-light);display:block;margin-bottom:8px">âœ… Resposta para o ArenaCUP:</strong>
+          <strong>Faixa etÃ¡ria alvo:</strong> Selecione <strong>18 anos ou mais</strong><br>
+          (ou "13 anos ou mais" se preferir incluir adolescentes)<br><br>
+          <strong>O app Ã© destinado principalmente a crianÃ§as?</strong> <strong>NÃ£o</strong><br><br>
+          Isso mantÃ©m o app fora das polÃ­ticas de proteÃ§Ã£o infantil e libera coleta de dados normais (login, analytics).
+        </div>
+      </div>
+    </div>
+
+    <!-- TAREFA 6 -->
+    <div style="border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:16px">
+      <div style="background:var(--card2);padding:14px 20px;display:flex;align-items:center;gap:12px">
+        <span style="background:var(--gold);color:black;font-weight:800;font-size:13px;padding:3px 10px;border-radius:20px">6</span>
+        <strong style="font-size:16px">SeguranÃ§a dos dados</strong>
+        <span style="margin-left:auto;color:var(--gold-light);font-size:12px">âš ï¸ Mais detalhado</span>
+      </div>
+      <div style="padding:16px 20px">
+        <p style="font-size:14px;margin-bottom:12px">SeÃ§Ã£o mais trabalhosa. VocÃª declara exatamente quais dados coleta, para que usa e se compartilha com terceiros. Aparece publicamente na ficha do app.</p>
+        <div style="background:rgba(212,151,13,0.08);border:1px solid rgba(212,151,13,0.25);border-radius:10px;padding:14px;font-size:13px">
+          <strong style="color:var(--gold-light);display:block;margin-bottom:10px">ðŸ“ Respostas para o ArenaCUP:</strong>
+
+          <strong>O app coleta ou compartilha dados do usuÃ¡rio?</strong> â†’ <strong>Sim</strong><br><br>
+
+          <strong>Dados coletados â€” marque todos:</strong><br>
+          âœ“ <strong>InformaÃ§Ãµes pessoais:</strong> Nome, endereÃ§o de e-mail<br>
+          âœ“ <strong>Atividade no app:</strong> InteraÃ§Ãµes com o app, histÃ³rico de buscas<br>
+          âœ“ <strong>Identificadores do app/dispositivo:</strong> ID do dispositivo<br><br>
+
+          <strong>Para cada dado, responda:</strong><br>
+          â€¢ Coletado: <strong>Sim</strong><br>
+          â€¢ Compartilhado com terceiros: <strong>NÃ£o</strong><br>
+          â€¢ Finalidade: <strong>Funcionalidade do app / Gerenciamento de conta</strong><br>
+          â€¢ Ã‰ obrigatÃ³rio para usar o app: <strong>Sim</strong> (login Ã© obrigatÃ³rio)<br>
+          â€¢ Processamento criptografado: <strong>Sim</strong> (Firebase usa HTTPS/TLS)<br>
+          â€¢ UsuÃ¡rio pode pedir exclusÃ£o: <strong>Sim</strong><br><br>
+
+          <strong>O app usa dados para rastrear o usuÃ¡rio?</strong> â†’ <strong>NÃ£o</strong><br>
+          <strong>O app compartilha dados com terceiros para publicidade?</strong> â†’ <strong>NÃ£o</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAREFA 7 -->
+    <div style="border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:16px">
+      <div style="background:var(--card2);padding:14px 20px;display:flex;align-items:center;gap:12px">
+        <span style="background:var(--gold);color:black;font-weight:800;font-size:13px;padding:3px 10px;border-radius:20px">7</span>
+        <strong style="font-size:16px">Apps governamentais</strong>
+      </div>
+      <div style="padding:16px 20px">
+        <div style="background:rgba(45,122,69,0.08);border:1px solid rgba(45,122,69,0.25);border-radius:10px;padding:14px;font-size:13px">
+          <strong style="color:var(--green-light);">âœ… Simples â€” apenas selecione:</strong><br><br>
+          <strong>"Este app nÃ£o Ã© um app governamental"</strong><br><br>
+          <em style="color:var(--muted)">Clique em Salvar e pronto. Esta tarefa Ã© para apps de Ã³rgÃ£os pÃºblicos oficiais.</em>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAREFA 8 -->
+    <div style="border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:16px">
+      <div style="background:var(--card2);padding:14px 20px;display:flex;align-items:center;gap:12px">
+        <span style="background:var(--gold);color:black;font-weight:800;font-size:13px;padding:3px 10px;border-radius:20px">8</span>
+        <strong style="font-size:16px">Recursos financeiros</strong>
+      </div>
+      <div style="padding:16px 20px">
+        <p style="font-size:14px;margin-bottom:12px">O Google verifica se o app tem funcionalidades financeiras como carteira digital, transferÃªncias bancÃ¡rias ou criptomoedas.</p>
+        <div style="background:rgba(45,122,69,0.08);border:1px solid rgba(45,122,69,0.25);border-radius:10px;padding:14px;font-size:13px">
+          <strong style="color:var(--green-light);display:block;margin-bottom:6px">âœ… Resposta para o ArenaCUP:</strong>
+          <strong>"Este app nÃ£o tem recursos financeiros"</strong><br><br>
+          <em style="color:var(--muted)">BolÃµes sem dinheiro real, in-app purchases via Google Play Billing e assinaturas <strong>nÃ£o se enquadram</strong> como "recursos financeiros" â€” esse campo Ã© para apps de banco, fintech e similares.</em>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAREFA 9 -->
+    <div style="border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:16px">
+      <div style="background:var(--card2);padding:14px 20px;display:flex;align-items:center;gap:12px">
+        <span style="background:var(--gold);color:black;font-weight:800;font-size:13px;padding:3px 10px;border-radius:20px">9</span>
+        <strong style="font-size:16px">SaÃºde</strong>
+      </div>
+      <div style="padding:16px 20px">
+        <div style="background:rgba(45,122,69,0.08);border:1px solid rgba(45,122,69,0.25);border-radius:10px;padding:14px;font-size:13px">
+          <strong style="color:var(--green-light);">âœ… Simples â€” apenas selecione:</strong><br><br>
+          <strong>"Este app nÃ£o tem recursos relacionados Ã  saÃºde"</strong><br><br>
+          <em style="color:var(--muted)">Este campo Ã© para apps mÃ©dicos, fitness com sensores corporais, saÃºde mental, etc. O ArenaCUP nÃ£o se enquadra.</em>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAREFA 10 -->
+    <div style="border:1px solid var(--border);border-radius:14px;overflow:hidden;margin-bottom:16px">
+      <div style="background:var(--card2);padding:14px 20px;display:flex;align-items:center;gap:12px">
+        <span style="background:var(--gold);color:black;font-weight:800;font-size:13px;padding:3px 10px;border-radius:20px">10</span>
+        <strong style="font-size:16px">Selecionar categoria e detalhes de contato</strong>
+      </div>
+      <div style="padding:16px 20px">
+        <div style="background:rgba(212,151,13,0.08);border:1px solid rgba(212,151,13,0.25);border-radius:10px;padding:14px;font-size:13px">
+          <strong style="color:var(--gold-light);display:block;margin-bottom:10px">ðŸ“ Preencha exatamente assim:</strong>
+          <strong>Tipo de app:</strong> Aplicativo (nÃ£o Jogo)<br>
+          <strong>Categoria:</strong> <strong>Esportes</strong><br>
+          <strong>Tags:</strong> Copa do Mundo, Futebol, BolÃµes, PrevisÃµes (adicione atÃ© 5)<br><br>
+          <strong>E-mail de suporte:</strong> seu e-mail de contato<br>
+          <strong>Site:</strong> <code style="background:rgba(255,255,255,0.08);padding:1px 6px;border-radius:4px">https://arenacopa-web-2026.web.app</code><br>
+          <strong>Telefone:</strong> opcional (nÃ£o precisa preencher)<br>
+          <strong>EndereÃ§o fÃ­sico:</strong> opcional (nÃ£o aparece na ficha pÃºblica)
+        </div>
+      </div>
+    </div>
+
+    <!-- TAREFA 11 -->
+    <div style="border:1px solid var(--green);border-radius:14px;overflow:hidden;margin-bottom:16px">
+      <div style="background:rgba(45,122,69,0.2);padding:14px 20px;display:flex;align-items:center;gap:12px">
+        <span style="background:var(--green);color:white;font-weight:800;font-size:13px;padding:3px 10px;border-radius:20px">11</span>
+        <strong style="font-size:16px">Configurar a pÃ¡gina "Detalhes do app" (Ficha da loja)</strong>
+        <span style="margin-left:auto;color:var(--gold-light);font-size:12px">â­ A mais importante</span>
+      </div>
+      <div style="padding:16px 20px">
+        <p style="font-size:14px;margin-bottom:14px">Esta Ã© a vitrine do app â€” o que os usuÃ¡rios veem antes de baixar. Preencha em <strong>inglÃªs</strong> primeiro (idioma padrÃ£o) e depois em portuguÃªs.</p>
+        <div style="background:rgba(212,151,13,0.08);border:1px solid rgba(212,151,13,0.25);border-radius:10px;padding:14px;font-size:13px;margin-bottom:12px">
+          <strong style="color:var(--gold-light);display:block;margin-bottom:10px">ðŸ“ Textos prontos â€” INGLÃŠS (idioma padrÃ£o):</strong>
+          <strong>Nome do app (50 car. mÃ¡x):</strong><br>
+          <code style="background:rgba(255,255,255,0.08);padding:6px 10px;border-radius:6px;display:block;margin:4px 0 10px">ArenaCUP 2026 â€” World Cup Pools</code>
+          <strong>DescriÃ§Ã£o curta (80 car. mÃ¡x):</strong><br>
+          <code style="background:rgba(255,255,255,0.08);padding:6px 10px;border-radius:6px;display:block;margin:4px 0 10px">Predict, compete & follow every match of the 2026 FIFA World Cup in real time.</code>
+          <strong>DescriÃ§Ã£o completa (4.000 car. mÃ¡x):</strong><br>
+          <code style="background:rgba(255,255,255,0.08);padding:6px 10px;border-radius:6px;display:block;margin:4px 0;line-height:1.8">ðŸ† ArenaCUP 2026 is the ultimate companion app for the FIFA World Cup 2026.<br><br>
+CREATE AND JOIN POOLS<br>
+Create your own prediction pools (bolÃµes), invite friends, and compete for the top spot on the leaderboard. Set up group rules, track real-time scores, and follow your pool rankings live.<br><br>
+REAL-TIME NEWS<br>
+Get the latest football news from BBC Sport, ESPN, The Guardian, Globo Esporte and more â€” all in one place, filtered by your favorite team.<br><br>
+FULL TOURNAMENT GUIDE<br>
+Everything about the 2026 World Cup: all 48 teams, group stage draw, match schedule, host cities across USA, Canada and Mexico, stadium info, ticket details and travel tips.<br><br>
+SIMULATE THE TOURNAMENT<br>
+Use our Simulation mode to predict the entire bracket â€” who wins each group, knockout results, and who lifts the trophy.<br><br>
+FEATURES<br>
+â€¢ Real-time match scores and standings<br>
+â€¢ Personalized news feed by team<br>
+â€¢ Group and knockout bracket tracker<br>
+â€¢ Multilingual: English, Portuguese, Spanish<br>
+â€¢ Works offline for schedules and team info<br><br>
+The 2026 FIFA World Cup will be played across 16 cities in USA, Canada and Mexico. Don't miss a single moment â€” download ArenaCUP now.</code>
+        </div>
+        <div style="background:rgba(45,122,69,0.08);border:1px solid rgba(45,122,69,0.25);border-radius:10px;padding:14px;font-size:13px">
+          <strong style="color:var(--green-light);display:block;margin-bottom:10px">ðŸ“ Textos prontos â€” PORTUGUÃŠS BRASIL:</strong>
+          <strong>Nome do app:</strong><br>
+          <code style="background:rgba(255,255,255,0.08);padding:6px 10px;border-radius:6px;display:block;margin:4px 0 10px">ArenaCUP 2026 â€” BolÃµes da Copa</code>
+          <strong>DescriÃ§Ã£o curta:</strong><br>
+          <code style="background:rgba(255,255,255,0.08);padding:6px 10px;border-radius:6px;display:block;margin:4px 0 10px">Palpite, compita e acompanhe cada jogo da Copa do Mundo 2026 em tempo real.</code>
+          <strong>DescriÃ§Ã£o completa:</strong><br>
+          <code style="background:rgba(255,255,255,0.08);padding:6px 10px;border-radius:6px;display:block;margin:4px 0;line-height:1.8">ðŸ† ArenaCUP 2026 Ã© o app completo para vocÃª viver a Copa do Mundo 2026 com seus amigos.<br><br>
+CRIE E PARTICIPE DE BOLÃ•ES<br>
+Monte seu bolÃ£o, convide amigos e dispute quem acerta mais resultados. Defina as regras do grupo, acompanhe o placar em tempo real e veja o ranking atualizado rodada a rodada.<br><br>
+NOTÃCIAS EM TEMPO REAL<br>
+As Ãºltimas notÃ­cias de futebol direto do BBC Sport, ESPN, The Guardian, Globo Esporte e mais â€” tudo em um sÃ³ lugar, filtrado pelo seu time favorito.<br><br>
+GUIA COMPLETO DA COPA<br>
+Tudo sobre a Copa 2026: todas as 48 seleÃ§Ãµes, tabela de grupos, calendÃ¡rio de jogos, sedes nos EUA, CanadÃ¡ e MÃ©xico, informaÃ§Ãµes de estÃ¡dios, ingressos e dicas de viagem.<br><br>
+SIMULE O TORNEIO<br>
+Use o modo SimulaÃ§Ã£o para prever o chaveamento completo â€” quem avanÃ§a em cada grupo, resultados das oitavas ao final, e quem ergue a taÃ§a.<br><br>
+DESTAQUES<br>
+â€¢ Placares e classificaÃ§Ã£o em tempo real<br>
+â€¢ Feed de notÃ­cias personalizado por seleÃ§Ã£o<br>
+â€¢ Acompanhamento de grupos e mata-mata<br>
+â€¢ MultilÃ­ngue: PortuguÃªs, InglÃªs e Espanhol<br>
+â€¢ Funciona offline para tabelas e informaÃ§Ãµes<br><br>
+A Copa do Mundo 2026 vai acontecer em 16 cidades dos EUA, CanadÃ¡ e MÃ©xico. NÃ£o perca nenhum momento â€” baixe o ArenaCUP agora.</code>
+        </div>
+        <div style="margin-top:14px;padding:12px 14px;background:rgba(220,50,50,0.08);border:1px solid rgba(220,50,50,0.2);border-radius:10px;font-size:13px">
+          <strong style="color:var(--red)">ðŸ“¸ Imagens obrigatÃ³rias nesta etapa:</strong><br>
+          Ãcone do app (512Ã—512 px), Feature graphic (1024Ã—500 px) e mÃ­nimo 2 screenshots por dispositivo (telefone obrigatÃ³rio). Todos os arquivos estÃ£o em <code style="background:rgba(255,255,255,0.08);padding:1px 6px;border-radius:4px">playstore_assets/</code>
+        </div>
+      </div>
+    </div>
+
+    <div class="alert green">
+      <div class="alert-icon">ðŸŽ¯</div>
+      <p><strong>Com as 11 tarefas concluÃ­das</strong>, o status da seÃ§Ã£o "ConteÃºdo do app" mudarÃ¡ para <strong style="color:var(--green-light)">verde âœ“</strong> e vocÃª poderÃ¡ avanÃ§ar para o envio do AAB e lanÃ§amento.</p>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- SECAO: POLITICA DE PRIVACIDADE -->
+<div class="step-section">
+  <div class="step-header">
+    <div class="step-number">ðŸ”’</div>
+    <div>
+      <div class="step-label">ObrigatÃ³rio pelo Google Play</div>
+      <h2 class="step-title">PolÃ­tica de Privacidade</h2>
+    </div>
+  </div>
+  <div class="step-body">
+    <div class="alert green" style="margin-bottom:24px">
+      <div class="alert-icon">âœ…</div>
+      <div>
+        <strong>PolÃ­tica de Privacidade jÃ¡ estÃ¡ publicada e no ar!</strong><br>
+        <a href="https://arenacopa-web-2026.web.app/privacidade" target="_blank"
+           style="color:var(--gold-light);word-break:break-all">
+          https://arenacopa-web-2026.web.app/privacidade
+        </a>
+        <div style="color:var(--muted);font-size:13px;margin-top:6px">
+          Hospedada no Firebase Hosting â€” mesma infraestrutura do app. Sempre disponÃ­vel.
+        </div>
+      </div>
+    </div>
+    <p style="margin-bottom:16px">Cole este link no campo <strong>"URL da PolÃ­tica de Privacidade"</strong> no Play Console ao preencher a ficha do app. Ele aparece em dois lugares:</p>
+    <ol class="step-list">
+      <li>
+        <strong>Ficha da loja (Store listing)</strong>
+        <span>Play Console â†’ PresenÃ§a na Play Store â†’ Ficha da loja principal â†’ campo "PolÃ­tica de privacidade"</span>
+      </li>
+      <li>
+        <strong>SeguranÃ§a dos dados (Data safety)</strong>
+        <span>Play Console â†’ ConteÃºdo do app â†’ SeguranÃ§a dos dados â†’ link obrigatÃ³rio para a polÃ­tica</span>
+      </li>
+    </ol>
+    <div class="info-box" style="margin-top:20px">
+      <div class="info-label">ðŸ“‹ O que sua polÃ­tica jÃ¡ cobre</div>
+      <div class="info-grid">
+        <div class="info-item"><span class="info-val">âœ“</span><span class="info-desc">Coleta de dados pessoais (nome, e-mail via login Google)</span></div>
+        <div class="info-item"><span class="info-val">âœ“</span><span class="info-desc">Uso de cookies apenas essenciais (sem rastreamento)</span></div>
+        <div class="info-item"><span class="info-val">âœ“</span><span class="info-desc">NÃ£o compartilhamento com terceiros</span></div>
+        <div class="info-item"><span class="info-val">âœ“</span><span class="info-desc">Armazenamento seguro no Firebase (Google Cloud)</span></div>
+        <div class="info-item"><span class="info-val">âœ“</span><span class="info-desc">Direito do usuÃ¡rio de excluir sua conta e dados</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- SECAO: MONETIZACAO -->
+<div class="step-section">
+  <div class="step-header">
+    <div class="step-number">ðŸ’°</div>
+    <div>
+      <div class="step-label">Como vocÃª serÃ¡ pago</div>
+      <h2 class="step-title">MonetizaÃ§Ã£o e Pagamentos</h2>
+    </div>
+  </div>
+  <div class="step-body">
+    <p style="margin-bottom:20px">O Google Play oferece quatro modelos de monetizaÃ§Ã£o. Para o ArenaCUP, recomendamos o modelo <strong>Freemium</strong> â€” app gratuito com recursos premium desbloqueÃ¡veis.</p>
+
+    <div style="display:grid;gap:14px;margin-bottom:28px">
+      <div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:16px 20px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <span style="font-size:20px">â­</span>
+          <strong style="color:var(--gold-light)">Freemium â€” RECOMENDADO para ArenaCUP</strong>
+        </div>
+        <p style="color:var(--muted);font-size:14px">App gratuito para download. Recursos avanÃ§ados pagos dentro do app. Maximiza base de usuÃ¡rios e ainda gera receita dos mais engajados.</p>
+        <div style="margin-top:12px;padding:12px;background:rgba(212,151,13,0.08);border-radius:8px;font-size:13px">
+          <strong style="color:var(--gold-light)">SugestÃ£o de preÃ§os para a Copa 2026:</strong><br>
+          â€¢ Plano Copa Premium mensal â†’ R$ 9,90/mÃªs<br>
+          â€¢ Acesso vitalÃ­cio (atÃ© o fim da Copa) â†’ R$ 19,90 Ãºnico<br>
+          â€¢ BolÃµes ilimitados (bÃ¡sico: atÃ© 3 bolÃµes/mÃªs grÃ¡tis)
+        </div>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 20px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <span style="font-size:18px">ðŸ“±</span>
+          <strong>Compras dentro do app (In-App Purchases)</strong>
+        </div>
+        <p style="color:var(--muted);font-size:14px">Itens avulsos comprados pontualmente. Ex: pacotes de simulaÃ§Ãµes, temas visuais, remoÃ§Ã£o de anÃºncios.</p>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 20px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <span style="font-size:18px">ðŸ”„</span>
+          <strong>Assinaturas (Subscriptions)</strong>
+        </div>
+        <p style="color:var(--muted);font-size:14px">CobranÃ§a recorrente semanal, mensal ou anual. Ideal para apps com conteÃºdo contÃ­nuo.</p>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 20px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <span style="font-size:18px">ðŸ“¢</span>
+          <strong>App Gratuito com AnÃºncios (AdMob)</strong>
+        </div>
+        <p style="color:var(--muted);font-size:14px">IntegraÃ§Ã£o com Google AdMob. Receita por impressÃµes e cliques. NÃ£o exige configuraÃ§Ã£o no Play Console.</p>
+      </div>
+    </div>
+
+    <div class="info-box">
+      <div class="info-label">ðŸ’³ Taxa do Google Play</div>
+      <div class="info-grid">
+        <div class="info-item">
+          <span class="info-val" style="color:var(--green-light)">15%</span>
+          <span class="info-desc">Nos primeiros US$ 1 milhÃ£o/ano â€” taxa reduzida para pequenos desenvolvedores</span>
+        </div>
+        <div class="info-item">
+          <span class="info-val">30%</span>
+          <span class="info-desc">Acima de US$ 1 milhÃ£o/ano de receita</span>
+        </div>
+        <div class="info-item">
+          <span class="info-val" style="color:var(--gold-light)">R$ â‰ˆ 8,50</span>
+          <span class="info-desc">VocÃª recebe para cada R$ 10,00 cobrado (taxa de 15%)</span>
+        </div>
+      </div>
+    </div>
+
+    <ol class="step-list" style="margin-top:20px">
+      <li>
+        <strong>Configure o perfil de pagamentos</strong>
+        <span>Play Console â†’ Pagamentos â†’ Perfil de pagamentos. Preencha CPF ou CNPJ e conta bancÃ¡ria brasileira.</span>
+      </li>
+      <li>
+        <strong>Recebimentos mensais</strong>
+        <span>O Google repassa os valores mensalmente via transferÃªncia bancÃ¡ria, em reais (BRL). HÃ¡ um saldo mÃ­nimo de US$ 1 para o primeiro pagamento.</span>
+      </li>
+      <li>
+        <strong>Implemente o Google Play Billing no app</strong>
+        <span>Para in-app purchases e assinaturas, Ã© necessÃ¡rio integrar a biblioteca <code style="background:rgba(255,255,255,0.08);padding:2px 6px;border-radius:4px">play-billing</code> no app Android via Capacitor ou React Native.</span>
+      </li>
+    </ol>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- SECAO: IDIOMA DA FICHA -->
+<div class="step-section">
+  <div class="step-header">
+    <div class="step-number">ðŸŒŽ</div>
+    <div>
+      <div class="step-label">App global â€” Copa do Mundo 2026</div>
+      <h2 class="step-title">Idioma da Ficha na Play Store</h2>
+    </div>
+  </div>
+  <div class="step-body">
+    <div class="alert" style="background:rgba(212,151,13,0.08);border-color:rgba(212,151,13,0.3);margin-bottom:24px">
+      <div class="alert-icon">ðŸ’¡</div>
+      <div>
+        <strong style="color:var(--gold-light)">RecomendaÃ§Ã£o: InglÃªs como idioma padrÃ£o + PortuguÃªs BR como segunda lÃ­ngua + Espanhol opcional</strong>
+        <div style="color:var(--muted);font-size:13px;margin-top:4px">
+          O Play Store usa o idioma padrÃ£o como fallback para usuÃ¡rios cujo idioma nÃ£o tem traduÃ§Ã£o. Um app de Copa do Mundo tem pÃºblico global â€” inglÃªs alcanÃ§a muito mais pessoas.
+        </div>
+      </div>
+    </div>
+
+    <div style="display:grid;gap:14px;margin-bottom:24px">
+      <div style="background:var(--card2);border:2px solid var(--green);border-radius:12px;padding:16px 20px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+          <span style="font-size:20px">ðŸ‡ºðŸ‡¸</span>
+          <div>
+            <strong style="color:var(--gold-light)">English (United States) â€” IDIOMA PADRÃƒO obrigatÃ³rio</strong>
+            <div style="color:var(--muted);font-size:12px">Fallback para todos os usuÃ¡rios sem traduÃ§Ã£o disponÃ­vel</div>
+          </div>
+        </div>
+        <p style="color:var(--muted);font-size:13px">O torneio acontece nos EUA, CanadÃ¡ e MÃ©xico. PÃºblico anglÃ³fono Ã© o maior segmento global. O nome "ArenaCUP" jÃ¡ funciona perfeitamente em inglÃªs sem precisar de traduÃ§Ã£o.</p>
+      </div>
+      <div style="background:var(--card2);border:1px solid var(--border);border-radius:12px;padding:16px 20px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+          <span style="font-size:20px">ðŸ‡§ðŸ‡·</span>
+          <div>
+            <strong>PortuguÃªs (Brasil) â€” SEGUNDA LÃNGUA prioritÃ¡ria</strong>
+            <div style="color:var(--muted);font-size:12px">Seu mercado principal e mais engajado</div>
+          </div>
+        </div>
+        <p style="color:var(--muted);font-size:13px">Brasil tem uma das maiores torcidas do mundo. O app jÃ¡ foi desenvolvido em PT-BR. Adicione a ficha completa em portuguÃªs para maximizar downloads no Brasil.</p>
+      </div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 20px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+          <span style="font-size:20px">ðŸ‡²ðŸ‡½</span>
+          <div>
+            <strong>EspaÃ±ol (LatinoamÃ©rica) â€” OPCIONAL mas estratÃ©gico</strong>
+            <div style="color:var(--muted);font-size:12px">MÃ©xico Ã© uma das sedes e o hispÃ¢nico Ã© enorme</div>
+          </div>
+        </div>
+        <p style="color:var(--muted);font-size:13px">MÃ©xico e Argentina estÃ£o entre as torcidas mais fanÃ¡ticas. A Copa no MÃ©xico Ã© um evento histÃ³rico. Uma ficha em espanhol pode capturar milhÃµes de usuÃ¡rios adicionais.</p>
+      </div>
+    </div>
+
+    <ol class="step-list">
+      <li>
+        <strong>Defina o idioma padrÃ£o como English (United States)</strong>
+        <span>Play Console â†’ PresenÃ§a na Play Store â†’ Ficha da loja principal â†’ idioma padrÃ£o. Preencha tÃ­tulo, descriÃ§Ã£o curta e descriÃ§Ã£o completa em inglÃªs.</span>
+      </li>
+      <li>
+        <strong>Adicione PortuguÃªs (Brasil) como traduÃ§Ã£o</strong>
+        <span>Clique em "Gerenciar traduÃ§Ãµes" â†’ "Adicionar idioma" â†’ PortuguÃªs (Brasil). Copie e traduza todos os campos: tÃ­tulo, descriÃ§Ã£o curta (80 car.), descriÃ§Ã£o completa (4.000 car.).</span>
+      </li>
+      <li>
+        <strong>Adicione screenshots localizados se possÃ­vel</strong>
+        <span>VocÃª pode ter screenshots diferentes por idioma. Screenshots em inglÃªs para o padrÃ£o, em portuguÃªs para BR. O algoritmo do Play favorece fichas com imagens localizadas.</span>
+      </li>
+      <li>
+        <strong>Espanhol (opcional)</strong>
+        <span>Se quiser expandir agora, adicione "EspaÃ±ol (LatinoamÃ©rica)". Se preferir focar no lanÃ§amento, adicione depois â€” vocÃª pode atualizar a ficha a qualquer momento sem precisar de nova revisÃ£o.</span>
+      </li>
+    </ol>
+
+    <div class="info-box" style="margin-top:20px">
+      <div class="info-label">ðŸ“ SugestÃ£o de tÃ­tulo do app em cada idioma</div>
+      <div class="info-grid">
+        <div class="info-item"><span class="info-val">ðŸ‡ºðŸ‡¸</span><span class="info-desc"><strong>ArenaCUP 2026</strong> â€” World Cup Predictions &amp; Pools</span></div>
+        <div class="info-item"><span class="info-val">ðŸ‡§ðŸ‡·</span><span class="info-desc"><strong>ArenaCUP 2026</strong> â€” BolÃµes e Palpites da Copa</span></div>
+        <div class="info-item"><span class="info-val">ðŸ‡²ðŸ‡½</span><span class="info-desc"><strong>ArenaCUP 2026</strong> â€” PronÃ³sticos y Quinielas</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- CARD FINAL -->
+<div class="final-card">
+  <h2>🏆 Resumo dos arquivos e o que falta fazer</h2>
+  <p style="margin-bottom:20px">Você tem <strong style="color:var(--gold-light)">tudo pronto</strong>. Os únicos passos que faltam são:</p>
+
+  <div style="text-align:left;max-width:480px;margin:0 auto">
+    <div style="display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
+      <span style="color:var(--red);font-size:18px">①</span>
+      <div>
+        <strong>Publicar a Política de Privacidade online</strong>
+        <div style="color:var(--muted);font-size:13px">Firebase Hosting ou GitHub Pages — 5 minutos</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
+      <span style="color:var(--gold);font-size:18px">②</span>
+      <div>
+        <strong>Criar conta Google Play Developer ($25)</strong>
+        <div style="color:var(--muted);font-size:13px">play.google.com/console — pago uma única vez</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)">
+      <span style="color:var(--gold);font-size:18px">③</span>
+      <div>
+        <strong>Preencher a ficha no Play Console</strong>
+        <div style="color:var(--muted);font-size:13px">Textos, imagens e configurações — 30 minutos</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;align-items:center;padding:10px 0">
+      <span style="color:var(--green-light);font-size:18px">④</span>
+      <div>
+        <strong>Fazer upload do AAB e enviar para revisão</strong>
+        <div style="color:var(--muted);font-size:13px">Google aprova em 1–3 dias úteis</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="text-align:center;padding:20px 40px;color:var(--muted);font-size:12px">
+  ArenaCopa 2026 · Desenvolvido por Antigravity · São Luís, MA<br>
+  Guia gerado em 22/03/2026
+</div>
+
+</body>
+</html>

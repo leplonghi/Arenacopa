@@ -1,0 +1,319 @@
+=== FILES WITH LOGO/SVG/PNG REFERENCES ===
+
+--- \App.css ---
+  8: .logo {
+  14: .logo:hover {
+  17: .logo.react:hover {
+  21: @keyframes logo-spin {
+  31:   a:nth-of-type(2) .logo {
+  32:     animation: logo-spin infinite 20s linear;
+
+--- \App.tsx ---
+  107: const LoadingScreen = () => (
+  118:   if (loading) return <LoadingScreen />;
+  126:   if (loading) return <LoadingScreen />;
+  183:           <Suspense fallback={<LoadingScreen />}>
+
+--- \components\FieldBackground.tsx ---
+  10:       style={{ backgroundImage: "url('/images/campo-bg.png?v=20260316')" }}
+  27:     <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-[0.025] mix-blend-overlay" />
+  32:       style={{ backgroundImage: "url('/noise.svg')" }}
+
+--- \components\Flag.tsx ---
+  58:       src={`https://flagcdn.com/w80/${iso}.png`}
+  59:       srcSet={`https://flagcdn.com/w160/${iso}.png 2x`}
+
+--- \components\Layout.tsx ---
+  28: const logoUrl = "/logo.png?v=20260316";
+  44:         setProfile({ name: "Usuário Demo", avatar: "https://github.com/shadcn.png" });
+  111:               <img src={logoUrl} alt="ArenaCup" className="h-10 w-10 object-contain" />
+  188:     { path: "/", icon: Home, label: t('nav.home') },
+  189:     { path: "/copa", icon: Trophy, label: t('nav.copa') },
+  190:     { path: "/boloes", icon: Dices, label: t('nav.bolao'), isFab: true },
+  191:     { path: "/ranking", icon: BarChart2, label: t('nav.ranking') },
+  215:                   {tab.icon && <tab.icon className="w-5 h-5" strokeWidth={isActive ? 2.5 : 1.8} />}
+  232:     { path: "/", icon: Home, label: t('nav.home') },
+  233:     { path: "/copa", icon: Trophy, label: t('nav.copa') },
+  234:     { path: "/copa/simulacao", icon: Dices, label: "Simular" },
+  235:     { path: "/guia", icon: BookOpen, label: "Guia" },
+  236:     { path: "/boloes", icon: Dices, label: t('nav.bolao') },
+  237:     { path: "/grupos", icon: Users2, label: "Grupos" },
+  238:     { path: "/perfil", icon: User, label: t('nav.profile') },
+  242:     <Sidebar className={cn("border-r border-white/10", className)} collapsible="icon">
+  245:           <div className="p-4 flex items-center justify-center group-data-[collapsible=icon]:p-2">
+  246:             <div className="flex items-center gap-3 group-data-[collapsible=icon]:hidden">
+  248:                 <img src={logoUrl} alt="ArenaCup" className="h-8 w-8 object-contain" />
+  254:             <div className="hidden group-data-[collapsible=icon]:flex w-full items-center justify-center">
+  255:               <img src={logoUrl} alt="ArenaCup" className="h-8 w-8 object-contain" />
+  275:                       {tab.icon ? <tab.icon className={cn(location.pathname === tab.path ? "text-primary" : "text-muted-foreground")} /> : <Dices className="text-primary" />}
+
+--- \components\OnboardingModal.tsx ---
+  13:     const logoUrl = "/logo.png?v=20260316";
+  78:                         <img src={logoUrl} alt="ArenaCUP Logo" className="w-full h-full object-contain drop-shadow-[0_0_12px_rgba(34,197,94,0.5)]" />
+
+--- \components\copa\BracketView.tsx ---
+  263:           <svg
+  297:           </svg>
+  399:           <div className="absolute inset-0 z-0 opacity-30 mix-blend-screen bg-[url('/noise.svg')] pointer-events-none" />
+
+--- \components\copa\GuiaTab.tsx ---
+  148:                         <InfoBadge icon={<Users className="w-3 h-3 text-blue-400" />} title={t('ui.population')} value={activeCountry.population} />
+  149:                         <InfoBadge icon={<DollarSign className="w-3 h-3 text-emerald-400" />} title={t('ui.currency')} value={activeCountry.currency} />
+  184:     const bgImage = city.image || "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?auto=format&fit=crop&w=800&q=80";
+  233: function InfoBadge({ icon, title, value }: { icon: React.ReactNode, title: string, value: string }) {
+  237:                 {icon} {title}
+
+--- \components\copa\HistoriaTab.tsx ---
+  23: const sectionTabs: { id: HistoriaSection; i18nKey: string; icon: React.ReactNode }[] = [
+  24:     { id: "edicoes", i18nKey: "editions", icon: <Calendar className="w-3.5 h-3.5" /> },
+  25:     { id: "titulos", i18nKey: "titles", icon: <Trophy className="w-3.5 h-3.5" /> },
+  26:     { id: "artilheiros", i18nKey: "scorers", icon: <Crosshair className="w-3.5 h-3.5" /> },
+  27:     { id: "participacoes", i18nKey: "participations", icon: <Globe className="w-3.5 h-3.5" /> },
+  28:     { id: "gols", i18nKey: "goals", icon: <Target className="w-3.5 h-3.5" /> },
+  29:     { id: "recordes", i18nKey: "records", icon: <Zap className="w-3.5 h-3.5" /> },
+  57:                 <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=1200&q=80')] opacity-20 bg-cover bg-center group-hover:scale-110 transition-transform duration-1000" />
+  113:                             {tab.icon}
+  152:             <SectionHeader icon={<Calendar className="w-5 h-5 text-primary" />} title={t('historia.sections.allEditions')} subtitle={t('historia.sections.allEditionsSub')} />
+  215:                                         <StatCard label={t('historia.labels.host')} value={edition.hostCity} icon={<Globe className="w-3 h-3" />} />
+  216:                                         <StatCard label={t('historia.labels.matches')} value={String(edition.totalMatches)} icon={<Swords className="w-3 h-3" />} />
+  217:                                         <StatCard label={t('historia.labels.goals')} value={String(edition.totalGoals)} icon={<Target className="w-3 h-3" />} />
+  268:             <SectionHeader icon={<Trophy className="w-5 h-5 text-yellow-500" />} title={t('historia.sections.hallOfChampions')} subtitle={t('historia.sections.hallOfChampionsSub')} />
+  345:             <SectionHeader icon={<Crosshair className="w-5 h-5 text-red-400" />} title={t('historia.sections.goldScorers')} subtitle={t('historia.sections.goldScorersSub')} />
+  402:             <SectionHeader icon={<Globe className="w-5 h-5 text-blue-400" />} title={t('historia.sections.globalPresences')} subtitle={t('historia.sections.globalPresencesSub')} />
+  470:             <SectionHeader icon={<Target className="w-5 h-5 text-emerald-400" />} title={t('historia.sections.goalMachines')} subtitle={t('historia.sections.goalMachinesSub')} />
+  519:     const iconMap: Record<string, typeof Zap> = {
+  525:             <SectionHeader icon={<Zap className="w-5 h-5 text-orange-400" />} title={t('historia.sections.historicRecords')} subtitle={t('historia.sections.historicRecordsSub')} />
+  529:                     const Icon = iconMap[record.icon] || Zap;
+  562: function SectionHeader({ icon, title, subtitle }: { icon: React.ReactNode; title: string; subtitle: string }) {
+  566:                 {icon}
+  596: function StatCard({ label, value, icon }: { label: string; value: string; icon: React.ReactNode }) {
+  600:                 {icon}
+
+--- \components\copa\MatchDetailsModal.tsx ---
+  34:             image: "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?auto=format&fit=crop&w=300&q=80"
+  41:             image: "https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&w=300&q=80"
+  48:             image: "https://images.unsplash.com/photo-1434648957308-5e6a859697e8?auto=format&fit=crop&w=300&q=80"
+  80:                                     src="https://images.unsplash.com/photo-1522778119026-d647f0565c6a?auto=format&fit=crop&w=800&q=80"
+
+--- \components\copa\NewsFeed.tsx ---
+  30:                 image: item.url_to_image || "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=800",
+
+--- \components\copa\PremiumModal.tsx ---
+  48:                         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-20 mix-blend-overlay"></div>
+  72:                                 { icon: <Zap className="w-4 h-4 text-yellow-500" />, text: "Remover todos os anúncios" },
+  73:                                 { icon: <Shield className="w-4 h-4 text-blue-500" />, text: "Estatísticas avançadas" },
+  74:                                 { icon: <Sparkles className="w-4 h-4 text-emerald-500" />, text: "Insignia exclusiva de apoiador" },
+  75:                                 { icon: <Crown className="w-4 h-4 text-orange-500" />, text: "Acesso antecipado a novidades" },
+  79:                                         {item.icon}
+
+--- \components\copa\SedesTab.tsx ---
+  23:         { id: "s1", name: "New York/New Jersey", country: "USA", stadium: "MetLife Stadium", capacity: 82500, image: "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?q=80&w=400", desc: "Palco da grande final, a capital do mundo aguarda." },
+  24:         { id: "s2", name: "Los Angeles", country: "USA", stadium: "SoFi Stadium", capacity: 70000, image: "https://images.unsplash.com/photo-1518481852452-9415b262eba4?q=80&w=400", desc: "A cidade dos anjos recebe o futebol mundial." },
+  25:         { id: "s3", name: "Toronto", country: "CAN", stadium: "BMO Field", capacity: 45000, image: "https://images.unsplash.com/photo-1547468862-520e7e1ef002?q=80&w=400", desc: "A diversidade de Toronto se traduz em futebol." },
+  26:         { id: "s4", name: "Mexico City", country: "MEX", stadium: "Estadio Azteca", capacity: 83000, image: "https://images.unsplash.com/photo-1565022536102-f7645c84354a?q=80&w=400", desc: "O sagrado Estadio Azteca faz história novamente." },
+  27:         { id: "s5", name: "Dallas", country: "USA", stadium: "AT&T Stadium", capacity: 80000, image: "https://images.unsplash.com/photo-1481270836528-76579fcbc5ee?q=80&w=400", desc: "Tudo é gigante no Texas, inclusive o estádio." },
+  28:         { id: "s6", name: "Miami", country: "USA", stadium: "Hard Rock Stadium", capacity: 65000, image: "https://images.unsplash.com/photo-1533227268428-f9ed0900e4b5?q=80&w=400", desc: "Clima tropical, praia e muito futebol em Miami." },
+  59:                                 <img src={city.image || "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?q=80&w=400"} alt={city.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+  95:                                 <img src={selectedSede.image || "https://images.unsplash.com/photo-1496442226666-8d4d0e62e6e9?q=80&w=800"} alt={selectedSede.name} className="w-full h-full object-cover" />
+
+--- \components\copa\ShareBracket.tsx ---
+  42:     a.download = "chaveamento-copa2026.png";
+  52:     const file = new File([blob], "chaveamento-copa2026.png", { type: "image/png" });
+  78:     a.download = "chaveamento-copa2026.png";
+
+--- \components\copa\bolao\JogosTab.tsx ---
+  432:             const file = new File([blob], `palpite.png`, { type: "image/png" });
+  438:                 link.download = 'meu-palpite.png';
+  465:                     link.download = 'meu-palpite.png';
+  482:                 icon="⚽"
+
+--- \components\copa\bolao\OverviewTab.tsx ---
+  125:                     icon={<Users className="w-5 h-5 text-emerald-400" />}
+  133:                     icon={<BarChart3 className="w-5 h-5 text-amber-400" />}
+  141:                     icon={<TrendingUp className="w-5 h-5 text-blue-400" />}
+  179:                             <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10" />
+  451: function StatCard({ icon, value, label, subLabel, color, delay }: { icon: React.ReactNode; value: string | number; label: string; subLabel: string; color: "emerald" | "amber" | "blue"; delay: number }) {
+  455:             iconBg: "bg-emerald-500/10 border-emerald-500/20",
+  460:             iconBg: "bg-amber-500/10 border-amber-500/20",
+  465:             iconBg: "bg-blue-500/10 border-blue-500/20",
+  483:                 <div className={cn("w-10 h-10 rounded-2xl flex items-center justify-center mb-4 transition-transform group-hover:rotate-12", config.iconBg)}>
+  484:                     {icon}
+
+--- \components\copa\bolao\RankingTab.tsx ---
+  85:                 <EmptyState icon="🏆" title={t('ranking.empty_title')} description={t('ranking.empty_desc')} />
+  116:                                         <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
+  158:                                         <div className="absolute inset-0 opacity-[0.05] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
+  193:                                         <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
+  264:                                         <div className="absolute inset-0 opacity-[0.05] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
+  339:                     <LegendItem icon={<Target className="w-6 h-6" />} label={t('ranking.legend_exact')} points={exactPts} color="text-emerald-400" bg="bg-emerald-500/10" border="border-emerald-500/20" />
+  340:                     <LegendItem icon={<Check className="w-6 h-6" />} label={t('ranking.legend_winner')} points={winnerPts} color="text-amber-500" bg="bg-amber-500/10" border="border-amber-500/20" />
+  341:                     <LegendItem icon={<Minus className="w-6 h-6" />} label={t('ranking.legend_draw')} points={drawPts} color="text-blue-400" bg="bg-blue-500/10" border="border-blue-500/20" />
+  348: function LegendItem({ icon, label, points, color, bg, border }: { icon: React.ReactNode; label: string; points: number; color: string; bg: string; border: string }) {
+  351:             <div className={cn("mb-4 transform group-hover:rotate-12 transition-transform", color)}>{icon}</div>
+
+--- \components\copa\bolao\RealtimeRankingTab.tsx ---
+  156:                     icon={hasError ? "⚠️" : "🏆"}
+  186:                                         <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
+  228:                                         <div className="absolute inset-0 opacity-[0.05] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
+  263:                                         <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
+  357:                                         <div className="absolute inset-0 opacity-[0.05] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
+
+--- \components\copa\bolao\ShareSheet.tsx ---
+  34:             const file = new File([blob], `bolao-${bolao.invite_code}.png`, { type: "image/png" });
+  40:                 link.download = `bolao-${bolao.invite_code}.png`;
+  57:             icon: MessageCircle,
+  68:             icon: Instagram,
+  76:             icon: Link2,
+  141:                                             <o.icon className="w-6 h-6 text-white" />
+
+--- \components\guia\EstadiosSection.tsx ---
+  19:     "azteca": "https://images.unsplash.com/photo-1627407949390-348638686256?auto=format&fit=crop&w=800&q=80",
+  20:     "estadio-azteca": "https://images.unsplash.com/photo-1627407949390-348638686256?auto=format&fit=crop&w=800&q=80",
+  21:     "akron": "https://images.unsplash.com/photo-1577223625816-7546f13df25d?auto=format&fit=crop&w=800&q=80",
+  22:     "bbva": "https://images.unsplash.com/photo-1522778119026-d647f0565c6a?auto=format&fit=crop&w=800&q=80",
+  23:     "metlife": "https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?auto=format&fit=crop&w=800&q=80",
+  24:     "sofi": "https://images.unsplash.com/photo-1647452327771-477543787766?auto=format&fit=crop&w=800&q=80",
+  25:     "att": "https://images.unsplash.com/photo-1504123924719-f559286d9904?auto=format&fit=crop&w=800&q=80",
+  26:     "mercedes-benz": "https://images.unsplash.com/photo-1599878144211-582773c683b7?auto=format&fit=crop&w=800&q=80",
+  27:     "hard-rock": "https://images.unsplash.com/photo-1549420084-25785bbd9b3d?auto=format&fit=crop&w=800&q=80",
+  28:     "bmo-field": "https://images.unsplash.com/photo-1563299796-b729d0af54a5?auto=format&fit=crop&w=800&q=80",
+  29:     "bc-place": "https://images.unsplash.com/photo-1566932769119-7a1fb6d7ce23?auto=format&fit=crop&w=800&q=80",
+  30:     "lumen-field": "https://images.unsplash.com/photo-1629215037416-5e04ca65853a?auto=format&fit=crop&w=800&q=80",
+  31:     "nrg": "https://images.unsplash.com/photo-1589487391730-58f20eb2c308?auto=format&fit=crop&w=800&q=80",
+  32:     "lincoln-financial": "https://images.unsplash.com/photo-1576478950549-923f66f97d2b?auto=format&fit=crop&w=800&q=80",
+  33:     "arrowhead": "https://images.unsplash.com/photo-1632769061614-7227d8e63546?auto=format&fit=crop&w=800&q=80",
+  34:     "gillette": "https://images.unsplash.com/photo-1628892102875-c085ac35b2c7?auto=format&fit=crop&w=800&q=80",
+  35:     "levis": "https://images.unsplash.com/photo-1521406606869-7c858b97d19e?auto=format&fit=crop&w=800&q=80",
+  73:         return key ? stadiumImages[key] : "https://images.unsplash.com/photo-1522778119026-d647f0565c6a?auto=format&fit=crop&w=800&q=80";
+  98:                 <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1556056504-5c7696c4c28d?auto=format&fit=crop&w=1200&q=80')] opacity-10 bg-cover bg-center group-hover:scale-105 transition-transform duration-1000" />
+
+--- \data\guiaData.ts ---
+  92:         "image": "https://images.unsplash.com/photo-1512813195386-6cf811ad3542",
+  104:             "heroImage": "https://images.unsplash.com/photo-1512813195386-6cf811ad3542",
+  194:         "image": "https://images.unsplash.com/photo-1534438327276-14e5300c3a48",
+  206:             "heroImage": "https://images.unsplash.com/photo-1534438327276-14e5300c3a48",
+  296:         "image": "https://images.unsplash.com/photo-1580655653885-65763b2597d0",
+  308:             "heroImage": "https://images.unsplash.com/photo-1580655653885-65763b2597d0",
+  380:         "gdp": "Hub de entretenimento e tecnologia (Silicon Beach). PIB est. $1.1 Trilhões.",
+  398:         "image": "https://images.unsplash.com/photo-1544274431-7e8c3df1b80c",
+  410:             "heroImage": "https://images.unsplash.com/photo-1544274431-7e8c3df1b80c",
+  500:         "image": "https://images.unsplash.com/photo-1522778119026-d647f0565c6a",
+  512:             "heroImage": "https://images.unsplash.com/photo-1522778119026-d647f0565c6a",
+  602:         "image": "https://images.unsplash.com/photo-1506729623306-b5a934d88b53",
+  614:             "heroImage": "https://images.unsplash.com/photo-1506729623306-b5a934d88b53",
+  704:         "image": "https://images.unsplash.com/photo-1502016222102-47b82eaa4a3c",
+  716:             "heroImage": "https://images.unsplash.com/photo-1502016222102-47b82eaa4a3c",
+  806:         "image": "https://images.unsplash.com/photo-1559511260-66a654ae982a",
+  818:             "heroImage": "https://images.unsplash.com/photo-1559511260-66a654ae982a",
+  908:         "image": "https://images.unsplash.com/photo-1541445763567-c25965b9319b",
+  920:             "heroImage": "https://images.unsplash.com/photo-1541445763567-c25965b9319b",
+  1010:         "image": "https://images.unsplash.com/photo-1563294340-9a40536d5e08",
+  1022:             "heroImage": "https://images.unsplash.com/photo-1563294340-9a40536d5e08",
+  1112:         "image": "https://images.unsplash.com/photo-1522083165195-3424ed129620",
+  1124:             "heroImage": "https://images.unsplash.com/photo-1522083165195-3424ed129620",
+  1214:         "image": "https://images.unsplash.com/photo-1541445763567-c25965b9319b",
+  1226:             "heroImage": "https://images.unsplash.com/photo-1541445763567-c25965b9319b",
+  1316:         "image": "https://images.unsplash.com/photo-1524143890288-726915e61df6",
+  1328:             "heroImage": "https://images.unsplash.com/photo-1524143890288-726915e61df6",
+  1418:         "image": "https://images.unsplash.com/photo-1542125387-c712848890cb",
+  1430:             "heroImage": "https://images.unsplash.com/photo-1542125387-c712848890cb",
+  1514:             "Silicon Valley",
+  1520:         "image": "https://images.unsplash.com/photo-1501594907352-04cda38ebc29",
+  1532:             "heroImage": "https://images.unsplash.com/photo-1501594907352-04cda38ebc29",
+  1622:         "image": "https://images.unsplash.com/photo-1490237014491-8aa29811ea56",
+  1634:             "heroImage": "https://images.unsplash.com/photo-1490237014491-8aa29811ea56",
+  1758:     { title: "Copa Gigante", description: "A primeira com 48 seleções e 104 jogos.", icon: "Globe" },
+  1759:     { title: "Três Anfitriões", description: "EUA, México e Canadá dividem a sede pela primeira vez.", icon: "Map" },
+  1760:     { title: "Sustentabilidade", description: "Vários estádios utilizam energia 100% renovável.", icon: "Leaf" }
+
+--- \data\sedesData.ts ---
+  53:             "image": "https://images.unsplash.com/photo-1512813195386-6cf811ad3542"
+  108:             "image": "https://images.unsplash.com/photo-1534438327276-14e5300c3a48"
+  163:             "image": "https://images.unsplash.com/photo-1580655653885-65763b2597d0"
+  218:             "image": "https://images.unsplash.com/photo-1544274431-7e8c3df1b80c"
+  273:             "image": "https://images.unsplash.com/photo-1522778119026-d647f0565c6a"
+  328:             "image": "https://images.unsplash.com/photo-1506729623306-b5a934d88b53"
+  383:             "image": "https://images.unsplash.com/photo-1502016222102-47b82eaa4a3c"
+  438:             "image": "https://images.unsplash.com/photo-1559511260-66a654ae982a"
+  493:             "image": "https://images.unsplash.com/photo-1541445763567-c25965b9319b"
+  548:             "image": "https://images.unsplash.com/photo-1563294340-9a40536d5e08"
+  575:             "É chamada de 'Silicon Valley' do México devido às empresas de tech.",
+  603:             "image": "https://images.unsplash.com/photo-1522083165195-3424ed129620"
+  658:             "image": "https://images.unsplash.com/photo-1541445763567-c25965b9319b"
+  713:             "image": "https://images.unsplash.com/photo-1524143890288-726915e61df6"
+  768:             "image": "https://images.unsplash.com/photo-1542125387-c712848890cb"
+  813:             "Silicon Valley",
+  823:             "image": "https://images.unsplash.com/photo-1501594907352-04cda38ebc29"
+  878:             "image": "https://images.unsplash.com/photo-1522202176988-66273c2fd55f"
+
+--- \pages\Auth.tsx ---
+  12:   const logoUrl = "/logo.png?v=20260316";
+  140:           <img src={logoUrl} alt="ArenaCup" className="w-full h-full object-contain brightness-110" />
+  174:           <svg viewBox="0 0 24 24" className="w-5 h-5">
+  179:           </svg>
+
+--- \pages\Index.tsx ---
+  506:                     <img src={item.imageUrl || "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=400"} alt={item.title} className="w-full h-full object-cover" />
+
+--- \pages\Menu.tsx ---
+  9:     const handleLogout = async () => {
+  86:                     onClick={handleLogout}
+
+--- \pages\Perfil.tsx ---
+  372:               { id: "primeiro_palpite", title: "Chute Inicial", desc: "Deu seu primeiro palpite", icon: <Goal className="w-6 h-6 text-primary" />, color: "primary", unlocked: (stats?.totalPredictions || 0) > 0 },
+  373:               { id: "placar_exato", title: "Na Mosca", desc: "Acertou 1 placar exato", icon: <Target className="w-6 h-6 text-blue-400" />, color: "blue-500", unlocked: (stats?.exactScores || 0) > 0 },
+  374:               { id: "criador_bolao", title: "Líder nato", desc: "Criou um bolão", icon: <Crown className="w-6 h-6 text-amber-500" />, color: "amber-500", unlocked: (stats?.createdBoloes || 0) > 0 },
+  375:               { id: "combo_3", title: "Hat-trick", desc: "Acertou 3 exatos totais", icon: <Zap className="w-6 h-6 text-violet-400" />, color: "violet-400", unlocked: (stats?.exactScores || 0) >= 3 },
+  376:               { id: "campeao", title: "Campeão", desc: "Venceu um bolão inteiro", icon: <Trophy className="w-6 h-6 text-emerald-400" />, color: "emerald-400", unlocked: (stats?.titles || 0) > 0 },
+  391:                   {ach.icon}
+  577:             { key: "notifications_goals" as const, icon: Goal, label: t('goals_notif'), desc: t('goals_notif_desc') },
+  578:             { key: "notifications_news" as const, icon: Newspaper, label: t('news_notif'), desc: t('news_notif_desc') },
+  579:             { key: "notifications_match_start" as const, icon: Clock, label: t('match_start_notif'), desc: t('match_start_notif_desc') },
+  583:                 <n.icon className="w-4 h-4 text-copa-green-light" />
+  701:       {/* Logout */}
+  707:         {t('logout')}
+
+--- \test\integration\AuthGoogleFlow.test.tsx ---
+  45:       photoURL: "https://example.com/avatar.png",
+  71:           avatar_url: "https://example.com/avatar.png",
+
+
+=== FieldBackground.tsx FULL ===
+const FieldBackground = () => (
+  <div
+    aria-hidden="true"
+    className="fixed inset-0 z-[-10] pointer-events-none overflow-hidden"
+  >
+    <div className="absolute inset-0 bg-[#03100a]" />
+
+    <div
+      className="absolute inset-0 bg-center bg-cover bg-no-repeat opacity-70 md:opacity-78"
+      style={{ backgroundImage: "url('/images/campo-bg.png?v=20260316')" }}
+    />
+
+    <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(116,255,153,0.12)_0%,rgba(8,38,23,0.45)_38%,rgba(2,10,6,0.9)_100%)]" />
+    <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.86)_0%,rgba(0,0,0,0.52)_18%,rgba(0,0,0,0.28)_40%,rgba(0,0,0,0.46)_68%,rgba(0,0,0,0.82)_100%)]" />
+    <div className="absolute inset-y-0 left-0 w-[22%] bg-[linear-gradient(90deg,rgba(0,0,0,0.65)_0%,transparent_100%)]" />
+    <div className="absolute inset-y-0 right-0 w-[22%] bg-[linear-gradient(270deg,rgba(0,0,0,0.65)_0%,transparent_100%)]" />
+    <div className="absolute inset-x-0 top-0 h-[22%] bg-[linear-gradient(180deg,rgba(0,0,0,0.82)_0%,transparent_100%)]" />
+    <div className="absolute inset-x-0 bottom-0 h-[24%] bg-[linear-gradient(0deg,rgba(0,0,0,0.88)_0%,transparent_100%)]" />
+
+    <div className="absolute inset-0 opacity-55">
+      <div className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-white/10" />
+      <div className="absolute left-1/2 top-1/2 h-56 w-56 -translate-x-1/2 -translate-y-1/2 rounded-full border border-white/10" />
+      <div className="absolute inset-x-[11%] top-[8%] bottom-[8%] rounded-[42px] border border-white/[0.06]" />
+      <div className="absolute inset-x-[14%] top-[11%] bottom-[11%] rounded-[36px] border border-white/[0.03]" />
+    </div>
+
+    <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-[0.025] mix-blend-overlay" />
+    <div className="absolute top-[-8%] left-[-10%] h-[52%] w-[58%] rounded-full bg-primary/8 blur-[140px]" />
+    <div className="absolute bottom-[-8%] right-[-10%] h-[48%] w-[52%] rounded-full bg-copa-success/8 blur-[120px]" />
+    <div 
+      className="absolute inset-0 opacity-[0.03] pointer-events-none"
+      style={{ backgroundImage: "url('/noise.svg')" }}
+    />
+  </div>
+);
+
+
+export default FieldBackground;

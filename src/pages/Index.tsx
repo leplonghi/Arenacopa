@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { Flag } from "@/components/Flag";
 import { getTeam, formatMatchTime, formatMatchDate, type Match } from "@/data/mockData";
-import { Users, Trophy, ChevronRight, AlertTriangle, Dices, Zap, Bell, Crown, Settings, CalendarDays, BarChart3 } from "lucide-react";
+import { Users, Trophy, ChevronRight, AlertTriangle, Dices, Zap, Crown, Settings, CalendarDays, Flame, Target, SlidersHorizontal, X, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
@@ -35,6 +35,101 @@ const itemVariants = {
   hidden: { opacity: 0, y: 20 },
   visible: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 300, damping: 24 } }
 };
+
+// "Ação do Dia" — smart contextual CTA
+interface ActionOfDayProps {
+  totalPending: number;
+  hasAnyBolao: boolean;
+  hasTodayMatch: boolean;
+  firstBolaoWithPending?: string;
+}
+
+function ActionOfDay({ totalPending, hasAnyBolao, hasTodayMatch, firstBolaoWithPending }: ActionOfDayProps) {
+  const { t } = useTranslation('home');
+  if (totalPending > 0) {
+    const s = totalPending > 1 ? "s" : "";
+    return (
+      <Link to={firstBolaoWithPending ? `/boloes/${firstBolaoWithPending}` : "/boloes"}>
+        <div className="flex items-center gap-4 rounded-[22px] bg-gradient-to-r from-primary/20 to-primary/5 border border-primary/30 px-5 py-4 hover:from-primary/30 transition-all active:scale-[0.98]">
+          <div className="w-10 h-10 rounded-[14px] bg-primary/20 flex items-center justify-center shrink-0">
+            <Target className="w-5 h-5 text-primary" strokeWidth={2.5} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-black uppercase tracking-[0.14em] text-primary/80">
+              {t('action_of_day.pending_title')}
+            </p>
+            <p className="text-sm font-bold text-white leading-snug truncate">
+              {t('action_of_day.pending_desc', { count: totalPending, s })}
+            </p>
+          </div>
+          <ChevronRight className="w-4 h-4 text-primary shrink-0" />
+        </div>
+      </Link>
+    );
+  }
+
+  if (!hasAnyBolao) {
+    return (
+      <Link to="/boloes/criar">
+        <div className="flex items-center gap-4 rounded-[22px] bg-gradient-to-r from-blue-500/15 to-blue-500/5 border border-blue-500/25 px-5 py-4 hover:from-blue-500/25 transition-all active:scale-[0.98]">
+          <div className="w-10 h-10 rounded-[14px] bg-blue-500/20 flex items-center justify-center shrink-0">
+            <Dices className="w-5 h-5 text-blue-400" strokeWidth={2} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-black uppercase tracking-[0.14em] text-blue-400/80">
+              {t('action_of_day.no_bolao_title')}
+            </p>
+            <p className="text-sm font-bold text-white leading-snug">
+              {t('action_of_day.no_bolao_desc')}
+            </p>
+          </div>
+          <ChevronRight className="w-4 h-4 text-blue-400 shrink-0" />
+        </div>
+      </Link>
+    );
+  }
+
+  if (hasTodayMatch) {
+    return (
+      <Link to="/copa/calendario">
+        <div className="flex items-center gap-4 rounded-[22px] bg-gradient-to-r from-orange-500/15 to-orange-500/5 border border-orange-500/25 px-5 py-4 hover:from-orange-500/25 transition-all active:scale-[0.98]">
+          <div className="w-10 h-10 rounded-[14px] bg-orange-500/20 flex items-center justify-center shrink-0">
+            <Flame className="w-5 h-5 text-orange-400" strokeWidth={2} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs font-black uppercase tracking-[0.14em] text-orange-400/80">
+              {t('action_of_day.today_match_title')}
+            </p>
+            <p className="text-sm font-bold text-white leading-snug">
+              {t('action_of_day.today_match_desc')}
+            </p>
+          </div>
+          <ChevronRight className="w-4 h-4 text-orange-400 shrink-0" />
+        </div>
+      </Link>
+    );
+  }
+
+  // Fallback: convide amigos ou explore a Copa
+  return (
+    <Link to="/boloes/criar">
+      <div className="flex items-center gap-4 rounded-[22px] bg-gradient-to-r from-purple-500/15 to-purple-500/5 border border-purple-500/25 px-5 py-4 hover:from-purple-500/25 transition-all active:scale-[0.98]">
+        <div className="w-10 h-10 rounded-[14px] bg-purple-500/20 flex items-center justify-center shrink-0">
+          <Users className="w-5 h-5 text-purple-400" strokeWidth={2} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-black uppercase tracking-[0.14em] text-purple-400/80">
+            Convide seus amigos
+          </p>
+          <p className="text-sm font-bold text-white leading-snug">
+            Crie um bolão e dispute com a galera 🏆
+          </p>
+        </div>
+        <ChevronRight className="w-4 h-4 text-purple-400 shrink-0" />
+      </div>
+    </Link>
+  );
+}
 
 const Index = () => {
   const { user } = useAuth();
@@ -82,25 +177,70 @@ const Index = () => {
 
   const [myBoloes, setMyBoloes] = useState<DashboardBolaoSummary[]>([]);
   const [loading, setLoading] = useState(true);
-  const [dashboardError, setDashboardError] = useState<string | null>(null);
+  const [dashboardError, setDashboardError] = useState<boolean>(false);
   const [dashboardRefreshKey, setDashboardRefreshKey] = useState(0);
   const [profile, setProfile] = useState<{ name: string; avatar?: string } | null>(null);
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
   const [isEliteModalOpen, setIsEliteModalOpen] = useState(false);
   const { isPremium } = useMonetization();
-  const { news: realtimeNews } = useRealtimeNews({ limitCount: 3 });
-  const miniNews = useMemo(
-    () =>
-      realtimeNews.map((item) => ({
-        id: item.id,
-        title: item.title,
-        category: item.source_name || item.category || "Geral",
-        publishedAt: item.published_at,
-        imageUrl: item.url_to_image || null,
-        url: item.url,
-      })),
-    [realtimeNews]
-  );
+  const [newsTab, setNewsTab] = useState<"copa" | "team">("copa");
+  const [showNewsPrefPanel, setShowNewsPrefPanel] = useState(false);
+
+  // Shared news categories & preferences (synced with /noticias page prefs)
+  const NEWS_CATEGORIES = [
+    { id: "copa",    label: "Copa 2026", emoji: "🏆" },
+    { id: "teams",   label: "Seleções",  emoji: "🌍" },
+    { id: "general", label: "Futebol",   emoji: "⚽" },
+    { id: "matches", label: "Partidas",  emoji: "🎯" },
+    { id: "travel",  label: "Viagem",    emoji: "✈️" },
+    { id: "tickets", label: "Ingressos", emoji: "🎟️" },
+  ];
+  const HOME_PREFS_KEY = "arenacopa_home_news_prefs";
+  const [homeNewsPrefs, setHomeNewsPrefs] = useState<string[]>(() => {
+    try { return JSON.parse(localStorage.getItem(HOME_PREFS_KEY) || '["copa","teams"]'); }
+    catch { return ["copa", "teams"]; }
+  });
+  const toggleNewsPref = (id: string) => {
+    setHomeNewsPrefs(prev => {
+      const next = prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id];
+      localStorage.setItem(HOME_PREFS_KEY, JSON.stringify(next));
+      return next;
+    });
+  };
+
+  // Copa 2026 general news — real-time listener
+  const { news: copaNewsRaw, isLoading: copaNewsLoading } = useRealtimeNews({ limitCount: 8 });
+  // Favourite-team news — real-time listener (separate Firestore query)
+  const { news: teamNewsRaw, isLoading: teamNewsLoading } = useRealtimeNews({
+    limitCount: 8,
+    countryFilter: favoriteTeamCode || null,
+  });
+
+  const newsLoading = newsTab === "copa" ? copaNewsLoading : teamNewsLoading;
+
+  const mapNews = (items: typeof copaNewsRaw) =>
+    items.map((item) => ({
+      id: item.id,
+      title: item.title,
+      category: item.source_name || item.category || "Geral",
+      publishedAt: item.published_at,
+      imageUrl: item.url_to_image || null,
+      url: item.url,
+    }));
+
+  // Copa tab: filter by user prefs (if any), else show all; limit to 4
+  const miniNews = useMemo(() => {
+    const all = mapNews(copaNewsRaw);
+    if (homeNewsPrefs.length === 0) return all.slice(0, 4);
+    const filtered = all.filter(item => homeNewsPrefs.some(p => item.category?.toLowerCase().includes(p)));
+    return (filtered.length > 0 ? filtered : all).slice(0, 4);
+  }, [copaNewsRaw, homeNewsPrefs]);
+
+  // "Para você" tab: team-specific news first, then pref-filtered; limit to 4
+  const teamNews = useMemo(() => {
+    const all = mapNews(teamNewsRaw);
+    return all.slice(0, 4);
+  }, [teamNewsRaw]);
 
   useEffect(() => {
     if (!user) {
@@ -123,7 +263,7 @@ const Index = () => {
         setMyBoloes(dashboardData.myBoloes);
       } catch (error) {
         console.error("Error loading dashboard data:", error);
-        setDashboardError("Não consegui atualizar seu painel agora. Alguns blocos podem aparecer vazios.");
+        setDashboardError(true);
       } finally {
         setLoading(false);
       }
@@ -142,14 +282,18 @@ const Index = () => {
     [allMatches]
   );
 
-  const displayName = profile?.name || user?.email?.split("@")[0] || "Torcedor";
+  const displayName = profile?.name || user?.email?.split("@")[0] || t('hero.default_name');
   const totalPoints = myBoloes.reduce((acc, curr) => acc + (curr.myPoints || 0), 0);
   const bestRank = myBoloes.length > 0 ? Math.min(...myBoloes.map(b => b.myRank || 999).filter(r => r > 0)) : 999;
   const totalPending = myBoloes.reduce((acc, curr) => acc + (curr.pendingCount || 0), 0);
+  const hasTodayMatch = (allMatches || []).some(
+    (m) => m.status !== "finished" && new Date(m.date).toDateString() === new Date().toDateString()
+  );
+  const firstBolaoWithPending = myBoloes.find(b => (b.pendingCount ?? 0) > 0)?.id;
 
 
   return (
-    <div className="min-h-screen bg-black/70 pb-24 overflow-hidden relative">
+    <div className="min-h-screen pb-24 overflow-hidden relative">
       {/* Immersive Background Gradients */}
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute top-0 left-0 w-full h-[600px] bg-gradient-to-b from-primary/10 via-primary/5 to-transparent opacity-40" />
@@ -172,27 +316,9 @@ const Index = () => {
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="relative z-10 mx-auto max-w-2xl space-y-10 px-4 pt-8 sm:px-6"
+        className="relative z-10 mx-auto max-w-2xl space-y-6 px-4 pt-8 sm:px-6"
       >
         <LiveMatchCard />
-
-        {dashboardError && (
-          <motion.div variants={itemVariants} className="rounded-[28px] border border-amber-500/20 bg-amber-500/10 p-4 backdrop-blur-md">
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <h2 className="text-sm font-black uppercase tracking-[0.12em] text-amber-300">{t('dashboard_partial.title')}</h2>
-                <p className="mt-1 text-sm text-amber-100/80">{dashboardError || t('dashboard_partial.desc')}</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => setDashboardRefreshKey((current) => current + 1)}
-                className="shrink-0 rounded-xl border border-amber-400/30 px-3 py-2 text-[11px] font-black uppercase tracking-[0.12em] text-amber-200 hover:bg-amber-500/10"
-              >
-                {t('dashboard_partial.retry')}
-              </button>
-            </div>
-          </motion.div>
-        )}
 
         {/* Profile Header HUD */}
         <motion.div variants={itemVariants} className="flex items-center justify-between">
@@ -231,7 +357,7 @@ const Index = () => {
               <h1 className="text-3xl font-black text-white tracking-tighter leading-none">{displayName}</h1>
             </div>
           </div>
-          <Link to="/perfil">
+          <Link to="/perfil" aria-label="Abrir perfil">
             <motion.div
               whileHover={{ scale: 1.1, rotate: 15 }}
               whileTap={{ scale: 0.9 }}
@@ -242,66 +368,43 @@ const Index = () => {
           </Link>
         </motion.div>
 
-        {/* Intelligence / Alerts Bar */}
+        {/* Compact Pending Alert */}
         {totalPending > 0 && (
           <motion.div variants={itemVariants}>
-            <Link to="/boloes" className="group">
-              <div className="relative p-7 rounded-[40px] bg-gradient-to-r from-orange-500/20 to-transparent border border-orange-500/30 overflow-hidden shadow-2xl backdrop-blur-md">
-                <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:scale-125 group-hover:rotate-12 transition-transform duration-700">
-                  <Bell className="w-20 h-20 text-orange-500" />
-                </div>
-                <div className="flex items-center gap-6 relative z-10">
-                  <div className="w-14 h-14 rounded-[22px] bg-orange-500 flex items-center justify-center shadow-2xl shadow-orange-500/50 shrink-0">
-                    <AlertTriangle className="w-7 h-7 text-white animate-pulse" />
-                  </div>
-                  <div className="flex-1">
-                    <h2 className="text-xl font-black text-white leading-tight uppercase tracking-tight">CUIDADO, CAPITÃO!</h2>
-                    <p className="mt-1 text-xs font-bold uppercase tracking-[0.14em] leading-snug text-orange-100/80">
-                      Você possui {totalPending} palpite{totalPending > 1 ? "s" : ""} pendente{totalPending > 1 ? "s" : ""}
-                    </p>
-                  </div>
-                  <motion.div
-                    whileHover={{ x: 3 }}
-                    className="w-12 h-12 rounded-2xl bg-black/40 flex items-center justify-center border border-white/10 group-hover:bg-orange-500 group-hover:text-black transition-all"
-                  >
-                    <ChevronRight className="w-6 h-6 stroke-[3px]" />
-                  </motion.div>
-                </div>
+            <Link to="/boloes">
+              <div className="flex items-center gap-3 px-5 py-3.5 rounded-2xl bg-orange-500/15 border border-orange-500/25 hover:bg-orange-500/20 transition-colors">
+                <AlertTriangle className="w-4 h-4 text-orange-400 shrink-0" />
+                <span className="text-sm font-bold text-orange-200 flex-1">
+                  {t('pending.title', { count: totalPending })}
+                </span>
+                <ChevronRight className="w-4 h-4 text-orange-400" />
               </div>
             </Link>
           </motion.div>
         )}
 
-        <motion.section variants={itemVariants} className="space-y-6">
-          <SectionHeader color="bg-primary" title={t('quick_panel.section_title')} rightElement={
-            <Link to="/ranking" className="text-[11px] text-gray-400 font-black uppercase tracking-[0.12em] hover:text-white transition-colors">
-              {t('quick_panel.view_ranking')} <ChevronRight className="w-3 h-3 inline ml-1" />
-            </Link>
-          } />
+        {/* Ação do Dia — smart contextual CTA */}
+        {!loading && (
+          <motion.div variants={itemVariants}>
+            <ActionOfDay
+              totalPending={totalPending}
+              hasAnyBolao={myBoloes.length > 0}
+              hasTodayMatch={hasTodayMatch}
+              firstBolaoWithPending={firstBolaoWithPending}
+            />
+          </motion.div>
+        )}
 
+        {/* Compact Stats Row */}
+        <motion.div variants={itemVariants}>
           <Link to="/ranking" className="block group">
-            <div className="surface-card-strong rounded-[40px] p-6 transition-all group-hover:border-primary/30">
-              <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.14em] text-primary">
-                    <BarChart3 className="w-4 h-4" />
-                    {t('quick_panel.kicker')}
-                  </div>
-                  <h2 className="text-2xl font-black text-white tracking-tight">{t('quick_panel.title')}</h2>
-                  <p className="text-sm text-zinc-400">
-                    {t('quick_panel.description')}
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-3 gap-3 md:min-w-[320px]">
-                  <CompactStat label={t('quick_panel.best_rank')} value={bestRank === 999 ? "-" : `${bestRank}º`} />
-                  <CompactStat label={t('quick_panel.points')} value={totalPoints} highlight />
-                  <CompactStat label={t('quick_panel.pools')} value={myBoloes.length} />
-                </div>
-              </div>
+            <div className="grid grid-cols-3 gap-3">
+              <CompactStat label={t('quick_panel.best_rank')} value={bestRank === 999 ? "-" : `${bestRank}º`} />
+              <CompactStat label={t('quick_panel.points')} value={totalPoints} highlight />
+              <CompactStat label={t('quick_panel.pools')} value={myBoloes.length} />
             </div>
           </Link>
-        </motion.section>
+        </motion.div>
 
         <motion.section variants={itemVariants} className="space-y-6">
           <SectionHeader color="bg-primary" title={t('upcoming.title')} rightElement={
@@ -324,6 +427,7 @@ const Index = () => {
                   <button
                     key={match.id}
                     type="button"
+                    aria-label={t('upcoming.match_aria', { home: match.homeTeam, away: match.awayTeam })}
                     onClick={() => setSelectedMatch(match)}
                     className={cn(
                       "surface-card-soft w-full rounded-[30px] p-5 text-left transition-all hover:border-white/20 hover:bg-white/[0.06]",
@@ -354,6 +458,163 @@ const Index = () => {
                   </button>
                 );
               })}
+            </div>
+          )}
+        </motion.section>
+
+        {/* Real-time News — tabbed Copa 2026 / Meu Time */}
+        <motion.section variants={itemVariants} className="space-y-4">
+          <SectionHeader color="bg-emerald-400" title={t('news.title')} rightElement={
+            <Link to="/noticias" className="text-[11px] text-gray-400 font-black uppercase tracking-[0.12em] hover:text-white transition-colors">
+              {t('news.view_all')} <ChevronRight className="w-3 h-3 inline ml-1" />
+            </Link>
+          } />
+
+          {/* Tab pills + preferences button */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setNewsTab("copa")}
+              className={cn(
+                "rounded-full px-4 py-1.5 text-[11px] font-black uppercase tracking-[0.16em] transition-all",
+                newsTab === "copa"
+                  ? "bg-emerald-400 text-black"
+                  : "border border-white/10 bg-white/5 text-zinc-400 hover:text-white"
+              )}
+            >
+              {t('news.tab_copa')}
+            </button>
+            <button
+              onClick={() => setNewsTab("team")}
+              className={cn(
+                "rounded-full px-4 py-1.5 text-[11px] font-black uppercase tracking-[0.16em] transition-all flex items-center gap-1.5",
+                newsTab === "team"
+                  ? "bg-primary text-black"
+                  : "border border-white/10 bg-white/5 text-zinc-400 hover:text-white"
+              )}
+            >
+              {favoriteTeam ? favoriteTeam.flag : "🏳"} Para você
+            </button>
+            <button
+              onClick={() => setShowNewsPrefPanel(v => !v)}
+              className={cn(
+                "ml-auto rounded-full p-2 transition-all",
+                showNewsPrefPanel
+                  ? "bg-primary/20 text-primary border border-primary/30"
+                  : "bg-white/5 text-zinc-500 border border-white/10 hover:text-white"
+              )}
+              title="Personalizar notícias"
+            >
+              <SlidersHorizontal className="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          {/* News preferences panel */}
+          <AnimatePresence>
+            {showNewsPrefPanel && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="overflow-hidden"
+              >
+                <div className="rounded-[20px] border border-primary/20 bg-primary/5 p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">
+                      Categorias preferidas na Home
+                    </p>
+                    <button onClick={() => setShowNewsPrefPanel(false)} className="rounded-full p-1 hover:bg-white/10">
+                      <X className="w-3.5 h-3.5 text-zinc-500" />
+                    </button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {NEWS_CATEGORIES.map(cat => (
+                      <button
+                        key={cat.id}
+                        onClick={() => toggleNewsPref(cat.id)}
+                        className={cn(
+                          "flex items-center gap-1 rounded-full px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.12em] transition-all",
+                          homeNewsPrefs.includes(cat.id)
+                            ? "bg-primary text-black"
+                            : "border border-white/10 bg-white/5 text-zinc-400"
+                        )}
+                      >
+                        <span>{cat.emoji}</span>
+                        <span>{cat.label}</span>
+                        {homeNewsPrefs.includes(cat.id) && <Check className="w-3 h-3 ml-0.5" />}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="mt-2 text-[10px] text-zinc-600">
+                    Também aplicado à aba "Para Você" na tela de Notícias.
+                  </p>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Content */}
+          {newsLoading ? (
+            <div className="grid gap-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="h-20 animate-pulse rounded-[24px] border border-white/5 bg-white/[0.02]" />
+              ))}
+            </div>
+          ) : newsTab === "team" && !favoriteTeamCode ? (
+            <p className="text-center text-xs text-zinc-500 py-6">{t('news.team_no_fav')}</p>
+          ) : newsTab === "team" && teamNews.length === 0 ? (
+            <p className="text-center text-xs text-zinc-500 py-6">
+              {t('news.team_empty', { team: favoriteTeam?.name || favoriteTeamCode })}
+            </p>
+          ) : (
+            <div className="grid gap-3">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={newsTab}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -6 }}
+                  transition={{ duration: 0.18 }}
+                  className="grid gap-3"
+                >
+                  {(newsTab === "copa" ? miniNews : teamNews).map((item) => (
+                    <a
+                      key={item.id}
+                      href={item.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="group flex gap-4 p-4 rounded-[22px] bg-white/[0.02] border border-white/5 hover:bg-white/[0.05] transition-all backdrop-blur-md"
+                    >
+                      <div className="w-20 h-14 rounded-[14px] overflow-hidden shrink-0 relative">
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent z-10" />
+                        <img
+                          src={item.imageUrl || "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=300"}
+                          alt={item.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          loading="lazy"
+                        />
+                      </div>
+                      <div className="flex flex-col justify-center flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-1">
+                          <span className={cn(
+                            "rounded px-1.5 py-0.5 text-[10px] font-black uppercase tracking-[0.14em]",
+                            newsTab === "team"
+                              ? "bg-primary/15 border border-primary/25 text-primary"
+                              : "bg-emerald-400/10 border border-emerald-400/20 text-emerald-400"
+                          )}>
+                            {item.category}
+                          </span>
+                          <span className="text-[10px] text-zinc-500 font-bold">
+                            {new Date(item.publishedAt).toLocaleDateString(i18n.language, { day: '2-digit', month: 'short' })}
+                          </span>
+                        </div>
+                        <h3 className="text-sm font-bold text-gray-200 leading-snug line-clamp-2 group-hover:text-white transition-colors">
+                          {item.title}
+                        </h3>
+                      </div>
+                    </a>
+                  ))}
+                </motion.div>
+              </AnimatePresence>
             </div>
           )}
         </motion.section>
@@ -395,7 +656,7 @@ const Index = () => {
               {myBoloes.map((bolao) => (
                 <Link key={bolao.id} to={`/boloes/${bolao.id}`} className="group relative">
                   <div className="p-[1.5px] rounded-[40px] bg-gradient-to-br from-white/10 to-transparent group-hover:from-primary/50 transition-all duration-500 shadow-2xl">
-                    <div className="bg-black/70 rounded-[39px] p-6 flex items-center justify-between group-hover:bg-black/80 transition-all backdrop-blur-3xl overflow-hidden relative">
+                    <div className="bg-white/[0.04] backdrop-blur-xl rounded-[39px] p-6 flex items-center justify-between group-hover:bg-white/[0.07] transition-all overflow-hidden relative border border-white/[0.06]">
                       {/* Interactive background pulse */}
                       {(bolao.pendingCount ?? 0) > 0 && <div className="absolute inset-0 bg-orange-500/5 animate-pulse pointer-events-none" />}
 
@@ -419,12 +680,12 @@ const Index = () => {
                           <div className="flex items-center gap-5 mt-2.5">
                             <div className="flex items-center gap-2">
                               <Users className="w-3.5 h-3.5 text-gray-600" />
-                              <span className="text-[11px] font-black uppercase tracking-[0.12em] text-gray-400">{bolao.memberCount} membros</span>
+                              <span className="text-[11px] font-black uppercase tracking-[0.12em] text-gray-400">{t('my_pools.members', { count: bolao.memberCount })}</span>
                             </div>
                             {bolao.myRank && bolao.myRank > 0 && (
                               <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20">
                                 <Crown className="w-3 h-3 text-primary" />
-                                <span className="text-[10px] font-black uppercase tracking-[0.12em] text-primary">#{bolao.myRank} lugar</span>
+                                <span className="text-[10px] font-black uppercase tracking-[0.12em] text-primary">{t('my_pools.rank_place', { rank: bolao.myRank })}</span>
                               </div>
                             )}
                           </div>
@@ -434,7 +695,7 @@ const Index = () => {
                       <div className="flex items-center gap-5 relative z-10">
                         <div className="text-right">
                           <span className="text-3xl font-black text-white tracking-tighter tabular-nums leading-none block mb-1">{bolao.myPoints}</span>
-                          <span className="text-[11px] font-black uppercase tracking-[0.12em] text-gray-400">Pontos</span>
+                          <span className="text-[11px] font-black uppercase tracking-[0.12em] text-gray-400">{t('quick_panel.points')}</span>
                         </div>
                         <div className="w-12 h-12 rounded-[18px] bg-white/5 border border-white/10 flex items-center justify-center text-gray-500 group-hover:bg-primary group-hover:text-black transition-all shadow-xl">
                           <ChevronRight className="w-6 h-6 stroke-[2.5px]" />
@@ -448,40 +709,7 @@ const Index = () => {
           )}
         </motion.section>
 
-        {/* Global News Section */}
-        {miniNews.length > 0 && (
-          <motion.section variants={itemVariants} className="space-y-6">
-          <SectionHeader color="bg-emerald-400" title={t('news.title')} rightElement={
-            <Link to="/copa/noticias" className="text-[11px] text-gray-400 font-black uppercase tracking-[0.12em] hover:text-white transition-colors">
-                {t('news.view_all')} <ChevronRight className="w-3 h-3 inline ml-1" />
-              </Link>
-            } />
 
-            <div className="grid gap-4">
-              {miniNews.map((item) => (
-                <a key={item.id} href={item.url} target="_blank" rel="noopener noreferrer" className="group flex gap-6 p-5 rounded-[28px] bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] transition-all backdrop-blur-md shadow-lg">
-                  <div className="w-28 h-20 rounded-[20px] overflow-hidden shrink-0 shadow-2xl group-hover:scale-105 transition-transform duration-700 relative">
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10" />
-                    <img src={item.imageUrl || "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=400"} alt={item.title} className="w-full h-full object-cover" />
-                  </div>
-                  <div className="flex flex-col justify-center flex-1 min-w-0">
-                    <div className="flex items-center gap-4 mb-2.5">
-                      <span className="rounded-lg border border-primary/20 bg-primary/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-primary">
-                        {item.category}
-                      </span>
-                      <span className="text-[11px] font-black uppercase tracking-[0.12em] text-gray-400">
-                        {new Date(item.publishedAt).toLocaleDateString(i18n.language, { day: '2-digit', month: 'short' })}
-                      </span>
-                    </div>
-                    <h3 className="text-base font-bold text-gray-100 leading-tight line-clamp-2 transition-colors group-hover:text-white tracking-tight">
-                      {item.title}
-                    </h3>
-                  </div>
-                </a>
-              ))}
-            </div>
-          </motion.section>
-        )}
 
         {/* Floating Strategic CTA */}
         <motion.div

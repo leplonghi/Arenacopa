@@ -1,0 +1,175 @@
+--- LINES 100-160 (state declarations) ---
+101:         case "home_goals":
+102:             return homeScore;
+103:         case "away_goals":
+104:             return awayScore;
+105:         case "total_goals":
+106:             return homeScore + awayScore;
+107:         case "both_score":
+108:             return homeScore > 0 && awayScore > 0 ? "yes" : "no";
+109:         default:
+110:             return null;
+111:     }
+112: }
+113: 
+114: export function JogosTab({
+115:     bolaoId,
+116:     highlightedMatchId,
+117:     markets = [],
+118:     predictions = [],
+119: }: {
+120:     bolaoId: string;
+121:     highlightedMatchId?: string;
+122:     rules?: unknown;
+123:     markets?: BolaoMarket[];
+124:     predictions?: BolaoPrediction[];
+125: }) {
+126:     const { t } = useTranslation('bolao');
+127:     const { user } = useAuth();
+128:     const { toast } = useToast();
+129:     const [matches, setMatches] = useState<JogosTabMatch[]>([]);
+130:     const [savedPalpites, setSavedPalpites] = useState<Record<string, EditablePalpite>>({});
+131:     const [draftPalpites, setDraftPalpites] = useState<Record<string, Partial<EditablePalpite>>>({});
+132:     const [draftFirstScorers, setDraftFirstScorers] = useState<Record<string, string>>({});
+133:     const [savingMatchId, setSavingMatchId] = useState<string | null>(null);
+134: 
+135:     // Share States
+136:     const [shareModalOpen, setShareModalOpen] = useState(false);
+137:     const [shareData, setShareData] = useState<ShareData | null>(null);
+138:     const shareRef = useRef<HTMLDivElement>(null);
+139:     const [isGenerating, setIsGenerating] = useState(false);
+140:     const matchMarkets = useMemo(
+141:         () => markets.filter((market) => market.scope === "match" && market.match_id),
+142:         [markets]
+143:     );
+144:     const exactScoreMarketByMatchId = useMemo(
+145:         () =>
+146:             matchMarkets.reduce<Record<string, BolaoMarket>>((accumulator, market) => {
+147:                 if (market.slug === "exact_score" && market.match_id) {
+148:                     accumulator[market.match_id] = market;
+149:                 }
+150:                 return accumulator;
+151:             }, {}),
+152:         [matchMarkets]
+153:     );
+154:     const firstScorerMarketByMatchId = useMemo(
+155:         () =>
+156:             matchMarkets.reduce<Record<string, BolaoMarket>>((accumulator, market) => {
+157:                 if (market.slug === "first_team_to_score" && market.match_id) {
+158:                     accumulator[market.match_id] = market;
+159:                 }
+160:                 return accumulator;
+
+--- LINES 508-600 (match card JSX) ---
+509:                     <div id={`match-card-${m.id}`} key={m.id} className={cn(
+510:                         "relative p-6 bg-white/[0.03] border rounded-[32px] overflow-hidden transition-all",
+511:                         isHighlighted ? "border-primary/50 bg-primary/5 ring-1 ring-primary/20" : "border-white/5"
+512:                     )}>
+513:                         {isStarted && <div className="absolute inset-0 bg-black/50 z-10 backdrop-blur-sm pointer-events-none flex flex-col items-center justify-center">
+514:                             <Lock className="w-8 h-8 text-gray-500 mb-2" />
+515:                             <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Palpites Encerrados</span>
+516:                             {m.status === 'finished' && p.id && (
+517:                                 <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="mt-4 flex flex-col items-center">
+518:                                     <span className="text-4xl font-black text-white">{p.points}</span>
+519:                                     <span className="text-[10px] text-primary uppercase font-bold tracking-widest">{p.is_exact ? "Exato 🎯" : "Pts"}</span>
+520:                                 </motion.div>
+521:                             )}
+522:                         </div>}
+523: 
+524:                         <div className="flex justify-between items-center mb-6">
+525:                             <div className="px-3 py-1 rounded-full bg-white/5 text-[9px] font-bold uppercase tracking-widest text-gray-500">
+526:                                 {new Date(m.match_date).toLocaleDateString('pt-BR')} • {new Date(m.match_date).toLocaleTimeString('pt-BR', { hour: "2-digit", minute: "2-digit" })}
+527:                             </div>
+528:                             <div className="px-3 py-1 rounded-full bg-white/5 text-[9px] font-bold uppercase tracking-widest text-gray-500">{m.stage}</div>
+529:                         </div>
+530: 
+531:                         {marketsForMatch.length > 0 && (
+532:                             <div className="mb-4 flex flex-wrap gap-2">
+533:                                 {marketsForMatch.slice(0, 4).map((market) => (
+534:                                     <div key={market.id} className="inline-flex items-center gap-1.5 rounded-full border border-primary/15 bg-primary/10 px-3 py-1 text-[9px] font-black uppercase tracking-[0.16em] text-primary">
+535:                                         <span>{getMarketShortLabel(market.slug, market.title)}</span>
+536:                                         <TooltipProvider delayDuration={120}>
+537:                                             <Tooltip>
+538:                                                 <TooltipTrigger asChild>
+539:                                                     <button
+540:                                                         type="button"
+541:                                                         className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-white/10 text-primary/80"
+542:                                                         aria-label={`Entender mercado ${market.title}`}
+543:                                                     >
+544:                                                         <CircleHelp className="h-3 w-3" />
+545:                                                     </button>
+546:                                                 </TooltipTrigger>
+547:                                                 <TooltipContent className="max-w-[240px] rounded-2xl border-white/10 bg-zinc-950 px-4 py-3 text-left text-xs text-zinc-200">
+548:                                                     <p className="mb-1 text-[11px] font-black uppercase tracking-[0.16em] text-primary">{market.title}</p>
+549:                                                     <p>{market.help_text || market.description}</p>
+550:                                                 </TooltipContent>
+551:                                             </Tooltip>
+552:                                         </TooltipProvider>
+553:                                     </div>
+554:                                 ))}
+555:                                 {marketsForMatch.length > 4 && (
+556:                                     <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[9px] font-black uppercase tracking-[0.16em] text-zinc-400">
+557:                                         +{marketsForMatch.length - 4} mercados
+558:                                     </span>
+559:                                 )}
+560:                             </div>
+561:                         )}
+562: 
+563:                         {isHighlighted && (
+564:                             <div className="mb-4 rounded-2xl border border-primary/20 bg-primary/10 px-4 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-primary">
+565:                                 Este jogo está pendente para você.
+566:                             </div>
+567:                         )}
+568: 
+569:                         <div className="flex items-center justify-center gap-4">
+570:                             <div className="flex flex-col items-center gap-2">
+571:                                 <Flag code={m.home_team_code} size="md" />
+572:                                 <span className="text-xs font-bold text-gray-400">{m.home_team_code}</span>
+573:                             </div>
+574: 
+575:                             <div className="flex items-center gap-2">
+576:                                 <input
+577:                                     type="text"
+578:                                     maxLength={2}
+579:                                     inputMode="numeric"
+580:                                     aria-label={`Palpite de gols para ${m.home_team_code}`}
+581:                                     value={p.home}
+582:                                     onChange={e => updateScore(m.id, 'home', e.target.value)}
+583:                                     className="w-14 h-16 bg-white/5 border border-white/10 rounded-2xl text-center text-3xl font-black text-white outline-none focus:border-primary/50"
+584:                                     disabled={isStarted}
+585:                                 />
+586:                                 <span className="text-gray-600 font-bold">x</span>
+587:                                 <input
+588:                                     type="text"
+589:                                     maxLength={2}
+590:                                     inputMode="numeric"
+591:                                     aria-label={`Palpite de gols para ${m.away_team_code}`}
+592:                                     value={p.away}
+593:                                     onChange={e => updateScore(m.id, 'away', e.target.value)}
+594:                                     className="w-14 h-16 bg-white/5 border border-white/10 rounded-2xl text-center text-3xl font-black text-white outline-none focus:border-primary/50"
+595:                                     disabled={isStarted}
+596:                                 />
+597:                             </div>
+598: 
+599:                             <div className="flex flex-col items-center gap-2">
+600:                                 <Flag code={m.away_team_code} size="md" />
+601:                                 <span className="text-xs font-bold text-gray-400">{m.away_team_code}</span>
+602:                             </div>
+603:                         </div>
+604: 
+605:                         {firstScorerMarket && !isStarted && (
+606:                             <div className="mt-5 rounded-[24px] border border-white/5 bg-black/10 p-4">
+607:                                 <div className="mb-3 flex items-center justify-between gap-3">
+608:                                     <div>
+609:                                         <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">Mercado extra da partida</p>
+610:                                         <p className="mt-1 text-sm font-bold text-white">Quem marca primeiro?</p>
+611:                                     </div>
+612:                                     <TooltipProvider delayDuration={120}>
+613:                                         <Tooltip>
+614:                                             <TooltipTrigger asChild>
+615:                                                 <button
+616:                                                     type="button"
+617:                                                     className="inline-flex h-9 items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 text-[10px] font-black uppercase tracking-[0.16em] text-zinc-300"
+618:                                                     aria-label={`Entender mercado ${firstScorerMarket.title}`}
+619:                                                 >
+620:                                                     <CircleHelp className="h-3.5 w-3.5 text-primary" />

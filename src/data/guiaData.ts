@@ -95,9 +95,12 @@ const rawCities: HostCity[] = [
             -99.1505
         ],
         "curiosities": [
-            "O Estádio Azteca será o primeiro a sediar três jogos de abertura.",
-            "A cidade afunda cerca de 10-30cm por ano.",
-            "Possui a maior quantidade de museus das Américas."
+            "O Estádio Azteca será o primeiro da história a sediar três jogos de abertura de Copa do Mundo: 1970, 1986 e 2026.",
+            "A Cidade do México afunda 10 a 30 cm por ano — foi construída sobre o Lago Texcoco, drenado pelos espanhóis no século XVII.",
+            "Com 2.240m de altitude, é a sede mais alta da Copa — jogadores sentem falta de fôlego nas primeiras 48h.",
+            "Tem mais museus por habitante do que qualquer outra cidade das Américas: são mais de 150 espaços.",
+            "Foi aqui que Pelé ganhou seu terceiro título mundial em 1970 e Maradona marcou o gol do século em 1986.",
+            "O Estádio Azteca comportou 114.600 pessoas em 1968 — o maior público da história em um estádio coberto."
         ],
         "weather": "Junho/Julho: Médias de 24°C / 14°C. Estação chuvosa suave.",
         "travelGuide": {
@@ -127,8 +130,9 @@ const rawCities: HostCity[] = [
                     }
                 ],
                 "tips": [
-                    "Não deixe de provar os pratos locais em mercados tradicionais.",
-                    "A gorjeta sugerida nos EUA é de 18-20%."
+                    "Visite o Mercado de la Merced para a experiência gastronômica mais autêntica e barata",
+                    "Tlayudas, sopes e elotes custam menos de US$3 nas barracas de rua",
+                    "A altitude de 2.240m pode causar ressaca antes do álcool — beba bastante água"
                 ]
             },
             "tourism": {
@@ -147,23 +151,27 @@ const rawCities: HostCity[] = [
                     }
                 ],
                 "hiddenGems": [
-                    "Passeios alternativos pela manhã",
-                    "Vista privilegiada do pôr do sol local"
+                    "Coyoacán — bairro boêmio colorido onde Frida Kahlo nasceu e viveu, com mercado aos domingos",
+                    "Xochimilco — canais pré-hispânicos com trajineras coloridas e bandas de mariachi ao vivo",
+                    "Mercado de Medellín — mercado de bairro autêntico em Roma Norte, longe dos roteiros turísticos",
+                    "Barrio de Tepito — se for com guia local, é o epicentro da cultura popular urbana mexicana"
                 ]
             },
             "accommodation": {
-                "avgHotelPrice": "US$ 180 - 450 / noite",
-                "avgAirbnbPrice": "US$ 120 - 250 / noite",
+                "avgHotelPrice": "US$ 120 - 350 / noite",
+                "avgAirbnbPrice": "US$ 60 - 180 / noite",
                 "bestAreas": [
-                    "Centro da Cidade",
-                    "Áreas próximas ao estádio"
+                    "Polanco — luxo e restaurantes estrelados, 30 min do Azteca",
+                    "Roma Norte — cafés, arte e vida noturna trendy, custo médio",
+                    "Condesa — parques, bares e gastronomia, ótimo custo-benefício"
                 ]
             },
             "safety": {
-                "level": "safe",
+                "level": "caution",
                 "tips": [
-                    "Mantenha atenção dobrada em locais de grande aglomeração.",
-                    "Siga as orientações das autoridades locais nos estádios."
+                    "Use apenas táxis de aplicativo (Uber/inDriver) — nunca táxis na rua",
+                    "Evite caminhar com celular visível em zonas turísticas como Centro Histórico",
+                    "Polanco, Roma Norte e Condesa são os bairros mais seguros para turistas"
                 ],
                 "emergencyNumbers": [
                     "911"
@@ -197,9 +205,12 @@ const rawCities: HostCity[] = [
             -74.0742
         ],
         "curiosities": [
-            "O MetLife Stadium será rebatizado para a final devido às regras da FIFA.",
-            "Mais de 800 línguas são faladas na Grande NY.",
-            "NY tem mais arranha-céus que qualquer outra cidade global."
+            "O MetLife Stadium será rebatizado para a grande final — a FIFA exige naming-rights neutros.",
+            "Nova York é a única cidade do mundo onde mais de 800 idiomas são falados regularmente.",
+            "O MetLife já sediou 2 Super Bowls e nenhuma partida de Copa do Mundo — até agora.",
+            "Brooklyn tem a maior concentração de brasileiros dos EUA, estimada em 100 mil pessoas.",
+            "A Grand Central Terminal tem uma sala de sussurros: quem fala num canto é ouvido no canto oposto.",
+            "O Central Park tem mais espécies de árvores do que muitos países inteiros — 26.000 árvores de 200 espécies."
         ],
         "weather": "Junho/Julho: Médias de 29°C / 20°C. Quente e úmido.",
         "travelGuide": {
@@ -229,8 +240,9 @@ const rawCities: HostCity[] = [
                     }
                 ],
                 "tips": [
-                    "Não deixe de provar os pratos locais em mercados tradicionais.",
-                    "A gorjeta sugerida nos EUA é de 18-20%."
+                    "Coma na Koreatown (32ª rua) para o melhor custo-benefício de Manhattan",
+                    "Chelsea Market tem 35+ fornecedores artesanais num complexo industrial histórico",
+                    "Gorjeta de 18-20% é padrão — em muitos restaurantes já é incluída automaticamente"
                 ]
             },
             "tourism": {
@@ -249,23 +261,27 @@ const rawCities: HostCity[] = [
                     }
                 ],
                 "hiddenGems": [
-                    "Passeios alternativos pela manhã",
-                    "Vista privilegiada do pôr do sol local"
+                    "High Line Park — parque elevado numa ferrovia desativada com arte pública e vista da cidade",
+                    "Smorgasburg Brooklyn — maior mercado de comida ao ar livre da América, sábados no verão",
+                    "Staten Island Ferry — passeio de 25 min gratuito com vista frontal da Estátua da Liberdade",
+                    "Roosevelt Island Tramway — teleférico urbano com vista única do East River e Manhattan"
                 ]
             },
             "accommodation": {
                 "avgHotelPrice": "US$ 180 - 450 / noite",
                 "avgAirbnbPrice": "US$ 120 - 250 / noite",
                 "bestAreas": [
-                    "Centro da Cidade",
-                    "Áreas próximas ao estádio"
+                    "Midtown Manhattan — central, perto de transporte, caro mas conveniente",
+                    "Jersey City NJ — 15 min do MetLife de trem, 40% mais barato que Manhattan",
+                    "Long Island City (Queens) — metrô direto a Manhattan, alternativa econômica"
                 ]
             },
             "safety": {
                 "level": "safe",
                 "tips": [
-                    "Mantenha atenção dobrada em locais de grande aglomeração.",
-                    "Siga as orientações das autoridades locais nos estádios."
+                    "Metrô é seguro na maioria das linhas — fique atento nas estações à noite",
+                    "Evite o Times Square para comer — só para fotos e cartão postal",
+                    "911 para emergências, 311 para não-emergências locais"
                 ],
                 "emergencyNumbers": [
                     "911"
@@ -299,9 +315,12 @@ const rawCities: HostCity[] = [
             -118.3392
         ],
         "curiosities": [
-            "O teto do SoFi Stadium é translúcido para entrada de luz natural.",
-            "LA sediará as Olimpíadas em 2028 pela terceira vez.",
-            "O letreiro de Hollywood dizia originalmente 'Hollywoodland'."
+            "O SoFi Stadium custou US$ 5,5 bilhões — o mais caro do mundo — e tem a primeira tela de 360° da NFL.",
+            "Los Angeles sediará os Jogos Olímpicos de 2028 pela terceira vez na história.",
+            "O letreiro de Hollywood foi instalado em 1923 como propaganda imobiliária e dizia 'Hollywoodland'.",
+            "LA tem mais carros do que qualquer outra cidade dos EUA — tráfego é medido em horas, não minutos.",
+            "O Grand Central Market do centro de LA funciona desde 1917, servindo todas as classes sociais.",
+            "São Francisco tem mais estrelas Michelin per capita, mas LA tem a maior diversidade gastronômica do mundo."
         ],
         "weather": "Junho/Julho: Médias de 29°C / 17°C. Ensolarado e seco.",
         "travelGuide": {
@@ -331,8 +350,9 @@ const rawCities: HostCity[] = [
                     }
                 ],
                 "tips": [
-                    "Não deixe de provar os pratos locais em mercados tradicionais.",
-                    "A gorjeta sugerida nos EUA é de 18-20%."
+                    "A cena de food trucks de LA é a melhor dos EUA — Grand Park tem feiras todas as semanas",
+                    "Grand Central Market funciona desde 1917 e tem opções de US$5 a US$30",
+                    "Reservas com 2-3 dias de antecedência são necessárias nos restaurantes estrelados"
                 ]
             },
             "tourism": {
@@ -351,23 +371,27 @@ const rawCities: HostCity[] = [
                     }
                 ],
                 "hiddenGems": [
-                    "Passeios alternativos pela manhã",
-                    "Vista privilegiada do pôr do sol local"
+                    "Griffith Observatory à noite — vista 360° da cidade e do letreiro com lua cheia",
+                    "The Last Bookstore — livraria em um antigo banco do centro de LA, instalação de arte única",
+                    "Malibu Creek State Park — trilhas com piscinas naturais e cachoeiras, a 45 min do SoFi",
+                    "Abbot Kinney Blvd — rua mais cool dos EUA segundo a GQ, em Venice Beach"
                 ]
             },
             "accommodation": {
                 "avgHotelPrice": "US$ 180 - 450 / noite",
                 "avgAirbnbPrice": "US$ 120 - 250 / noite",
                 "bestAreas": [
-                    "Centro da Cidade",
-                    "Áreas próximas ao estádio"
+                    "Santa Monica — beira-mar, próximo ao SoFi de Uber, walkable",
+                    "Inglewood — bairro do SoFi Stadium, conveniente e mais econômico",
+                    "West Hollywood — central, animado e seguro, excelente para deslocamentos"
                 ]
             },
             "safety": {
                 "level": "safe",
                 "tips": [
-                    "Mantenha atenção dobrada em locais de grande aglomeração.",
-                    "Siga as orientações das autoridades locais nos estádios."
+                    "Skid Row no centro de LA deve ser evitado a pé",
+                    "Alugue carro — a cidade é enorme e o transporte público é limitado fora do metrô",
+                    "Sunscreen é essencial — sol engana em LA, especialmente para quem vem de climas frios"
                 ],
                 "emergencyNumbers": [
                     "911"
@@ -401,9 +425,12 @@ const rawCities: HostCity[] = [
             -97.0945
         ],
         "curiosities": [
-            "O telão do estádio é tão grande que teve que ser considerado no design.",
-            "Dallas terá o maior hub de transporte para torcedores.",
-            "Muitos jogos serão em teto fechado devido ao calor texano."
+            "Dallas terá o maior número de jogos da Copa 2026: 9 partidas, incluindo uma semifinal.",
+            "O AT&T Stadium (Jerry World) tem um dos maiores telões internos do mundo — 85m de largura.",
+            "Dallas-Fort Worth é o aeroporto com mais rotas domésticas dos EUA, facilitando o acesso.",
+            "A cidade foi palco do assassinato do presidente JFK em 22 de novembro de 1963, no Dealey Plaza.",
+            "O State Fair of Texas em Dallas recebe mais de 2 milhões de visitantes por edição — o maior dos EUA.",
+            "O AT&T Stadium tem uma galeria de arte permanente com obras de Damien Hirst — o único no mundo."
         ],
         "weather": "Junho/Julho: Médias de 35°C / 24°C. Muito quente.",
         "travelGuide": {
@@ -433,8 +460,9 @@ const rawCities: HostCity[] = [
                     }
                 ],
                 "tips": [
-                    "Não deixe de provar os pratos locais em mercados tradicionais.",
-                    "A gorjeta sugerida nos EUA é de 18-20%."
+                    "Lockhart Smokehouse em Bishop Arts é referência nacional — filas são sinal de qualidade",
+                    "Tex-Mex de Dallas é diferente da culinária mexicana autêntica — são gastronomias distintas",
+                    "A gorjeta mínima aqui é 20% — menos que isso é considerado desrespeito"
                 ]
             },
             "tourism": {
@@ -453,23 +481,27 @@ const rawCities: HostCity[] = [
                     }
                 ],
                 "hiddenGems": [
-                    "Passeios alternativos pela manhã",
-                    "Vista privilegiada do pôr do sol local"
+                    "Bishop Arts District — arte independente, gastronomia e cultura em Oak Cliff",
+                    "Deep Ellum — bairro histórico de jazz e blues com dezenas de murais gigantes",
+                    "Klyde Warren Park — parque urbano suspenso sobre uma rodovia, com food trucks diários",
+                    "Dallas Museum of Art — entrada gratuita, uma das coleções permanentes mais completas do sul"
                 ]
             },
             "accommodation": {
                 "avgHotelPrice": "US$ 180 - 450 / noite",
                 "avgAirbnbPrice": "US$ 120 - 250 / noite",
                 "bestAreas": [
-                    "Centro da Cidade",
-                    "Áreas próximas ao estádio"
+                    "Uptown Dallas — walkable, vida noturna intensa e restaurantes de qualidade",
+                    "Deep Ellum — boêmio, histórico e a 10 min do downtown de Uber",
+                    "Arlington — cidade do AT&T Stadium, hotéis especializados em eventos esportivos"
                 ]
             },
             "safety": {
                 "level": "safe",
                 "tips": [
-                    "Mantenha atenção dobrada em locais de grande aglomeração.",
-                    "Siga as orientações das autoridades locais nos estádios."
+                    "Dallas em julho chega a 40°C — hidrate-se constantemente e use protetor solar",
+                    "Oak Cliff e Far East Dallas têm áreas que requerem mais cautela à noite",
+                    "Carro é essencial — Dallas foi projetada para automóveis, não para pedestres"
                 ],
                 "emergencyNumbers": [
                     "911"
@@ -503,9 +535,12 @@ const rawCities: HostCity[] = [
             -84.4006
         ],
         "curiosities": [
-            "O teto retrátil abre em apenas 8 minutos.",
-            "O aeroporto de Atlanta é o mais movimentado do mundo.",
-            "Sede dos Jogos Olímpicos de 1996."
+            "O teto retrátil do Mercedes-Benz Stadium abre como uma íris de câmera fotográfica em apenas 8 minutos.",
+            "O aeroporto Hartsfield-Jackson de Atlanta é o mais movimentado do mundo há mais de 20 anos consecutivos.",
+            "Atlanta sediou os Jogos Olímpicos de 1996 — o parque olímpico Centennial é um legado visitável.",
+            "Atlanta foi fundada em 1837 como terminal ferroviário e se chamava 'Terminus' por isso.",
+            "A Coca-Cola foi inventada em Atlanta em 1886 por um farmacêutico chamado John Stith Pemberton.",
+            "O bairro Sweet Auburn foi o berço do movimento dos direitos civis — Martin Luther King Jr. nasceu aqui."
         ],
         "weather": "Junho/Julho: Médias de 32°C / 21°C. Úmido com tempestades.",
         "travelGuide": {
@@ -535,8 +570,9 @@ const rawCities: HostCity[] = [
                     }
                 ],
                 "tips": [
-                    "Não deixe de provar os pratos locais em mercados tradicionais.",
-                    "A gorjeta sugerida nos EUA é de 18-20%."
+                    "O Sweet Auburn Market é o mais diverso e autêntico da cidade, com vendedores independentes",
+                    "Soul food (frango frito, mac & cheese, collard greens) é uma experiência cultural obrigatória",
+                    "Atlanta tem a maior concentração de restaurantes de culinária africana autêntica dos EUA"
                 ]
             },
             "tourism": {
@@ -555,23 +591,27 @@ const rawCities: HostCity[] = [
                     }
                 ],
                 "hiddenGems": [
-                    "Passeios alternativos pela manhã",
-                    "Vista privilegiada do pôr do sol local"
+                    "Krog Street Tunnel — grafites em constante mutação debaixo de um viaduto, fotografia incrível",
+                    "Cascade Springs Nature Preserve — floresta densa de 135 acres dentro da cidade, com cascatas",
+                    "The Varsity — drive-in com funcionamento desde 1928, lanche obrigatório antes dos jogos",
+                    "BeltLine Eastside Trail — trilha urbana de 33km com arte pública ao longo do trajeto"
                 ]
             },
             "accommodation": {
                 "avgHotelPrice": "US$ 180 - 450 / noite",
                 "avgAirbnbPrice": "US$ 120 - 250 / noite",
                 "bestAreas": [
-                    "Centro da Cidade",
-                    "Áreas próximas ao estádio"
+                    "Midtown Atlanta — museus, Piedmont Park e acesso fácil ao MARTA",
+                    "Old Fourth Ward — próximo ao BeltLine, histórico e muito vibrante",
+                    "Buckhead — luxo, compras de alto padrão e os melhores restaurantes da cidade"
                 ]
             },
             "safety": {
-                "level": "safe",
+                "level": "caution",
                 "tips": [
-                    "Mantenha atenção dobrada em locais de grande aglomeração.",
-                    "Siga as orientações das autoridades locais nos estádios."
+                    "O centro de Atlanta (Downtown) tem áreas com alto índice de crimes — evite caminhar à noite",
+                    "MARTA é seguro durante o dia — prefira apps de transporte após as 22h",
+                    "Midtown e Buckhead são os bairros mais seguros e recomendados para turistas"
                 ],
                 "emergencyNumbers": [
                     "911"
@@ -605,9 +645,12 @@ const rawCities: HostCity[] = [
             -80.2389
         ],
         "curiosities": [
-            "Miami tem a maior coleção mundial de arquitetura Art Déco.",
-            "É a única grande cidade dos EUA fundada por uma mulher.",
-            "Conhecida como a capital mundial dos cruzeiros."
+            "Miami tem a maior coleção de arquitetura Art Déco preservada do mundo — mais de 800 edifícios.",
+            "É a única grande cidade dos EUA fundada por uma mulher: Julia Tuttle, em 1896.",
+            "O bairro Wynwood era uma zona industrial abandonada — hoje é o maior museu de street art a céu aberto.",
+            "Miami tem mais de 80 idiomas falados e é genuinamente bilíngue — inglês e espanhol são igualmente oficiais na prática.",
+            "O Porto de Miami é o maior porto de cruzeiros do mundo em número de passageiros.",
+            "A comunidade brasileira de Miami é uma das maiores fora do Brasil — estima-se 300 mil brasucas na região."
         ],
         "weather": "Junho/Julho: Médias de 33°C / 26°C. Tropical e úmido.",
         "travelGuide": {
@@ -637,8 +680,9 @@ const rawCities: HostCity[] = [
                     }
                 ],
                 "tips": [
-                    "Não deixe de provar os pratos locais em mercados tradicionais.",
-                    "A gorjeta sugerida nos EUA é de 18-20%."
+                    "Little Havana (8ª rua) é o coração gastronômico — café cubano com tostada custa US$3",
+                    "Evite comer na Ocean Drive — preços turísticos inflados e qualidade abaixo da média",
+                    "Farmers market de Coconut Grove aos sábados tem os melhores produtos frescos da Flórida"
                 ]
             },
             "tourism": {
@@ -657,23 +701,27 @@ const rawCities: HostCity[] = [
                     }
                 ],
                 "hiddenGems": [
-                    "Passeios alternativos pela manhã",
-                    "Vista privilegiada do pôr do sol local"
+                    "Wynwood Walls — ao redor das walls principais há galerias gratuitas e restaurantes únicos",
+                    "Coconut Grove — o bairro mais antigo de Miami, com atmosfera boêmia e arborizada",
+                    "Bill Baggs Cape Florida — praia preservada na extremidade de Key Biscayne, quase sem turistas",
+                    "Little Haiti — culinária caribenha autêntica e murais vibrantes no bairro mais original de Miami"
                 ]
             },
             "accommodation": {
                 "avgHotelPrice": "US$ 180 - 450 / noite",
                 "avgAirbnbPrice": "US$ 120 - 250 / noite",
                 "bestAreas": [
-                    "Centro da Cidade",
-                    "Áreas próximas ao estádio"
+                    "Brickell — moderno, próximo ao downtown, Metromover gratuito conecta tudo",
+                    "South Beach — experiência máxima de Miami, preços elevados mas atmosfera imbatível",
+                    "Coconut Grove — tranquilo, arborizado e ideal para famílias com crianças"
                 ]
             },
             "safety": {
                 "level": "safe",
                 "tips": [
-                    "Mantenha atenção dobrada em locais de grande aglomeração.",
-                    "Siga as orientações das autoridades locais nos estádios."
+                    "Liberty City e Overtown têm altos índices de crime — evite completamente",
+                    "O calor e a umidade de julho são extremos — hidrate-se e use protetor solar frequentemente",
+                    "Cuidado com raios nas praias entre 14h e 17h — tempestades de verão são repentinas"
                 ],
                 "emergencyNumbers": [
                     "911"
@@ -707,9 +755,12 @@ const rawCities: HostCity[] = [
             -79.4186
         ],
         "curiosities": [
-            "Mais de 180 línguas e dialetos são falados em Toronto.",
-            "A rede PATH é a maior galeria subterrânea do mundo.",
-            "Mais de 50% dos residentes nasceram fora do Canadá."
+            "Toronto é considerada a cidade mais diversa do mundo — mais de 200 idiomas são falados regularmente.",
+            "O CN Tower (553m) foi a estrutura mais alta do mundo de 1976 até 2010, quando foi superada pelo Burj Khalifa.",
+            "Toronto tem o maior sistema de corredores subterrâneos do mundo — 30km de galerias chamadas 'PATH'.",
+            "O BMO Field passou por reformas para a Copa e a cidade criou um Fan Zone especial para o Mundial.",
+            "O bairro Kensington Market surgiu como mercado judaico no início do século XX — hoje é totalmente multicultural.",
+            "A Universidade de Toronto é constantemente ranqueada entre as 20 melhores do mundo."
         ],
         "weather": "Junho/Julho: Médias de 27°C / 17°C. Agradável e ensolarado.",
         "travelGuide": {
@@ -739,8 +790,9 @@ const rawCities: HostCity[] = [
                     }
                 ],
                 "tips": [
-                    "Não deixe de provar os pratos locais em mercados tradicionais.",
-                    "A gorjeta sugerida nos EUA é de 18-20%."
+                    "Poutine (batata frita com queijo coalho e molho) é o prato canadense — Smoke's Poutinerie tem 20+ variações",
+                    "O Chinatown de Toronto é um dos mais autênticos do mundo — dim sum no domingo de manhã",
+                    "Preço médio de jantar em restaurante: CAD $25-50 por pessoa sem bebidas"
                 ]
             },
             "tourism": {
@@ -759,23 +811,27 @@ const rawCities: HostCity[] = [
                     }
                 ],
                 "hiddenGems": [
-                    "Passeios alternativos pela manhã",
-                    "Vista privilegiada do pôr do sol local"
+                    "Distillery District — complexo vitoriano de tijolos reconvertido em galerias, restaurantes e arte",
+                    "Toronto Islands — fuga urbana com praias e trilhas a 15 min de ferry do centro",
+                    "Kensington Market — bairro boêmio com vendedores de 30+ países, o mais multicultural da cidade",
+                    "The Annex — bairro universitário com livrarias, cafés e a vibe intelectual de Toronto"
                 ]
             },
             "accommodation": {
                 "avgHotelPrice": "US$ 180 - 450 / noite",
                 "avgAirbnbPrice": "US$ 120 - 250 / noite",
                 "bestAreas": [
-                    "Centro da Cidade",
-                    "Áreas próximas ao estádio"
+                    "Downtown Core — perto de tudo, acesso direto ao metrô TTC",
+                    "Distillery District — charme histórico, restaurantes boutique e a 20 min do BMO Field",
+                    "Queen West — criativo, animado e o melhor custo-benefício do centro"
                 ]
             },
             "safety": {
                 "level": "safe",
                 "tips": [
-                    "Mantenha atenção dobrada em locais de grande aglomeração.",
-                    "Siga as orientações das autoridades locais nos estádios."
+                    "Toronto é uma das cidades mais seguras do mundo — andar a pé à noite é tranquilo na maioria dos bairros",
+                    "O inverno pode surpreender — junho/julho são excelentes mas leve camada para a noite",
+                    "Atenção com bicicletas e patinetes nas ciclovias — o tráfego é respeitoso mas intenso"
                 ],
                 "emergencyNumbers": [
                     "911"
@@ -809,9 +865,12 @@ const rawCities: HostCity[] = [
             -123.112
         ],
         "curiosities": [
-            "O Stanley Park é maior que o Central Park de NY.",
-            "Conhecida como 'Hollywood North' pela indústria de cinema.",
-            "Raramente neva pesado no centro da cidade."
+            "Vancouver aparece constantemente nos rankings das cidades mais habitáveis e mais bonitas do mundo.",
+            "Stanley Park (405 hectares) tem quase o dobro do tamanho do Central Park de Nova York.",
+            "O BC Place terá capacidade ampliada para a Copa 2026 e um novo sistema de iluminação espetacular.",
+            "Vancouver é a cidade mais cara do Canadá para moradia — mais cara que Toronto em custo por metro quadrado.",
+            "A área de Richmond, no sul de Vancouver, tem a maior concentração de restaurantes chineses autênticos fora da Ásia.",
+            "Grouse Mountain, a 15 minutos do centro, tem trilhas, esqui e uma família de ursos como atração."
         ],
         "weather": "Junho/Julho: Médias de 22°C / 13°C. Verão fresco.",
         "travelGuide": {
@@ -841,8 +900,9 @@ const rawCities: HostCity[] = [
                     }
                 ],
                 "tips": [
-                    "Não deixe de provar os pratos locais em mercados tradicionais.",
-                    "A gorjeta sugerida nos EUA é de 18-20%."
+                    "O Public Market de Granville Island é obrigatório — chegue antes das 10h para evitar filas",
+                    "Vancouver tem o melhor dim sum fora de Hong Kong — vá ao bairro Richmond no domingo",
+                    "Salmão do Pacífico selvagem e halibut fresco são baratos e excepcionais nos mercados locais"
                 ]
             },
             "tourism": {
@@ -861,23 +921,27 @@ const rawCities: HostCity[] = [
                     }
                 ],
                 "hiddenGems": [
-                    "Passeios alternativos pela manhã",
-                    "Vista privilegiada do pôr do sol local"
+                    "Granville Island — mercado público com artistas locais, cervejarias e frutos do mar frescos",
+                    "Deep Cove — vilarejo costeiro com caiaques, trilhas e tranquilidade, a 40 min de carro",
+                    "East Van (Mount Pleasant) — cervejarias artesanais, murais e o melhor café da cidade",
+                    "Lynn Canyon — alternativa gratuita ao Capilano Suspension Bridge, igualmente impressionante"
                 ]
             },
             "accommodation": {
                 "avgHotelPrice": "US$ 180 - 450 / noite",
                 "avgAirbnbPrice": "US$ 120 - 250 / noite",
                 "bestAreas": [
-                    "Centro da Cidade",
-                    "Áreas próximas ao estádio"
+                    "Yaletown — moderno, design, restaurantes sofisticados e próximo ao BC Place",
+                    "Gastown — histórico, pedras paralelepípedos e o relógio a vapor famoso",
+                    "Kitsilano — praias, yoga, cafés e a vibe mais autenticamente 'Vancouver'"
                 ]
             },
             "safety": {
-                "level": "safe",
+                "level": "caution",
                 "tips": [
-                    "Mantenha atenção dobrada em locais de grande aglomeração.",
-                    "Siga as orientações das autoridades locais nos estádios."
+                    "O bairro Downtown Eastside tem problemas sérios de drogas — evite a área",
+                    "Vancouver é muito segura para turistas fora do Downtown Eastside",
+                    "Verão é tempo perfeito — leve camada leve para noites, pode refrescar rápido"
                 ],
                 "emergencyNumbers": [
                     "911"
@@ -911,9 +975,12 @@ const rawCities: HostCity[] = [
             -100.2449
         ],
         "curiosities": [
-            "O estádio BBVA é considerado um dos mais belos do mundo.",
-            "Monterrey tem o maior PIB per capita do México.",
-            "O Cerro de la Silla é um monumento natural icônico."
+            "Monterrey é o centro industrial e econômico do México — siderurgia, cimento e manufatura são a base.",
+            "O Estadio BBVA é considerado um dos mais modernos e bonitos da América Latina, inaugurado em 2015.",
+            "A Serra de Santa Catarina e o Cerro de la Silla criam um horizonte dramático e único ao redor da cidade.",
+            "A temperatura em Monterrey em junho pode passar de 40°C — o mais quente dentre as sedes mexicanas.",
+            "Monterrey tem o índice de educação superior mais alto do México — chamada de 'a cidade mais americanizada' do país.",
+            "A cerveja Carta Blanca (1890) e a Tecate têm origem aqui — Monterrey é a capital cervejeira do México."
         ],
         "weather": "Junho/Julho: Médias de 35°C / 23°C. Quente e semiárido.",
         "travelGuide": {
@@ -943,8 +1010,9 @@ const rawCities: HostCity[] = [
                     }
                 ],
                 "tips": [
-                    "Não deixe de provar os pratos locais em mercados tradicionais.",
-                    "A gorjeta sugerida nos EUA é de 18-20%."
+                    "Monterrey é a capital do cabrito assado — Restaurante El Rey del Cabrito serve desde 1959",
+                    "Tacos de trompo (espeto vertical de porco) são diferentes dos do centro do país e deliciosos",
+                    "A cerveja Carta Blanca e a Tecate têm origem em Monterrey — aprecie geladas"
                 ]
             },
             "tourism": {
@@ -963,23 +1031,27 @@ const rawCities: HostCity[] = [
                     }
                 ],
                 "hiddenGems": [
-                    "Passeios alternativos pela manhã",
-                    "Vista privilegiada do pôr do sol local"
+                    "Barrio Antiguo — centro histórico colonial com casas coloridas e vida noturna local autêntica",
+                    "Chipinque Ecological Park — trilhas nas montanhas da Sierra Madre a apenas 20 min do centro",
+                    "Parque Fundidora — antiga usina siderúrgica reconvertida em parque urbano com museus e eventos",
+                    "Bioparque Estrella — uma das melhores experiências de safári da América Latina"
                 ]
             },
             "accommodation": {
                 "avgHotelPrice": "US$ 180 - 450 / noite",
                 "avgAirbnbPrice": "US$ 120 - 250 / noite",
                 "bestAreas": [
-                    "Centro da Cidade",
-                    "Áreas próximas ao estádio"
+                    "San Pedro Garza García — o bairro mais seguro e sofisticado, com restaurantes estrelados",
+                    "Barrio Antiguo — perto do centro histórico e da vida cultural da cidade",
+                    "Valle Oriente — moderno, shoppings e próximo ao Estadio BBVA"
                 ]
             },
             "safety": {
-                "level": "safe",
+                "level": "caution",
                 "tips": [
-                    "Mantenha atenção dobrada em locais de grande aglomeração.",
-                    "Siga as orientações das autoridades locais nos estádios."
+                    "Monterrey melhorou muito em segurança — os bairros turísticos são tranquilos",
+                    "Evite deslocamentos noturnos de carro por áreas desconhecidas — use sempre apps de transporte",
+                    "San Pedro Garza García é o município mais seguro e recomendado para turistas"
                 ],
                 "emergencyNumbers": [
                     "911"
@@ -1013,9 +1085,12 @@ const rawCities: HostCity[] = [
             -103.4624
         ],
         "curiosities": [
-            "O mariachi e a tequila nasceram nesta região.",
-            "O estádio é movido a energia solar.",
-            "Sediou jogos das Copas de 1970 e 1986."
+            "Guadalajara é a cidade natal do tequila, do mariachi e do charreada — símbolos máximos da cultura mexicana.",
+            "A Arena Akron é um dos estádios mais sustentáveis da América Latina, com projeto arquitetônico premiado.",
+            "O Centro Histórico de Guadalajara tem a segunda maior coleção de arte colonial barroca das Américas.",
+            "A cidade é chamada de 'La Perla del Occidente' (A Pérola do Ocidente) pelos próprios mexicanos.",
+            "Tlaquepaque e Tonalá, municípios ao lado de Guadalajara, produzem 40% dos artesanatos exportados pelo México.",
+            "O Lago de Chapala, a 45km, é o maior lago do México e uma das colônias de expatriados mais numerosas da América Latina."
         ],
         "weather": "Junho/Julho: Médias de 31°C / 18°C. Quente com chuvas.",
         "travelGuide": {
@@ -1045,8 +1120,9 @@ const rawCities: HostCity[] = [
                     }
                 ],
                 "tips": [
-                    "Não deixe de provar os pratos locais em mercados tradicionais.",
-                    "A gorjeta sugerida nos EUA é de 18-20%."
+                    "Birria (ensopado de cabra) é o prato máximo de Guadalajara — La Chata é a referência desde 1942",
+                    "Mercado San Juan de Dios tem 3 andares de gastronomia e artesanato jaliscense autêntico",
+                    "Tejuino — feito de milho fermentado com limão e sal — é a bebida local única que você não encontra em outro lugar"
                 ]
             },
             "tourism": {
@@ -1065,23 +1141,27 @@ const rawCities: HostCity[] = [
                     }
                 ],
                 "hiddenGems": [
-                    "Passeios alternativos pela manhã",
-                    "Vista privilegiada do pôr do sol local"
+                    "Tlaquepaque — vila artesanal colonial com cerâmica, vidro soprado e prata local de altíssima qualidade",
+                    "Lago de Chapala — maior lago do México a 45 min, com colônias de expatriados e paisagem deslumbrante",
+                    "Tonalá — capital dos artesanatos mexicanos com feiras impressionantes às quintas e domingos",
+                    "Bosque Los Colomos — reserva natural urbana com trilhas e piscinas de fontes naturais"
                 ]
             },
             "accommodation": {
                 "avgHotelPrice": "US$ 180 - 450 / noite",
                 "avgAirbnbPrice": "US$ 120 - 250 / noite",
                 "bestAreas": [
-                    "Centro da Cidade",
-                    "Áreas próximas ao estádio"
+                    "Providencia — a zona mais cosmopolita e segura, com cafés e restaurantes internacionais",
+                    "Tlaquepaque — charmosa, artesanal e ideal para turistas culturais",
+                    "Zapopan — moderno, próximo à Arena Akron, bem estruturado para visitantes"
                 ]
             },
             "safety": {
-                "level": "safe",
+                "level": "caution",
                 "tips": [
-                    "Mantenha atenção dobrada em locais de grande aglomeração.",
-                    "Siga as orientações das autoridades locais nos estádios."
+                    "Guadalajara é mais tranquila para turistas do que a reputação do México sugere",
+                    "Evite certas zonas periféricas — Providencia e Tlaquepaque são completamente seguras",
+                    "Use Uber ou InDriver — nunca pegue táxi na rua"
                 ],
                 "emergencyNumbers": [
                     "911"
@@ -1115,9 +1195,12 @@ const rawCities: HostCity[] = [
             -95.4107
         ],
         "curiosities": [
-            "Houston é a cidade com maior diversidade étnica dos EUA.",
-            "Centro das famosas missões Apollo da NASA.",
-            "Possui o maior centro médico do mundo."
+            "Houston tem o maior complexo médico do mundo — o Texas Medical Center reúne mais de 60 hospitais.",
+            "O Centro Espacial Johnson da NASA em Houston controla TODOS os voos tripulados americanos desde 1961.",
+            "Houston é a cidade mais diversa dos EUA — mais de 145 idiomas são falados, ultrapassando Nova York.",
+            "O NRG Stadium tem teto retrátil e foi o maior domo do mundo quando inaugurado em 2002.",
+            "A comunidade vietnamita de Houston é a maior fora do Vietnã — com um 'Little Saigon' completo.",
+            "Houston não tem código de zoneamento urbano — a única grande cidade dos EUA sem regras de uso do solo."
         ],
         "weather": "Junho/Julho: Médias de 34°C / 24°C. Muito calor e umidade.",
         "travelGuide": {
@@ -1147,8 +1230,9 @@ const rawCities: HostCity[] = [
                     }
                 ],
                 "tips": [
-                    "Não deixe de provar os pratos locais em mercados tradicionais.",
-                    "A gorjeta sugerida nos EUA é de 18-20%."
+                    "Houston tem a culinária vietnamita mais autêntica fora do Vietnã — bairro Midtown é o epicentro",
+                    "Tex-Mex de Houston tem mais influência mexicana real do que o de Dallas",
+                    "Whataburger é uma instituição texana — hamburger de madrugada obrigatório"
                 ]
             },
             "tourism": {
@@ -1167,23 +1251,27 @@ const rawCities: HostCity[] = [
                     }
                 ],
                 "hiddenGems": [
-                    "Passeios alternativos pela manhã",
-                    "Vista privilegiada do pôr do sol local"
+                    "The Menil Collection — museu de arte gratuito com obras de Picasso, surrealistas e arte tribal",
+                    "Houston Heights — bairro histórico com casas vitorianas, antiquários e restaurantes independentes",
+                    "Buffalo Bayou Park — parque urbano 6km às margens do bayou com esculturas e gruta de morcegos",
+                    "Space Center Houston — o centro de controle de missões da NASA está aberto ao público"
                 ]
             },
             "accommodation": {
                 "avgHotelPrice": "US$ 180 - 450 / noite",
                 "avgAirbnbPrice": "US$ 120 - 250 / noite",
                 "bestAreas": [
-                    "Centro da Cidade",
-                    "Áreas próximas ao estádio"
+                    "Midtown Houston — animado, walkable e genuinamente multicultural",
+                    "Montrose — o bairro mais boêmio, artístico e com a melhor cena gastronômica",
+                    "Medical Center area — conveniente para o NRG, hotéis com bom custo-benefício"
                 ]
             },
             "safety": {
-                "level": "safe",
+                "level": "caution",
                 "tips": [
-                    "Mantenha atenção dobrada em locais de grande aglomeração.",
-                    "Siga as orientações das autoridades locais nos estádios."
+                    "Houston em julho chega a 38°C com umidade extrema — hidrate-se constantemente",
+                    "Algumas áreas do Third Ward e Northeast Houston têm índices altos de crime",
+                    "Midtown e Montrose são completamente seguros para explorar a pé durante o dia"
                 ],
                 "emergencyNumbers": [
                     "911"
@@ -1217,9 +1305,12 @@ const rawCities: HostCity[] = [
             -94.4839
         ],
         "curiosities": [
-            "Conhecida como 'Cidade das Fontes' (mais que Roma).",
-            "A cidade se estende por dois estados (MO e KS).",
-            "Invenção dos 'Burnt Ends' aconteceu aqui."
+            "Kansas City tem mais fontes por habitante do que qualquer cidade do mundo, exceto Roma — são mais de 200.",
+            "O Arrowhead Stadium detém o recorde Guinness de estádio mais barulhento do mundo, com 142,2 dB registrados.",
+            "Kansas City está em dois estados simultaneamente — Missouri e Kansas — dividida pelo Rio Missouri.",
+            "O BBQ estilo Kansas City é reconhecido como uma das quatro grandes tradições de churrasco americano.",
+            "O jazz bebop foi desenvolvido aqui nos anos 1930-40, no 18th & Vine District, por Charlie Parker e outros.",
+            "Kansas City tem mais ristaurantes de BBQ per capita do que qualquer cidade norte-americana."
         ],
         "weather": "Junho/Julho: Médias de 32°C / 21°C. Quente e úmido.",
         "travelGuide": {
@@ -1249,8 +1340,9 @@ const rawCities: HostCity[] = [
                     }
                 ],
                 "tips": [
-                    "Não deixe de provar os pratos locais em mercados tradicionais.",
-                    "A gorjeta sugerida nos EUA é de 18-20%."
+                    "BBQ de Kansas City é considerado por muitos o melhor dos EUA — usa molho tomatado adocicado único",
+                    "Joe's Kansas City Bar-B-Que foi eleito melhor BBQ do mundo por diversas publicações especializadas",
+                    "Burnt ends (pontas do brisket caramelizadas) foram inventados aqui — pedido absolutamente obrigatório"
                 ]
             },
             "tourism": {
@@ -1269,23 +1361,27 @@ const rawCities: HostCity[] = [
                     }
                 ],
                 "hiddenGems": [
-                    "Passeios alternativos pela manhã",
-                    "Vista privilegiada do pôr do sol local"
+                    "18th & Vine Historic District — berço do jazz americano Kansas City style, com museu interativo",
+                    "Westport — o bairro mais antigo da cidade, com bares históricos e janelas estilo saloon",
+                    "Nelson-Atkins Museum of Art — uma das melhores coleções dos EUA, entrada gratuita",
+                    "Union Station — imponente estação ferroviária de 1914 reconvertida em museu de ciências"
                 ]
             },
             "accommodation": {
                 "avgHotelPrice": "US$ 180 - 450 / noite",
                 "avgAirbnbPrice": "US$ 120 - 250 / noite",
                 "bestAreas": [
-                    "Centro da Cidade",
-                    "Áreas próximas ao estádio"
+                    "Country Club Plaza — shopping ao ar livre com arquitetura espanhola, o mais famoso dos EUA",
+                    "Crossroads Arts District — galerias, cervejarias artesanais e restaurantes criativos",
+                    "Leawood KS — do lado Kansas, próximo ao Arrowhead Stadium, familiar e bem organizado"
                 ]
             },
             "safety": {
-                "level": "safe",
+                "level": "caution",
                 "tips": [
-                    "Mantenha atenção dobrada em locais de grande aglomeração.",
-                    "Siga as orientações das autoridades locais nos estádios."
+                    "Kansas City tem áreas de alta criminalidade no leste da cidade — mantenha-se na área turística",
+                    "Plaza e Crossroads são completamente seguras, especialmente durante o dia",
+                    "Arrowhead Stadium fica em zona industrial — vá de carro ou app de transporte"
                 ],
                 "emergencyNumbers": [
                     "911"
@@ -1319,9 +1415,12 @@ const rawCities: HostCity[] = [
             -75.1675
         ],
         "curiosities": [
-            "Primeira capital oficial dos Estados Unidos.",
-            "A escadaria do filme Rocky é um ponto viral de fotos.",
-            "Possui a maior quantidade de murais urbanos do país."
+            "Philadelphia foi a primeira capital dos Estados Unidos — a Constituição Americana foi assinada aqui em 1787.",
+            "O Lincoln Financial Field tem a maior instalação de energia solar de um estádio na NFL — totalmente autossuficiente.",
+            "Os degraus do Philadelphia Museum of Art ficaram famosos globalmente após o filme Rocky (1976).",
+            "Philly criou o cheesesteak, o soft pretzel e o water ice — três ícones gastronômicos americanos.",
+            "O Reading Terminal Market funciona ininterruptamente desde 1893 — o mercado público mais antigo dos EUA.",
+            "A Filadélfia teve o primeiro hospital americano (1751), a primeira escola de medicina e a primeira biblioteca pública."
         ],
         "weather": "Junho/Julho: Médias de 30°C / 20°C. Quente e umidade.",
         "travelGuide": {
@@ -1351,8 +1450,9 @@ const rawCities: HostCity[] = [
                     }
                 ],
                 "tips": [
-                    "Não deixe de provar os pratos locais em mercados tradicionais.",
-                    "A gorjeta sugerida nos EUA é de 18-20%."
+                    "Cheesesteak é levado muito a sério — Geno's vs Pat's é a rivalidade gastronômica mais famosa da América",
+                    "O Italian Market da 9ª rua é o mercado ao ar livre mais antigo e autêntico dos EUA",
+                    "Soft pretzels quentes são vendidos nas esquinas por US$1,50 — o melhor lanche rápido de Philly"
                 ]
             },
             "tourism": {
@@ -1371,23 +1471,27 @@ const rawCities: HostCity[] = [
                     }
                 ],
                 "hiddenGems": [
-                    "Passeios alternativos pela manhã",
-                    "Vista privilegiada do pôr do sol local"
+                    "Eastern State Penitentiary — prisão histórica gótica de 1829 com tours noturno e exposições de arte",
+                    "Reading Terminal Market — mercado público em operação contínua desde 1893, o mais antigo dos EUA",
+                    "Mummers Museum — cultura única e bizarra de Philly, os Mummers desfilam toda virada de ano",
+                    "Magic Gardens de Isaiah Zagar — mosaico insano de garrafas e azulejos cobrindo becos inteiros"
                 ]
             },
             "accommodation": {
                 "avgHotelPrice": "US$ 180 - 450 / noite",
                 "avgAirbnbPrice": "US$ 120 - 250 / noite",
                 "bestAreas": [
-                    "Centro da Cidade",
-                    "Áreas próximas ao estádio"
+                    "Center City — coração da cidade, tudo a pé, ótimo acesso ao transporte SEPTA",
+                    "South Philly — área italiana histórica, próxima ao Lincoln Financial Field",
+                    "Old City — colonial, restaurantes e bares, à sombra da Independence Hall"
                 ]
             },
             "safety": {
-                "level": "safe",
+                "level": "caution",
                 "tips": [
-                    "Mantenha atenção dobrada em locais de grande aglomeração.",
-                    "Siga as orientações das autoridades locais nos estádios."
+                    "Kensington é a área de maior risco — evite completamente",
+                    "Center City, Old City e South Philly são seguros para turistas durante o dia",
+                    "O centro de Philly tem boa iluminação e movimento — seguro para caminhar à noite nas áreas principais"
                 ],
                 "emergencyNumbers": [
                     "911"
@@ -1421,9 +1525,12 @@ const rawCities: HostCity[] = [
             -122.3316
         ],
         "curiosities": [
-            "Primeira loja da Starbucks abriu aqui em 1971.",
-            "Sede da Amazon e da Microsoft.",
-            "O grunge (Nirvana, Pearl Jam) nasceu nos clubes de Seattle."
+            "Seattle tem o apelido de 'Emerald City' pela vegetação exuberante que permanece verde o ano todo.",
+            "O Lumen Field era considerado o estádio mais barulhento do mundo antes de Kansas City bater o recorde.",
+            "Seattle tem o maior consumo de café per capita dos EUA — e a Starbucks foi fundada aqui em 1971.",
+            "A Space Needle (184m) foi construída em 13 meses para a Expo 62 e sobreviveu a dois terremotos significativos.",
+            "Seattle é a sede de Amazon, Boeing e Microsoft — o Silicon Valley do noroeste americano.",
+            "O Pike Place Market funciona desde 1907 e tem um ritual famoso: os peixeiros jogam salmões de um lado para o outro."
         ],
         "weather": "Junho/Julho: Médias de 23°C / 13°C. Verão ameno com chuvas leves.",
         "travelGuide": {
@@ -1453,8 +1560,9 @@ const rawCities: HostCity[] = [
                     }
                 ],
                 "tips": [
-                    "Não deixe de provar os pratos locais em mercados tradicionais.",
-                    "A gorjeta sugerida nos EUA é de 18-20%."
+                    "Salmão selvagem do Alasca e Dungeness crab são mais baratos e melhores em Seattle do que em qualquer outro lugar",
+                    "Starbucks original no Pike Place Market vale a fila — mas explore as centenas de torrefações locais independentes",
+                    "Salumi Artisan Cured Meats — fila de uma hora para o melhor sanduíche de salame do mundo"
                 ]
             },
             "tourism": {
@@ -1473,23 +1581,27 @@ const rawCities: HostCity[] = [
                     }
                 ],
                 "hiddenGems": [
-                    "Passeios alternativos pela manhã",
-                    "Vista privilegiada do pôr do sol local"
+                    "Pike Place Market — muito além dos peixes voadores: 200+ vendedores artesanais e a primeira Starbucks",
+                    "Capitol Hill — bairro LGBTQ+ com a melhor cena de música ao vivo de Seattle",
+                    "Chihuly Garden and Glass — instalação monumental de vidro soprado ao lado da Space Needle, hipnótico",
+                    "Fremont Troll — escultura gigante debaixo da ponte Aurora, símbolo do bairro mais excêntrico de Seattle"
                 ]
             },
             "accommodation": {
                 "avgHotelPrice": "US$ 180 - 450 / noite",
                 "avgAirbnbPrice": "US$ 120 - 250 / noite",
                 "bestAreas": [
-                    "Centro da Cidade",
-                    "Áreas próximas ao estádio"
+                    "South Lake Union — moderno, próximo à Amazon HQ, restaurantes de alto nível",
+                    "Capitol Hill — diverso, animado e com acesso fácil de Link Light Rail",
+                    "Belltown — central, próximo ao Pike Place e à cena noturna"
                 ]
             },
             "safety": {
-                "level": "safe",
+                "level": "caution",
                 "tips": [
-                    "Mantenha atenção dobrada em locais de grande aglomeração.",
-                    "Siga as orientações das autoridades locais nos estádios."
+                    "O bairro SODO tem esvaziamento noturno — o Lumen Field fica aqui, use app de transporte",
+                    "Pike Place e Capitol Hill são muito seguros — ótimos para explorar a pé",
+                    "Verão em Seattle é magnífico — raramente passa dos 27°C, sem umidade excessiva"
                 ],
                 "emergencyNumbers": [
                     "911"
@@ -1523,9 +1635,12 @@ const rawCities: HostCity[] = [
             -121.9694
         ],
         "curiosities": [
-            "Levi's Stadium é totalmente movido por painéis solares.",
-            "O Vale do Silício é a sede global da Apple e Google.",
-            "A neblina matinal é tão comum que tem nome: Karl."
+            "O Levi's Stadium é alimentado 100% por energia renovável — o primeiro estádio neutro em carbono da NFL.",
+            "O Vale do Silício fica no sul da Baía — São Francisco em si é sede de Salesforce, Twitter e muitas startups.",
+            "As correntes frias do Pacífico mantêm São Francisco a apenas 14°C de temperatura média em julho — mais frio que Boston.",
+            "O Golden Gate Bridge usa 129km de cabos de aço e levou 4 anos para ser construído (1933-1937).",
+            "A bactéria Lactobacillus sanfranciscensis, encontrada apenas aqui, dá ao sourdough local um sabor único no mundo.",
+            "Alcatraz, a 2,5km da costa, foi a prisão de segurança máxima mais famosa do mundo até 1963."
         ],
         "weather": "Junho/Julho: Médias de 22°C / 13°C. Verão fresco e nublado.",
         "travelGuide": {
@@ -1555,8 +1670,9 @@ const rawCities: HostCity[] = [
                     }
                 ],
                 "tips": [
-                    "Não deixe de provar os pratos locais em mercados tradicionais.",
-                    "A gorjeta sugerida nos EUA é de 18-20%."
+                    "O burrito Mission-style (com arroz dentro) foi inventado aqui — La Taqueria é a referência desde 1973",
+                    "O sourdough de SF tem sabor único impossível de replicar fora da região por causa da bactéria local Lactobacillus sanfranciscensis",
+                    "Ferry Building Farmers Market às terças e sábados tem os melhores ingredientes orgânicos da Califórnia"
                 ]
             },
             "tourism": {
@@ -1575,23 +1691,27 @@ const rawCities: HostCity[] = [
                     }
                 ],
                 "hiddenGems": [
-                    "Passeios alternativos pela manhã",
-                    "Vista privilegiada do pôr do sol local"
+                    "Ferry Building Marketplace — mercado gourmet na orla com o melhor café, queijo e frutos do mar da baía",
+                    "Muir Woods — redwoods milenares (até 800 anos) a 45 min, chegue antes das 9h para evitar lotação",
+                    "Tartine Bakery na Mission District — considerada por muitos a melhor padaria do continente americano",
+                    "Lands End Trail — trilha costeira de 5km entre ruínas e vista do Golden Gate, praticamente desconhecida"
                 ]
             },
             "accommodation": {
                 "avgHotelPrice": "US$ 180 - 450 / noite",
                 "avgAirbnbPrice": "US$ 120 - 250 / noite",
                 "bestAreas": [
-                    "Centro da Cidade",
-                    "Áreas próximas ao estádio"
+                    "Mission District — a mais animada, diversa e gastronômica de todas as opções",
+                    "SoMa (South of Market) — próxima ao Levi's de ônibus ou BART, hotéis de custo médio",
+                    "Palo Alto — Silicon Valley, próximo ao estádio, hotéis boutique de alto padrão"
                 ]
             },
             "safety": {
-                "level": "safe",
+                "level": "caution",
                 "tips": [
-                    "Mantenha atenção dobrada em locais de grande aglomeração.",
-                    "Siga as orientações das autoridades locais nos estádios."
+                    "Tenderloin e partes do SOMA têm problemas sérios de segurança — evite à noite",
+                    "Mission, Castro e Haight-Ashbury são seguros e vibrantes para explorar",
+                    "O frio surpreende — SF em julho tem média de 14°C, sempre leve uma jaqueta"
                 ],
                 "emergencyNumbers": [
                     "911"
@@ -1625,9 +1745,12 @@ const rawCities: HostCity[] = [
             -71.2643
         ],
         "curiosities": [
-            "A revolta do chá em Boston desencadeou a Revolução Americana.",
-            "Possui o primeiro metrô construído nos EUA.",
-            "Harvard é a universidade mais antiga do país (1636)."
+            "Boston tem as universidades mais importantes do planeta: Harvard (1636) e MIT estão aqui, a 10 min do centro.",
+            "O Gillette Stadium foi palco dos New England Patriots de Tom Brady em 6 títulos de Super Bowl.",
+            "A Maratona de Boston (1897) é a mais antiga do mundo e a mais difícil de se qualificar — exige tempo mínimo.",
+            "O Boston Tea Party de 1773 — protesto contra impostos britânicos — deflagrou a Revolução Americana.",
+            "O sistema de metrô de Boston (The T) é o mais antigo dos EUA, inaugurado em 1897.",
+            "Boston tem a maior concentração de estudantes universitários do mundo — 250 mil em 35 universidades."
         ],
         "weather": "Junho/Julho: Médias de 28°C / 18°C. Verão ameno e agradável.",
         "travelGuide": {
@@ -1657,8 +1780,9 @@ const rawCities: HostCity[] = [
                     }
                 ],
                 "tips": [
-                    "Não deixe de provar os pratos locais em mercados tradicionais.",
-                    "A gorjeta sugerida nos EUA é de 18-20%."
+                    "New England Clam Chowder cremoso é obrigatório — Neptune Oyster ou Legal Sea Foods são as referências",
+                    "Lobster Roll frio com maionese é o sanduíche mais icônico — Mike's Pastry no North End para cannolis de sobremesa",
+                    "Harpoon Brewery é a mais antiga de Boston — tours e degustação às sextas e sábados"
                 ]
             },
             "tourism": {
@@ -1677,23 +1801,27 @@ const rawCities: HostCity[] = [
                     }
                 ],
                 "hiddenGems": [
-                    "Passeios alternativos pela manhã",
-                    "Vista privilegiada do pôr do sol local"
+                    "Arnold Arboretum — jardim botânico gratuito de 107 hectares em Jamaica Plain, visitado por apenas locais",
+                    "Isabella Stewart Gardner Museum — villa italiana com Rembrandt, Vermeer e um jardim central deslumbrante",
+                    "Roslindale Village — bairro local com farmers market e cafés independentes, sem turistas",
+                    "Charles River Esplanade — caminhada às margens do rio com vista de Cambridge e do MIT"
                 ]
             },
             "accommodation": {
                 "avgHotelPrice": "US$ 180 - 450 / noite",
                 "avgAirbnbPrice": "US$ 120 - 250 / noite",
                 "bestAreas": [
-                    "Centro da Cidade",
-                    "Áreas próximas ao estádio"
+                    "Back Bay — central, elegante e com as melhores conexões ao metrô Green Line",
+                    "Foxborough — cidade do Gillette Stadium, hotéis especializados em eventos do estádio, mais econômico",
+                    "Cambridge — universitário, intelectual e com restaurantes étnicos de primeira linha"
                 ]
             },
             "safety": {
                 "level": "safe",
                 "tips": [
-                    "Mantenha atenção dobrada em locais de grande aglomeração.",
-                    "Siga as orientações das autoridades locais nos estádios."
+                    "Boston é uma das cidades mais seguras dos EUA para turistas",
+                    "Roxbury tem áreas com índice de crime mais alto — mantenha-se nos bairros turísticos",
+                    "O inverno de Boston é extremo — em junho/julho o clima é perfeito, entre 20°C e 27°C"
                 ],
                 "emergencyNumbers": [
                     "911"

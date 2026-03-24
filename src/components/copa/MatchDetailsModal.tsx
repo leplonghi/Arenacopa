@@ -7,7 +7,6 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { MapPin, Calendar, Clock, Users, Sun, Globe, Newspaper } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AdBanner } from "@/components/AdBanner";
 
 interface MatchDetailsModalProps {
     match: Match | null;
@@ -51,7 +50,7 @@ export function MatchDetailsModal({ match, isOpen, onClose }: MatchDetailsModalP
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-            <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden bg-background/95 backdrop-blur-xl border-white/10">
+            <DialogContent className="sm:max-w-[500px] p-0 overflow-hidden bg-black/60 backdrop-blur-xl border-white/10 shadow-2xl">
                 <DialogTitle className="sr-only">
                     {t('match_details.sr_title', { home: home.name, away: away.name })}
                 </DialogTitle>
@@ -199,7 +198,6 @@ export function MatchDetailsModal({ match, isOpen, onClose }: MatchDetailsModalP
                                     </div>
                                 </div>
                             </div>
-                            <AdBanner className="mt-4 mx-6 mb-6" />
                         </TabsContent>
 
                         <TabsContent value="comparison" className="p-6 space-y-6 focus-visible:ring-0">
@@ -284,7 +282,6 @@ export function MatchDetailsModal({ match, isOpen, onClose }: MatchDetailsModalP
                                     </div>
                                 </div>
                             </div>
-                            <AdBanner className="mt-4" />
                         </TabsContent>
                     </ScrollArea>
                 </Tabs>

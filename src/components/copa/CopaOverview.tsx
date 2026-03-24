@@ -13,12 +13,10 @@ import { cn } from "@/lib/utils";
 import { staggerContainer, staggerItem, heroEnter, titleReveal } from "./animations";
 import { Trophy, ChevronRight, Calculator, CalendarDays, TrendingUp } from "lucide-react";
 import { TournamentStageTracker } from "./TournamentStageTracker";
-import { AdBanner } from "@/components/AdBanner";
 import { PremiumModal } from "./PremiumModal";
 import { Crown } from "lucide-react";
 import { useMonetization } from "@/contexts/MonetizationContext";
 import { useTranslation } from "react-i18next";
-import { InterstitialAd } from "@/components/InterstitialAd";
 import { useMatches } from "@/hooks/useMatches";
 import { useNavigate } from "react-router-dom";
 import { EmptyState } from "@/components/EmptyState";
@@ -110,18 +108,10 @@ export function CopaOverview() {
     const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
     const [showPremiumModal, setShowPremiumModal] = useState(false);
 
-    const { isPremium, shouldShowInterstitial, incrementActionCount } = useMonetization();
-    const [showInterstitial, setShowInterstitial] = useState(false);
-    const [pendingAction, setPendingAction] = useState<(() => void) | null>(null);
+    const { isPremium } = useMonetization();
 
     const handleInteraction = (action: () => void) => {
-        incrementActionCount();
-        if (shouldShowInterstitial()) {
-            setPendingAction(() => action);
-            setShowInterstitial(true);
-        } else {
-            action();
-        }
+        action();
     };
 
     const openTab = (tab: "grupos" | "simulacao" | "calendario" | "sedes") => {
@@ -182,8 +172,6 @@ export function CopaOverview() {
                 )}
             </section>
 
-            {/* Ad Banner 1 */}
-            <AdBanner className="mx-1" />
 
             {/* 3. Quick Access to Sub-tabs */}
             <section className="grid grid-cols-2 md:grid-cols-4 gap-3 px-1">
@@ -252,27 +240,25 @@ export function CopaOverview() {
                     <p className="text-[10px] text-muted-foreground mt-3 font-medium text-center">{t('overview.quick_access.calendar_desc')}</p>
                 </motion.div>
 
-                {/* Map Quick Access */}
+                {/* Guia Quick Access */}
                 <motion.div
                     variants={staggerItem}
-                    onClick={() => openTab("sedes")}
+                    onClick={() => navigate("/guia")}
                     className="glass-card p-4 relative overflow-hidden group cursor-pointer border-l-4 border-l-secondary-foreground/20 hover:border-l-green-400 transition-colors"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                 >
                     <div className="flex items-center justify-between mb-2">
-                        <h3 className="text-sm font-black leading-none">{t('overview.quick_access.map_title')}</h3>
+                        <h3 className="text-sm font-black leading-none">Guia</h3>
                         <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-green-400 transition-colors" />
                     </div>
                     <div className="space-y-2 mt-3 flex items-center justify-center py-1">
-                        <span className="text-2xl">🗺️</span>
+                        <span className="text-2xl">🏙️</span>
                     </div>
-                    <p className="text-[10px] text-muted-foreground mt-3 font-medium text-center">{t('overview.quick_access.map_desc')}</p>
+                    <p className="text-[10px] text-muted-foreground mt-3 font-medium text-center">Sedes, mapa e história</p>
                 </motion.div>
             </section>
 
-            {/* Ad Banner 2 */}
-            <AdBanner variant="large" className="mx-1" />
 
             {/* 4. Other Matches */}
             <section className="space-y-3 px-1">
@@ -300,7 +286,7 @@ export function CopaOverview() {
                     <div className="glass-card rounded-[28px] p-5">
                         <EmptyState
                             icon="📅"
-                            title="Nenhuma partida próxima agora"
+                            title={t('overview.no_upcoming')}
                             description="Assim que a agenda oficial carregar os próximos jogos, eles aparecem aqui."
                         />
                     </div>
@@ -392,16 +378,6 @@ export function CopaOverview() {
                 onSuccess={() => undefined}
             />
 
-            <InterstitialAd
-                isOpen={showInterstitial}
-                onClose={() => {
-                    setShowInterstitial(false);
-                    if (pendingAction) {
-                        pendingAction();
-                        setPendingAction(null);
-                    }
-                }}
-            />
 
             <MatchDetailsModal
                 match={selectedMatch}

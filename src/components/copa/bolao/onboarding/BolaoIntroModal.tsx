@@ -55,7 +55,6 @@ export function BolaoIntroModal({
     onClose,
     onGoToPredictions,
 }: BolaoIntroModalProps) {
-    const { t } = useTranslation("bolao");
     return (
         <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && onClose()}>
             <DialogContent className="surface-dialog overflow-hidden sm:max-w-2xl">

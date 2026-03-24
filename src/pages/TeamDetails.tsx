@@ -222,6 +222,123 @@ const TeamDetails = () => {
                     </motion.div>
                 )}
 
+                {/* WC History */}
+                {team.stats && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        className="glass-card p-5"
+                    >
+                        <h3 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider mb-4 text-muted-foreground border-b border-white/5 pb-2">
+                            <Trophy className="w-4 h-4 text-yellow-500" />
+                            Histórico na Copa do Mundo
+                        </h3>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="flex flex-col gap-1 bg-secondary/30 rounded-xl p-3">
+                                <span className="text-[10px] uppercase text-muted-foreground font-bold">Títulos</span>
+                                <span className="text-2xl font-black text-yellow-500">{team.stats.titles > 0 ? team.stats.titles : '—'}</span>
+                            </div>
+                            <div className="flex flex-col gap-1 bg-secondary/30 rounded-xl p-3">
+                                <span className="text-[10px] uppercase text-muted-foreground font-bold">Participações</span>
+                                <span className="text-2xl font-black">{team.stats.appearances || '—'}</span>
+                            </div>
+                            <div className="flex flex-col gap-1 bg-secondary/30 rounded-xl p-3">
+                                <span className="text-[10px] uppercase text-muted-foreground font-bold">Primeira Copa</span>
+                                <span className="text-xl font-black">{team.stats.firstAppearance || '—'}</span>
+                            </div>
+                            <div className="flex flex-col gap-1 bg-secondary/30 rounded-xl p-3">
+                                <span className="text-[10px] uppercase text-muted-foreground font-bold">Melhor resultado</span>
+                                <span className="text-sm font-bold leading-tight">{team.stats.bestResult || '—'}</span>
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+
+                {/* Classic Rivals */}
+                {(() => {
+                    const RIVALS: Record<string, { code: string; name: string; context: string }[]> = {
+                        BRA: [
+                            { code: "ARG", name: "Argentina", context: "El Clásico das Américas — maior rivalidade do futebol sul-americano" },
+                            { code: "URU", name: "Urugüai", context: "A dor do Maracanazo (1950) ainda ressoa na memória brasileira" },
+                            { code: "GER", name: "Alemanha", context: "O 7×1 na semifinal da Copa 2014 é o jogo mais marcante desta rivalidade" },
+                        ],
+                        ARG: [
+                            { code: "BRA", name: "Brasil", context: "El Clásico das Américas — décadas de rivalidade intensa" },
+                            { code: "ENG", name: "Inglaterra", context: "A 'Mão de Deus' (1986) e a guerra das Malvinas tornam este duelo único" },
+                            { code: "URU", name: "Urugüai", context: "Clásico del Río de la Plata — o derby mais antigo das Américas" },
+                        ],
+                        GER: [
+                            { code: "NED", name: "Holanda", context: "A final de 1974 inaugurou uma das maiores rivalidades europeias" },
+                            { code: "ENG", name: "Inglaterra", context: "1966, 1990, 1996 — mais de meio século de encontros decisivos" },
+                            { code: "BRA", name: "Brasil", context: "O 7×1 em 2014 é o jogo mais mítico desta rivalidade" },
+                        ],
+                        FRA: [
+                            { code: "GER", name: "Alemanha", context: "Semifinal 1982 — um dos jogos mais polêmicos da história das Copas" },
+                            { code: "ARG", name: "Argentina", context: "A final de 2022 é considerada a melhor final de todos os tempos" },
+                            { code: "POR", name: "Portugal", context: "Semifinal 2006 e de Euro — rivalidade ibero-latina crescente" },
+                        ],
+                        ENG: [
+                            { code: "ARG", name: "Argentina", context: "Mão de Deus, 1986 — um dos momentos mais controversos do esporte mundial" },
+                            { code: "GER", name: "Alemanha", context: "1966, 1990, 1996 — duelo entre gigantes europeus" },
+                            { code: "URU", name: "Urugüai", context: "A derrota em 1954 marcou o início de um clássico transatlântico" },
+                        ],
+                        ESP: [
+                            { code: "POR", name: "Portugal", context: "El Deríbi Ibérico — vizinhos com histórias opostas nas Copas" },
+                            { code: "NED", name: "Holanda", context: "A final de 2010 — polêmica, física e definitiva para a Espanha" },
+                            { code: "GER", name: "Alemanha", context: "Duelo recorrente em grandes torneios europeus" },
+                        ],
+                        ITA: [
+                            { code: "BRA", name: "Brasil", context: "Finais de 1970 e 1994 — dois países com 5 títulos cada" },
+                            { code: "FRA", name: "França", context: "A tragedi da cabeçada de Zidane na final de 2006 é inesquecível" },
+                            { code: "URU", name: "Urugüai", context: "Final do primeiro mundial em 1930 — a partida mais antiga da rivalidade" },
+                        ],
+                        URU: [
+                            { code: "BRA", name: "Brasil", context: "O Maracanazo (1950) é a vitória mais lembrada do futebol uruguaio" },
+                            { code: "ARG", name: "Argentina", context: "Clásico del Río de la Plata — o derby mais antigo do mundo" },
+                            { code: "ITA", name: "Itália", context: "Final do primeiro mundial em 1930 — uruguaios sagraram-se campeões" },
+                        ],
+                        NED: [
+                            { code: "GER", name: "Alemanha", context: "A final de 1974 e as guerras europeias tornam esta rivalidade especial" },
+                            { code: "ESP", name: "Espanha", context: "A revancha da final de 2010 nunca aconteceu, mas a rivalidade persiste" },
+                            { code: "ARG", name: "Argentina", context: "Semifinais de 1974 e 2022 — confrontos memoraveis entre as duas" },
+                        ],
+                        POR: [
+                            { code: "ESP", name: "Espanha", context: "El Deríbi Ibérico — unidos pela língua, separados pela rivalidade" },
+                            { code: "FRA", name: "França", context: "Semifinal de 2022 e várias edições de Euro — Mbappé vs Ronaldo" },
+                            { code: "ENG", name: "Inglaterra", context: "Quartas da Copa 2006 foram polêmicas e eliminaram Ronaldo do torneio" },
+                        ],
+                    };
+                    const rivals = RIVALS[code || ""] || [];
+                    if (rivals.length === 0) return null;
+                    return (
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            className="glass-card p-5"
+                        >
+                            <h3 className="flex items-center gap-2 text-sm font-bold uppercase tracking-wider mb-4 text-muted-foreground border-b border-white/5 pb-2">
+                                <Coins className="w-4 h-4 text-copa-live" />
+                                Grandes Rivalidades
+                            </h3>
+                            <div className="space-y-3">
+                                {rivals.map((rival) => (
+                                    <div key={rival.code} className="flex items-start gap-3 bg-secondary/20 rounded-xl p-3">
+                                        <div className="shrink-0 mt-0.5">
+                                            <Flag code={rival.code} size="sm" />
+                                        </div>
+                                        <div className="min-w-0">
+                                            <p className="text-sm font-bold text-foreground">{rival.name}</p>
+                                            <p className="text-xs text-muted-foreground leading-relaxed">{rival.context}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </motion.div>
+                    );
+                })()}
+
                 {/* Qualifiers */}
                 {team.qualifiers && (
                     <motion.div

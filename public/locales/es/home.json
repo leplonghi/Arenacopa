@@ -1,66 +1,93 @@
 {
-    "welcome": "Bienvenido,",
-    "pending": {
-        "title_one": "Tienes {{count}} pronóstico pendiente",
-        "title_other": "Tienes {{count}} pronósticos pendientes",
-        "subtitle": "Toca para apostar antes de los partidos"
-    },
-    "stats": {
-        "rank": "Rango",
-        "points": "Puntos",
-        "pools": "Quinielas"
-    },
-    "my_team": {
-        "title": "Mi Equipo",
-        "view_group": "Ver grupo",
-        "group": "Grupo {{group}}",
-        "next_match": "Próximo",
-        "no_matches": "Sin partidos"
-    },
-    "my_pools": {
-        "title": "Mis Quinielas",
-        "manage": "Gestionar",
-        "join_title": "Únete a una Quiniela",
-        "join_desc": "Crea tu liga o únete a una existente.",
-        "start_now": "Empezar ahora",
-        "rank_place": "{{rank}}º Lugar",
-        "pts": "pts"
-    },
-    "highlights": {
-        "title": "Destacados",
-        "view_all": "Ver todo",
-        "general": "General"
-    },
-    "dashboard_partial": {
-        "title": "Panel parcial",
-        "desc": "No pude actualizar tu panel ahora. Algunos bloques pueden aparecer vacíos.",
-        "retry": "Intentar de nuevo"
-    },
-    "hero": {
-        "kicker": "Panel central",
-        "get_elite": "Obtener Elite",
-        "elite_member": "Miembro Elite"
-    },
-    "quick_panel": {
-        "section_title": "Tu ritmo",
-        "view_ranking": "Ver ranking",
-        "kicker": "Vista rápida del torneo",
-        "title": "Tu panel competitivo",
-        "description": "Mira tu posición general, sigue la evolución de tus quinielas y entra al ranking completo cuando quieras.",
-        "best_rank": "Mejor puesto",
-        "points": "Puntos",
-        "pools": "Quinielas"
-    },
-    "upcoming": {
-        "title": "Próximos partidos",
-        "view_calendar": "Ver calendario",
-        "empty": "Todavía no hay partidos futuros cargados para mostrar aquí.",
-        "favorite_team": "Tu equipo: {{team}}",
-        "next_round": "Próxima jornada"
-    },
-    "news": {
-        "title": "Últimas noticias",
-        "view_all": "Centro de noticias"
-    },
-    "cta_predict": "Hacer Pronósticos"
+  "welcome": "Bienvenido,",
+  "pending": {
+    "title_one": "Tienes {{count}} pronóstico pendiente",
+    "title_other": "Tienes {{count}} pronósticos pendientes",
+    "subtitle": "Toca para apostar antes de los partidos"
+  },
+  "stats": {
+    "rank": "Rango",
+    "points": "Puntos",
+    "pools": "Quinielas"
+  },
+  "my_team": {
+    "title": "Mi Equipo",
+    "view_group": "Ver grupo",
+    "group": "Grupo {{group}}",
+    "next_match": "Próximo",
+    "no_matches": "Sin partidos"
+  },
+  "my_pools": {
+    "title": "Mis Quinielas",
+    "manage": "Gestionar",
+    "join_title": "Únete a una Quiniela",
+    "join_desc": "Crea tu liga o únete a una existente.",
+    "start_now": "Empezar ahora",
+    "rank_place": "{{rank}}º Lugar",
+    "pts": "pts",
+    "members": "{{count}} miembros"
+  },
+  "highlights": {
+    "title": "Destacados",
+    "view_all": "Ver todo",
+    "general": "General"
+  },
+  "dashboard_partial": {
+    "title": "Panel parcial",
+    "desc": "No pude actualizar tu panel ahora. Algunos bloques pueden aparecer vacíos.",
+    "retry": "Intentar de nuevo"
+  },
+  "hero": {
+    "kicker": "Panel central",
+    "get_elite": "Obtener Elite",
+    "elite_member": "Miembro Elite",
+    "default_name": "Aficionado"
+  },
+  "quick_panel": {
+    "section_title": "Tu ritmo",
+    "view_ranking": "Ver ranking",
+    "kicker": "Vista rápida del torneo",
+    "title": "Tu panel competitivo",
+    "description": "Mira tu posición general, sigue la evolución de tus quinielas y entra al ranking completo cuando quieras.",
+    "best_rank": "Mejor puesto",
+    "points": "Puntos",
+    "pools": "Quinielas"
+  },
+  "upcoming": {
+    "title": "Próximos partidos",
+    "view_calendar": "Ver calendario",
+    "empty": "Todavía no hay partidos futuros cargados para mostrar aquí.",
+    "favorite_team": "Tu equipo: {{team}}",
+    "next_round": "Próxima jornada",
+    "match_aria": "Detalles del partido: {{home}} vs {{away}}"
+  },
+  "news": {
+    "title": "Últimas noticias",
+    "view_all": "Centro de noticias",
+    "tab_copa": "Copa 2026",
+    "tab_team": "Mi Equipo",
+    "team_empty": "Sin noticias recientes sobre {{team}}",
+    "team_no_fav": "Configura tu equipo en el perfil para ver noticias personalizadas",
+    "live_badge": "En vivo"
+  },
+  "cta_predict": "Hacer Pronósticos",
+  "live_card": {
+    "loading": "Cargando...",
+    "live_label": "En vivo",
+    "follow_btn": "Seguir en el Bolao",
+    "next_game": "Próximo Partido"
+  },
+  "action_of_day": {
+    "pending_title": "Pronósticos pendientes",
+    "pending_desc": "{count} partido{s} esperando tu pronóstico",
+    "pending_cta": "Pronosticar ahora",
+    "no_bolao_title": "Crea tu primera quiniela",
+    "no_bolao_desc": "Compite con amigos en Copa 2026",
+    "no_bolao_cta": "Crear quiniela",
+    "today_match_title": "¡Partido hoy!",
+    "today_match_desc": "¿Ya hiciste tu pronóstico para hoy?",
+    "today_match_cta": "Ver partidos",
+    "ready_title": "¡Todo listo!",
+    "ready_desc": "Tus pronósticos están hechos. ¡Buena suerte!"
+  }
 }

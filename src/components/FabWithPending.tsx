@@ -1,6 +1,90 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { Clock, Dices } from "lucide-react";
+import { Clock } from "lucide-react";
+
+/** Classic Telstar black-and-white soccer ball */
+function RealisticBall({ active = false }: { active?: boolean }) {
+  return (
+    <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full drop-shadow-[0_2px_8px_rgba(0,0,0,0.55)]">
+      <defs>
+        {/* Sphere: white with subtle top-left sheen */}
+        <radialGradient id="bMain" cx="36%" cy="28%" r="70%">
+          <stop offset="0%"   stopColor="#FFFFFF" />
+          <stop offset="55%"  stopColor="#F5F5F5" />
+          <stop offset="100%" stopColor="#C8C8C8" />
+        </radialGradient>
+        {/* Bottom-right shadow on sphere */}
+        <radialGradient id="bShadow" cx="70%" cy="75%" r="50%">
+          <stop offset="0%"   stopColor="rgba(0,0,0,0.30)" />
+          <stop offset="100%" stopColor="rgba(0,0,0,0)" />
+        </radialGradient>
+        {/* Pentagon patch gradient — rich black with slight shimmer */}
+        <radialGradient id="bPatch" cx="35%" cy="25%" r="75%">
+          <stop offset="0%"   stopColor="#2A2A2A" />
+          <stop offset="100%" stopColor="#000000" />
+        </radialGradient>
+        <clipPath id="bClip">
+          <circle cx="32" cy="32" r="28" />
+        </clipPath>
+      </defs>
+
+      {/* === SPHERE === */}
+      <g clipPath="url(#bClip)">
+        {/* Base white */}
+        <circle cx="32" cy="32" r="28" fill="url(#bMain)" />
+        {/* Bottom shadow */}
+        <circle cx="32" cy="32" r="28" fill="url(#bShadow)" />
+
+        {/* ── Telstar pentagons ── */}
+        {/* Centre */}
+        <path d="M32 18 L39.5 23.5 L36.8 32.5 L27.2 32.5 L24.5 23.5 Z" fill="url(#bPatch)" />
+        {/* Top-left */}
+        <path d="M14 17 L18.5 14.5 L23 21 L19.5 26.5 L13 24 Z" fill="url(#bPatch)" />
+        {/* Top-right */}
+        <path d="M41 14.5 L48 17 L49 24 L43 26.5 L39 21 Z" fill="url(#bPatch)" />
+        {/* Left */}
+        <path d="M5 28 L10 24.5 L15 31.5 L11.5 38.5 L5 37 Z" fill="url(#bPatch)" />
+        {/* Right */}
+        <path d="M49 24.5 L57 28 L57 37 L51.5 38.5 L48 31.5 Z" fill="url(#bPatch)" />
+        {/* Bottom */}
+        <path d="M22 39 L32 36.5 L42 39 L40 47.5 L24 47.5 Z" fill="url(#bPatch)" />
+
+        {/* Seam lines between patches */}
+        <g stroke="rgba(0,0,0,0.12)" strokeWidth="0.7" fill="none" strokeLinecap="round">
+          <path d="M24.5 23.5 L19.5 26.5" />
+          <path d="M39.5 23.5 L43 26.5" />
+          <path d="M32 18 L41 14.5" />
+          <path d="M32 18 L23 21" />
+          <path d="M36.8 32.5 L42 39" />
+          <path d="M27.2 32.5 L22 39" />
+          <path d="M15 31.5 L22 39" />
+          <path d="M49 24.5 L43 26.5" />
+          <path d="M13 24 L5 28" />
+          <path d="M10 24.5 L15 31.5" />
+          <path d="M24 47.5 L11.5 38.5" />
+          <path d="M40 47.5 L51.5 38.5" />
+        </g>
+      </g>
+
+      {/* Hard edge ring */}
+      <circle cx="32" cy="32" r="28"
+        stroke={active ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.20)"}
+        strokeWidth="0.8" fill="none"
+      />
+
+      {/* Specular highlight — upper left */}
+      <ellipse cx="23" cy="20" rx="7" ry="4"
+        fill="rgba(255,255,255,0.75)"
+        transform="rotate(-30 23 20)"
+      />
+      {/* Soft secondary fill */}
+      <ellipse cx="38" cy="38" rx="5" ry="3"
+        fill="rgba(255,255,255,0.12)"
+        transform="rotate(15 38 38)"
+      />
+    </svg>
+  );
+}
 import { useAuth } from "@/contexts/AuthContext";
 import { db } from "@/integrations/firebase/client";
 import { cn } from "@/lib/utils";
@@ -184,24 +268,49 @@ export function FabWithPending({
   };
 
   const fabButton = (
-    <div
-      className={cn(
-        "relative flex h-full min-w-0 flex-col items-center justify-center gap-1 rounded-[22px] px-2 py-2 text-center",
-        isActive ? "text-primary" : "text-muted-foreground"
-      )}
-    >
-      <div className="relative flex h-5 w-5 items-center justify-center">
-        <Dices
-          className={cn("h-5 w-5", isActive ? "text-primary" : "text-muted-foreground")}
-          strokeWidth={isActive ? 2.5 : 1.8}
-        />
+    <div className="relative flex h-full flex-col items-center justify-center gap-1 py-2">
+      {/* ── Ball container — protrudes upward ── */}
+      <div
+        className={cn(
+          "absolute -top-[28px] left-1/2 -translate-x-1/2 flex items-center justify-center transition-all duration-300 rounded-full",
+          isActive ? "scale-[1.12] shadow-[0_4px_25px_rgba(34,197,94,0.6)]" : "scale-100 hover:scale-[1.05] active:scale-95 shadow-[0_4px_15px_rgba(34,197,94,0.4)]"
+        )}
+        style={{ width: 68, height: 68 }}
+      >
+        {/* Glowing Gradient Ring */}
+        <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-[#1A4D2E] via-[#22c55e] to-emerald-400 animate-pulse-slow shadow-lg">
+          {/* Inner Ball Container */}
+          <div className="relative w-full h-full rounded-full bg-black/90 flex items-center justify-center overflow-hidden">
+            <img 
+              src="https://firebasestorage.googleapis.com/v0/b/arenacopa-web-2026.firebasestorage.app/o/assets%2Fbola_oficial_bw.png?alt=media&token=a21b815e-3b09-4c80-81e1-7f3164f04ebb" 
+              alt="Bolão" 
+              className={cn(
+                "w-full h-full object-cover transition-all duration-300 scale-[1.05]",
+                isActive ? "brightness-125" : "brightness-100"
+              )} 
+            />
+            {isActive && <div className="absolute inset-0 bg-white/5 rounded-full" />}
+          </div>
+        </div>
+
+        {/* Pending-predictions badge */}
         {totalMissingPredictions > 0 && (
-          <span className="absolute -right-1 -top-1 min-w-6 rounded-full bg-red-500 px-1.5 py-0.5 text-center text-[10px] font-black text-white">
-            {totalMissingPredictions}
+          <span className="absolute right-1 top-2 min-w-[20px] h-[20px] rounded-full bg-red-600 flex items-center justify-center px-1 text-[9px] font-black text-white shadow-lg ring-2 ring-[#0f3a21] z-10">
+            {totalMissingPredictions > 9 ? "9+" : totalMissingPredictions}
           </span>
         )}
       </div>
-      <span className={cn("text-[10px] leading-none", isActive ? "font-bold" : "font-medium")}>{t('page.kicker')}</span>
+
+      {/* Spacer to match icon height from other nav items */}
+      <div className="h-5 w-5 invisible" />
+
+      {/* Navigation Label - Matches Layout.tsx logic exactly */}
+      <span className={cn(
+        "text-[10px] leading-none transition-colors",
+        isActive ? "text-primary font-bold" : "text-muted-foreground font-medium"
+      )}>
+        {t('nav.bolao', { defaultValue: 'Bolões' })}
+      </span>
     </div>
   );
 
@@ -209,6 +318,7 @@ export function FabWithPending({
     return (
       <NavLink
         to="/boloes"
+        aria-label={t('page.kicker')}
         className={cn(
           "inline-flex h-full items-center justify-center",
           isActive ? "opacity-100" : "opacity-95",
@@ -223,7 +333,7 @@ export function FabWithPending({
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetTrigger asChild>
-        <button className={cn("inline-flex h-full items-center justify-center", className)}>{fabButton}</button>
+        <button aria-label={t('page.kicker')} className={cn("inline-flex h-full items-center justify-center", className)}>{fabButton}</button>
       </SheetTrigger>
       <SheetContent side="bottom" className="border-white/10 bg-zinc-950 text-white">
         <SheetHeader>

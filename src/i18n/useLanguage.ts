@@ -43,21 +43,26 @@ export function useLanguage() {
         setIsLoading(true);
         try {
             const normalizedLanguage = normalizeLanguage(lang);
+
+            // 1. Change language in i18n immediately (UI updates right away)
             await i18n.changeLanguage(normalizedLanguage);
             localStorage.setItem("i18nextLng", normalizedLanguage);
 
-            if (user && !isDemoMode) {
-                await updatePreferredLanguage(user.id, normalizedLanguage);
-            }
-
-            // Helper message for demo purpose or feedback
+            // 2. Show success toast right after UI update
             const messages = {
                 'pt-BR': 'Idioma alterado para Português',
                 'en': 'Language changed to English',
                 'es': 'Idioma cambiado a Español'
             };
-
             toast.success(messages[normalizedLanguage]);
+
+            // 3. Persist to Firestore silently in the background (fire-and-forget)
+            // A Firestore failure must NOT affect the user experience
+            if (user && !isDemoMode) {
+                updatePreferredLanguage(user.id, normalizedLanguage).catch(err =>
+                    console.error('Failed to persist language preference to Firestore:', err)
+                );
+            }
         } catch (error) {
             console.error('Error changing language:', error);
             toast.error('Erro ao alterar idioma');

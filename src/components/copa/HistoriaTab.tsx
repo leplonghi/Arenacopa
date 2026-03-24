@@ -67,7 +67,7 @@ export function HistoriaTab() {
                         <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shadow-[0_0_20px_rgba(16,185,129,0.2)]">
                             <Trophy className="w-6 h-6 text-emerald-400" />
                         </div>
-                        <h1 className="text-4xl font-black text-white tracking-tighter uppercase italic">
+                        <h1 className="text-4xl font-black text-white tracking-tighter uppercase">
                             {t('historia.saga')} <span className="text-emerald-400">{t('historia.mundial')}</span>
                         </h1>
                         <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 shadow-[0_0_20px_rgba(16,185,129,0.2)]">
@@ -94,13 +94,13 @@ export function HistoriaTab() {
             </section>
 
             {/* Section Tabs */}
-            <div className="flex gap-2 p-1.5 bg-black/40 backdrop-blur-xl rounded-2xl border border-white/5 overflow-x-auto scrollbar-none">
+            <div className="grid grid-cols-3 gap-1.5 p-1.5 bg-black/40 backdrop-blur-xl rounded-2xl border border-white/5">
                 {sectionTabs.map(tab => (
                     <button
                         key={tab.id}
                         onClick={() => setSection(tab.id)}
                         className={cn(
-                            "px-5 py-3 rounded-xl text-[11px] font-bold uppercase tracking-[0.12em] transition-all shrink-0 flex items-center gap-2.5 relative group",
+                            "px-2 py-2.5 rounded-xl text-[10px] font-bold uppercase tracking-[0.08em] transition-all flex items-center justify-center gap-1.5 relative group",
                             section === tab.id
                                 ? "text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.1)]"
                                 : "text-white/30 hover:text-white/60 border border-transparent"
@@ -166,7 +166,7 @@ function EdicoesSection() {
                         className="w-full p-4 flex items-center gap-4 text-left relative z-10"
                     >
                         <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-white/10 to-white/5 flex items-center justify-center shrink-0 border border-white/5 shadow-inner">
-                            <span className="text-lg font-black text-white italic tracking-tighter">{edition.year}</span>
+                            <span className="text-lg font-black text-white tracking-tighter">{edition.year}</span>
                         </div>
                         <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2 mb-1">
@@ -570,7 +570,7 @@ function SectionHeader({ icon, title, subtitle }: { icon: React.ReactNode; title
         <div className="mb-2">
             <div className="flex items-center gap-2 mb-0.5">
                 {icon}
-                <h2 className="text-lg font-display font-bold text-white tracking-[0.12em] uppercase italic">{title}</h2>
+                <h2 className="text-lg font-display font-bold text-white tracking-[0.12em] uppercase">{title}</h2>
             </div>
             <p className="text-[12px] text-muted-foreground pl-7">{subtitle}</p>
         </div>

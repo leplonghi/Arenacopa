@@ -13,9 +13,10 @@ import {
 } from "firebase/firestore";
 import { useAuth } from "@/contexts/AuthContext";
 import { Flag } from "@/components/Flag";
+import { useTranslation } from "react-i18next";
 import { useToast } from "@/hooks/use-toast";
 import confetti from "canvas-confetti";
-import { CircleHelp, Lock, Share2, Download, Copy, MessageCircle } from "lucide-react";
+import { CircleHelp, Lock, Share2, Download, Copy, MessageCircle, CheckCircle2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -122,6 +123,7 @@ export function JogosTab({
     markets?: BolaoMarket[];
     predictions?: BolaoPrediction[];
 }) {
+    const { t } = useTranslation('bolao');
     const { user } = useAuth();
     const { toast } = useToast();
     const [matches, setMatches] = useState<JogosTabMatch[]>([]);
@@ -129,6 +131,7 @@ export function JogosTab({
     const [draftPalpites, setDraftPalpites] = useState<Record<string, Partial<EditablePalpite>>>({});
     const [draftFirstScorers, setDraftFirstScorers] = useState<Record<string, string>>({});
     const [savingMatchId, setSavingMatchId] = useState<string | null>(null);
+    const [savedFlashMatchIds, setSavedFlashMatchIds] = useState<Set<string>>(new Set());
 
     // Share States
     const [shareModalOpen, setShareModalOpen] = useState(false);
@@ -222,7 +225,7 @@ export function JogosTab({
                 if (change.type === "modified") {
                     const np = change.doc.data() as PalpiteRealtimeRow;
                     if (np.is_exact) {
-                        toast({ title: "Na mosca!", description: "Você cravou o placar exato!", className: "bg-primary text-black font-black" });
+                        toast({ title: t('palpites.exact_score'), description: t('palpites.exact_score_desc'), className: "bg-primary text-black font-black" });
                         confetti({ particleCount: 150, spread: 90, origin: { y: 0.6 } });
                     }
                 }
@@ -332,6 +335,9 @@ export function JogosTab({
 
             await Promise.all(tasks);
 
+            setSavedFlashMatchIds(prev => new Set([...prev, matchId]));
+            window.setTimeout(() => setSavedFlashMatchIds(prev => { const next = new Set(prev); next.delete(matchId); return next; }), 1500);
+
             setDraftPalpites((currentDrafts) => {
                 const nextDrafts = { ...currentDrafts };
                 delete nextDrafts[matchId];
@@ -344,14 +350,14 @@ export function JogosTab({
             });
 
             toast({
-                title: "Palpite salvo.",
+                title: t('palpites.saved'),
                 description: hasScoreInput
                     ? `${homeTeam} ${hs} x ${as} ${awayTeam}`
                     : `Mercado de ${homeTeam} x ${awayTeam} atualizado.`,
             });
         } catch (error) {
             console.error(error);
-            toast({ title: "Erro ao salvar palpite", variant: "destructive" });
+            toast({ title: t('palpites.error_save'), variant: 'destructive' });
         } finally {
             setSavingMatchId(null);
         }
@@ -387,8 +393,8 @@ export function JogosTab({
         const palpite = getCurrentPalpite(matchId);
         if (palpite.home === "" || palpite.away === "") {
             toast({
-                title: "Salve seu palpite primeiro.",
-                description: "Depois você pode compartilhar a arte do resultado.",
+                title: t('palpites.save_first'),
+                description: t('palpites.save_first_desc'),
             });
             return;
         }
@@ -405,8 +411,8 @@ export function JogosTab({
     const generateImageBlob = async (): Promise<Blob | null> => {
         if (!shareRef.current) {
             toast({
-                title: "Arte ainda nao esta pronta",
-                description: "Tente novamente em alguns instantes.",
+                title: t('palpites.card_not_ready'),
+                description: t('palpites.card_not_ready_desc'),
                 variant: "destructive",
             });
             return null;
@@ -432,27 +438,27 @@ export function JogosTab({
                 link.download = 'meu-palpite.png';
                 link.click();
                 window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
-                toast({ title: "Imagem salva com sucesso!" });
+                toast({ title: t('palpites.image_saved') });
             } else if (method === 'copy') {
                 if (navigator.clipboard && navigator.clipboard.write && "ClipboardItem" in window) {
                     await navigator.clipboard.write([new ClipboardItem({ [blob.type]: blob })]);
-                    toast({ title: "Copiado para a área de transferência!" });
+                    toast({ title: t('palpites.copied') });
                 } else if (navigator.clipboard?.writeText) {
                     const draftText = `${shareData?.homeTeam} ${shareData?.homeScore} x ${shareData?.awayScore} ${shareData?.awayTeam}`;
-                    await navigator.clipboard.writeText(`Meu palpite no ArenaCopa: ${draftText}`);
-                    toast({ title: "Texto do palpite copiado!" });
+                    await navigator.clipboard.writeText(`${t('palpites.share_text')} ${draftText}`);
+                    toast({ title: t('palpites.text_copied') });
                 } else {
-                    toast({ title: "Não suportado no seu navegador", variant: 'destructive' });
+                    toast({ title: t('palpites.not_supported'), variant: 'destructive' });
                 }
             } else if (method === 'whatsapp') {
                 if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
                     await navigator.share({
                         title: `Meu Palpite`,
-                        text: `Olha meu palpite no ArenaCopa!`,
+                        text: `Olha meu palpite no Arena CUP!`,
                         files: [file]
                     });
                 } else {
-                    toast({ title: "Download da imagem foi iniciado. Compartilhe no seu WhatsApp. " });
+                    toast({ title: t('palpites.download_started') });
                     const link = document.createElement('a');
                     const objectUrl = URL.createObjectURL(blob);
                     link.href = objectUrl;
@@ -463,7 +469,7 @@ export function JogosTab({
             }
         } catch (err) {
             console.error("Erro ao compartilhar palpite:", err);
-            toast({ title: "Erro ao compartilhar", variant: "destructive" });
+            toast({ title: t('palpites.error_share'), variant: 'destructive' });
         } finally {
             setIsGenerating(false);
             setShareModalOpen(false);
@@ -474,8 +480,8 @@ export function JogosTab({
         return (
             <EmptyState
                 icon="⚽"
-                title="Calendário ainda indisponível"
-                description="Assim que os jogos forem carregados, seus palpites aparecem aqui."
+                title={t('palpites.calendar_unavailable')}
+                description={t('palpites.calendar_unavailable_desc')}
             />
         );
     }
@@ -518,6 +524,22 @@ export function JogosTab({
                                 </motion.div>
                             )}
                         </div>}
+
+                        <AnimatePresence>
+                            {savedFlashMatchIds.has(m.id) && (
+                                <motion.div
+                                    key="save-flash"
+                                    initial={{ opacity: 0, scale: 0.8 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    exit={{ opacity: 0, scale: 1.1 }}
+                                    transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                                    className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/70 backdrop-blur-sm pointer-events-none rounded-[32px]"
+                                >
+                                    <CheckCircle2 className="w-14 h-14 text-primary mb-3" />
+                                    <span className="text-[11px] font-black uppercase tracking-widest text-primary">{t('palpites.saved')}</span>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
 
                         <div className="flex justify-between items-center mb-6">
                             <div className="px-3 py-1 rounded-full bg-white/5 text-[9px] font-bold uppercase tracking-widest text-gray-500">

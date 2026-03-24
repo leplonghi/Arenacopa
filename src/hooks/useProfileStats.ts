@@ -29,7 +29,7 @@ export function useProfileStats(userId: string | undefined) {
         // 2. Titles calculation (Boloes where user is #1)
         let titlesCount = 0;
         if (rankings.length > 0) {
-          for (const r of rankings) {
+          const titlesPromises = rankings.map(async (r) => {
             const othersQuery = query(
               rankingsRef, 
               where("bolao_id", "==", r.bolao_id),
@@ -37,11 +37,10 @@ export function useProfileStats(userId: string | undefined) {
               limit(1)
             );
             const othersSnapshot = await getDocs(othersQuery);
-            
-            if (othersSnapshot.empty) {
-              titlesCount++;
-            }
-          }
+            return othersSnapshot.empty ? 1 : 0;
+          });
+          const titleResults = await Promise.all(titlesPromises);
+          titlesCount = titleResults.reduce((acc, val) => acc + val, 0);
         }
 
         // 3. Get total predictions

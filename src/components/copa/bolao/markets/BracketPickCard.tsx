@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { CheckCircle2, GitBranch, Loader2, Trophy } from "lucide-react";
 import { Flag } from "@/components/Flag";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 import type { PredictionValue } from "@/types/bolao";
 
 type BracketPickValue = {
@@ -114,6 +115,7 @@ export function BracketPickCard({
     onSave: (value: PredictionValue) => Promise<void>;
     onResolve?: (value: PredictionValue) => Promise<void>;
 }) {
+    const { t } = useTranslation('bolao');
     const [draft, setDraft] = useState<BracketPickValue>(() => normalizeBracketValue(savedValue, semifinalists));
     const [resolutionDraft, setResolutionDraft] = useState<BracketPickValue>(() => normalizeBracketValue(resolvedValue, semifinalists));
 
@@ -165,7 +167,7 @@ export function BracketPickCard({
                         <GitBranch className="h-4 w-4" />
                     </div>
                     <div>
-                        <p className="text-sm font-black text-white">Bracket visual desbloqueia com os semifinalistas</p>
+                        <p className="text-sm font-black text-white">{t('bracket_pick.unlocks_with')}</p>
                         <p className="mt-1 text-xs leading-relaxed text-zinc-400">
                             Para montar a chave visual, primeiro salve o mercado de semifinalistas na aba de fase. Depois o bracket usa essas quatro seleções como base.
                         </p>
@@ -178,7 +180,7 @@ export function BracketPickCard({
     return (
         <div className="space-y-5">
             <div className="rounded-[24px] border border-white/10 bg-black/10 p-4">
-                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">Sua chave decisiva</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">{t('bracket_pick.your_bracket')}</p>
                 <p className="mt-2 text-sm text-zinc-400">
                     Escolha os vencedores das semifinais e depois crave o campeão na final. O bracket usa seus semifinalistas já salvos.
                 </p>
@@ -206,7 +208,7 @@ export function BracketPickCard({
                     </div>
 
                     <div className="rounded-[22px] border border-primary/15 bg-primary/5 p-4">
-                        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">Final</p>
+                        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">{t('bracket_pick.final')}</p>
                         <div className="mt-3 grid gap-2">
                             {draftFinalists.length === 2 ? (
                                 draftFinalists.map((teamCode) => {
@@ -242,7 +244,7 @@ export function BracketPickCard({
                             className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-4 text-[11px] font-black uppercase tracking-[0.18em] text-black disabled:opacity-60"
                         >
                             {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : draft.champion ? <CheckCircle2 className="h-4 w-4" /> : <Trophy className="h-4 w-4" />}
-                            {saving ? "Salvando..." : "Salvar bracket"}
+                            {saving ? t('bracket_pick.saving') : t('bracket_pick.save')}
                         </button>
                     </div>
                 </div>
@@ -250,19 +252,19 @@ export function BracketPickCard({
 
             {savedValue && (
                 <div className="rounded-[22px] border border-white/10 bg-white/5 p-4">
-                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-zinc-400">Seu bracket salvo</p>
+                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-zinc-400">{t('bracket_pick.saved_bracket')}</p>
                     <p className="mt-2 text-sm text-zinc-300">
-                        Finalistas: <span className="font-black text-white">{draftFinalists.join(" x ") || "Ainda não definidos"}</span>
+                        {t('bracket_pick.finalists')}: <span className="font-black text-white">{draftFinalists.join(" x ") || t('bracket_pick.not_defined_yet')}</span>
                     </p>
                     <p className="mt-1 text-sm text-zinc-300">
-                        Campeão: <span className="font-black text-white">{draft.champion || "Ainda não definido"}</span>
+                        {t('bracket_pick.champion')}: <span className="font-black text-white">{draft.champion || t('bracket_pick.champion_not_defined')}</span>
                     </p>
                 </div>
             )}
 
             {canManage && onResolve && (
                 <div className="rounded-[24px] border border-amber-500/20 bg-amber-500/5 p-4">
-                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-amber-300">Resultado oficial do bracket</p>
+                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-amber-300">{t('bracket_pick.official_result')}</p>
                     <p className="mt-2 text-sm text-zinc-400">
                         Como criador, feche a semifinal e a final oficiais aqui para distribuir os pontos deste mercado especial.
                     </p>
@@ -290,7 +292,7 @@ export function BracketPickCard({
                         </div>
 
                         <div className="rounded-[22px] border border-amber-500/20 bg-black/10 p-4">
-                            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-amber-300">Final oficial</p>
+                            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-amber-300">{t('bracket_pick.official_final')}</p>
                             <div className="mt-3 grid gap-2">
                                 {resolutionFinalists.length === 2 ? (
                                     resolutionFinalists.map((teamCode) => {
@@ -326,7 +328,7 @@ export function BracketPickCard({
                                 className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-amber-400/30 bg-amber-400 px-5 py-4 text-[11px] font-black uppercase tracking-[0.18em] text-black disabled:opacity-60"
                             >
                                 {resolving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trophy className="h-4 w-4" />}
-                                {resolving ? "Resolvendo..." : "Confirmar bracket oficial"}
+                                {resolving ? t('bracket_pick.resolving') : t('bracket_pick.confirm_official')}
                             </button>
                         </div>
                     </div>

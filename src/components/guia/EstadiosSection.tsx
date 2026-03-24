@@ -152,7 +152,7 @@ export function EstadiosSection({ onViewOnMap }: { onViewOnMap?: (cityId: string
                 </div>
 
                 {/* Sort */}
-                <div className="flex gap-2 overflow-x-auto scrollbar-hide w-full sm:w-auto">
+                <div className="flex flex-wrap gap-2 w-full sm:w-auto">
                     {([
                         { id: "capacity" as SortField, label: "Capacidade" },
                         { id: "matches" as SortField, label: "Partidas" },

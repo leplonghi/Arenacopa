@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   collection,
   query,
@@ -12,6 +12,7 @@ import { Haptics, ImpactStyle } from "@capacitor/haptics";
 import { db } from "@/integrations/firebase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 import { buildBolaoMarkets } from "@/services/boloes/bolao-market.service";
 import type { BolaoFormatSlug, MarketTemplateSlug, ScoringRules } from "@/types/bolao";
 
@@ -34,8 +35,16 @@ export interface CreateBolaoResult {
 
 export function useCreateBolao() {
   const { user } = useAuth();
+  const { t } = useTranslation('bolao');
   const { toast } = useToast();
   const [creating, setCreating] = useState(false);
+  // Guard against calling setState on an unmounted component (e.g. user navigates
+  // away mid-creation while batch.commit() is still in flight).
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
 
   const safeHaptic = async (style: ImpactStyle) => {
     try { await Haptics.impact({ style }); } catch { /* no-op on web */ }
@@ -113,13 +122,13 @@ export function useCreateBolao() {
     } catch (error) {
       console.error("Erro ao criar bolão:", error);
       toast({
-        title: "Erro ao criar bolão",
-        description: error instanceof Error ? error.message : "Tente novamente.",
+        title: t('create_bolao.error_title'),
+        description: error instanceof Error ? error.message : t('create_bolao.error_desc'),
         variant: "destructive",
       });
       return null;
     } finally {
-      setCreating(false);
+      if (mountedRef.current) setCreating(false);
     }
   };
 

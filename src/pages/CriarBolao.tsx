@@ -33,17 +33,18 @@ interface PoolTypeCard {
   formatId: BolaoFormatSlug; allMarkets: boolean;
 }
 
-const POOL_TYPES: PoolTypeCard[] = [
-  { id: "placar",      emoji: "⚽", title: "Palpite de Placar",   desc: "Acerte o resultado exato de cada jogo",    formatId: "classic",    allMarkets: false },
-  { id: "vencedor",    emoji: "🏆", title: "Quem Vai Ganhar",     desc: "Vitória, empate ou derrota",               formatId: "detailed",   allMarkets: false },
-  { id: "grupos",      emoji: "📊", title: "Fase de Grupos",      desc: "Classifique cada grupo",                  formatId: "knockout",   allMarkets: false },
-  { id: "chaveamento", emoji: "🔀", title: "Chaveamento",         desc: "Mata-mata completo do torneio",            formatId: "tournament", allMarkets: false },
-  { id: "express",     emoji: "⚡", title: "Jogo Único / Express", desc: "Um jogo só — crie em 10 segundos",        formatId: "strategic",  allMarkets: false },
-  { id: "completo",    emoji: "🎯", title: "Completo",            desc: "Tudo: jogos, fases e campeonato",          formatId: "classic",    allMarkets: true  },
-];
-
 export default function CriarBolao() {
   const { t } = useTranslation("bolao");
+
+  const POOL_TYPES = useMemo<PoolTypeCard[]>(() => [
+    { id: "placar",      emoji: "⚽", title: t('create_bolao.type_placar'),   desc: t('create_bolao.type_placar_desc'),    formatId: "classic",    allMarkets: false },
+    { id: "vencedor",    emoji: "🏆", title: t('create_bolao.type_vencedor'),     desc: t('create_bolao.type_vencedor_desc'),               formatId: "detailed",   allMarkets: false },
+    { id: "grupos",      emoji: "📊", title: t('create_bolao.type_grupos'),      desc: t('create_bolao.type_grupos_desc'),                  formatId: "knockout",   allMarkets: false },
+    { id: "chaveamento", emoji: "🔀", title: t('create_bolao.type_chaveamento'),         desc: t('create_bolao.type_chaveamento_desc'),            formatId: "tournament", allMarkets: false },
+    { id: "express",     emoji: "⚡", title: t('create_bolao.type_express'), desc: "Um jogo só — crie em 10 segundos",        formatId: "strategic",  allMarkets: false },
+    { id: "completo",    emoji: "🎯", title: t('create_bolao.type_completo'),            desc: t('create_bolao.type_completo_desc'),          formatId: "classic",    allMarkets: true  },
+  ], [t]);
+
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
@@ -130,10 +131,10 @@ export default function CriarBolao() {
   // ─── Success ──────────────────────────────────────────────────────────────
   if (step === 5 && createdBolaoId && createdInviteCode) {
     const inviteUrl = `${window.location.origin}/b/${createdInviteCode}`;
-    const msg = `Vem pro meu bolão "${name}" no ArenaCopa! Código: ${createdInviteCode}`;
+    const msg = `Vem pro meu bolão "${name}" no Arena CUP! Código: ${createdInviteCode}`;
     const handleShareNative = async () => {
-      try { await Share.share({ title: "ArenaCopa Bolão", text: msg, url: inviteUrl }); }
-      catch { await navigator.clipboard.writeText(inviteUrl); toast({ title: "Link copiado." }); }
+      try { await Share.share({ title: "Arena CUP Bolão", text: msg, url: inviteUrl }); }
+      catch { await navigator.clipboard.writeText(inviteUrl); toast({ title: t('bolao_detail.link_copied') }); }
     };
     return (
       <div className="mx-auto max-w-xl px-4 py-10 text-white">
@@ -149,7 +150,7 @@ export default function CriarBolao() {
               <Share2 className="h-4 w-4" /> Mais opções
             </button>
           </div>
-          <button onClick={() => { navigator.clipboard.writeText(inviteUrl); toast({ title: "Link copiado!" }); }}
+          <button onClick={() => { navigator.clipboard.writeText(inviteUrl); toast({ title: t('bolao_detail.link_copied') }); }}
             className="surface-card-soft mt-3 w-full truncate rounded-2xl px-4 py-4 text-xs font-bold text-zinc-300">{inviteUrl}</button>
           <button onClick={() => navigate(`/boloes/${createdBolaoId}`)}
             className="mt-6 w-full rounded-[24px] bg-primary px-6 py-5 text-[11px] font-black uppercase tracking-[0.2em] text-black">Ver meu bolão →</button>

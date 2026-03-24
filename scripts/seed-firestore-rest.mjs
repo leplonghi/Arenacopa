@@ -1,5 +1,5 @@
 /**
- * Firestore Seed Script — ArenaCopa 2026
+ * Firestore Seed Script — ArenaCUP 2026
  * Uses Firebase REST API with the CLI token (no service account needed)
  * Usage: node scripts/seed-firestore-rest.mjs
  */
@@ -7,7 +7,7 @@
 import { execSync } from "child_process";
 import https from "https";
 
-const PROJECT_ID = "arenacopa-web-2026";
+const PROJECT_ID = "arenacup-web-2026";
 const BASE_URL = `firestore.googleapis.com`;
 const DB_PATH = `projects/${PROJECT_ID}/databases/(default)/documents`;
 
@@ -169,7 +169,7 @@ const matchesData = [
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 async function main() {
-  console.log("🌱 ArenaCopa Firestore Seed\n");
+  console.log("🌱 ArenaCUP Firestore Seed\n");
   console.log("⚙️  Getting Firebase auth token...");
 
   let token;
@@ -185,7 +185,7 @@ async function main() {
     console.log("✅ Token obtained via gcloud\n");
   } catch {
     console.error(
-      "❌ Could not get auth token.\n\nTo fix, run:\n  gcloud auth application-default login\n  gcloud config set project arenacopa-web-2026\n"
+      "❌ Could not get auth token.\n\nTo fix, run:\n  gcloud auth application-default login\n  gcloud config set project arenacup-web-2026\n"
     );
     process.exit(1);
   }

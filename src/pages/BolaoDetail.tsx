@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ArrowLeft, Crown, Info, Share2, Trophy, Users } from "lucide-react";
 import confetti from "canvas-confetti";
@@ -18,6 +18,7 @@ import {
 } from "firebase/firestore";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
@@ -43,6 +44,7 @@ export default function BolaoDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const { t } = useTranslation('bolao');
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -70,6 +72,15 @@ export default function BolaoDetail() {
   const [myChampion, setMyChampion] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState(validTabs.has(initialTab) ? initialTab : "ranking");
 
+  // Guard setState calls that happen after async operations finish.
+  // If the user navigates away while loadBolao() is still in-flight, we must
+  // not call setState on the unmounted component.
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
+
   const isCreator = bolao?.creator_id === user?.id;
   const myMember = members.find(m => m.user_id === user?.id);
   const isPaid = myMember?.payment_status === 'paid' || myMember?.payment_status === 'exempt' || isCreator;
@@ -80,32 +91,39 @@ export default function BolaoDetail() {
   const tournamentMarkets = bolaoMarkets.filter((market) => market.scope === "tournament");
   const formatLabel = bolao?.format_id
     ? ({
-        classic: "Clássico",
-        detailed: "Detalhado",
+        classic: t('bolao_detail.format_classic'),
+        detailed: t('bolao_detail.format_detailed'),
         knockout: "Mata-mata",
-        tournament: "Campeonato",
-        strategic: "Estratégico",
+        tournament: t('bolao_detail.format_tournament'),
+        strategic: t('bolao_detail.format_strategic'),
       } as const)[bolao.format_id] ?? bolao.format_id
     : null;
 
   const loadBolao = useCallback(async () => {
     if (!id || !user) return;
-    setLoading(true);
+    if (mountedRef.current) setLoading(true);
 
     try {
-      // Check membership
+      // Check membership, bolao info, member count, and champion prediction in parallel
       const membershipRef = doc(db, "bolao_members", `${user.id}_${id}`);
-      const membershipSnap = await getDoc(membershipRef);
+      const bolaoRef = doc(db, "boloes", id);
+      const champRef = doc(db, "bolao_champion_predictions", `${user.id}_${id}`);
+      const membersQuery = query(collection(db, "bolao_members"), where("bolao_id", "==", id));
+
+      const [membershipSnap, bolaoSnap, champSnap, countSnap] = await Promise.all([
+        getDoc(membershipRef),
+        getDoc(bolaoRef),
+        getDoc(champRef),
+        getCountFromServer(membersQuery),
+      ]);
+
+      if (!mountedRef.current) return; // component unmounted while fetching
 
       if (!membershipSnap.exists()) {
-        toast({ title: "Você não é membro deste bolão." });
+        toast({ title: t('bolao_detail.not_member') });
         navigate("/boloes");
         return;
       }
-
-      // Fetch bolao info
-      const bolaoRef = doc(db, "boloes", id);
-      const bolaoSnap = await getDoc(bolaoRef);
 
       if (!bolaoSnap.exists()) throw new Error("Bolão não encontrado");
 
@@ -131,15 +149,7 @@ export default function BolaoDetail() {
         cutoff_mode: bData.cutoff_mode,
       } as BolaoData);
 
-      // Fetch member count
-      const membersRef = collection(db, "bolao_members");
-      const membersQuery = query(membersRef, where("bolao_id", "==", id));
-      const countSnap = await getCountFromServer(membersQuery);
       setMemberCount(countSnap.data().count);
-
-      // Fetch champion prediction
-      const champRef = doc(db, "bolao_champion_predictions", `${user.id}_${id}`);
-      const champSnap = await getDoc(champRef);
 
       if (champSnap.exists()) {
         const champData = champSnap.data();
@@ -148,13 +158,15 @@ export default function BolaoDetail() {
       }
     } catch (error) {
       console.error(error);
-      toast({
-        title: "Erro ao carregar o bolão.",
-        description: "Tenta novamente em alguns instantes.",
-        variant: "destructive",
-      });
+      if (mountedRef.current) {
+        toast({
+          title: t('bolao_detail.load_error'),
+          description: t('bolao_detail.load_error_desc'),
+          variant: "destructive",
+        });
+      }
     } finally {
-      setLoading(false);
+      if (mountedRef.current) setLoading(false);
     }
   }, [id, navigate, toast, user]);
 
@@ -332,13 +344,13 @@ export default function BolaoDetail() {
       confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
 
       toast({
-        title: "Aposta de campeão registrada.",
+        title: t('bolao_detail.champion_saved'),
         className: "bg-emerald-500 text-white font-black",
       });
     } catch (error) {
       console.error(error);
       toast({
-        title: "Erro ao salvar campeão.",
+        title: t('bolao_detail.champion_error'),
         variant: "destructive",
       });
     }
@@ -348,7 +360,7 @@ export default function BolaoDetail() {
     if (!bolao) return;
 
     const inviteUrl = `${window.location.origin}/b/${bolao.invite_code}`;
-    const shareText = `Vem pro bolao "${bolao.name}" no ArenaCopa. Usa o codigo ${bolao.invite_code} ou entra por aqui: ${inviteUrl}`;
+    const shareText = `Vem pro bolao "${bolao.name}" no Arena CUP. Usa o codigo ${bolao.invite_code} ou entra por aqui: ${inviteUrl}`;
 
     try {
       if (navigator.share) {
@@ -360,8 +372,8 @@ export default function BolaoDetail() {
       } else {
         await navigator.clipboard.writeText(inviteUrl);
         toast({
-          title: "Link copiado.",
-          description: "Agora é só compartilhar com a galera.",
+          title: t('bolao_detail.link_copied'),
+          description: t('bolao_detail.link_copied_desc'),
         });
       }
     } catch (error) {
@@ -371,8 +383,8 @@ export default function BolaoDetail() {
 
       console.error(error);
       toast({
-        title: "Não consegui compartilhar agora.",
-        description: "Tenta novamente em alguns segundos.",
+        title: t('bolao_detail.share_error'),
+        description: t('bolao_detail.share_error_desc'),
         variant: "destructive",
       });
     }
@@ -442,10 +454,10 @@ export default function BolaoDetail() {
 
   const tabs = useMemo(
     () => [
-      { id: "palpitar", label: highlightedMatch ? "Palpitar (pendente)" : "Palpitar" },
-      { id: "ranking",  label: "Ranking" },
-      { id: "galera",   label: "A Galera" },
-      { id: "config",   label: "Config" },
+      { id: "palpitar", label: highlightedMatch ? t('bolao_detail.tab_palpitar_pending') : t('bolao_detail.tab_palpitar') },
+      { id: "ranking",  label: t('bolao_detail.tab_ranking') },
+      { id: "galera",   label: t('bolao_detail.tab_galera') },
+      { id: "config",   label: t('bolao_detail.tab_config') },
     ],
     [highlightedMatch]
   );

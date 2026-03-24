@@ -1,14 +1,83 @@
 import { useState, useMemo, useEffect } from "react";
 import useEmblaCarousel from "embla-carousel-react";
 import { MatchCard } from "@/components/MatchCard";
-import { EmptyState } from "@/components/EmptyState";
-import { formatMatchDate, type Match } from "@/data/mockData";
+import { type Match } from "@/data/mockData";
 import { motion } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { MatchDetailsModal } from "./MatchDetailsModal";
 import { useMatches } from "@/hooks/useMatches";
+import { useTranslation } from "react-i18next";
+
+// Copa 2026 opening match: June 11, 2026 21:00 UTC-3 (00:00 UTC June 12)
+const COPA_START = new Date("2026-06-12T00:00:00Z");
+
+function CopaCounting() {
+  const [timeLeft, setTimeLeft] = useState(() => {
+    const diff = COPA_START.getTime() - Date.now();
+    return Math.max(0, diff);
+  });
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      const diff = COPA_START.getTime() - Date.now();
+      setTimeLeft(Math.max(0, diff));
+    }, 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const days    = Math.floor(timeLeft / 86400000);
+  const hours   = Math.floor((timeLeft % 86400000) / 3600000);
+  const minutes = Math.floor((timeLeft % 3600000) / 60000);
+  const seconds = Math.floor((timeLeft % 60000) / 1000);
+
+  const pad = (n: number) => String(n).padStart(2, "0");
+
+  return (
+    <div className="flex flex-col items-center justify-center py-12 px-4 gap-8">
+      <div className="flex flex-col items-center gap-2">
+        <span className="text-5xl">⚽</span>
+        <h2 className="text-xl font-black uppercase tracking-tight text-white text-center">
+          Copa do Mundo 2026
+        </h2>
+        <p className="text-sm text-muted-foreground text-center max-w-xs">
+          O calendário será publicado em breve. A contagem regressiva para o apito inicial:
+        </p>
+      </div>
+
+      <div className="grid grid-cols-4 gap-3">
+        {[
+          { value: days,    label: "dias"    },
+          { value: hours,   label: "horas"   },
+          { value: minutes, label: "min"     },
+          { value: seconds, label: "seg"     },
+        ].map(({ value, label }) => (
+          <motion.div
+            key={label}
+            className="flex flex-col items-center gap-1 bg-white/[0.04] border border-white/[0.08] rounded-2xl px-4 py-3 min-w-[64px]"
+          >
+            <motion.span
+              key={value}
+              initial={{ opacity: 0, y: -6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.25 }}
+              className="text-2xl font-black text-primary tabular-nums"
+            >
+              {label === "dias" ? String(value) : pad(value)}
+            </motion.span>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{label}</span>
+          </motion.div>
+        ))}
+      </div>
+
+      <p className="text-xs text-muted-foreground/60 text-center">
+        Estreia: 11 de junho de 2026 · Estádio Azteca, Cidade do México
+      </p>
+    </div>
+  );
+}
 
 export function CalendarioTab() {
+  const { t } = useTranslation('copa');
   const { data: matchesData = [], isLoading } = useMatches();
 
   // Group matches by date
@@ -61,7 +130,7 @@ export function CalendarioTab() {
 
   const currentDay = matchDays[dayIndex];
   if (!currentDay) {
-    return <EmptyState icon="📅" title="Sem jogos" description="Nenhum jogo agendado." />;
+    return <CopaCounting />;
   }
 
   const dateObj = new Date(currentDay.date + "T12:00:00");
@@ -74,6 +143,7 @@ export function CalendarioTab() {
         <button
           onClick={() => setDayIndex(Math.max(0, dayIndex - 1))}
           disabled={dayIndex === 0}
+          aria-label={t('calendario.prev_day')}
           className="p-2 rounded-lg bg-secondary disabled:opacity-30 transition-opacity"
         >
           <ChevronLeft className="w-4 h-4" />
@@ -92,6 +162,7 @@ export function CalendarioTab() {
         <button
           onClick={() => setDayIndex(Math.min(matchDays.length - 1, dayIndex + 1))}
           disabled={dayIndex === matchDays.length - 1}
+          aria-label={t('calendario.next_day')}
           className="p-2 rounded-lg bg-secondary disabled:opacity-30 transition-opacity"
         >
           <ChevronRight className="w-4 h-4" />

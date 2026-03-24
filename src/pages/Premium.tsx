@@ -139,7 +139,7 @@ export default function Premium() {
             <ShieldCheck className="w-12 h-12 text-primary mx-auto mb-4" />
             <h2 className="text-xl font-bold mb-2">Você já tem Copa Pass!</h2>
             <p className="text-sm text-muted-foreground mb-6">
-              Obrigado por apoiar o ArenaCopa. Todos os benefícios estão ativos para você.
+              Obrigado por apoiar o Arena CUP. Todos os benefícios estão ativos para você.
             </p>
             <Button onClick={() => navigate("/")} className="w-full bg-primary text-black font-bold h-12">
               Voltar ao Início

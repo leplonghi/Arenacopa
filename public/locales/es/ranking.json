@@ -1,43 +1,61 @@
 {
-    "title": "Ranking General",
-    "subtitle": "Los mejores predictores de la Copa del Mundo 2026. Sube en la clasificación y conquista la gloria eterna.",
-    "hall_of_fame": "HALL OF FAME",
-    "tabs": {
-        "global": "Global",
-        "boloes": "Quinielas",
-        "historico": "Histórico",
-        "stats": "Stats"
-    },
-    "user_section": {
-        "podium_desc": "Elite Global",
-        "my_performance": "Tu Rendimiento",
-        "status_protective": "Estado Protectivo",
-        "climbing": "SUBIENDO",
-        "points": "PUNTOS",
-        "accuracy": "PRECISIÓN",
-        "rank_sync": "Sincronizado hace {{time}}",
-        "top_50": "Clasificación Top 50"
-    },
-    "boloes_section": {
-        "elite": "Elite de Quinielas",
-        "members": "MIEMBROS",
-        "accuracy": "ACC",
-        "total_prize": "PREMIO TOTAL"
-    },
-    "history_section": {
-        "legendary_winners": "CAMPEONES LEGENDARIOS",
-        "panorama": "PANORAMA HISTÓRICO",
-        "titles": "TÍTULOS",
-        "participations": "PARTICIPACIONES",
-        "goals": "GOLES"
-    },
-    "stats_section": {
-        "top_scorers": "GOLEADORES HISTÓRICOS",
-        "records": {
-            "most_titles": "Selección con más títulos",
-            "most_wins": "Mayor número de victorias",
-            "goals_record": "Récord de goles marcados",
-            "biggest_rout": "Mayor goleada histórica"
-        }
+  "title": "Fanáticos destacados",
+  "subtitle": "Los mejores predictores de la Copa del Mundo 2026. Sube en la clasificación y conquista la gloria eterna.",
+  "hall_of_fame": "HALL OF FAME",
+  "tabs": {
+    "global": "Global",
+    "boloes": "Quinielas",
+    "historico": "Histórico",
+    "stats": "Stats"
+  },
+  "user_section": {
+    "podium_desc": "Elite Global",
+    "my_performance": "Tu Rendimiento",
+    "status_protective": "Estado Protectivo",
+    "climbing": "SUBIENDO",
+    "points": "PUNTOS",
+    "accuracy": "PRECISIÓN",
+    "rank_sync": "Sincronizado hace {{time}}",
+    "top_50": "Clasificación Top 50"
+  },
+  "boloes_section": {
+    "elite": "Elite de Quinielas",
+    "members": "MIEMBROS",
+    "accuracy": "ACC",
+    "total_prize": "PREMIO TOTAL"
+  },
+  "history_section": {
+    "legendary_winners": "CAMPEONES LEGENDARIOS",
+    "panorama": "PANORAMA HISTÓRICO",
+    "titles": "TÍTULOS",
+    "participations": "PARTICIPACIONES",
+    "goals": "GOLES"
+  },
+  "stats_section": {
+    "top_scorers": "GOLEADORES HISTÓRICOS",
+    "records": {
+      "most_titles": "Selección con más títulos",
+      "most_wins": "Mayor número de victorias",
+      "goals_record": "Récord de goles marcados",
+      "biggest_rout": "Mayor goleada histórica"
     }
+  },
+  "label": "Ranking",
+  "your_position": "Tu posición actual",
+  "leader": "Líder",
+  "vice_leader": "2.º lugar",
+  "top3": "Top 3",
+  "favorite_team": "Equipo favorito: {{team}}",
+  "no_favorite_team": "Equipo favorito no definido",
+  "no_favorite_team_short": "Sin equipo favorito",
+  "empty_title": "Ranking aún vacío",
+  "empty_desc": "Cuando las quinielas empiecen a puntuar, el ranking global aparecerá aquí.",
+  "overall": "Clasificación general",
+  "page_label": "Ranking",
+  "page_title": "Hinchas en alza",
+  "page_desc": "Datos agregados de las quinielas puntuadas.",
+  "my_position": "Tu posición actual",
+  "overall_title": "Clasificación general",
+  "favorite_team_short": "Equipo favorito: {team}",
+  "filter_global": "Global"
 }

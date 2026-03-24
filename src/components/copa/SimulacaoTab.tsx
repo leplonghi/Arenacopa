@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { staggerContainer, staggerItem } from "./animations";
 import {
   RotateCcw, Trophy, ChevronDown, ChevronUp, Plus, ArrowLeft,
-  Trash2, Share2, MessageCircle, Link2, X, Pencil, Check
+  Trash2, Share2, MessageCircle, Link2, X, Pencil, Check, Sparkles
 } from "lucide-react";
 import { useSimulacao } from "@/contexts/SimulacaoContext";
 import { calcStandings } from "@/utils/simulacaoUtils";
@@ -121,9 +121,9 @@ function CreateSimModal({ open, onClose, onCreate }: {
   onClose: () => void;
   onCreate: (name: string, groups: string[]) => void;
 }) {
+  const { t } = useTranslation('copa');
   const [name, setName] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set(allGroupsList));
-  const { t } = useTranslation('copa');
 
   const toggleGroup = (g: string) => {
     setSelected(prev => {
@@ -213,11 +213,11 @@ function CreateSimModal({ open, onClose, onCreate }: {
 
 /* ───────── Simulation List ───────── */
 function SimulationList() {
+  const { t } = useTranslation('copa');
   const { simulations, loading, selectSimulation, deleteSimulation, createSimulation } = useSimulacao();
   const { user } = useAuth();
   const [createOpen, setCreateOpen] = useState(false);
   const { toast } = useToast();
-  const { t } = useTranslation('copa');
 
   const handleCreate = async (name: string, groups: string[]) => {
     const id = await createSimulation(name, groups);
@@ -252,19 +252,46 @@ function SimulationList() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-lg font-black">{t('simulator.list.title')}</h2>
-          <p className="text-[11px] text-muted-foreground">{t('simulator.list.subtitle')}</p>
+
+      {/* ── Hero banner ── */}
+      <motion.div
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-500/20 via-orange-500/15 to-transparent border border-amber-500/30 p-5"
+      >
+        {/* decorative glow */}
+        <div className="pointer-events-none absolute -top-6 -right-6 h-24 w-24 rounded-full bg-amber-500/20 blur-2xl" />
+        <div className="relative flex items-center gap-4">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 shadow-lg shadow-amber-500/30">
+            <Sparkles className="h-6 w-6 text-black" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-0.5">
+              <h2 className="text-base font-black text-white">Simulador de Copa</h2>
+              <span className="text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-full bg-amber-500 text-black leading-none">
+                NOVO
+              </span>
+            </div>
+            <p className="text-[11px] text-amber-200/70">Simule resultados e veja quem avança na Copa 2026</p>
+          </div>
+          <button
+            onClick={() => setCreateOpen(true)}
+            className="shrink-0 flex items-center gap-1.5 text-xs font-black px-3.5 py-2.5 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 text-black shadow-md shadow-amber-500/25 hover:opacity-90 transition-opacity active:scale-95"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            {t('simulator.list.new')}
+          </button>
         </div>
-        <button
-          onClick={() => setCreateOpen(true)}
-          className="flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-lg bg-primary text-primary-foreground"
-        >
-          <Plus className="w-3.5 h-3.5" />
-          {t('simulator.list.new')}
-        </button>
-      </div>
+      </motion.div>
+
+      {/* ── list header (only when there are simulations) ── */}
+      {simulations.length > 0 && (
+        <div className="flex items-center justify-between px-1">
+          <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+            Suas Simulações
+          </p>
+        </div>
+      )}
 
       {simulations.length === 0 ? (
         <motion.div
@@ -277,7 +304,7 @@ function SimulationList() {
           <p className="text-[11px] text-muted-foreground mb-4">{t('simulator.list.empty_desc')}</p>
           <button
             onClick={() => setCreateOpen(true)}
-            className="text-xs font-bold px-4 py-2 rounded-lg bg-primary text-primary-foreground"
+            className="text-xs font-black px-5 py-2.5 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 text-black shadow-md shadow-amber-500/25 hover:opacity-90 transition-opacity"
           >
             {t('simulator.list.create_first')}
           </button>
@@ -332,6 +359,7 @@ function SimulationList() {
 
 /* ───────── Simulation Editor ───────── */
 function SimulationEditor() {
+  const { t } = useTranslation('copa');
   const {
     currentSim, allMatches, standings, filledCount, totalMatches,
     updateScore, resetAll, goBackToList, renameSimulation,
@@ -343,7 +371,6 @@ function SimulationEditor() {
   const [editName, setEditName] = useState("");
   const [phase, setPhase] = useState<"groups" | "knockout">("groups");
   const navigate = useNavigate();
-  const { t } = useTranslation('copa');
 
   if (!currentSim) return null;
 

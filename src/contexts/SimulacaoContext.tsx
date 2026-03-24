@@ -45,7 +45,7 @@ type SimulationRecord = {
   updatedAt: string;
 };
 
-const getSimulationStorageKey = (userId: string) => `arenacopa_simulations_${userId}`;
+const getSimulationStorageKey = (userId: string) => `arenacup_simulations_${userId}`;
 
 const parseStoredSimulations = (rawValue: string | null): Simulation[] => {
   if (!rawValue) return [];

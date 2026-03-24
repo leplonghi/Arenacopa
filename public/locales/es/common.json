@@ -1,65 +1,66 @@
 {
-    "nav": {
-        "home": "Inicio",
-        "copa": "Copa",
-        "bolao": "Quinielas",
-        "simulator": "Simulador",
-        "guia": "Guía",
-        "ranking": "Ranking",
-        "profile": "Cuenta",
-        "menu": "Cuenta"
-    },
-    "header": {
-        "titles": {
-            "boloes": "Quinielas",
-            "create_bolao": "Crear Quiniela",
-            "bolao_detail": "Quiniela",
-            "profile": "Cuenta",
-            "menu": "Cuenta"
-        }
-    },
-    "common": {
-        "loading": "Cargando...",
-        "error": "Ocurrió un error",
-        "save": "Guardar",
-        "cancel": "Cancelar",
-        "back": "Volver",
-        "next": "Siguiente",
-        "confirm": "Confirmar",
-        "search": "Buscar",
-        "filter": "Filtrar",
-        "close": "Cerrar",
-        "error_title": "¡Ups! Algo salió mal",
-        "error_desc": "No se pudieron cargar los datos. Inténtalo de nuevo.",
-        "retry": "Intentar de nuevo"
-    },
-    "notifications": {
-        "title": "Notificaciones",
-        "mark_all_read": "Marcar todas como leídas",
-        "description": "Consulta las últimas novedades y actualizaciones.",
-        "empty": "Sin notificaciones",
-        "load_error": "No pude cargar tus notificaciones.",
-        "demo_title": "Nueva invitación",
-        "demo_message": "Una quiniela abrió un lugar para que pruebes la experiencia completa.",
-        "new": "Nueva",
-        "new_count_one": "{{count}} nueva",
-        "new_count_other": "{{count}} nuevas"
-    },
-    "pwa": {
-        "title": "Instala la app",
-        "description": "Ten ArenaCopa en tu pantalla de inicio para una experiencia móvil más fluida.",
-        "install": "Instalar ahora"
-    },
-    "onboarding": {
-        "title": "Bienvenido a ArenaCopa",
-        "description": "Elige tu selección favorita para la Copa del Mundo 2026.",
-        "loading": "Confirmando...",
-        "confirm": "Confirmar y Entrar en la Arena"
-    },
-    "status": {
-        "active": "Activo",
-        "finished": "Finalizado",
-        "live": "En Vivo",
-        "scheduled": "Programado"
+  "nav": {
+    "home": "Inicio",
+    "copa": "Copa",
+    "bolao": "Quinielas",
+    "simulator": "Simulador",
+    "guia": "Guía",
+    "ranking": "Ranking",
+    "profile": "Cuenta",
+    "menu": "Cuenta"
+  },
+  "header": {
+    "titles": {
+      "boloes": "Quinielas",
+      "create_bolao": "Crear Quiniela",
+      "bolao_detail": "Quiniela",
+      "profile": "Cuenta",
+      "menu": "Cuenta"
     }
+  },
+  "common": {
+    "loading": "Cargando...",
+    "error": "Ocurrió un error",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "back": "Volver",
+    "next": "Siguiente",
+    "confirm": "Confirmar",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "close": "Cerrar",
+    "error_title": "¡Ups! Algo salió mal",
+    "error_desc": "No se pudieron cargar los datos. Inténtalo de nuevo.",
+    "retry": "Intentar de nuevo"
+  },
+  "notifications": {
+    "title": "Notificaciones",
+    "mark_all_read": "Marcar todas como leídas",
+    "description": "Consulta las últimas novedades y actualizaciones.",
+    "empty": "Sin notificaciones",
+    "load_error": "No pude cargar tus notificaciones.",
+    "demo_title": "Nueva invitación",
+    "demo_message": "Una quiniela abrió un lugar para que pruebes la experiencia completa.",
+    "new": "Nueva",
+    "new_count_one": "{{count}} nueva",
+    "new_count_other": "{{count}} nuevas"
+  },
+  "pwa": {
+    "title": "Instala la app",
+    "description": "Ten ArenaCUP en tu pantalla de inicio para una experiencia móvil más fluida.",
+    "install": "Instalar ahora"
+  },
+  "onboarding": {
+    "title": "Bienvenido a ArenaCUP",
+    "description": "Elige tu selección favorita para la Copa del Mundo 2026.",
+    "loading": "Confirmando...",
+    "confirm": "Confirmar y Entrar en la Arena"
+  },
+  "status": {
+    "active": "Activo",
+    "finished": "Finalizado",
+    "live": "En Vivo",
+    "scheduled": "Programado"
+  },
+  "app_loading": "Cargando ArenaCUP..."
 }

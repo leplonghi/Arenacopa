@@ -3,12 +3,14 @@ import { toPng } from "html-to-image";
 import { Share2, MessageCircle, Download, Loader2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 interface ShareBracketProps {
   bracketRef: React.RefObject<HTMLDivElement>;
 }
 
 export function ShareBracket({ bracketRef }: ShareBracketProps) {
+  const { t } = useTranslation('copa');
   const [isOpen, setIsOpen] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -24,7 +26,7 @@ export function ShareBracket({ bracketRef }: ShareBracketProps) {
       const res = await fetch(dataUrl);
       return await res.blob();
     } catch {
-      toast.error("Erro ao gerar imagem do chaveamento");
+      toast.error(t('share_bracket.gen_error'));
       return null;
     } finally {
       setIsGenerating(false);
@@ -40,7 +42,7 @@ export function ShareBracket({ bracketRef }: ShareBracketProps) {
     a.download = "chaveamento-copa2026.png";
     a.click();
     URL.revokeObjectURL(url);
-    toast.success("Imagem salva!");
+    toast.success(t('share_bracket.saved'));
     setIsOpen(false);
   }, [generateImage]);
 
@@ -58,10 +60,10 @@ export function ShareBracket({ bracketRef }: ShareBracketProps) {
         });
         setIsOpen(false);
       } catch (e: unknown) {
-        if (e instanceof Error && e.name !== "AbortError") toast.error("Erro ao compartilhar");
+        if (e instanceof Error && e.name !== "AbortError") toast.error(t('share_bracket.share_error'));
       }
     } else {
-      toast.error("Compartilhamento não suportado neste navegador");
+      toast.error(t('share_bracket.not_supported'));
     }
   }, [generateImage]);
 
@@ -79,7 +81,7 @@ export function ShareBracket({ bracketRef }: ShareBracketProps) {
 
     const text = encodeURIComponent("Confira minha simulação do chaveamento da Copa 2026! ⚽🏆");
     window.open(`https://wa.me/?text=${text}`, "_blank");
-    toast.success("Imagem baixada! Anexe no WhatsApp");
+    toast.success(t('share_bracket.downloaded'));
     setIsOpen(false);
   }, [generateImage]);
 

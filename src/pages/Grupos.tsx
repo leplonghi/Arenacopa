@@ -12,6 +12,7 @@ import { PREMIUM_CHECKOUT_UNAVAILABLE_MESSAGE } from "@/services/monetization/st
 import { useAuth } from "@/contexts/AuthContext";
 import { usePlanLimits } from "@/hooks/usePlanLimits";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/EmptyState";
 
@@ -24,6 +25,7 @@ interface Grupo {
 const EMOJIS_G = ["👥", "⚽", "🏆", "🔥", "🎯", "🦁", "🎉", "💪"];
 
 export default function Grupos() {
+  const { t } = useTranslation('bolao');
   const { user } = useAuth();
   const { isPremium, purchasePremium, isLoading: isPurchasing } = useMonetization();
   const canStartCheckout = monetizationEnv.enablePremiumSimulation || monetizationEnv.premiumCheckoutEnabled;
@@ -88,11 +90,11 @@ export default function Grupos() {
         grupo_id: grupoRef.id, user_id: user.id, role: "admin",
         joined_at: new Date().toISOString(),
       });
-      toast({ title: "Grupo criado!", className: "bg-emerald-500 text-white font-black" });
+      toast({ title: t('grupos.created'), className: "bg-emerald-500 text-white font-black" });
       setShowCreate(false); setNewName(""); setNewDesc("");
       navigate(`/grupos/${grupoRef.id}`);
     } catch (e) {
-      toast({ title: "Erro ao criar grupo", variant: "destructive" });
+      toast({ title: t('grupos.create_error'), variant: "destructive" });
     } finally { setCreating(false); }
   };
 
@@ -102,19 +104,19 @@ export default function Grupos() {
     try {
       const code = joinCode.trim().toUpperCase();
       const snap = await getDocs(query(collection(db, "grupos"), where("invite_code", "==", code), limit(1)));
-      if (snap.empty) throw new Error("Código inválido");
+      if (snap.empty) throw new Error(t('grupos.invalid_code'));
       const gDoc = snap.docs[0];
       const memberId = `${user.id}_${gDoc.id}`;
       const existing = await getDoc(doc(db, "grupo_members", memberId));
-      if (existing.exists()) { toast({ title: "Você já está neste grupo" }); return; }
+      if (existing.exists()) { toast({ title: t('grupos.already_member') }); return; }
       await setDoc(doc(db, "grupo_members", memberId), {
         grupo_id: gDoc.id, user_id: user.id, role: "member", joined_at: new Date().toISOString(),
       });
-      toast({ title: "Entrou no grupo!", className: "bg-emerald-500 text-white font-black" });
+      toast({ title: t('grupos.joined'), className: "bg-emerald-500 text-white font-black" });
       setShowJoin(false); setJoinCode("");
       navigate(`/grupos/${gDoc.id}`);
     } catch (e) {
-      toast({ title: "Código inválido", description: "Verifique e tente novamente.", variant: "destructive" });
+      toast({ title: t('grupos.invalid_code'), description: t('grupos.invalid_code_desc'), variant: "destructive" });
     } finally { setJoining(false); }
   };
 

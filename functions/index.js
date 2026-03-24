@@ -843,3 +843,320 @@ exports.onBolaoPredictionWrite = functions.firestore
 
         return null;
     });
+
+
+// =============================================
+// NEWS SCRAPING - Scheduled Cloud Function
+// Fetches Copa 2026 news from reliable RSS feeds
+// and stores in Firestore copa_news collection.
+// Runs every 30 minutes.
+// =============================================
+
+const RSSParser = require("rss-parser");
+const crypto = require("crypto");
+
+// Team name/alias -> FIFA code (used as country_filter in Firestore)
+const TEAM_KEYWORDS = {
+    // South America
+    "brazil": "BRA", "brasil": "BRA", "seleção brasileira": "BRA", "verde-amarela": "BRA",
+    "argentina": "ARG", "albiceleste": "ARG", "messi": "ARG",
+    "uruguay": "URU", "uruguai": "URU", "celeste": "URU",
+    "colombia": "COL", "colômbia": "COL",
+    "chile": "CHI",
+    "ecuador": "ECU", "equador": "ECU",
+    "peru": "PER",
+    "bolivia": "BOL", "bolívia": "BOL",
+    "paraguay": "PAR",
+    "venezuela": "VEN",
+    // North/Central America
+    "mexico": "MEX", "méxico": "MEX", "el tri": "MEX",
+    "united states": "USA", "estados unidos": "USA", "usmnt": "USA",
+    "canada": "CAN", "canadá": "CAN",
+    "costa rica": "CRC",
+    "honduras": "HON",
+    "panama": "PAN", "panamá": "PAN",
+    "jamaica": "JAM",
+    "el salvador": "SLV",
+    "haiti": "HAI",
+    // Europe
+    "france": "FRA", "frança": "FRA", "les bleus": "FRA",
+    "germany": "GER", "alemanha": "GER", "deutschland": "GER",
+    "england": "ENG", "inglaterra": "ENG", "three lions": "ENG",
+    "spain": "ESP", "espanha": "ESP", "españa": "ESP", "la roja": "ESP",
+    "portugal": "POR",
+    "netherlands": "NED", "holanda": "NED", "holland": "NED", "oranje": "NED",
+    "italy": "ITA", "itália": "ITA", "azzurri": "ITA",
+    "croatia": "CRO", "croácia": "CRO",
+    "belgium": "BEL", "bélgica": "BEL",
+    "switzerland": "SUI", "suíça": "SUI",
+    "austria": "AUT",
+    "poland": "POL", "polônia": "POL",
+    "ukraine": "UKR", "ucrânia": "UKR",
+    "turkey": "TUR", "turquia": "TUR",
+    "denmark": "DEN", "dinamarca": "DEN",
+    "serbia": "SRB", "sérvia": "SRB",
+    "scotland": "SCO", "escócia": "SCO",
+    "wales": "WAL",
+    "greece": "GRE", "grécia": "GRE",
+    "romania": "ROU",
+    "sweden": "SWE", "suécia": "SWE",
+    "norway": "NOR", "noruega": "NOR",
+    "slovakia": "SVK", "eslováquia": "SVK",
+    "czechia": "CZE", "czech republic": "CZE", "república tcheca": "CZE",
+    // Africa
+    "morocco": "MAR", "marrocos": "MAR",
+    "nigeria": "NGA",
+    "senegal": "SEN",
+    "cameroon": "CMR", "camarões": "CMR",
+    "ghana": "GHA",
+    "ivory coast": "CIV", "côte d'ivoire": "CIV", "costa do marfim": "CIV",
+    "egypt": "EGY", "egito": "EGY",
+    "algeria": "ALG", "argélia": "ALG",
+    "south africa": "RSA", "áfrica do sul": "RSA",
+    "mali": "MLI",
+    "angola": "ANG",
+    "tunisia": "TUN", "tunísia": "TUN",
+    "zambia": "ZAM", "zâmbia": "ZAM",
+    "tanzania": "TAN",
+    "cape verde": "CPV", "cabo verde": "CPV",
+    // Asia/Oceania
+    "japan": "JPN", "japão": "JPN",
+    "south korea": "KOR", "coreia do sul": "KOR",
+    "australia": "AUS",
+    "saudi arabia": "KSA", "arábia saudita": "KSA", "arabia saudita": "KSA",
+    "iran": "IRN",
+    "china": "CHN",
+    "qatar": "QAT",
+    "indonesia": "IDN",
+    "new zealand": "NZL", "nova zelândia": "NZL",
+    "uzbekistan": "UZB",
+    "iraq": "IRQ",
+    "oman": "OMA",
+    "bahrain": "BHR",
+    "jordan": "JOR",
+};
+
+// Keywords to determine if an article is Copa/World Cup relevant
+const COPA_KEYWORDS = [
+    "copa do mundo", "world cup", "copa mundial", "copa 2026",
+    "world cup 2026", "fifa 2026", "mundial 2026", "mundial de futebol",
+    "copa do mundo 2026", "fase de grupos", "group stage", "oitavas",
+    "round of 16", "quarterfinal", "semifinal", "final do mundial",
+    "eliminatórias", "qualifiers", "seleção nacional",
+    "futebol", "football", "soccer", "futebol internacional",
+    "gol", "goal", "partida internacional", "amistoso", "friendly",
+    "convocação", "squad", "escalação", "lineup",
+];
+
+// RSS feeds from reliable, well-known sources
+const RSS_FEEDS = [
+    {
+        url: "https://news.google.com/rss/search?q=Copa+do+Mundo+2026+futebol&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+        name: "Google News BR",
+        alwaysRelevant: true,
+    },
+    {
+        url: "https://news.google.com/rss/search?q=FIFA+World+Cup+2026&hl=en&gl=US&ceid=US:en",
+        name: "Google News EN",
+        alwaysRelevant: true,
+    },
+    {
+        url: "https://news.google.com/rss/search?q=sele%C3%A7%C3%A3o+brasileira+Copa+2026&hl=pt-BR&gl=BR&ceid=BR:pt-419",
+        name: "Google News Seleção",
+        alwaysRelevant: true,
+    },
+    {
+        url: "https://esporte.uol.com.br/ultimas-noticias/index.xml",
+        name: "UOL Esporte",
+        alwaysRelevant: false,
+    },
+    {
+        url: "https://feeds.bbci.co.uk/sport/football/rss.xml",
+        name: "BBC Sport Football",
+        alwaysRelevant: false,
+    },
+];
+
+function hashUrl(url) {
+    return crypto.createHash("md5").update(url).digest("hex");
+}
+
+function detectTeam(text) {
+    if (!text) return null;
+    const lower = text.toLowerCase();
+    for (const [keyword, code] of Object.entries(TEAM_KEYWORDS)) {
+        if (lower.includes(keyword)) return code;
+    }
+    return null;
+}
+
+function isCopaRelevant(title, description) {
+    const text = `${title} ${description}`.toLowerCase();
+    return COPA_KEYWORDS.some((kw) => text.includes(kw));
+}
+
+function categorizeNews(title, description) {
+    const text = `${title} ${description}`.toLowerCase();
+    if (
+        text.includes("ingresso") || text.includes("ticket") ||
+        text.includes("bilhete") || text.includes("ingressos")
+    ) return "tickets";
+    if (
+        text.includes("viagem") || text.includes("travel") ||
+        text.includes("hotel") || text.includes("turismo") || text.includes("tourist")
+    ) return "travel";
+    if (
+        text.includes("partida") || text.includes("jogo") ||
+        text.includes("match") || text.includes("placar") ||
+        text.includes("score") || text.includes("gol") ||
+        text.includes("goal") || text.includes("result")
+    ) return "matches";
+    if (
+        text.includes("seleção") || text.includes("team") ||
+        text.includes("jogador") || text.includes("player") ||
+        text.includes("convocação") || text.includes("squad") ||
+        text.includes("treinador") || text.includes("coach")
+    ) return "teams";
+    return "general";
+}
+
+function extractImageUrl(item) {
+    if (item["media:content"] && item["media:content"]["$"]) {
+        return item["media:content"]["$"].url || null;
+    }
+    if (item["media:thumbnail"] && item["media:thumbnail"]["$"]) {
+        return item["media:thumbnail"]["$"].url || null;
+    }
+    if (item.enclosure && item.enclosure.url) {
+        return item.enclosure.url || null;
+    }
+    // Try to extract first image from content HTML
+    const content = item.content || item["content:encoded"] || "";
+    const imgMatch = content.match(/<img[^>]+src=["']([^"']+)["']/i);
+    if (imgMatch) return imgMatch[1];
+    return null;
+}
+
+exports.fetchNewsScheduled = functions.pubsub
+    .schedule("every 30 minutes")
+    .timeZone("America/Sao_Paulo")
+    .onRun(async (context) => {
+        const parser = new RSSParser({
+            customFields: {
+                item: [
+                    ["media:content", "media:content"],
+                    ["media:thumbnail", "media:thumbnail"],
+                    ["enclosure", "enclosure"],
+                    ["content:encoded", "content:encoded"],
+                ],
+            },
+            timeout: 12000,
+            headers: {
+                "User-Agent": "ArenaCUP/1.0 (Copa 2026 News Aggregator)",
+            },
+        });
+
+        const newsRef = db.collection("copa_news");
+        let totalAdded = 0;
+
+        for (const feed of RSS_FEEDS) {
+            try {
+                functions.logger.info(`[fetchNews] Fetching: ${feed.name}`);
+                const feedData = await parser.parseURL(feed.url);
+                const items = (feedData.items || []).slice(0, 20);
+
+                for (const item of items) {
+                    try {
+                        const title = (item.title || "").trim();
+                        const description = (
+                            item.contentSnippet ||
+                            item.summary ||
+                            item.content ||
+                            ""
+                        ).replace(/<[^>]+>/g, "").trim().substring(0, 600);
+
+                        const url = item.link || item.guid || "";
+                        if (!url || !title) continue;
+
+                        // Skip irrelevant articles from non-targeted feeds
+                        if (!feed.alwaysRelevant && !isCopaRelevant(title, description)) {
+                            continue;
+                        }
+
+                        const urlHash = hashUrl(url);
+
+                        // Deduplication: skip if already stored
+                        const existing = await newsRef
+                            .where("url_hash", "==", urlHash)
+                            .limit(1)
+                            .get();
+                        if (!existing.empty) continue;
+
+                        // Detect team mention for country_filter
+                        const countryFilter = detectTeam(`${title} ${description}`);
+
+                        // Image URL extraction
+                        const imageUrl = extractImageUrl(item);
+
+                        // Parse publish date
+                        let publishedAt = admin.firestore.Timestamp.now();
+                        const rawDate = item.pubDate || item.isoDate;
+                        if (rawDate) {
+                            const parsed = new Date(rawDate);
+                            if (!isNaN(parsed.getTime())) {
+                                publishedAt = admin.firestore.Timestamp.fromDate(parsed);
+                            }
+                        }
+
+                        await newsRef.add({
+                            title,
+                            description,
+                            url,
+                            url_to_image: imageUrl || null,
+                            source_name: feed.name,
+                            category: categorizeNews(title, description),
+                            country_filter: countryFilter || null,
+                            published_at: publishedAt,
+                            url_hash: urlHash,
+                            created_at: admin.firestore.FieldValue.serverTimestamp(),
+                        });
+
+                        totalAdded++;
+                        functions.logger.info(`[fetchNews] Added: "${title.substring(0, 60)}"`);
+                    } catch (itemErr) {
+                        functions.logger.warn(`[fetchNews] Item error in ${feed.name}`, {
+                            error: itemErr?.message,
+                        });
+                    }
+                }
+            } catch (feedErr) {
+                functions.logger.error(`[fetchNews] Feed error: ${feed.name}`, {
+                    error: feedErr?.message,
+                });
+            }
+        }
+
+        // Cleanup: delete news older than 7 days (batched, max 100 per run)
+        try {
+            const cutoffDate = new Date();
+            cutoffDate.setDate(cutoffDate.getDate() - 7);
+            const cutoffTs = admin.firestore.Timestamp.fromDate(cutoffDate);
+
+            const oldDocs = await newsRef
+                .where("created_at", "<", cutoffTs)
+                .limit(100)
+                .get();
+
+            if (!oldDocs.empty) {
+                const batch = db.batch();
+                oldDocs.docs.forEach((doc) => batch.delete(doc.ref));
+                await batch.commit();
+                functions.logger.info(`[fetchNews] Deleted ${oldDocs.size} old news items`);
+            }
+        } catch (cleanErr) {
+            functions.logger.warn("[fetchNews] Cleanup error", { error: cleanErr?.message });
+        }
+
+        functions.logger.info(`[fetchNews] Completed. Total added: ${totalAdded}`);
+        return null;
+    });

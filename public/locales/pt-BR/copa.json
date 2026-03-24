@@ -1,13 +1,18 @@
 {
   "tabs": {
-    "overview": "Hoje",
+    "overview": "Visão",
     "calendar": "Calendário",
     "groups": "Grupos",
     "bracket": "Mata-mata",
     "simulator": "Simulador",
     "news": "Notícias",
     "hosts": "Sedes",
-    "history": "História"
+    "history": "História",
+    "simulacao": "Simular",
+    "calendario": "Agenda",
+    "grupos": "Grupos",
+    "chaves": "Chaves",
+    "loading": "Carregando..."
   },
   "groups": {
     "mode": {
@@ -99,7 +104,8 @@
     },
     "champion_label": "Campeão Mundial",
     "champion_sub": "CAMPEÃO MUNDIAL 2026",
-    "tbd": "A definir"
+    "tbd": "A definir",
+    "third_place": "Disputa de 3º Lugar"
   },
   "overview": {
     "featured": "Destaque",
@@ -135,7 +141,9 @@
     "premium_cta": {
       "title": "Seja Premium",
       "desc": "Remova anúncios e desbloqueie recursos"
-    }
+    },
+    "no_upcoming": "Nenhuma partida próxima agora",
+    "no_upcoming_desc": "Em breve novos jogos aparecerão aqui."
   },
   "match_details": {
     "sr_title": "Detalhes da Partida: {{home}} vs {{away}}",
@@ -195,6 +203,48 @@
       "advances": "{{team}} avança",
       "defined_games": "{{filled}}/{{total}} jogos definidos",
       "defined_games_singular": "{{filled}}/{{total}} jogo definido"
+    }
+  },
+  "match_card": {
+    "live": "Em andamento",
+    "next_game": "Próximo Jogo",
+    "live_badge": "Ao Vivo",
+    "details_cta": "Ver Detalhes do Jogo",
+    "group": "Grupo {{group}}",
+    "my_prediction": "Seu palpite:",
+    "edit": "Editar"
+  },
+  "share_bracket": {
+    "gen_error": "Erro ao gerar imagem do chaveamento",
+    "saved": "Imagem salva!",
+    "share_error": "Erro ao compartilhar",
+    "not_supported": "Compartilhamento não suportado neste navegador",
+    "downloaded": "Imagem baixada! Anexe no WhatsApp",
+    "btn_label": "Compartilhar"
+  },
+  "calendario": {
+    "empty_title": "Nenhum jogo por aqui",
+    "empty_desc": "O calendário aparece assim que os jogos forem carregados.",
+    "prev_day": "Dia anterior",
+    "next_day": "Próximo dia"
+  },
+  "grupos": {
+    "no_games": "Nenhum jogo encontrado para este grupo."
+  },
+  "noticias": {
+    "priority_team": "Prioridade do seu time",
+    "priority_summary_fallback": "Notícia destacada para o seu time favorito.",
+    "open_source": "Abrir fonte",
+    "read_source": "Ler na fonte",
+    "summary_fallback": "Notícia disponível na fonte original.",
+    "date_unknown": "Data não informada",
+    "categories": {
+      "all": "Todas",
+      "general": "Geral",
+      "matches": "Partidas",
+      "teams": "Seleções",
+      "travel": "Turismo",
+      "tickets": "Ingressos"
     }
   }
 }

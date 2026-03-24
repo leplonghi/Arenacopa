@@ -115,7 +115,7 @@ export function GruposTab() {
                   <span className="text-center">{t('groups.table.p')}</span>
                   <span className="text-center">{t('groups.table.gd')}</span>
                   {viewMode === "real" ? (
-                    <span className="text-right">{t('groups.table.prob')}</span>
+                    <span className="text-right">FIFA</span>
                   ) : (
                     <span className="text-right">{t('groups.table.j')}</span>
                   )}
@@ -149,17 +149,9 @@ export function GruposTab() {
                       <span className={cn("text-center text-sm", qualifies && "font-black")}>{s.points}</span>
                       <span className="text-center text-sm">{gd >= 0 ? `+${gd}` : gd}</span>
                       {viewMode === "real" ? (
-                        <div className="flex items-center gap-1.5 justify-end min-w-[60px]">
-                          <div className="w-12 h-1.5 bg-secondary rounded-full overflow-hidden">
-                            <div
-                              className={cn("h-full rounded-full",
-                                s.probability >= 60 ? "bg-copa-success" :
-                                  s.probability >= 30 ? "bg-primary" : "bg-copa-live"
-                              )}
-                              style={{ width: `${s.probability}%` }}
-                            />
-                          </div>
-                        </div>
+                        <span className="text-right text-xs font-bold text-muted-foreground min-w-[40px]">
+                          {team.fifaRanking ? `#${team.fifaRanking}` : "\u2014"}
+                        </span>
                       ) : (
                         <span className="text-right text-sm min-w-[60px]">{s.played}</span>
                       )}

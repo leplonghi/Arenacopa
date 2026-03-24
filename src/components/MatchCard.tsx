@@ -1,4 +1,5 @@
 import { getTeam, formatMatchTime, getStadium, type Match } from "@/data/mockData";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { StatusBadge } from "./StatusBadge";
 import { Flag } from "./Flag";
@@ -37,6 +38,7 @@ export function MatchCard({ match, prediction, compact = false, variant = "defau
   const away = getTeam(match.awayTeam);
   const stadium = getStadium(match.stadium);
   const navigate = useNavigate();
+  const { t } = useTranslation('copa');
 
   const handleTeamClick = (code: string) => (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -88,7 +90,7 @@ export function MatchCard({ match, prediction, compact = false, variant = "defau
           <div className="flex justify-between items-start text-[10px] font-black uppercase tracking-widest text-white/60 pointer-events-none">
             <span className="bg-black/30 backdrop-blur-md px-3 py-1 rounded-full border border-white/5 flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-copa-live animate-pulse" />
-              {match.status === "live" ? "Em andamento" : "Próximo Jogo"}
+              {match.status === "live" ? t('match_card.live') : t('match_card.next_game')}
             </span>
             <span className="text-right">{stadium?.city} • {formatMatchTime(match.date)}</span>
           </div>
@@ -144,7 +146,7 @@ export function MatchCard({ match, prediction, compact = false, variant = "defau
           {/* Bottom Bar: CTA */}
           <div className="flex justify-center pointer-events-none">
             <button className="glass-button px-6 py-2 rounded-full text-xs font-bold uppercase tracking-wider hover:bg-white/10 transition-colors pointer-events-auto">
-              Ver Detalhes do Jogo
+              {t('match_card.details_cta')}
             </button>
           </div>
         </div>
@@ -175,7 +177,7 @@ export function MatchCard({ match, prediction, compact = false, variant = "defau
             animate={{ scale: 1, opacity: 1 }}
             className="text-[11px] font-black px-3 py-1 rounded-full bg-copa-live text-white uppercase tracking-wider"
           >
-            Ao Vivo • {match.minute}'
+            {t('match_card.live_badge')} • {match.minute}'
           </motion.span>
         </div>
 
@@ -199,7 +201,7 @@ export function MatchCard({ match, prediction, compact = false, variant = "defau
             </div>
             {match.group && (
               <span className="text-[10px] uppercase tracking-wider text-muted-foreground mt-1">
-                Grupo {match.group}
+                {t('match_card.group', { group: match.group })}
               </span>
             )}
           </div>
@@ -219,10 +221,10 @@ export function MatchCard({ match, prediction, compact = false, variant = "defau
         {prediction && (
           <div className="border-t border-border/30 px-4 py-3 flex items-center justify-between bg-secondary/30">
             <span className="text-xs text-muted-foreground">
-              Seu palpite: <span className="font-black text-foreground ml-1">{prediction.homeScore} - {prediction.awayScore}</span>
+              {t('match_card.my_prediction')} <span className="font-black text-foreground ml-1">{prediction.homeScore} - {prediction.awayScore}</span>
             </span>
             <button className="text-[11px] font-bold px-3 py-1.5 rounded-lg bg-copa-green/20 text-copa-green-light border border-copa-green/30">
-              Editar
+              {t('match_card.edit')}
             </button>
           </div>
         )}

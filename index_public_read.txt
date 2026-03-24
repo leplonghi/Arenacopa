@@ -1,0 +1,82 @@
+=== C:\Users\eduar\OneDrive\Desktop\Antigravity\ArenaCopa\Arenacopa\index.html ===
+<!doctype html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+  <title>ArenaCUP — World Cup 2026</title>
+  <link rel="icon" type="image/png" href="/logo.png?v=20260316" />
+  <meta name="description" content="Follow the World Cup 2026, create pools and compete with your friends." />
+  <meta name="author" content="ArenaCUP" />
+  <meta name="theme-color" content="#061a10" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="apple-touch-icon" href="/icon-192x192.png?v=20260316" />
+
+  <!-- Open Graph / Facebook / WhatsApp -->
+  <meta property="og:title" content="ArenaCUP — World Cup 2026" />
+  <meta property="og:description" content="Follow the World Cup 2026, create pools and compete with your friends." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://arenacup.com" />
+  <meta property="og:image" content="/og-image.png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="ArenaCUP — Pools, Simulations, Tables and Complete World Cup 2026 Guide" />
+  <meta property="og:site_name" content="ArenaCUP" />
+  <meta property="og:locale" content="pt_BR" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="ArenaCUP — World Cup 2026" />
+  <meta name="twitter:description" content="Follow the World Cup 2026, create pools and compete with your friends." />
+  <meta name="twitter:image" content="/og-image.png" />
+  <meta name="twitter:image:alt" content="ArenaCUP — World Cup 2026" />
+
+  <!-- Google AdSense -->
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-XXXXXXXXXXXXXXXX"
+    crossorigin="anonymous"></script>
+
+  <!-- Plausible Analytics -->
+  <script defer data-domain="arenacup.com" src="https://plausible.io/js/script.tagged-events.js"></script>
+  <script>window.plausible = window.plausible || function () { (window.plausible.q = window.plausible.q || []).push(arguments) }</script>
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+
+</html>
+
+
+
+=== PUBLIC FOLDER CONTENTS ===
+  \icon-192x192.png  (72076 bytes)
+  \icon-512x512.png  (457425 bytes)
+  \logo-mark.svg  (1958 bytes)
+  \logo.png  (5017330 bytes)
+  \manifest.json  (603 bytes)
+  \noise.svg  (327 bytes)
+  \og-image.png  (91906 bytes)
+  \placeholder.svg  (3253 bytes)
+  \robots.txt  (174 bytes)
+  \sw.js  (1249 bytes)
+
+=== App.tsx LoadingScreen ===
+turn null;
+}
+
+const LoadingScreen = () => (
+  <div className="flex h-screen w-full items-center justify-center bg-[#082016] text-white">
+    <div className="flex flex-col items-center gap-4">
+      <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+      <p className="animate-pulse font-medium text-primary">ArenaCUP</p>
+    </div>
+  </div>
+);
+
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
+  if (load

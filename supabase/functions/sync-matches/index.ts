@@ -7,7 +7,7 @@ const corsHeaders = {
     'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Map of common API-Football country names to 3-letter codes used in Arenacopa
+// Map of common API-Football country names to 3-letter codes used in ArenaCUP
 const countryMap: Record<string, string> = {
     "Brazil": "BRA", "Argentina": "ARG", "France": "FRA", "Germany": "GER",
     "Spain": "ESP", "England": "ENG", "Portugal": "POR", "Italy": "ITA",
@@ -29,7 +29,7 @@ serve(async (req) => {
         const vapidPublicKey = Deno.env.get('VAPID_PUBLIC_KEY') || '';
         const vapidPrivateKey = Deno.env.get('VAPID_PRIVATE_KEY') || '';
         if (vapidPublicKey && vapidPrivateKey) {
-            webpush.setVapidDetails('mailto:suporte@arenacopa.com', vapidPublicKey, vapidPrivateKey);
+            webpush.setVapidDetails('mailto:suporte@arenacup.com', vapidPublicKey, vapidPrivateKey);
         }
 
         // Get the API key from Supabase Vault (Secrets mechanism)

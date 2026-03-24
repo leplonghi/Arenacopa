@@ -1,0 +1,2961 @@
+
+
+=== FILE: src\pages\Index.tsx (577 lines) ===
+1: import { Link } from "react-router-dom";
+2: import { Flag } from "@/components/Flag";
+3: import { getTeam, formatMatchTime, formatMatchDate, type Match } from "@/data/mockData";
+4: import { Users, Trophy, ChevronRight, AlertTriangle, Dices, Zap, Crown, Settings, CalendarDays, Flame, Target } from "lucide-react";
+5: import { cn } from "@/lib/utils";
+6: import { motion, AnimatePresence } from "framer-motion";
+7: import { useAuth } from "@/contexts/AuthContext";
+8: import { useEffect, useState, useMemo } from "react";
+9: import { Skeleton } from "@/components/ui/skeleton";
+10: import { MatchDetailsModal } from "@/components/copa/MatchDetailsModal";
+11: import { useTranslation } from "react-i18next";
+12: import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+13: import { ElitePassModal } from "@/components/ElitePassModal";
+14: import { LiveMatchCard } from "@/components/LiveMatchCard";
+15: import { useMonetization } from "@/contexts/MonetizationContext";
+16: import { useQuery } from "@tanstack/react-query";
+17: import { getDashboardData, type DashboardBolaoSummary } from "@/services/dashboard/dashboard.service";
+18: import { useMatches } from "@/hooks/useMatches";
+19: import { useRealtimeNews } from "@/hooks/useRealtimeNews";
+20: import {
+21:   getStoredFavoriteTeam,
+22:   setStoredFavoriteTeam,
+23:   subscribeToFavoriteTeamUpdates,
+24: } from "@/lib/favorite-team";
+25: 
+26: const containerVariants = {
+27:   hidden: { opacity: 0 },
+28:   visible: {
+29:     opacity: 1,
+30:     transition: { staggerChildren: 0.1, delayChildren: 0.1 }
+31:   }
+32: };
+33: 
+34: const itemVariants = {
+35:   hidden: { opacity: 0, y: 20 },
+36:   visible: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 300, damping: 24 } }
+37: };
+38: 
+39: // "Ação do Dia" — smart contextual CTA
+40: interface ActionOfDayProps {
+41:   totalPending: number;
+42:   hasAnyBolao: boolean;
+43:   hasTodayMatch: boolean;
+44:   firstBolaoWithPending?: string;
+45: }
+46: 
+47: function ActionOfDay({ totalPending, hasAnyBolao, hasTodayMatch, firstBolaoWithPending }: ActionOfDayProps) {
+48:   const { t } = useTranslation('home');
+49:   if (totalPending > 0) {
+50:     const s = totalPending > 1 ? "s" : "";
+51:     return (
+52:       <Link to={firstBolaoWithPending ? `/boloes/${firstBolaoWithPending}` : "/boloes"}>
+53:         <div className="flex items-center gap-4 rounded-[22px] bg-gradient-to-r from-primary/20 to-primary/5 border border-primary/30 px-5 py-4 hover:from-primary/30 transition-all active:scale-[0.98]">
+54:           <div className="w-10 h-10 rounded-[14px] bg-primary/20 flex items-center justify-center shrink-0">
+55:             <Target className="w-5 h-5 text-primary" strokeWidth={2.5} />
+56:           </div>
+57:           <div className="flex-1 min-w-0">
+58:             <p className="text-xs font-black uppercase tracking-[0.14em] text-primary/80">
+59:               {t('action_of_day.pending_title')}
+60:             </p>
+61:             <p className="text-sm font-bold text-white leading-snug truncate">
+62:               {totalPending} jogo{s} esperando seu palpite
+63:             </p>
+64:           </div>
+65:           <ChevronRight className="w-4 h-4 text-primary shrink-0" />
+66:         </div>
+67:       </Link>
+68:     );
+69:   }
+70: 
+71:   if (!hasAnyBolao) {
+72:     return (
+73:       <Link to="/boloes/criar">
+74:         <div className="flex items-center gap-4 rounded-[22px] bg-gradient-to-r from-blue-500/15 to-blue-500/5 border border-blue-500/25 px-5 py-4 hover:from-blue-500/25 transition-all active:scale-[0.98]">
+75:           <div className="w-10 h-10 rounded-[14px] bg-blue-500/20 flex items-center justify-center shrink-0">
+76:             <Dices className="w-5 h-5 text-blue-400" strokeWidth={2} />
+77:           </div>
+78:           <div className="flex-1 min-w-0">
+79:             <p className="text-xs font-black uppercase tracking-[0.14em] text-blue-400/80">
+80:               {t('action_of_day.no_bolao_title')}
+81:             </p>
+82:             <p className="text-sm font-bold text-white leading-snug">
+83:               Dispute com amigos na Copa 2026
+84:             </p>
+85:           </div>
+86:           <ChevronRight className="w-4 h-4 text-blue-400 shrink-0" />
+87:         </div>
+88:       </Link>
+89:     );
+90:   }
+91: 
+92:   if (hasTodayMatch) {
+93:     return (
+94:       <Link to="/copa/calendario">
+95:         <div className="flex items-center gap-4 rounded-[22px] bg-gradient-to-r from-orange-500/15 to-orange-500/5 border border-orange-500/25 px-5 py-4 hover:from-orange-500/25 transition-all active:scale-[0.98]">
+96:           <div className="w-10 h-10 rounded-[14px] bg-orange-500/20 flex items-center justify-center shrink-0">
+97:             <Flame className="w-5 h-5 text-orange-400" strokeWidth={2} />
+98:           </div>
+99:           <div className="flex-1 min-w-0">
+100:             <p className="text-xs font-black uppercase tracking-[0.14em] text-orange-400/80">
+101:               {t('action_of_day.today_match_title')}
+102:             </p>
+103:             <p className="text-sm font-bold text-white leading-snug">
+104:               Já fez seu palpite para hoje?
+105:             </p>
+106:           </div>
+107:           <ChevronRight className="w-4 h-4 text-orange-400 shrink-0" />
+108:         </div>
+109:       </Link>
+110:     );
+111:   }
+112: 
+113:   return null;
+114: }
+115: 
+116: const Index = () => {
+117:   const { user } = useAuth();
+118:   const { i18n, t } = useTranslation('home');
+119: 
+120:   const { data: dbFavoriteTeamCode } = useQuery({
+121:     queryKey: ['favoriteTeam', user?.id],
+122:     queryFn: async () => {
+123:       if (!user?.id) return null;
+124:       try {
+125:         const { getDoc, doc } = await import("firebase/firestore");
+126:         const { db } = await import("@/integrations/firebase/client");
+127:         const docRef = doc(db, "profiles", user.id);
+128:         const docSnap = await getDoc(docRef);
+129:         
+130:         if (docSnap.exists()) {
+131:           const data = docSnap.data();
+132:           return data.favorite_team || null;
+133:         }
+134:         return null;
+135:       } catch (error) {
+136:         console.error("Error fetching favorite team from Firestore:", error);
+137:         return null;
+138:       }
+139:     },
+140:     enabled: !!user?.id,
+141:   });
+142: 
+143:   const [favoriteTeamOverride, setFavoriteTeamOverride] = useState<string | null>(null);
+144: 
+145:   useEffect(() => {
+146:     return subscribeToFavoriteTeamUpdates((teamCode) => {
+147:       setFavoriteTeamOverride(teamCode);
+148:     });
+149:   }, []);
+150: 
+151:   useEffect(() => {
+152:     if (dbFavoriteTeamCode && dbFavoriteTeamCode !== getStoredFavoriteTeam()) {
+153:       setStoredFavoriteTeam(dbFavoriteTeamCode);
+154:     }
+155:   }, [dbFavoriteTeamCode]);
+156: 
+157:   const favoriteTeamCode = favoriteTeamOverride || dbFavoriteTeamCode || getStoredFavoriteTeam() || "BRA";
+158:   const favoriteTeam = getTeam(favoriteTeamCode);
+159: 
+160:   const [myBoloes, setMyBoloes] = useState<DashboardBolaoSummary[]>([]);
+161:   const [loading, setLoading] = useState(true);
+162:   const [dashboardError, setDashboardError] = useState<string | null>(null);
+163:   const [dashboardRefreshKey, setDashboardRefreshKey] = useState(0);
+164:   const [profile, setProfile] = useState<{ name: string; avatar?: string } | null>(null);
+165:   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
+166:   const [isEliteModalOpen, setIsEliteModalOpen] = useState(false);
+167:   const { isPremium } = useMonetization();
+168:   const { news: realtimeNews } = useRealtimeNews({ limitCount: 3 });
+169:   const miniNews = useMemo(
+170:     () =>
+171:       realtimeNews.map((item) => ({
+172:         id: item.id,
+173:         title: item.title,
+174:         category: item.source_name || item.category || "Geral",
+175:         publishedAt: item.published_at,
+176:         imageUrl: item.url_to_image || null,
+177:         url: item.url,
+178:       })),
+179:     [realtimeNews]
+180:   );
+181: 
+182:   useEffect(() => {
+183:     if (!user) {
+184:       setProfile(null);
+185:       setMyBoloes([]);
+186:       setDashboardError(null);
+187:       setLoading(false);
+188:       return;
+189:     }
+190: 
+191:     const fetchData = async () => {
+192:       try {
+193:         setLoading(true);
+194:         setDashboardError(null);
+195:         const dashboardData = await getDashboardData(user.id);
+196:         setProfile({
+197:           name: dashboardData.profile?.name || "",
+198:           avatar: dashboardData.profile?.avatar_url || "",
+199:         });
+200:         setMyBoloes(dashboardData.myBoloes);
+201:       } catch (error) {
+202:         console.error("Error loading dashboard data:", error);
+203:         setDashboardError("Não consegui atualizar seu painel agora. Alguns blocos podem aparecer vazios.");
+204:       } finally {
+205:         setLoading(false);
+206:       }
+207:     };
+208: 
+209:     fetchData();
+210:   }, [user, dashboardRefreshKey]);
+211: 
+212:   const { data: allMatches } = useMatches();
+213: 
+214:   const upcomingMatches = useMemo(
+215:     () =>
+216:       (allMatches || [])
+217:         .filter((match) => match.status !== "finished")
+218:         .slice(0, 3),
+219:     [allMatches]
+220:   );
+221: 
+222:   const displayName = profile?.name || user?.email?.split("@")[0] || "Torcedor";
+223:   const totalPoints = myBoloes.reduce((acc, curr) => acc + (curr.myPoints || 0), 0);
+224:   const bestRank = myBoloes.length > 0 ? Math.min(...myBoloes.map(b => b.myRank || 999).filter(r => r > 0)) : 999;
+225:   const totalPending = myBoloes.reduce((acc, curr) => acc + (curr.pendingCount || 0), 0);
+226:   const hasTodayMatch = (allMatches || []).some(
+227:     (m) => m.status !== "finished" && new Date(m.date).toDateString() === new Date().toDateString()
+228:   );
+229:   const firstBolaoWithPending = myBoloes.find(b => (b.pendingCount ?? 0) > 0)?.id;
+230: 
+231: 
+232:   return (
+233:     <div className="min-h-screen bg-black/70 pb-24 overflow-hidden relative">
+234:       {/* Immersive Background Gradients */}
+235:       <div className="fixed inset-0 pointer-events-none">
+236:         <div className="absolute top-0 left-0 w-full h-[600px] bg-gradient-to-b from-primary/10 via-primary/5 to-transparent opacity-40" />
+237:         <div className="absolute top-[20%] right-[-10%] w-[500px] h-[500px] bg-primary/5 rounded-full blur-[120px]" />
+238:         <div className="absolute bottom-[10%] left-[-10%] w-[400px] h-[400px] bg-blue-500/5 rounded-full blur-[100px]" />
+239:       </div>
+240: 
+241:       <MatchDetailsModal
+242:         match={selectedMatch}
+243:         isOpen={!!selectedMatch}
+244:         onClose={() => setSelectedMatch(null)}
+245:       />
+246: 
+247:       <ElitePassModal
+248:         isOpen={isEliteModalOpen}
+249:         onClose={() => setIsEliteModalOpen(false)}
+250:       />
+251: 
+252:       <motion.div
+253:         variants={containerVariants}
+254:         initial="hidden"
+255:         animate="visible"
+256:         className="relative z-10 mx-auto max-w-2xl space-y-6 px-4 pt-8 sm:px-6"
+257:       >
+258:         <LiveMatchCard />
+259: 
+260:         {/* Profile Header HUD */}
+261:         <motion.div variants={itemVariants} className="flex items-center justify-between">
+262:           <div className="flex items-center gap-5">
+263:             <div className="relative">
+264:               <div className="p-1 rounded-[24px] bg-gradient-to-br from-primary/40 to-transparent">
+265:                 <Avatar className="w-16 h-16 rounded-[22px] border-none bg-black shadow-2xl">
+266:                   <AvatarImage src={profile?.avatar} />
+267:                   <AvatarFallback className="bg-primary/10 text-primary font-black text-xl">
+268:                     {displayName.charAt(0).toUpperCase()}
+269:                   </AvatarFallback>
+270:                 </Avatar>
+271:               </div>
+272:               <div className="absolute -bottom-1 -right-1 w-7 h-7 rounded-[10px] bg-primary flex items-center justify-center shadow-lg border-2 border-[#050505]">
+273:                 <Zap className="w-4 h-4 text-black" strokeWidth={3} />
+274:               </div>
+275:             </div>
+276:             <div>
+277:               <div className="flex items-center gap-2 mb-1">
+278:                 <span className="block text-[11px] font-black uppercase tracking-[0.16em] text-gray-400">{t('hero.kicker')}</span>
+279:                 {!isPremium ? (
+280:                   <button
+281:                     onClick={() => setIsEliteModalOpen(true)}
+282:                     className="flex items-center gap-1.5 rounded-[8px] bg-gradient-to-r from-yellow-600 to-yellow-500 px-2.5 py-1 hover:scale-105 transition-transform"
+283:                   >
+284:                     <Crown className="w-2.5 h-2.5 text-black" />
+285:                     <span className="text-[10px] font-black uppercase tracking-[0.12em] text-black">{t('hero.get_elite')}</span>
+286:                   </button>
+287:                 ) : (
+288:                   <div className="flex items-center gap-1.5 rounded-[8px] bg-white/10 px-2.5 py-1">
+289:                     <Crown className="w-2.5 h-2.5 text-yellow-500" />
+290:                     <span className="text-[10px] font-black uppercase tracking-[0.12em] text-yellow-500">{t('hero.elite_member')}</span>
+291:                   </div>
+292:                 )}
+293:               </div>
+294:               <h1 className="text-3xl font-black text-white tracking-tighter leading-none">{displayName}</h1>
+295:             </div>
+296:           </div>
+297:           <Link to="/perfil" aria-label="Abrir perfil">
+298:             <motion.div
+299:               whileHover={{ scale: 1.1, rotate: 15 }}
+300:               whileTap={{ scale: 0.9 }}
+301:               className="w-14 h-14 rounded-[22px] bg-white/5 border border-white/10 flex items-center justify-center text-gray-500 hover:text-white transition-all backdrop-blur-3xl"
+302:             >
+303:               <Settings className="w-6 h-6" />
+304:             </motion.div>
+305:           </Link>
+306:         </motion.div>
+307: 
+308:         {/* Compact Pending Alert */}
+309:         {totalPending > 0 && (
+310:           <motion.div variants={itemVariants}>
+311:             <Link to="/boloes">
+312:               <div className="flex items-center gap-3 px-5 py-3.5 rounded-2xl bg-orange-500/15 border border-orange-500/25 hover:bg-orange-500/20 transition-colors">
+313:                 <AlertTriangle className="w-4 h-4 text-orange-400 shrink-0" />
+314:                 <span className="text-sm font-bold text-orange-200 flex-1">
+315:                   {totalPending} palpite{totalPending > 1 ? "s" : ""} pendente{totalPending > 1 ? "s" : ""}
+316:                 </span>
+317:                 <ChevronRight className="w-4 h-4 text-orange-400" />
+318:               </div>
+319:             </Link>
+320:           </motion.div>
+321:         )}
+322: 
+323:         {/* Ação do Dia — smart contextual CTA */}
+324:         {!loading && (
+325:           <motion.div variants={itemVariants}>
+326:             <ActionOfDay
+327:               totalPending={totalPending}
+328:               hasAnyBolao={myBoloes.length > 0}
+329:               hasTodayMatch={hasTodayMatch}
+330:               firstBolaoWithPending={firstBolaoWithPending}
+331:             />
+332:           </motion.div>
+333:         )}
+334: 
+335:         {/* Compact Stats Row */}
+336:         <motion.div variants={itemVariants}>
+337:           <Link to="/ranking" className="block group">
+338:             <div className="grid grid-cols-3 gap-3">
+339:               <CompactStat label={t('quick_panel.best_rank')} value={bestRank === 999 ? "-" : `${bestRank}º`} />
+340:               <CompactStat label={t('quick_panel.points')} value={totalPoints} highlight />
+341:               <CompactStat label={t('quick_panel.pools')} value={myBoloes.length} />
+342:             </div>
+343:           </Link>
+344:         </motion.div>
+345: 
+346:         <motion.section variants={itemVariants} className="space-y-6">
+347:           <SectionHeader color="bg-primary" title={t('upcoming.title')} rightElement={
+348:             <Link to="/copa/calendario" className="text-[11px] text-gray-400 font-black uppercase tracking-[0.12em] hover:text-white transition-colors">
+349:               {t('upcoming.view_calendar')} <ChevronRight className="w-3 h-3 inline ml-1" />
+350:             </Link>
+351:           } />
+352: 
+353:           {upcomingMatches.length === 0 ? (
+354:             <div className="surface-card rounded-[32px] p-6 text-center text-sm text-zinc-400">
+355:               {t('upcoming.empty')}
+356:             </div>
+357:           ) : (
+358:             <div className="grid gap-4">
+359:               {upcomingMatches.map((match) => {
+360:                 const isFavoriteMatch = match.homeTeam === favoriteTeamCode || match.awayTeam === favoriteTeamCode;
+361:                 const isToday = new Date(match.date).toDateString() === new Date().toDateString();
+362: 
+363:                 return (
+364:                   <button
+365:                     key={match.id}
+366:                     type="button"
+367:                     aria-label={`Ver detalhes: ${match.homeTeam} vs ${match.awayTeam}`}
+368:                     onClick={() => setSelectedMatch(match)}
+369:                     className={cn(
+370:                       "surface-card-soft w-full rounded-[30px] p-5 text-left transition-all hover:border-white/20 hover:bg-white/[0.06]",
+371:                       isFavoriteMatch && "border-primary/30 bg-primary/[0.08]"
+372:                     )}
+373:                   >
+374:                     <div className="mb-4 flex items-center justify-between gap-4">
+375:                       <div className="flex items-center gap-2 text-[11px] font-black uppercase tracking-[0.14em] text-zinc-400">
+376:                         <CalendarDays className="w-4 h-4 text-primary" />
+377:                         {isFavoriteMatch && favoriteTeam ? t('upcoming.favorite_team', { team: favoriteTeam.name }) : t('upcoming.next_round')}
+378:                       </div>
+379:                       <span className="text-[11px] font-black uppercase tracking-[0.14em] text-primary">
+380:                         {isToday ? formatMatchTime(match.date, i18n.language) : formatMatchDate(match.date, i18n.language)}
+381:                       </span>
+382:                     </div>
+383: 
+384:                     <div className="flex items-center justify-between gap-3">
+385:                       <div className="flex items-center gap-3">
+386:                         <Flag code={match.homeTeam} size="md" className="shadow-md" />
+387:                         <span className="text-sm font-black text-white">{match.homeTeam}</span>
+388:                       </div>
+389:                       <span className="text-xs font-black uppercase tracking-[0.2em] text-zinc-500">vs</span>
+390:                       <div className="flex items-center gap-3">
+391:                         <span className="text-sm font-black text-white">{match.awayTeam}</span>
+392:                         <Flag code={match.awayTeam} size="md" className="shadow-md" />
+393:                       </div>
+394:                     </div>
+395:                   </button>
+396:                 );
+397:               })}
+398:             </div>
+399:           )}
+400:         </motion.section>
+401: 
+402:         {/* Active Leagues - HUD Style Cards */}
+403:         <motion.section variants={itemVariants} className="space-y-6">
+404:           <SectionHeader color="bg-blue-500" title={t('my_pools.title')} rightElement={
+405:             <Link to="/boloes" className="text-[11px] text-gray-400 font-black uppercase tracking-[0.12em] hover:text-white transition-colors">
+406:               {t('my_pools.manage')} <ChevronRight className="w-3 h-3 inline ml-1" />
+407:             </Link>
+408:           } />
+409: 
+410:           {loading ? (
+411:             <div className="grid gap-4">
+412:               <Skeleton className="h-32 w-full rounded-[40px] bg-white/5" />
+413:               <Skeleton className="h-32 w-full rounded-[40px] bg-white/5" />
+414:             </div>
+415:           ) : myBoloes.length === 0 ? (
+416:             <Link to="/boloes/criar" className="group block">
+417:               <div className="rounded-[48px] border-2 border-dashed border-white/10 p-12 flex flex-col items-center text-center gap-8 hover:border-primary/50 hover:bg-primary/5 transition-all backdrop-blur-3xl shadow-2xl">
+418:                 <div className="w-24 h-24 rounded-[32px] bg-primary/10 flex items-center justify-center group-hover:scale-110 group-hover:rotate-12 transition-all duration-700 shadow-2xl border border-primary/20">
+419:                   <Trophy className="w-12 h-12 text-primary" />
+420:                 </div>
+421:                 <div className="space-y-2">
+422:                   <h3 className="text-2xl font-black text-white uppercase tracking-tight">{t('my_pools.join_title')}</h3>
+423:                   <p className="text-sm text-gray-500 font-medium max-w-[280px] leading-relaxed mx-auto">{t('my_pools.join_desc')}</p>
+424:                 </div>
+425:                 <motion.span
+426:                   whileHover={{ scale: 1.05 }}
+427:                   whileTap={{ scale: 0.95 }}
+428:                   className="px-12 py-5 rounded-[24px] bg-white text-black text-[11px] font-black uppercase tracking-[0.3em] shadow-2xl"
+429:                 >
+430:                   {t('my_pools.start_now')}
+431:                 </motion.span>
+432:               </div>
+433:             </Link>
+434:           ) : (
+435:             <div className="grid gap-5">
+436:               {myBoloes.map((bolao) => (
+437:                 <Link key={bolao.id} to={`/boloes/${bolao.id}`} className="group relative">
+438:                   <div className="p-[1.5px] rounded-[40px] bg-gradient-to-br from-white/10 to-transparent group-hover:from-primary/50 transition-all duration-500 shadow-2xl">
+439:                     <div className="bg-black/70 rounded-[39px] p-6 flex items-center justify-between group-hover:bg-black/80 transition-all backdrop-blur-3xl overflow-hidden relative">
+440:                       {/* Interactive background pulse */}
+441:                       {(bolao.pendingCount ?? 0) > 0 && <div className="absolute inset-0 bg-orange-500/5 animate-pulse pointer-events-none" />}
+442: 
+443:                       <div className="flex items-center gap-6 relative z-10">
+444:                         <div className="w-16 h-16 rounded-[24px] bg-white/5 flex items-center justify-center text-3xl shadow-inner relative group-hover:scale-110 group-hover:rotate-6 transition-all duration-700 border border-white/5">
+445:                           ⚽
+446:                           <AnimatePresence>
+447:                             {(bolao.pendingCount ?? 0) > 0 && (
+448:                               <motion.div
+449:                                 initial={{ scale: 0, rotate: -45 }}
+450:                                 animate={{ scale: 1, rotate: 0 }}
+451:                                 className="absolute -top-2 -right-2 w-7 h-7 bg-orange-500 rounded-xl text-[11px] font-black text-white flex items-center justify-center shadow-2xl border-2 border-[#0b0b0b]"
+452:                               >
+453:                                 {bolao.pendingCount}
+454:                               </motion.div>
+455:                             )}
+456:                           </AnimatePresence>
+457:                         </div>
+458:                         <div>
+459:                           <h3 className="text-xl font-black text-white tracking-tight leading-none group-hover:text-primary transition-colors">{bolao.name}</h3>
+460:                           <div className="flex items-center gap-5 mt-2.5">
+461:                             <div className="flex items-center gap-2">
+462:                               <Users className="w-3.5 h-3.5 text-gray-600" />
+463:                               <span className="text-[11px] font-black uppercase tracking-[0.12em] text-gray-400">{bolao.memberCount} membros</span>
+464:                             </div>
+465:                             {bolao.myRank && bolao.myRank > 0 && (
+466:                               <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20">
+467:                                 <Crown className="w-3 h-3 text-primary" />
+468:                                 <span className="text-[10px] font-black uppercase tracking-[0.12em] text-primary">#{bolao.myRank} lugar</span>
+469:                               </div>
+470:                             )}
+471:                           </div>
+472:                         </div>
+473:                       </div>
+474: 
+475:                       <div className="flex items-center gap-5 relative z-10">
+476:                         <div className="text-right">
+477:                           <span className="text-3xl font-black text-white tracking-tighter tabular-nums leading-none block mb-1">{bolao.myPoints}</span>
+478:                           <span className="text-[11px] font-black uppercase tracking-[0.12em] text-gray-400">Pontos</span>
+479:                         </div>
+480:                         <div className="w-12 h-12 rounded-[18px] bg-white/5 border border-white/10 flex items-center justify-center text-gray-500 group-hover:bg-primary group-hover:text-black transition-all shadow-xl">
+481:                           <ChevronRight className="w-6 h-6 stroke-[2.5px]" />
+482:                         </div>
+483:                       </div>
+484:                     </div>
+485:                   </div>
+486:                 </Link>
+487:               ))}
+488:             </div>
+489:           )}
+490:         </motion.section>
+491: 
+492:         {/* Global News Section */}
+493:         {miniNews.length > 0 && (
+494:           <motion.section variants={itemVariants} className="space-y-6">
+495:           <SectionHeader color="bg-emerald-400" title={t('news.title')} rightElement={
+496:             <Link to="/copa/noticias" className="text-[11px] text-gray-400 font-black uppercase tracking-[0.12em] hover:text-white transition-colors">
+497:                 {t('news.view_all')} <ChevronRight className="w-3 h-3 inline ml-1" />
+498:               </Link>
+499:             } />
+500: 
+501:             <div className="grid gap-4">
+502:               {miniNews.map((item) => (
+503:                 <a key={item.id} href={item.url} target="_blank" rel="noopener noreferrer" className="group flex gap-6 p-5 rounded-[28px] bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] transition-all backdrop-blur-md shadow-lg">
+504:                   <div className="w-28 h-20 rounded-[20px] overflow-hidden shrink-0 shadow-2xl group-hover:scale-105 transition-transform duration-700 relative">
+505:                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent z-10" />
+506:                     <img src={item.imageUrl || "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=400"} alt={item.title} className="w-full h-full object-cover" />
+507:                   </div>
+508:                   <div className="flex flex-col justify-center flex-1 min-w-0">
+509:                     <div className="flex items-center gap-4 mb-2.5">
+510:                       <span className="rounded-lg border border-primary/20 bg-primary/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-primary">
+511:                         {item.category}
+512:                       </span>
+513:                       <span className="text-[11px] font-black uppercase tracking-[0.12em] text-gray-400">
+514:                         {new Date(item.publishedAt).toLocaleDateString(i18n.language, { day: '2-digit', month: 'short' })}
+515:                       </span>
+516:                     </div>
+517:                     <h3 className="text-base font-bold text-gray-100 leading-tight line-clamp-2 transition-colors group-hover:text-white tracking-tight">
+518:                       {item.title}
+519:                     </h3>
+520:                   </div>
+521:                 </a>
+522:               ))}
+523:             </div>
+524:           </motion.section>
+525:         )}
+526: 
+527:         {/* Floating Strategic CTA */}
+528:         <motion.div
+529:           variants={itemVariants}
+530:           className="pt-4 sticky bottom-8 left-0 right-0"
+531:         >
+532:           <Link
+533:             to="/boloes"
+534:             className="relative flex w-full items-center justify-center gap-4 overflow-hidden rounded-[28px] border border-white/10 bg-white py-6 text-[12px] font-black uppercase tracking-[0.22em] text-black shadow-[0_30px_60px_rgba(0,0,0,0.6)] transition-all hover:scale-[1.02] active:scale-[0.98] group"
+535:           >
+536:             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-black/5 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+537:             <Dices className="w-6 h-6 stroke-[2.5px]" />
+538:             {t('cta_predict')}
+539:           </Link>
+540:         </motion.div>
+541:       </motion.div>
+542:     </div>
+543:   );
+544: };
+545: 
+546: /* --- Refined UI Components --- */
+547: 
+548: function CompactStat({ label, value, highlight = false }: { label: string; value: string | number; highlight?: boolean }) {
+549:   return (
+550:     <div
+551:       className={cn(
+552:         "rounded-[24px] border p-4 text-center transition-all backdrop-blur-xl",
+553:         highlight
+554:           ? "bg-primary/10 border-primary/30"
+555:           : "bg-white/[0.04] border-white/10"
+556:       )}
+557:     >
+558:       <span className={cn("block text-2xl font-black tracking-tighter leading-none tabular-nums", highlight ? "text-primary" : "text-white")}>{value}</span>
+559:       <span className="mt-2 block text-[11px] font-black uppercase tracking-[0.12em] text-gray-400">{label}</span>
+560:     </div>
+561:   );
+562: }
+563: 
+564: function SectionHeader({ color, title, rightElement }: { color: string; title: string; rightElement: React.ReactNode }) {
+565:   return (
+566:     <div className="flex items-center justify-between px-2">
+567:       <h2 className="text-sm font-black text-white flex items-center gap-4 tracking-[0.15em] uppercase">
+568:         <div className={cn("w-2.5 h-2.5 rounded-sm rotate-45", color)} />
+569:         {title}
+570:       </h2>
+571:       {rightElement}
+572:     </div>
+573:   );
+574: }
+575: 
+576: export default Index;
+577: 
+
+
+=== FILE: src\components\copa\NoticiasTab.tsx (166 lines) ===
+1: 
+2: import { useEffect, useMemo, useState } from "react";
+3: import { ExternalLink, Newspaper, Sparkles } from "lucide-react";
+4: import { useAuth } from "@/contexts/AuthContext";
+5: import { getStoredFavoriteTeam, subscribeToFavoriteTeamUpdates } from "@/lib/favorite-team";
+6: import { useRealtimeNews } from "@/hooks/useRealtimeNews";
+7: 
+8: type NewsItem = {
+9:   id: string;
+10:   title: string;
+11:   summary?: string;
+12:   category?: string;
+13:   external_url?: string;
+14:   image_url?: string;
+15:   teams?: string[];
+16:   published_at?: string;
+17:   source_name?: string;
+18: };
+19: 
+20: const categories = ["all", "general", "matches", "teams", "travel", "tickets"];
+21: 
+22: export function NoticiasTab() {
+23:   const { user } = useAuth();
+24:   const { news: realtimeNews, isLoading: loading } = useRealtimeNews({ limitCount: 30 });
+25:   const [activeCategory, setActiveCategory] = useState("all");
+26:   const [favoriteTeam, setFavoriteTeam] = useState<string | null>(() => getStoredFavoriteTeam());
+27: 
+28:   useEffect(() => {
+29:     setFavoriteTeam(getStoredFavoriteTeam());
+30:     return subscribeToFavoriteTeamUpdates(setFavoriteTeam);
+31:   }, [user?.id]);
+32: 
+33:   const news = useMemo(
+34:     () =>
+35:       realtimeNews.map((item) => ({
+36:         id: item.id,
+37:         title: item.title,
+38:         summary: item.description || item.content || undefined,
+39:         category: item.category || (item.country_filter ? "teams" : "general"),
+40:         external_url: item.url,
+41:         image_url: item.url_to_image || undefined,
+42:         teams: item.country_filter ? [item.country_filter] : [],
+43:         published_at: item.published_at,
+44:         source_name: item.source_name,
+45:       })) satisfies NewsItem[],
+46:     [realtimeNews]
+47:   );
+48: 
+49:   const prioritizedNews = useMemo(() => {
+50:     const normalizedFav = favoriteTeam?.toUpperCase() || null;
+51:     const filtered =
+52:       activeCategory === "all"
+53:         ? news
+54:         : news.filter((item) => (item.category || "general").toLowerCase() === activeCategory);
+55: 
+56:     return [...filtered].sort((a, b) => {
+57:       const aFav = normalizedFav && (a.teams || []).map((t) => t.toUpperCase()).includes(normalizedFav) ? 1 : 0;
+58:       const bFav = normalizedFav && (b.teams || []).map((t) => t.toUpperCase()).includes(normalizedFav) ? 1 : 0;
+59:       return bFav - aFav;
+60:     });
+61:   }, [activeCategory, favoriteTeam, news]);
+62: 
+63:   const topPersonalized = useMemo(
+64:     () =>
+65:       prioritizedNews.filter((item) =>
+66:         favoriteTeam ? (item.teams || []).map((t) => t.toUpperCase()).includes(favoriteTeam.toUpperCase()) : false
+67:       ),
+68:     [favoriteTeam, prioritizedNews]
+69:   );
+70: 
+71:   if (loading) {
+72:     return (
+73:       <div className="space-y-4 text-white">
+74:         {[1, 2, 3].map((i) => (
+75:           <div key={i} className="h-32 animate-pulse rounded-3xl border border-white/10 bg-white/5" />
+76:         ))}
+77:       </div>
+78:     );
+79:   }
+80: 
+81:   return (
+82:     <div className="space-y-6 text-white">
+83:       {favoriteTeam && topPersonalized.length > 0 && (
+84:         <div className="rounded-[28px] border border-primary/30 bg-primary/10 p-5">
+85:           <div className="mb-3 flex items-center gap-2">
+86:             <Sparkles className="h-4 w-4 text-primary" />
+87:             <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">
+88:               Prioridade do seu time
+89:             </p>
+90:           </div>
+91:           <h2 className="text-xl font-black">{topPersonalized[0].title}</h2>
+92:           <p className="mt-2 text-sm text-zinc-300">{topPersonalized[0].summary || "Notícia destacada para o seu time favorito."}</p>
+93:           {topPersonalized[0].external_url && (
+94:             <a
+95:               href={topPersonalized[0].external_url}
+96:               target="_blank"
+97:               rel="noreferrer"
+98:               className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-primary px-4 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-black"
+99:             >
+100:               Abrir fonte
+101:               <ExternalLink className="h-4 w-4" />
+102:             </a>
+103:           )}
+104:         </div>
+105:       )}
+106: 
+107:       <div className="flex flex-wrap gap-2">
+108:         {categories.map((category) => (
+109:           <button
+110:             key={category}
+111:             onClick={() => setActiveCategory(category)}
+112:             className={`rounded-full px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] ${
+113:               activeCategory === category
+114:                 ? "bg-primary text-black"
+115:                 : "border border-white/10 bg-white/5 text-zinc-300"
+116:             }`}
+117:           >
+118:             {category === "all" ? "Todas" : category}
+119:           </button>
+120:         ))}
+121:       </div>
+122: 
+123:       <div className="grid gap-4">
+124:         {prioritizedNews.map((item) => (
+125:           <article key={item.id} className="rounded-[28px] border border-white/10 bg-white/5 p-5">
+126:             <div className="mb-3 flex items-center justify-between gap-3">
+127:               <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-zinc-300">
+128:                 <Newspaper className="h-3.5 w-3.5" />
+129:                 {(item.category || "general").toUpperCase()}
+130:               </div>
+131:               {item.source_name && (
+132:                 <span className="text-xs text-zinc-500">{item.source_name}</span>
+133:               )}
+134:             </div>
+135: 
+136:             <h3 className="text-xl font-black">{item.title}</h3>
+137:             <p className="mt-2 text-sm text-zinc-400">
+138:               {item.summary || "Notícia disponível na fonte original."}
+139:             </p>
+140: 
+141:             <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+142:               <div className="text-xs text-zinc-500">
+143:                 {item.published_at
+144:                   ? new Date(item.published_at).toLocaleString("pt-BR")
+145:                   : "Data não informada"}
+146:               </div>
+147: 
+148:               {item.external_url && (
+149:                 <a
+150:                   href={item.external_url}
+151:                   target="_blank"
+152:                   rel="noreferrer"
+153:                   className="inline-flex items-center gap-2 rounded-2xl border border-primary/30 bg-primary/15 px-4 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-primary"
+154:                 >
+155:                   Ler na fonte
+156:                   <ExternalLink className="h-4 w-4" />
+157:                 </a>
+158:               )}
+159:             </div>
+160:           </article>
+161:         ))}
+162:       </div>
+163:     </div>
+164:   );
+165: }
+166: 
+
+
+=== FILE: src\pages\Boloes.tsx (586 lines) ===
+1: import { useCallback, useEffect, useMemo, useState } from "react";
+2: import { Link, useNavigate } from "react-router-dom";
+3: import { Compass, Loader2, Plus, Search, Trophy, UserPlus, Users, Users2, Zap } from "lucide-react";
+4: import { BolaoExpressSheet } from "@/components/BolaoExpressSheet";
+5: import { db } from "@/integrations/firebase/client";
+6: import { 
+7:   collection, 
+8:   query, 
+9:   where, 
+10:   getDocs, 
+11:   orderBy, 
+12:   limit, 
+13:   doc, 
+14:   getDoc, 
+15:   setDoc,
+16:   getCountFromServer,
+17:   documentId
+18: } from "firebase/firestore";
+19: import { useAuth } from "@/contexts/AuthContext";
+20: import { useToast } from "@/hooks/use-toast";
+21: import { EmptyState } from "@/components/EmptyState";
+22: import { Skeleton } from "@/components/ui/skeleton";
+23: import { useTranslation } from "react-i18next";
+24: 
+25: type BolaoRow = {
+26:   id: string;
+27:   name: string;
+28:   description: string | null;
+29:   creator_id: string;
+30:   invite_code: string;
+31:   created_at: string;
+32:   avatar_url?: string | null;
+33:   category?: "public" | "private";
+34:   status?: string;
+35:   memberCount: number;
+36:   isCreator: boolean;
+37: };
+38: 
+39: type PublicBolaoRow = BolaoRow & {
+40:   leader_score: number;
+41: };
+42: 
+43: type MembershipRow = {
+44:   bolao_id: string;
+45:   role: string;
+46: };
+47: 
+48: type BolaoSelectRow = {
+49:   id: string;
+50:   name: string;
+51:   description: string | null;
+52:   creator_id: string;
+53:   invite_code: string;
+54:   created_at: string;
+55:   avatar_url: string | null;
+56:   category: "public" | "private";
+57:   status: string;
+58:   bolao_members: { count: number }[];
+59: };
+60: 
+61: const statusWhitelist = ["open", "active"];
+62: 
+63: function chunkValues<T>(values: T[], chunkSize: number) {
+64:   const chunks: T[][] = [];
+65:   for (let index = 0; index < values.length; index += chunkSize) {
+66:     chunks.push(values.slice(index, index + chunkSize));
+67:   }
+68:   return chunks;
+69: }
+70: 
+71: export default function Boloes() {
+72:   const { user, session } = useAuth();
+73:   const { toast } = useToast();
+74:   const navigate = useNavigate();
+75:   const { t } = useTranslation('bolao');
+76: 
+77:   const [boloes, setBoloes] = useState<BolaoRow[]>([]);
+78:   const [publicBoloes, setPublicBoloes] = useState<PublicBolaoRow[]>([]);
+79:   const [loading, setLoading] = useState(true);
+80:   const [joinCode, setJoinCode] = useState("");
+81:   const [joining, setJoining] = useState(false);
+82:   const [joiningPublicBolaoId, setJoiningPublicBolaoId] = useState<string | null>(null);
+83:   const [showJoin, setShowJoin] = useState(false);
+84:   const [searchQuery, setSearchQuery] = useState("");
+85:   const [publicBoloesUnavailable, setPublicBoloesUnavailable] = useState(false);
+86:   const [expressOpen, setExpressOpen] = useState(false);
+87:   const isDemoMode = localStorage.getItem("demo_mode") === "true";
+88: 
+89:   const loadData = useCallback(async () => {
+90:     if (!user) return;
+91:     setLoading(true);
+92:     setPublicBoloesUnavailable(false);
+93: 
+94:     if (isDemoMode || !session) {
+95:       setBoloes([
+96:         {
+97:           id: "demo-bolao-1",
+98:           name: t("page.demo_1_name"),
+99:           description: t("page.demo_1_desc"),
+100:           creator_id: user.id,
+101:           invite_code: "DEMO26",
+102:           created_at: new Date().toISOString(),
+103:           avatar_url: null,
+104:           category: "private",
+105:           status: "active",
+106:           memberCount: 12,
+107:           isCreator: true,
+108:         },
+109:         {
+110:           id: "demo-bolao-2",
+111:           name: t("page.demo_2_name"),
+112:           description: t("page.demo_2_desc"),
+113:           creator_id: "demo-friend",
+114:           invite_code: "ARENA7",
+115:           created_at: new Date(Date.now() - 86_400_000).toISOString(),
+116:           avatar_url: null,
+117:           category: "public",
+118:           status: "open",
+119:           memberCount: 27,
+120:           isCreator: false,
+121:         },
+122:       ]);
+123:       setPublicBoloes([]);
+124:       setLoading(false);
+125:       return;
+126:     }
+127: 
+128:     let membershipIds: string[] = [];
+129: 
+130:     try {
+131:       // 1. Get user's memberships
+132:       const membersRef = collection(db, "bolao_members");
+133:       const qMembers = query(membersRef, where("user_id", "==", user.id));
+134:       const memberSnap = await getDocs(qMembers);
+135:       
+136:       membershipIds = memberSnap.docs.map(doc => doc.data().bolao_id);
+137: 
+138:       if (membershipIds.length > 0) {
+139:         const boloesRef = collection(db, "boloes");
+140:         const myBoloesDocs = await Promise.all(
+141:           chunkValues(membershipIds, 30).map(async (membershipChunk) => {
+142:             const qMyBoloes = query(
+143:               boloesRef,
+144:               where(documentId(), "in", membershipChunk)
+145:             );
+146:             const snapshot = await getDocs(qMyBoloes);
+147:             return snapshot.docs;
+148:           })
+149:         );
+150:         const myBoloesSnap = myBoloesDocs.flat();
+151: 
+152:         const myBoloesEnriched = await Promise.all(
+153:           myBoloesSnap.map(async (docElem) => {
+154:             const data = docElem.data();
+155:             
+156:             // Get member count
+157:             const countQuery = query(collection(db, "bolao_members"), where("bolao_id", "==", docElem.id));
+158:             const countSnap = await getCountFromServer(countQuery);
+159:             
+160:             return {
+161:               id: docElem.id,
+162:               name: data.name,
+163:               description: data.description,
+164:               creator_id: data.creator_id,
+165:               invite_code: data.invite_code,
+166:               created_at: data.created_at,
+167:               avatar_url: data.avatar_url,
+168:               category: data.category,
+169:               status: data.status,
+170:               memberCount: countSnap.data().count,
+171:               isCreator: data.creator_id === user.id,
+172:             } as BolaoRow;
+173:           })
+174:         );
+175:         
+176:         // Sort by created_at (since we manually enriched, orderBy in query isn't enough for the final list if we want to preserve order)
+177:         setBoloes(myBoloesEnriched.sort((a, b) => 
+178:           new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+179:         ));
+180:       } else {
+181:         setBoloes([]);
+182:       }
+183:     } catch (error) {
+184:       console.error(error);
+185:       toast({
+186:         title: t('page.load_error_title'),
+187:         description: t('page.load_error_desc'),
+188:         variant: "destructive",
+189:       });
+190:     } finally {
+191:       setLoading(false);
+192:     }
+193: 
+194:     try {
+195:       // Busca pública separada para não derrubar a tela inteira
+196:       // nem depender de índice composto para category + status + created_at.
+197:       const publicBoloesQuery = query(
+198:         collection(db, "boloes"),
+199:         where("category", "==", "public"),
+200:         orderBy("created_at", "desc"),
+201:         limit(20)
+202:       );
+203: 
+204:       const publicSnap = await getDocs(publicBoloesQuery);
+205:       const filteredPublicData = publicSnap.docs.filter((docSnapshot) => {
+206:         const data = docSnapshot.data();
+207:         return !membershipIds.includes(docSnapshot.id) && statusWhitelist.includes(data.status);
+208:       });
+209: 
+210:       const enrichedPublic = await Promise.all(
+211:         filteredPublicData.map(async (docElem) => {
+212:           const b = docElem.data();
+213: 
+214:           const countQuery = query(collection(db, "bolao_members"), where("bolao_id", "==", docElem.id));
+215:           const countSnap = await getCountFromServer(countQuery);
+216: 
+217:           let leaderScore = 0;
+218:           try {
+219:             const rankingQuery = query(
+220:               collection(db, "bolao_rankings"),
+221:               where("bolao_id", "==", docElem.id),
+222:               orderBy("total_points", "desc"),
+223:               limit(1)
+224:             );
+225:             const rankingSnap = await getDocs(rankingQuery);
+226:             leaderScore = rankingSnap.docs[0]?.data()?.total_points ?? 0;
+227:           } catch (rankingError) {
+228:             console.error("Erro ao carregar ranking público do bolão:", rankingError);
+229:           }
+230: 
+231:           return {
+232:             id: docElem.id,
+233:             name: b.name,
+234:             description: b.description,
+235:             creator_id: b.creator_id,
+236:             invite_code: b.invite_code,
+237:             created_at: b.created_at,
+238:             avatar_url: b.avatar_url,
+239:             category: b.category,
+240:             status: b.status,
+241:             memberCount: countSnap.data().count,
+242:             isCreator: false,
+243:             leader_score: leaderScore,
+244:           } as PublicBolaoRow;
+245:         })
+246:       );
+247: 
+248:       setPublicBoloes(enrichedPublic);
+249:     } catch (error) {
+250:       console.error("Erro ao carregar bolões públicos:", error);
+251:       setPublicBoloes([]);
+252:       setPublicBoloesUnavailable(true);
+253:     }
+254:   }, [isDemoMode, session, t, toast, user]);
+255: 
+256:   useEffect(() => {
+257:     loadData();
+258:   }, [loadData]);
+259: 
+260:   const completeJoin = async (bolaoId: string) => {
+261:     if (!user) return;
+262:     try {
+263:       const memberId = `${user.id}_${bolaoId}`;
+264:       await setDoc(doc(db, "bolao_members", memberId), {
+265:         bolao_id: bolaoId,
+266:         user_id: user.id,
+267:         role: "member",
+268:         payment_status: "exempt",
+269:         created_at: new Date().toISOString(),
+270:         joined_at: new Date().toISOString(),
+271:       });
+272: 
+273:       toast({
+274:         title: t('page.join_success_title'),
+275:         description: t('page.join_success_desc'),
+276:         className: "bg-emerald-500 text-white font-black",
+277:       });
+278: 
+279:       await loadData();
+280:       return true;
+281:     } catch (error) {
+282:       const message = error instanceof Error ? error.message : "";
+283:       if (!message.toLowerCase().includes("duplicate")) {
+284:         console.error("Error joining bolao:", error);
+285:         toast({
+286:           title: t('page.join_error_title'),
+287:           description: t('page.join_error_desc'),
+288:           variant: "destructive",
+289:         });
+290:       }
+291:       return false;
+292:     }
+293:   };
+294: 
+295:   const verifyAndPrepareJoin = async () => {
+296:     if (!user || !joinCode.trim()) return;
+297:     setJoining(true);
+298: 
+299:     try {
+300:       const normalizedCode = joinCode.trim().toUpperCase();
+301:       
+302:       const q = query(collection(db, "boloes"), where("invite_code", "==", normalizedCode), limit(1));
+303:       const querySnap = await getDocs(q);
+304: 
+305:       if (querySnap.empty) throw new Error("Código inválido.");
+306:       
+307:       const bolaoDoc = querySnap.docs[0];
+308:       const bolaoData = bolaoDoc.data();
+309: 
+310:       if (!statusWhitelist.includes(bolaoData.status)) {
+311:         throw new Error("Este bolão não está disponível para entrada.");
+312:       }
+313: 
+314:       // Check if already a member
+315:       const memberId = `${user.id}_${bolaoDoc.id}`;
+316:       const memberSnap = await getDoc(doc(db, "bolao_members", memberId));
+317: 
+318:       if (memberSnap.exists()) {
+319:         toast({ title: t('page.already_joined') });
+320:         setJoining(false);
+321:         return;
+322:       }
+323: 
+324:       await completeJoin(bolaoDoc.id);
+325:       setJoinCode("");
+326:       setShowJoin(false);
+327:     } catch (error) {
+328:       toast({
+329:         title: t('page.invalid_code_title'),
+330:         description: error instanceof Error ? error.message : t('page.invalid_code_desc'),
+331:         variant: "destructive",
+332:       });
+333:     } finally {
+334:       setJoining(false);
+335:     }
+336:   };
+337: 
+338:   const handleJoinPublicBolao = async (bolaoId: string) => {
+339:     setJoiningPublicBolaoId(bolaoId);
+340:     try {
+341:       const joined = await completeJoin(bolaoId);
+342:       if (joined) {
+343:         navigate(`/boloes/${bolaoId}`);
+344:       }
+345:     } finally {
+346:       setJoiningPublicBolaoId(null);
+347:     }
+348:   };
+349: 
+350:   const filtered = useMemo(
+351:     () => boloes.filter((b) => !searchQuery || b.name.toLowerCase().includes(searchQuery.toLowerCase())),
+352:     [boloes, searchQuery]
+353:   );
+354: 
+355:   const myBoloes = filtered.filter((b) => b.isCreator);
+356:   const joinedBoloes = filtered.filter((b) => !b.isCreator);
+357: 
+358:   return (
+359:     <div className="mx-auto max-w-5xl px-4 pb-28 pt-6 text-white">
+360:       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+361:         <div>
+362:           <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">{t('page.kicker')}</p>
+363:           <h1 className="mt-1 text-3xl font-black">{t('page.kicker')}</h1>
+364:           <p className="mt-2 max-w-2xl text-sm text-zinc-400">
+365:             {t('page.description')}
+366:           </p>
+367:         </div>
+368: 
+369:         <div className="flex gap-2">
+370:           <button
+371:             onClick={() => setExpressOpen(true)}
+372:             className="inline-flex items-center gap-2 rounded-2xl bg-white/10 border border-white/10 px-4 py-3 text-[11px] font-black uppercase tracking-[0.18em] hover:bg-white/20 transition-colors"
+373:           >
+374:             <Zap className="h-4 w-4 text-primary" />
+375:             Express
+376:           </button>
+377:           <Link
+378:             to="/boloes/criar"
+379:             className="inline-flex items-center gap-2 rounded-2xl bg-primary px-5 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-black"
+380:           >
+381:             <Plus className="h-4 w-4" />
+382:             {t('page.create')}
+383:           </Link>
+384:         </div>
+385:       </div>
+386: 
+387:       {/* Grupos banner */}
+388:       <Link to="/grupos" className="mb-6 flex items-center justify-between gap-3 rounded-[24px] border border-primary/20 bg-primary/5 px-5 py-4 transition-all hover:bg-primary/10">
+389:         <div className="flex items-center gap-3">
+390:           <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/15 text-xl">👥</div>
+391:           <div>
+392:             <p className="text-sm font-black">Grupos</p>
+393:             <p className="text-xs text-zinc-400">Reúna seus bolões em um grupo e veja o ranking geral</p>
+394:           </div>
+395:         </div>
+396:         <Users2 className="h-5 w-5 text-primary/60 shrink-0" />
+397:       </Link>
+398: 
+399:       <div className="surface-card mb-6 p-4">
+400:         <div className="flex flex-wrap items-center justify-between gap-3">
+401:           <div>
+402:             <p className="text-xs font-black uppercase tracking-[0.18em] text-zinc-400">{t('page.quick_join_kicker')}</p>
+403:             <h2 className="mt-1 text-lg font-black">{t('page.quick_join_title')}</h2>
+404:           </div>
+405:           <button
+406:             onClick={() => setShowJoin((prev) => !prev)}
+407:             className="surface-chip rounded-2xl px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em]"
+408:           >
+409:             {showJoin ? t('page.close_join') : t('page.use_invite')}
+410:           </button>
+411:         </div>
+412: 
+413:         {showJoin && (
+414:           <div className="mt-4 flex flex-col gap-3 md:flex-row">
+415:             <input
+416:               value={joinCode}
+417:               onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+418:               placeholder={t('page.code_placeholder')}
+419:               className="surface-input flex-1 rounded-2xl px-4 py-3 text-lg font-black uppercase"
+420:             />
+421:             <button
+422:               onClick={verifyAndPrepareJoin}
+423:               disabled={joining || !joinCode.trim()}
+424:               className="inline-flex min-w-[180px] items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-black disabled:opacity-60"
+425:             >
+426:               {joining ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
+427:               {joining ? t('page.joining') : t('page.join_action')}
+428:             </button>
+429:           </div>
+430:         )}
+431:       </div>
+432: 
+433:       {!loading && boloes.length > 0 && (
+434:         <div className="relative mb-6">
+435:           <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
+436:           <input
+437:             value={searchQuery}
+438:             onChange={(e) => setSearchQuery(e.target.value)}
+439:             placeholder={t('page.search_placeholder')}
+440:             className="surface-input w-full rounded-3xl py-4 pl-12 pr-4 text-sm"
+441:           />
+442:         </div>
+443:       )}
+444: 
+445:       {loading ? (
+446:         <div className="space-y-4">
+447:           {[1, 2, 3].map((i) => (
+448:             <Skeleton key={i} className="h-28 rounded-3xl bg-white/10" />
+449:           ))}
+450:         </div>
+451:       ) : boloes.length === 0 && publicBoloes.length === 0 ? (
+452:         <EmptyState
+453:           title={t('page.empty_title')}
+454:           description={t('page.empty_desc')}
+455:         />
+456:       ) : (
+457:         <div className="space-y-8">
+458:           {myBoloes.length > 0 && (
+459:             <section>
+460:               <div className="mb-3 flex items-center gap-2">
+461:                 <Trophy className="h-4 w-4 text-primary" />
+462:                 <h2 className="text-sm font-black uppercase tracking-[0.18em] text-primary">{t('page.section_created')}</h2>
+463:               </div>
+464:               <div className="grid gap-4">
+465:                 {myBoloes.map((b) => (
+466:                   <BolaoCard key={b.id} bolao={b} href={`/boloes/${b.id}`} />
+467:                 ))}
+468:               </div>
+469:             </section>
+470:           )}
+471: 
+472:           {joinedBoloes.length > 0 && (
+473:             <section>
+474:               <div className="mb-3 flex items-center gap-2">
+475:                 <Users className="h-4 w-4 text-primary" />
+476:                 <h2 className="text-sm font-black uppercase tracking-[0.18em] text-primary">{t('page.section_participating')}</h2>
+477:               </div>
+478:               <div className="grid gap-4">
+479:                 {joinedBoloes.map((b) => (
+480:                   <BolaoCard key={b.id} bolao={b} href={`/boloes/${b.id}`} />
+481:                 ))}
+482:               </div>
+483:             </section>
+484:           )}
+485: 
+486:           {publicBoloes.length > 0 && !searchQuery && (
+487:             <section>
+488:               <div className="mb-3 flex items-center gap-2">
+489:                 <Compass className="h-4 w-4 text-primary" />
+490:                 <h2 className="text-sm font-black uppercase tracking-[0.18em] text-primary">{t('page.section_explore')}</h2>
+491:               </div>
+492:               <div className="grid gap-4">
+493:                 {publicBoloes.map((b) => (
+494:                   <article
+495:                     key={b.id}
+496:                     className="surface-card-hover p-5"
+497:                   >
+498:                     <div className="flex items-start justify-between gap-4">
+499:                       <div>
+500:                         <div className="flex items-center gap-3">
+501:                           <div className="surface-card-soft flex h-12 w-12 items-center justify-center rounded-2xl text-xl">
+502:                             {b.avatar_url || "🏆"}
+503:                           </div>
+504:                           <div>
+505:                             <h3 className="text-lg font-black">{b.name}</h3>
+506:                             <p className="text-sm text-zinc-400">{b.description || t("page.no_description")}</p>
+507:                           </div>
+508:                         </div>
+509:                       </div>
+510:                       <div className="rounded-full bg-primary/15 px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-primary">{t('page.public_label')}</div>
+511:                     </div>
+512: 
+513:                     <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+514:                       <div className="flex flex-wrap gap-3 text-sm text-zinc-300">
+515:                         <span>{t('page.members_count', { count: b.memberCount })}</span>
+516:                         <span>•</span>
+517:                         <span>{t('page.leader_score', { points: b.leader_score })}</span>
+518:                       </div>
+519: 
+520:                       <button
+521:                         onClick={() => void handleJoinPublicBolao(b.id)}
+522:                         disabled={joiningPublicBolaoId === b.id}
+523:                         className="inline-flex min-w-[150px] items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-black disabled:opacity-60"
+524:                       >
+525:                         {joiningPublicBolaoId === b.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
+526:                         {joiningPublicBolaoId === b.id ? t('page.joining') : t('page.join_now')}
+527:                       </button>
+528:                     </div>
+529:                   </article>
+530:                 ))}
+531:               </div>
+532:             </section>
+533:           )}
+534: 
+535:           {publicBoloesUnavailable && !searchQuery && (
+536:             <section>
+537:               <div className="surface-card-soft p-5 text-sm text-zinc-300">
+538:                 <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">
+539:                   {t('page.public_unavailable_title')}
+540:                 </p>
+541:                 <p className="mt-2 text-sm text-zinc-400">
+542:                   {t('page.public_unavailable_desc')}
+543:                 </p>
+544:               </div>
+545:             </section>
+546:           )}
+547:         </div>
+548:       )}
+549: 
+550:       <BolaoExpressSheet open={expressOpen} onClose={() => setExpressOpen(false)} />
+551:     </div>
+552:   );
+553: }
+554: 
+555: function BolaoCard({ bolao, href }: { bolao: BolaoRow; href: string }) {
+556:   const { t } = useTranslation('bolao');
+557: 
+558:   return (
+559:     <Link
+560:       to={href}
+561:       className="surface-card-hover p-5"
+562:     >
+563:       <div className="flex items-start justify-between gap-4">
+564:         <div className="flex items-center gap-3">
+565:           <div className="surface-card-soft flex h-12 w-12 items-center justify-center rounded-2xl text-xl">
+566:             {bolao.avatar_url || "⚽"}
+567:           </div>
+568:           <div>
+569:             <h3 className="text-lg font-black">{bolao.name}</h3>
+570:             <p className="text-sm text-zinc-400">{bolao.description || t("page.no_description")}</p>
+571:           </div>
+572:         </div>
+573:         <div className="surface-chip rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-zinc-300">
+574:           {bolao.category === "public" ? t('page.public_label') : t('page.private_label')}
+575:         </div>
+576:       </div>
+577: 
+578:       <div className="mt-4 flex flex-wrap gap-3 text-sm text-zinc-300">
+579:         <span>{t('page.members_count', { count: bolao.memberCount })}</span>
+580:         <span>•</span>
+581:         <span>{t('page.code_label', { code: bolao.invite_code })}</span>
+582:       </div>
+583:     </Link>
+584:   );
+585: }
+586: 
+
+
+=== FILE: src\components\copa\SimulacaoTab.tsx (582 lines) ===
+1: import { useState, useMemo } from "react";
+2: import { createPortal } from "react-dom";
+3: import { useNavigate } from "react-router-dom";
+4: import { cn } from "@/lib/utils";
+5: import { Flag } from "@/components/Flag";
+6: import { groups as allGroupsList, getTeam } from "@/data/mockData";
+7: import { motion, AnimatePresence } from "framer-motion";
+8: import { staggerContainer, staggerItem } from "./animations";
+9: import {
+10:   RotateCcw, Trophy, ChevronDown, ChevronUp, Plus, ArrowLeft,
+11:   Trash2, Share2, MessageCircle, Link2, X, Pencil, Check
+12: } from "lucide-react";
+13: import { useSimulacao } from "@/contexts/SimulacaoContext";
+14: import { calcStandings } from "@/utils/simulacaoUtils";
+15: import { KnockoutPhase } from "./KnockoutPhase";
+16: import { useAuth } from "@/contexts/AuthContext";
+17: import { Skeleton } from "@/components/ui/skeleton";
+18: import { useToast } from "@/hooks/use-toast";
+19: import { useTranslation } from "react-i18next";
+20: 
+21: function ScoreInput({ value, onChange }: { value: number | null; onChange: (v: number | null) => void }) {
+22:   return (
+23:     <input
+24:       type="number"
+25:       min={0}
+26:       max={20}
+27:       value={value ?? ""}
+28:       onChange={e => {
+29:         const v = e.target.value;
+30:         onChange(v === "" ? null : Math.max(0, Math.min(20, parseInt(v) || 0)));
+31:       }}
+32:       className="w-10 h-10 rounded-lg bg-secondary border border-border text-center text-sm font-black focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+33:       placeholder="–"
+34:     />
+35:   );
+36: }
+37: 
+38: /* ───────── Share Sheet ───────── */
+39: function SimShareSheet({ open, onClose, sim }: {
+40:   open: boolean;
+41:   onClose: () => void;
+42:   sim: { name: string; standings: Record<string, { teamCode: string; points: number; gf: number; ga: number }[]> };
+43: }) {
+44:   const { toast } = useToast();
+45:   const { t } = useTranslation('copa');
+46: 
+47:   const buildShareText = () => {
+48:     let text = t('simulator.share.text_intro', { name: sim.name });
+49:     Object.entries(sim.standings).forEach(([g, teams]) => {
+50:       text += t('simulator.share.text_group', { group: g });
+51:       teams.slice(0, 2).forEach((tData, i) => {
+52:         const team = getTeam(tData.teamCode);
+53:         text += `  ${i + 1}. ${team.name} (${tData.points}pts)\n`;
+54:       });
+55:       text += "\n";
+56:     });
+57:     text += t('simulator.share.text_footer');
+58:     return text;
+59:   };
+60: 
+61:   const shareText = buildShareText();
+62:   const encoded = encodeURIComponent(shareText);
+63: 
+64:   const shareWhatsApp = () => { window.open(`https://wa.me/?text=${encoded}`, "_blank"); onClose(); };
+65:   const copyText = () => {
+66:     navigator.clipboard.writeText(shareText);
+67:     toast({ title: t('simulator.share.copied'), description: t('simulator.share.copied_desc') });
+68:     onClose();
+69:   };
+70:   const nativeShare = async () => {
+71:     if (navigator.share) {
+72:       try { await navigator.share({ title: `Simulação: ${sim.name}`, text: shareText }); onClose(); } catch { /* user cancelled */ }
+73:     }
+74:   };
+75: 
+76:   return createPortal(
+77:     <AnimatePresence>
+78:       {open && (
+79:         <>
+80:           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 z-[100]" onClick={onClose} />
+81:           <motion.div
+82:             initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
+83:             transition={{ type: "spring", damping: 30, stiffness: 400 }}
+84:             className="fixed bottom-0 left-0 right-0 z-[101] rounded-t-2xl bg-card border-t border-border/50 safe-bottom"
+85:           >
+86:             <div className="flex justify-center pt-3 pb-1"><div className="w-10 h-1 rounded-full bg-muted-foreground/30" /></div>
+87:             <div className="px-5 pb-2">
+88:               <div className="flex items-center justify-between mb-1">
+89:                 <h3 className="text-base font-black">{t('simulator.share.title')}</h3>
+90:                 <button onClick={onClose} className="p-1.5 rounded-lg bg-secondary"><X className="w-4 h-4" /></button>
+91:               </div>
+92:               <p className="text-xs text-muted-foreground mb-4">{t('simulator.share.desc')}</p>
+93:             </div>
+94:             <div className="px-5 pb-6 space-y-2">
+95:               <button onClick={shareWhatsApp} className="w-full flex items-center gap-3 p-3.5 rounded-xl bg-[#25D366]/10 border border-[#25D366]/20 hover:bg-[#25D366]/20 transition-colors">
+96:                 <div className="w-10 h-10 rounded-full bg-[#25D366] flex items-center justify-center shrink-0"><MessageCircle className="w-5 h-5 text-white" /></div>
+97:                 <div className="text-left"><span className="text-sm font-bold block">{t('simulator.share.whatsapp')}</span><span className="text-[10px] text-muted-foreground">{t('simulator.share.whatsapp_desc')}</span></div>
+98:               </button>
+99:               <button onClick={copyText} className="w-full flex items-center gap-3 p-3.5 rounded-xl bg-secondary hover:bg-secondary/80 transition-colors border border-border/30">
+100:                 <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center shrink-0"><Link2 className="w-5 h-5 text-accent-foreground" /></div>
+101:                 <div className="text-left"><span className="text-sm font-bold block">{t('simulator.share.copy')}</span><span className="text-[10px] text-muted-foreground">{t('simulator.share.copy_desc')}</span></div>
+102:               </button>
+103:               {typeof navigator !== "undefined" && "share" in navigator && (
+104:                 <button onClick={nativeShare} className="w-full flex items-center gap-3 p-3.5 rounded-xl bg-primary/10 border border-primary/20 hover:bg-primary/20 transition-colors">
+105:                   <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center shrink-0"><Share2 className="w-5 h-5 text-primary-foreground" /></div>
+106:                   <div className="text-left"><span className="text-sm font-bold block">{t('simulator.share.more')}</span><span className="text-[10px] text-muted-foreground">{t('simulator.share.more_desc')}</span></div>
+107:                 </button>
+108:               )}
+109:             </div>
+110:           </motion.div>
+111:         </>
+112:       )}
+113:     </AnimatePresence>,
+114:     document.body
+115:   );
+116: }
+117: 
+118: /* ───────── Create Simulation Modal ───────── */
+119: function CreateSimModal({ open, onClose, onCreate }: {
+120:   open: boolean;
+121:   onClose: () => void;
+122:   onCreate: (name: string, groups: string[]) => void;
+123: }) {
+124:   const { t } = useTranslation('copa');
+125:   const [name, setName] = useState("");
+126:   const [selected, setSelected] = useState<Set<string>>(new Set(allGroupsList));
+127: 
+128:   const toggleGroup = (g: string) => {
+129:     setSelected(prev => {
+130:       const next = new Set(prev);
+131:       if (next.has(g)) { if (next.size > 1) next.delete(g); } else next.add(g);
+132:       return next;
+133:     });
+134:   };
+135: 
+136:   const selectAll = () => setSelected(new Set(allGroupsList));
+137:   const handleCreate = () => {
+138:     if (!name.trim()) return;
+139:     onCreate(name.trim(), Array.from(selected).sort());
+140:     setName("");
+141:     setSelected(new Set(allGroupsList));
+142:     onClose();
+143:   };
+144: 
+145:   return createPortal(
+146:     <AnimatePresence>
+147:       {open && (
+148:         <>
+149:           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 z-[100]" onClick={onClose} />
+150:           <motion.div
+151:             initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }}
+152:             transition={{ type: "spring", damping: 30, stiffness: 400 }}
+153:             className="fixed bottom-0 left-0 right-0 z-[101] rounded-t-2xl bg-card border-t border-border/50 safe-bottom max-h-[85vh] overflow-y-auto"
+154:           >
+155:             <div className="flex justify-center pt-3 pb-1"><div className="w-10 h-1 rounded-full bg-muted-foreground/30" /></div>
+156:             <div className="px-5 pb-6 space-y-4">
+157:               <div className="flex items-center justify-between">
+158:                 <h3 className="text-base font-black">{t('simulator.create.title')}</h3>
+159:                 <button onClick={onClose} className="p-1.5 rounded-lg bg-secondary"><X className="w-4 h-4" /></button>
+160:               </div>
+161: 
+162:               {/* Name */}
+163:               <div>
+164:                 <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground block mb-1.5">{t('simulator.create.name_label')}</label>
+165:                 <input
+166:                   value={name}
+167:                   onChange={e => setName(e.target.value)}
+168:                   placeholder={t('simulator.create.name_placeholder')}
+169:                   className="w-full px-3 py-2.5 rounded-lg bg-secondary border border-border text-sm font-medium focus:outline-none focus:ring-2 focus:ring-primary/50"
+170:                   maxLength={50}
+171:                 />
+172:               </div>
+173: 
+174:               {/* Group selection */}
+175:               <div>
+176:                 <div className="flex items-center justify-between mb-1.5">
+177:                   <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{t('simulator.create.groups_label')}</label>
+178:                   <button onClick={selectAll} className="text-[10px] font-bold text-primary">{t('simulator.create.select_all')}</button>
+179:                 </div>
+180:                 <div className="grid grid-cols-6 gap-2">
+181:                   {allGroupsList.map(g => (
+182:                     <button
+183:                       key={g}
+184:                       onClick={() => toggleGroup(g)}
+185:                       className={cn(
+186:                         "h-10 rounded-lg text-xs font-black transition-all",
+187:                         selected.has(g)
+188:                           ? "bg-primary text-primary-foreground"
+189:                           : "bg-secondary text-muted-foreground"
+190:                       )}
+191:                     >
+192:                       {g}
+193:                     </button>
+194:                   ))}
+195:                 </div>
+196:               </div>
+197: 
+198:               <button
+199:                 onClick={handleCreate}
+200:                 disabled={!name.trim()}
+201:                 className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-bold text-sm disabled:opacity-40 transition-opacity"
+202:               >
+203:                 {t('simulator.create.button')}
+204:               </button>
+205:             </div>
+206:           </motion.div>
+207:         </>
+208:       )}
+209:     </AnimatePresence>,
+210:     document.body
+211:   );
+212: }
+213: 
+214: /* ───────── Simulation List ───────── */
+215: function SimulationList() {
+216:   const { simulations, loading, selectSimulation, deleteSimulation, createSimulation } = useSimulacao();
+217:   const { user } = useAuth();
+218:   const [createOpen, setCreateOpen] = useState(false);
+219:   const { toast } = useToast();
+220: 
+221:   const handleCreate = async (name: string, groups: string[]) => {
+222:     const id = await createSimulation(name, groups);
+223:     if (id) toast({ title: t('simulator.list.created') });
+224:   };
+225: 
+226:   const handleDelete = async (id: string, e: React.MouseEvent) => {
+227:     e.stopPropagation();
+228:     await deleteSimulation(id);
+229:     toast({ title: t('simulator.list.deleted') });
+230:   };
+231: 
+232:   if (loading) {
+233:     return (
+234:       <div className="space-y-3">
+235:         <Skeleton className="h-8 w-1/2" />
+236:         <Skeleton className="h-24 rounded-xl" />
+237:         <Skeleton className="h-24 rounded-xl" />
+238:       </div>
+239:     );
+240:   }
+241: 
+242:   if (!user) {
+243:     return (
+244:       <div className="glass-card p-6 text-center">
+245:         <span className="text-2xl mb-2 block">🔒</span>
+246:         <p className="text-sm font-bold">{t('simulator.list.login_title')}</p>
+247:         <p className="text-[11px] text-muted-foreground">{t('simulator.list.login_desc')}</p>
+248:       </div>
+249:     );
+250:   }
+251: 
+252:   return (
+253:     <div className="space-y-4">
+254:       <div className="flex items-center justify-between">
+255:         <div>
+256:           <h2 className="text-lg font-black">{t('simulator.list.title')}</h2>
+257:           <p className="text-[11px] text-muted-foreground">{t('simulator.list.subtitle')}</p>
+258:         </div>
+259:         <button
+260:           onClick={() => setCreateOpen(true)}
+261:           className="flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-lg bg-primary text-primary-foreground"
+262:         >
+263:           <Plus className="w-3.5 h-3.5" />
+264:           {t('simulator.list.new')}
+265:         </button>
+266:       </div>
+267: 
+268:       {simulations.length === 0 ? (
+269:         <motion.div
+270:           initial={{ opacity: 0, y: 12 }}
+271:           animate={{ opacity: 1, y: 0 }}
+272:           className="glass-card p-6 text-center"
+273:         >
+274:           <span className="text-3xl mb-2 block">⚽</span>
+275:           <p className="text-sm font-bold">{t('simulator.list.empty_title')}</p>
+276:           <p className="text-[11px] text-muted-foreground mb-4">{t('simulator.list.empty_desc')}</p>
+277:           <button
+278:             onClick={() => setCreateOpen(true)}
+279:             className="text-xs font-bold px-4 py-2 rounded-lg bg-primary text-primary-foreground"
+280:           >
+281:             {t('simulator.list.create_first')}
+282:           </button>
+283:         </motion.div>
+284:       ) : (
+285:         <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="space-y-3 md:space-y-0 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-4">
+286:           {simulations.map(sim => {
+287:             const groupCount = sim.selectedGroups.length;
+288:             const totalM = Object.values(sim.matches || {}).reduce((s, ms) => s + (ms?.length || 0), 0);
+289:             const filled = Object.values(sim.matches || {}).reduce(
+290:               (s, ms) => s + (ms?.filter(m => m.homeScore !== null && m.awayScore !== null).length || 0), 0
+291:             );
+292:             const progress = totalM > 0 ? Math.round((filled / totalM) * 100) : 0;
+293: 
+294:             return (
+295:               <motion.div
+296:                 key={sim.id}
+297:                 variants={staggerItem}
+298:                 whileTap={{ scale: 0.98 }}
+299:                 onClick={() => selectSimulation(sim.id)}
+300:                 className="glass-card p-4 cursor-pointer"
+301:               >
+302:                 <div className="flex items-center justify-between mb-2">
+303:                   <h3 className="text-sm font-black truncate flex-1">{sim.name}</h3>
+304:                   <button
+305:                     onClick={(e) => handleDelete(sim.id, e)}
+306:                     className="p-1.5 rounded-lg bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors ml-2 shrink-0"
+307:                   >
+308:                     <Trash2 className="w-3.5 h-3.5" />
+309:                   </button>
+310:                 </div>
+311:                 <div className="flex items-center gap-3 text-[10px] text-muted-foreground mb-2">
+312:                   <span>{t('simulator.list.groups_count', { count: groupCount })}</span>
+313:                   <span>•</span>
+314:                   <span>{t('simulator.list.games_count', { filled, total: totalM })}</span>
+315:                   <span>•</span>
+316:                   <span>{new Date(sim.updatedAt).toLocaleDateString("pt-BR")}</span>
+317:                 </div>
+318:                 <div className="w-full h-1.5 bg-secondary rounded-full overflow-hidden">
+319:                   <div className="h-full bg-primary rounded-full transition-all" style={{ width: `${progress}%` }} />
+320:                 </div>
+321:               </motion.div>
+322:             );
+323:           })}
+324:         </motion.div>
+325:       )}
+326: 
+327:       <CreateSimModal open={createOpen} onClose={() => setCreateOpen(false)} onCreate={handleCreate} />
+328:     </div>
+329:   );
+330: }
+331: 
+332: /* ───────── Simulation Editor ───────── */
+333: function SimulationEditor() {
+334:   const {
+335:     currentSim, allMatches, standings, filledCount, totalMatches,
+336:     updateScore, resetAll, goBackToList, renameSimulation,
+337:     isGroupsComplete,
+338:   } = useSimulacao();
+339:   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
+340:   const [shareOpen, setShareOpen] = useState(false);
+341:   const [editing, setEditing] = useState(false);
+342:   const [editName, setEditName] = useState("");
+343:   const [phase, setPhase] = useState<"groups" | "knockout">("groups");
+344:   const navigate = useNavigate();
+345: 
+346:   if (!currentSim) return null;
+347: 
+348:   const toggleGroup = (g: string) => {
+349:     setExpandedGroups(prev => {
+350:       const next = new Set(prev);
+351:       if (next.has(g)) next.delete(g); else next.add(g);
+352:       return next;
+353:     });
+354:   };
+355: 
+356:   const progress = totalMatches > 0 ? Math.round((filledCount / totalMatches) * 100) : 0;
+357:   const selectedGroups = currentSim.selectedGroups;
+358: 
+359:   const startEdit = () => { setEditName(currentSim.name); setEditing(true); };
+360:   const saveEdit = () => {
+361:     if (editName.trim()) renameSimulation(currentSim.id, editName.trim());
+362:     setEditing(false);
+363:   };
+364: 
+365:   return (
+366:     <div className="space-y-4">
+367:       {/* Header */}
+368:       <div className="flex items-center gap-3">
+369:         <button onClick={goBackToList} className="p-1.5 rounded-lg bg-secondary shrink-0">
+370:           <ArrowLeft className="w-4 h-4" />
+371:         </button>
+372:         <div className="flex-1 min-w-0">
+373:           {editing ? (
+374:             <div className="flex items-center gap-2">
+375:               <input
+376:                 value={editName}
+377:                 onChange={e => setEditName(e.target.value)}
+378:                 className="flex-1 text-lg font-black bg-secondary px-2 py-1 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary/50"
+379:                 autoFocus
+380:                 onKeyDown={e => e.key === "Enter" && saveEdit()}
+381:                 maxLength={50}
+382:               />
+383:               <button onClick={saveEdit} className="p-1.5 rounded-lg bg-primary text-primary-foreground">
+384:                 <Check className="w-4 h-4" />
+385:               </button>
+386:             </div>
+387:           ) : (
+388:             <div className="flex items-center gap-2">
+389:               <h2 className="text-lg font-black truncate">{currentSim.name}</h2>
+390:               <button onClick={startEdit} className="p-1 rounded-md hover:bg-secondary transition-colors shrink-0">
+391:                 <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
+392:               </button>
+393:             </div>
+394:           )}
+395:           <p className="text-[11px] text-muted-foreground">
+396:             {t('simulator.editor.selected_groups', { count: selectedGroups.length })}
+397:           </p>
+398:         </div>
+399:         <div className="flex items-center gap-1.5 shrink-0">
+400:           <button
+401:             onClick={() => setShareOpen(true)}
+402:             className="p-2 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors"
+403:           >
+404:             <Share2 className="w-4 h-4 text-primary" />
+405:           </button>
+406:           <button
+407:             onClick={resetAll}
+408:             className="p-2 rounded-lg bg-secondary hover:bg-secondary/80 transition-colors"
+409:           >
+410:             <RotateCcw className="w-4 h-4 text-muted-foreground" />
+411:           </button>
+412:         </div>
+413:       </div>
+414: 
+415:       {/* Progress bar */}
+416:       <div className="glass-card p-3">
+417:         <div className="flex items-center justify-between mb-2">
+418:           <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{t('simulator.editor.progress')}</span>
+419:           <span className="text-xs font-black text-primary">{t('simulator.editor.games_count', { filled: filledCount, total: totalMatches })}</span>
+420:         </div>
+421:         <div className="w-full h-2 bg-secondary rounded-full overflow-hidden">
+422:           <motion.div
+423:             className="h-full bg-primary rounded-full"
+424:             initial={{ width: 0 }}
+425:             animate={{ width: `${progress}%` }}
+426:             transition={{ duration: 0.4 }}
+427:           />
+428:         </div>
+429:       </div>
+430: 
+431:       {/* Phase Toggle (only when all 12 groups selected) */}
+432:       {currentSim.selectedGroups.length === 12 && (
+433:         <div className="flex gap-2">
+434:           <button
+435:             onClick={() => setPhase("groups")}
+436:             className={cn(
+437:               "flex-1 py-2.5 rounded-xl text-xs font-bold transition-colors",
+438:               phase === "groups" ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"
+439:             )}
+440:           >
+441:             {t('simulator.editor.phase_groups')}
+442:           </button>
+443:           <button
+444:             onClick={() => setPhase("knockout")}
+445:             className={cn(
+446:               "flex-1 py-2.5 rounded-xl text-xs font-bold transition-colors relative",
+447:               phase === "knockout" ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground",
+448:               !isGroupsComplete && "opacity-50"
+449:             )}
+450:             disabled={!isGroupsComplete}
+451:           >
+452:             {t('simulator.editor.phase_knockout')}
+453:             {isGroupsComplete && (
+454:               <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-copa-success rounded-full" />
+455:             )}
+456:           </button>
+457:         </div>
+458:       )}
+459: 
+460:       {/* Groups */}
+461:       {phase === "groups" && (
+462:         <motion.div variants={staggerContainer} initial="hidden" animate="visible" className="space-y-3 md:space-y-0 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-4">
+463:           {selectedGroups.map(g => {
+464:             const groupMatches = allMatches[g];
+465:             if (!groupMatches) return null;
+466:             const expanded = expandedGroups.has(g);
+467:             const groupStandings = standings[g] || [];
+468:             const groupFilled = groupMatches.filter(m => m.homeScore !== null && m.awayScore !== null).length;
+469:             const groupComplete = groupFilled === groupMatches.length;
+470: 
+471:             return (
+472:               <motion.div key={g} variants={staggerItem} className="glass-card overflow-hidden">
+473:                 <button onClick={() => toggleGroup(g)} className="w-full flex items-center justify-between p-4">
+474:                   <div className="flex items-center gap-3">
+475:                     <h3 className="text-base font-black">{t('match_details.group_label', { group: g })}</h3>
+476:                     <span className={cn(
+477:                       "text-[10px] font-bold px-2 py-0.5 rounded-full",
+478:                       groupComplete ? "bg-copa-success/20 text-copa-success" :
+479:                         groupFilled > 0 ? "bg-primary/20 text-primary" :
+480:                           "bg-secondary text-muted-foreground"
+481:                     )}>
+482:                       {groupComplete ? t('simulator.editor.group_complete') : `${groupFilled}/${groupMatches.length}`}
+483:                     </span>
+484:                   </div>
+485:                   {expanded ? <ChevronUp className="w-4 h-4 text-muted-foreground" /> : <ChevronDown className="w-4 h-4 text-muted-foreground" />}
+486:                 </button>
+487: 
+488:                 {expanded && (
+489:                   <div className="px-4 pb-4 space-y-4">
+490:                     <div className="space-y-2">
+491:                       {groupMatches.map((m, idx) => {
+492:                         const home = getTeam(m.home);
+493:                         const away = getTeam(m.away);
+494:                         return (
+495:                           <div key={`${m.home}-${m.away}`} className="flex items-center gap-2 py-2">
+496:                             <div
+497:                               className="flex items-center gap-1.5 flex-1 justify-end cursor-pointer hover:underline"
+498:                               onClick={() => navigate(`/team/${home.code}`)}
+499:                             >
+500:                               <span className="text-xs font-bold truncate max-w-[60px]">{home.name}</span>
+501:                               <Flag code={home.code} size="sm" />
+502:                             </div>
+503:                             <ScoreInput value={m.homeScore} onChange={v => updateScore(g, idx, "home", v)} />
+504:                             <span className="text-xs font-bold text-muted-foreground">×</span>
+505:                             <ScoreInput value={m.awayScore} onChange={v => updateScore(g, idx, "away", v)} />
+506:                             <div
+507:                               className="flex items-center gap-1.5 flex-1 cursor-pointer hover:underline"
+508:                               onClick={() => navigate(`/team/${away.code}`)}
+509:                             >
+510:                               <Flag code={away.code} size="sm" />
+511:                               <span className="text-xs font-bold truncate max-w-[60px]">{away.name}</span>
+512:                             </div>
+513:                           </div>
+514:                         );
+515:                       })}
+516:                     </div>
+517: 
+518:                     {groupFilled > 0 && (
+519:                       <div className="border-t border-border/30 pt-3">
+520:                         <span className="text-[10px] font-bold uppercase tracking-wider text-primary mb-2 block">{t('simulator.editor.standings')}</span>
+521:                         <div className="grid grid-cols-[16px_1fr_24px_24px_24px_24px] gap-x-1.5 px-1 py-1 text-[9px] font-bold uppercase tracking-wider text-muted-foreground">
+522:                           <span>#</span><span>{t('groups.table.country')}</span>
+523:                           <span className="text-center">{t('groups.table.j')}</span><span className="text-center">{t('groups.table.w')}</span>
+524:                           <span className="text-center">{t('groups.table.gd')}</span><span className="text-center">{t('groups.table.p')}</span>
+525:                         </div>
+526:                         {groupStandings.map((s, i) => {
+527:                           const team = getTeam(s.teamCode);
+528:                           const qualifies = i < 2;
+529:                           const gd = s.gf - s.ga;
+530:                           return (
+531:                             <div key={s.teamCode} className={cn(
+532:                               "grid grid-cols-[16px_1fr_24px_24px_24px_24px] gap-x-1.5 items-center px-1 py-2 rounded-md",
+533:                               qualifies && "bg-copa-success/10"
+534:                             )}>
+535:                               <span className={cn("text-xs font-bold", qualifies ? "text-copa-success" : "text-muted-foreground")}>
+536:                                 {qualifies && <Trophy className="w-3 h-3 inline" />}
+537:                                 {!qualifies && (i + 1)}
+538:                               </span>
+539:                               <div
+540:                                 className="flex items-center gap-1.5 cursor-pointer hover:underline"
+541:                                 onClick={() => navigate(`/team/${team.code}`)}
+542:                               >
+543:                                 <Flag code={team.code} size="sm" />
+544:                                 <span className={cn("text-xs", qualifies ? "font-black" : "font-medium")}>{team.name}</span>
+545:                               </div>
+546:                               <span className="text-center text-xs">{s.played}</span>
+547:                               <span className="text-center text-xs">{s.won}</span>
+548:                               <span className="text-center text-xs">{gd >= 0 ? `+${gd}` : gd}</span>
+549:                               <span className={cn("text-center text-xs", qualifies && "font-black text-copa-success")}>{s.points}</span>
+550:                             </div>
+551:                           );
+552:                         })}
+553:                       </div>
+554:                     )}
+555:                   </div>
+556:                 )}
+557:               </motion.div>
+558:             );
+559:           })}
+560:         </motion.div>
+561:       )}
+562: 
+563:       {/* Knockout Phase */}
+564:       {phase === "knockout" && <KnockoutPhase />}
+565: 
+566:       {/* Share Sheet */}
+567:       <SimShareSheet
+568:         open={shareOpen}
+569:         onClose={() => setShareOpen(false)}
+570:         sim={{ name: currentSim.name, standings }}
+571:       />
+572:     </div>
+573:   );
+574: }
+575: 
+576: /* ───────── Main Tab ───────── */
+577: export function SimulacaoTab() {
+578:   const { currentSim } = useSimulacao();
+579: 
+580:   return currentSim ? <SimulationEditor /> : <SimulationList />;
+581: }
+582: 
+
+
+=== FILE NOT FOUND: src\components\copa\BolaoDetail.tsx ===
+
+
+=== FILE: src\pages\Perfil.tsx (716 lines) ===
+1: import { useState, useEffect, useCallback } from "react";
+2: import { useTranslation } from "react-i18next";
+3: import { teams, getTeam } from "@/data/mockData";
+4: import { Flag } from "@/components/Flag";
+5: import { cn } from "@/lib/utils";
+6: import { LogOut, Settings, Bell, Sparkles, Goal, Newspaper, Clock, Loader2, Languages, Target, Star, Crown, Zap, Trophy, Medal, Award, Heart, BookOpen } from "lucide-react";
+7: import { useAuth } from "@/contexts/AuthContext";
+8: import { db } from "@/integrations/firebase/client";
+9: import { useNavigate } from "react-router-dom";
+10: import { useToast } from "@/hooks/use-toast";
+11: import { useLanguage } from "@/i18n/useLanguage";
+12: import { useProfileStats } from "@/hooks/useProfileStats";
+13: import { deleteDoc, doc, setDoc } from "firebase/firestore";
+14: 
+15: import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+16: import { Input } from "@/components/ui/input";
+17: import { Label } from "@/components/ui/label";
+18: import { Button } from "@/components/ui/button";
+19: import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+20: import { Textarea } from "@/components/ui/textarea";
+21: import { Flag as FlagIcon } from "lucide-react";
+22: import { getProfile, updateFavoriteTeam, updateProfile, uploadAvatar } from "@/services/profile/profile.service";
+23: import type { ProfileRecord } from "@/services/profile/profile.types";
+24: import { setStoredFavoriteTeam } from "@/lib/favorite-team";
+25: 
+26: function urlBase64ToUint8Array(base64String: string) {
+27:   const padding = '='.repeat((4 - base64String.length % 4) % 4);
+28:   const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+29:   const rawData = window.atob(base64);
+30:   const outputArray = new Uint8Array(rawData.length);
+31:   for (let i = 0; i < rawData.length; ++i) {
+32:     outputArray[i] = rawData.charCodeAt(i);
+33:   }
+34:   return outputArray;
+35: }
+36: 
+37: function getPushSubscriptionDocId(userId: string, endpoint: string) {
+38:   return `${userId}_${encodeURIComponent(endpoint)}`;
+39: }
+40: 
+41: const Perfil = () => {
+42:   const { user, signOut } = useAuth();
+43:   const navigate = useNavigate();
+44:   const { toast } = useToast();
+45:   const { t } = useTranslation('profile');
+46:   const { language, changeLanguage } = useLanguage();
+47:   const [profile, setProfile] = useState<ProfileRecord | null>(null);
+48: 
+49:   const [isEditing, setIsEditing] = useState(false);
+50:   const [editForm, setEditForm] = useState({
+51:     name: "",
+52:     nickname: "",
+53:     bio: "",
+54:     birth_date: "",
+55:     gender: "",
+56:     nationality: ""
+57:   });
+58:   const [showTeamPicker, setShowTeamPicker] = useState(false);
+59:   const [loading, setLoading] = useState(true);
+60: 
+61:   const { data: stats } = useProfileStats(user?.id);
+62: 
+63:   const fetchProfile = useCallback(async () => {
+64:     if (!user) return;
+65:     try {
+66:       const data = await getProfile(user.id);
+67:       if (data) {
+68:         setProfile(data);
+69:         setEditForm({
+70:           name: data.name || "",
+71:           nickname: data.nickname || "",
+72:           bio: data.bio || "",
+73:           birth_date: data.birth_date || "",
+74:           gender: data.gender || "",
+75:           nationality: data.nationality || ""
+76:         });
+77:       }
+78:     } catch (error) {
+79:       console.error(error);
+80:     }
+81:     setLoading(false);
+82:   }, [user]);
+83: 
+84:   useEffect(() => {
+85:     fetchProfile();
+86:   }, [fetchProfile]);
+87: 
+88:   const handleSignOut = async () => {
+89:     await signOut();
+90:     navigate("/auth");
+91:   };
+92: 
+93:   const setFavoriteTeam = async (code: string) => {
+94:     setProfile(prev => prev ? { ...prev, favorite_team: code } : null);
+95:     if (user?.id) {
+96:       await updateFavoriteTeam(user.id, code);
+97:     }
+98:     setStoredFavoriteTeam(code);
+99:   };
+100: 
+101:   /* Safe access to team with fallback */
+102:   const favoriteTeam = profile?.favorite_team || localStorage.getItem("favorite_team") || "BRA";
+103:   const team = getTeam(favoriteTeam) || getTeam("BRA") || teams[0];
+104:   const displayName = profile?.name || user?.email?.split("@")[0] || "Usuário";
+105:   const initials = displayName.slice(0, 2).toUpperCase();
+106: 
+107:   if (loading) {
+108:     return (
+109:       <div className="flex items-center justify-center h-64">
+110:         <Loader2 className="w-6 h-6 animate-spin text-primary" />
+111:       </div>
+112:     );
+113:   }
+114: 
+115:   return (
+116:     <div className="px-4 py-4 space-y-6">
+117:       {/* Profile header */}
+118:       <div className="flex flex-col items-center pt-4 pb-2">
+119:         <div className="w-24 h-24 rounded-full bg-gradient-to-br from-copa-green to-copa-green-light flex items-center justify-center text-3xl font-black mb-3 border-4 border-primary/20 relative group cursor-pointer overflow-hidden">
+120:           {profile?.avatar_url ? (
+121:             <img src={profile.avatar_url} alt={displayName} className="w-full h-full rounded-full object-cover" />
+122:           ) : (
+123:             initials
+124:           )}
+125: 
+126:           <label className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+127:             <span className="text-[11px] font-bold text-white uppercase tracking-[0.12em]">{t('upload_photo')}</span>
+128:             <input
+129:               type="file"
+130:               accept="image/*"
+131:               className="hidden"
+132:               onChange={async (e) => {
+133:                 const file = e.target.files?.[0];
+134:                 if (!file || !user) return;
+135: 
+136:                 try {
+137:                   toast({ title: t('common:common.loading'), description: t('avatar_uploading') });
+138:                   const publicUrl = await uploadAvatar(user.id, file);
+139: 
+140:                   setProfile(prev => prev ? { ...prev, avatar_url: publicUrl } : null);
+141:                   toast({ title: t('bolao:create_bolao.notification.created_title'), description: t('avatar_success') });
+142:                 } catch (error) {
+143:                   console.error('Error uploading avatar:', error);
+144:                   toast({ title: t('bolao:common.error_title'), description: t('bolao:common.error_desc'), variant: "destructive" });
+145:                 }
+146:               }}
+147:             />
+148:           </label>
+149:         </div>
+150:         <h2 className="text-xl font-black">{displayName}</h2>
+151:         <span className="text-xs text-muted-foreground">{user?.email}</span>
+152: 
+153:         <Dialog
+154:           open={isEditing}
+155:           onOpenChange={(open) => {
+156:             setIsEditing(open);
+157:             if (open && profile) {
+158:               setEditForm({
+159:                 name: profile.name || "",
+160:                 nickname: profile.nickname || "",
+161:                 bio: profile.bio || "",
+162:                 birth_date: profile.birth_date || "",
+163:                 gender: profile.gender || "",
+164:                 nationality: profile.nationality || ""
+165:               });
+166:             }
+167:           }}
+168:         >
+169:           <DialogTrigger asChild>
+170:             <Button variant="outline" size="sm" className="mt-3 h-7 text-xs gap-1.5">
+171:               <Settings className="w-3 h-3" />
+172:               {t('edit')}
+173:             </Button>
+174:           </DialogTrigger>
+175:           <DialogContent className="sm:max-w-md w-[95%] rounded-xl">
+176:             <DialogHeader>
+177:               <DialogTitle>{t('edit_modal_title')}</DialogTitle>
+178:             </DialogHeader>
+179:             <div className="space-y-4 py-2">
+180:               <div className="space-y-2">
+181:                 <Label htmlFor="name">{t('full_name')}</Label>
+182:                 <Input
+183:                   id="name"
+184:                   value={editForm.name}
+185:                   onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
+186:                 />
+187:               </div>
+188: 
+189:               <div className="grid grid-cols-2 gap-4">
+190:                 <div className="space-y-2">
+191:                   <Label htmlFor="nickname">{t('nickname')}</Label>
+192:                   <Input
+193:                     id="nickname"
+194:                     value={editForm.nickname}
+195:                     onChange={(e) => setEditForm(prev => ({ ...prev, nickname: e.target.value }))}
+196:                     placeholder={t('nickname_placeholder')}
+197:                   />
+198:                 </div>
+199: 
+200:                 <div className="space-y-2">
+201:                   <Label htmlFor="birth_date">{t('birth_date')}</Label>
+202:                   <Input
+203:                     id="birth_date"
+204:                     type="date"
+205:                     value={editForm.birth_date}
+206:                     onChange={(e) => setEditForm(prev => ({ ...prev, birth_date: e.target.value }))}
+207:                   />
+208:                 </div>
+209:               </div>
+210: 
+211:               <div className="grid grid-cols-2 gap-4">
+212:                 <div className="space-y-2">
+213:                   <Label>{t('gender')}</Label>
+214:                   <Select
+215:                     value={editForm.gender}
+216:                     onValueChange={(value) => setEditForm(prev => ({ ...prev, gender: value }))}
+217:                   >
+218:                     <SelectTrigger>
+219:                       <SelectValue placeholder={t('gender_placeholder')} />
+220:                     </SelectTrigger>
+221:                     <SelectContent>
+222:                       <SelectItem value="masculino">{t('gender_male')}</SelectItem>
+223:                       <SelectItem value="feminino">{t('gender_female')}</SelectItem>
+224:                       <SelectItem value="outro">{t('gender_other')}</SelectItem>
+225:                       <SelectItem value="prefiro_nao_dizer">{t('gender_none')}</SelectItem>
+226:                     </SelectContent>
+227:                   </Select>
+228:                 </div>
+229: 
+230:                 <div className="space-y-2">
+231:                   <Label htmlFor="nationality">{t('nationality')}</Label>
+232:                   <div className="relative">
+233:                     <FlagIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+234:                     <Input
+235:                       id="nationality"
+236:                       className="pl-9"
+237:                       value={editForm.nationality}
+238:                       onChange={(e) => setEditForm(prev => ({ ...prev, nationality: e.target.value }))}
+239:                       placeholder={t('nationality_placeholder')}
+240:                     />
+241:                   </div>
+242:                 </div>
+243:               </div>
+244: 
+245:               <div className="space-y-2">
+246:                 <Label htmlFor="bio">{t('bio')}</Label>
+247:                 <Textarea
+248:                   id="bio"
+249:                   value={editForm.bio}
+250:                   onChange={(e) => setEditForm(prev => ({ ...prev, bio: e.target.value }))}
+251:                   placeholder={t('bio_placeholder')}
+252:                   className="resize-none h-20"
+253:                 />
+254:               </div>
+255: 
+256:               <Button
+257:                 className="w-full font-bold"
+258:                 onClick={async () => {
+259:                   try {
+260:                     setLoading(true);
+261:                     if (!user?.id) throw new Error("No user");
+262:                     const updateData = {
+263:                       name: editForm.name,
+264:                       nickname: editForm.nickname,
+265:                       bio: editForm.bio,
+266:                       birth_date: editForm.birth_date || null,
+267:                       gender: editForm.gender,
+268:                       nationality: editForm.nationality
+269:                     };
+270:                     await updateProfile(user.id, updateData);
+271: 
+272:                     setProfile(prev => prev ? {
+273:                       ...prev,
+274:                       name: editForm.name,
+275:                       nickname: editForm.nickname,
+276:                       bio: editForm.bio,
+277:                       birth_date: editForm.birth_date || null,
+278:                       gender: editForm.gender,
+279:                       nationality: editForm.nationality
+280:                     } : null);
+281: 
+282:                     toast({ title: t('update_success') });
+283:                     setIsEditing(false);
+284:                   } catch (error) {
+285:                     console.error("Error updating profile:", error);
+286:                     toast({
+287:                       title: t('bolao:common.error_title'),
+288:                       description: t('bolao:common.error_desc'),
+289:                       variant: "destructive"
+290:                     });
+291:                   } finally {
+292:                     setLoading(false);
+293:                   }
+294:                 }}
+295:               >
+296:                 {t('save_changes')}
+297:               </Button>
+298:             </div>
+299:           </DialogContent>
+300:         </Dialog>
+301: 
+302:         {/* Info Cards */}
+303:         <div className="grid grid-cols-2 gap-2 w-full mt-4">
+304:           <div className="glass-card p-3 flex flex-col gap-1 items-center justify-center text-center">
+305:             <span className="text-[11px] uppercase font-bold tracking-[0.12em] text-muted-foreground">{t('nickname')}</span>
+306:             <span className="text-sm font-bold">{profile?.nickname || "-"}</span>
+307:           </div>
+308:           <div className="glass-card p-3 flex flex-col gap-1 items-center justify-center text-center">
+309:             <span className="text-[11px] uppercase font-bold tracking-[0.12em] text-muted-foreground">{t('nationality')}</span>
+310:             <div className="flex items-center gap-1.5">
+311:               {profile?.nationality && <FlagIcon className="w-3 h-3 text-primary" />}
+312:               <span className="text-sm font-bold">{profile?.nationality || "-"}</span>
+313:             </div>
+314:           </div>
+315:         </div>
+316:       </div>
+317: 
+318:       {/* Gamification / Statistics & Achievements */}
+319:       <section>
+320:         <div className="flex items-center justify-between mb-3">
+321:           <div className="flex items-center gap-1.5">
+322:             <Trophy className="w-4 h-4 text-emerald-400" />
+323:             <h3 className="text-[11px] font-black uppercase tracking-[0.12em] text-gray-300">{t('performance_title')}</h3>
+324:           </div>
+325:         </div>
+326: 
+327:         {/* Stats Grid */}
+328:         <div className="grid grid-cols-2 gap-3 mb-4">
+329:           <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between backdrop-blur-md">
+330:             <div>
+331:               <p className="text-[11px] text-gray-400 font-bold uppercase tracking-[0.12em] mb-1">{t('stat_total_points')}</p>
+332:               <h4 className="text-2xl font-black text-white leading-none">{stats?.points || 0}</h4>
+333:             </div>
+334:             <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20">
+335:               <Star className="w-5 h-5 text-primary" />
+336:             </div>
+337:           </div>
+338:           <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between backdrop-blur-md">
+339:             <div>
+340:               <p className="text-[11px] text-gray-400 font-bold uppercase tracking-[0.12em] mb-1">{t('stat_efficiency')}</p>
+341:               <h4 className="text-2xl font-black text-white leading-none">{stats?.efficiency || 0}%</h4>
+342:             </div>
+343:             <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
+344:               <Target className="w-5 h-5 text-blue-400" />
+345:             </div>
+346:           </div>
+347:           <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between backdrop-blur-md">
+348:             <div>
+349:               <p className="text-[11px] text-gray-400 font-bold uppercase tracking-[0.12em] mb-1">{t('stat_exact_scores')}</p>
+350:               <h4 className="text-2xl font-black text-white leading-none">{stats?.exactScores || 0}</h4>
+351:             </div>
+352:             <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
+353:               <Goal className="w-5 h-5 text-emerald-400" />
+354:             </div>
+355:           </div>
+356:           <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between backdrop-blur-md">
+357:             <div>
+358:               <p className="text-[11px] text-gray-400 font-bold uppercase tracking-[0.12em] mb-1">{t('stat_titles')}</p>
+359:               <h4 className="text-2xl font-black text-white leading-none">{stats?.titles || 0}</h4>
+360:             </div>
+361:             <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center border border-amber-500/20">
+362:               <Crown className="w-5 h-5 text-amber-500" />
+363:             </div>
+364:           </div>
+365:         </div>
+366: 
+367:         {/* Achievements Horizontal Scroll */}
+368:         <div className="space-y-2">
+369:           <p className="text-[11px] text-gray-300 font-bold uppercase tracking-[0.12em] px-1">{t('achievements_title')}</p>
+370:           <div className="flex gap-3 overflow-x-auto pb-4 snap-x hide-scrollbar">
+371:             {[
+372:               { id: "primeiro_palpite", title: "Chute Inicial", desc: "Deu seu primeiro palpite", icon: <Goal className="w-6 h-6 text-primary" />, color: "primary", unlocked: (stats?.totalPredictions || 0) > 0 },
+373:               { id: "placar_exato", title: "Na Mosca", desc: "Acertou 1 placar exato", icon: <Target className="w-6 h-6 text-blue-400" />, color: "blue-500", unlocked: (stats?.exactScores || 0) > 0 },
+374:               { id: "criador_bolao", title: "Líder nato", desc: "Criou um bolão", icon: <Crown className="w-6 h-6 text-amber-500" />, color: "amber-500", unlocked: (stats?.createdBoloes || 0) > 0 },
+375:               { id: "combo_3", title: "Hat-trick", desc: "Acertou 3 exatos totais", icon: <Zap className="w-6 h-6 text-violet-400" />, color: "violet-400", unlocked: (stats?.exactScores || 0) >= 3 },
+376:               { id: "campeao", title: "Campeão", desc: "Venceu um bolão inteiro", icon: <Trophy className="w-6 h-6 text-emerald-400" />, color: "emerald-400", unlocked: (stats?.titles || 0) > 0 },
+377:             ].map(ach => (
+378:               <div
+379:                 key={ach.id}
+380:                 className={cn(
+381:                   "snap-center shrink-0 w-[140px] p-4 rounded-3xl border flex flex-col items-center justify-center text-center transition-all",
+382:                   ach.unlocked
+383:                     ? "bg-white/10 border-white/20 shadow-xl"
+384:                     : "bg-white/[0.02] border-white/5 opacity-50 grayscale"
+385:                 )}
+386:               >
+387:                 <div className={cn(
+388:                   "w-12 h-12 rounded-[16px] flex items-center justify-center mb-3",
+389:                   ach.unlocked ? "bg-primary/20" : "bg-white/5"
+390:                 )}>
+391:                   {ach.icon}
+392:                 </div>
+393:                 <span className="text-xs font-black text-white mb-1 leading-tight">{ach.title}</span>
+394:                 <span className="text-[10px] text-gray-400 font-medium leading-tight">{ach.unlocked ? ach.desc : "Bloqueado"}</span>
+395:               </div>
+396:             ))}
+397:             {/* spacer for scroll */}
+398:             <div className="snap-center shrink-0 w-2" />
+399:           </div>
+400:         </div>
+401:       </section>
+402: 
+403:       {/* My Team */}
+404:       <section>
+405:         <div className="flex items-center justify-between mb-2">
+406:           <div className="flex items-center gap-1.5">
+407:             <Settings className="w-3.5 h-3.5 text-primary" />
+408:             <h3 className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">{t('my_team')}</h3>
+409:           </div>
+410:           <button
+411:             onClick={() => setShowTeamPicker(!showTeamPicker)}
+412:             aria-expanded={showTeamPicker}
+413:             className="text-sm text-primary font-semibold"
+414:           >
+415:             {t('edit_team')}
+416:           </button>
+417:         </div>
+418: 
+419:         <div className="glass-card p-4">
+420:           <div className="flex items-center gap-3 pb-3 border-b border-border/30">
+421:             <Flag code={team.code} size="xl" className="border-2 border-copa-green/30" />
+422:             <div>
+423:               <h4 className="text-base font-black">{team.name}</h4>
+424:               <span className="text-xs text-muted-foreground">{t('bolao:common.group')} {team.group}</span>
+425:             </div>
+426:           </div>
+427: 
+428:           <div className="pt-3">
+429:             <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground block mb-2">{t('quick_switch')}</span>
+430:             <div className="flex gap-2">
+431:               {teams.slice(0, 4).map(t => (
+432:                 <button
+433:                   key={t.code}
+434:                   onClick={() => setFavoriteTeam(t.code)}
+435:                   aria-label={`Escolher ${t.name} como time favorito`}
+436:                   className={cn(
+437:                     "w-11 h-11 rounded-full overflow-hidden transition-all",
+438:                     favoriteTeam === t.code && "ring-2 ring-primary"
+439:                   )}
+440:                 >
+441:                   <Flag code={t.code} size="md" className="w-11 h-11" />
+442:                 </button>
+443:               ))}
+444:               <button
+445:                 onClick={() => setShowTeamPicker(true)}
+446:                 aria-label="Abrir seletor completo de times"
+447:                 className="w-11 h-11 rounded-full bg-secondary flex items-center justify-center text-lg text-muted-foreground"
+448:               >
+449:                 +
+450:               </button>
+451:             </div>
+452:           </div>
+453:         </div>
+454: 
+455:         {showTeamPicker && (
+456:           <div className="glass-card mt-2 p-3 max-h-60 overflow-y-auto">
+457:             <div className="grid grid-cols-5 gap-1.5">
+458:               {teams.map(t => (
+459:                 <button
+460:                   key={t.code}
+461:                   onClick={() => {
+462:                     setFavoriteTeam(t.code);
+463:                     setShowTeamPicker(false);
+464:                   }}
+465:                   className={cn(
+466:                     "flex flex-col items-center gap-0.5 p-2 rounded-lg transition-colors",
+467:                     favoriteTeam === t.code ? "bg-primary/20 ring-1 ring-primary" : "hover:bg-secondary"
+468:                   )}
+469:                 >
+470:                   <Flag code={t.code} size="sm" />
+471:                   <span className="text-[10px] font-bold">{t.code}</span>
+472:                 </button>
+473:               ))}
+474:             </div>
+475:           </div>
+476:         )}
+477:       </section>
+478: 
+479:       {/* Language Selection */}
+480:       <section>
+481:         <div className="flex items-center gap-1.5 mb-3">
+482:           <Languages className="w-3.5 h-3.5 text-primary" />
+483:           <h3 className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">{t('language')}</h3>
+484:         </div>
+485:         <div className="glass-card p-4">
+486:           <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground mb-3">{t('language_choose')}</p>
+487:           <div className="grid grid-cols-3 gap-2">
+488:             {[
+489:               { code: 'pt-BR' as const, name: 'Português', flag: 'BRA' },
+490:               { code: 'en' as const, name: 'English', flag: 'USA' },
+491:               { code: 'es' as const, name: 'Español', flag: 'ESP' }
+492:             ].map(lang => (
+493:               <button
+494:                 key={lang.code}
+495:                 onClick={() => changeLanguage(lang.code)}
+496:                 className={cn(
+497:                   "flex flex-col items-center gap-2 p-3 rounded-xl transition-all border",
+498:                   language === lang.code
+499:                     ? "bg-primary/20 border-primary ring-1 ring-primary"
+500:                     : "bg-secondary/40 border-border/50 hover:bg-secondary"
+501:                 )}
+502:               >
+503:                 <Flag code={lang.flag} size="sm" />
+504:                 <span className="text-[11px] font-bold">{lang.name}</span>
+505:               </button>
+506:             ))}
+507:           </div>
+508:         </div>
+509:       </section>
+510: 
+511:       {/* Fun Mode */}
+512:       <div className="rounded-xl bg-gradient-to-r from-primary/80 to-primary p-4 flex items-center gap-3">
+513:         <div className="flex-1">
+514:           <div className="flex items-center gap-1.5 mb-1">
+515:             <Sparkles className="w-4 h-4" />
+516:             <span className="text-sm font-black">{t('fun_mode')}</span>
+517:           </div>
+518:           <p className="text-[11px] text-primary-foreground/80 leading-relaxed">
+519:             {t('fun_mode_desc')}
+520:           </p>
+521:         </div>
+522:         <button
+523:           onClick={async () => {
+524:             const newVal = !profile?.fun_mode;
+525:             setProfile(prev => prev ? { ...prev, fun_mode: newVal } : null);
+526:             if (user?.id) {
+527:               await updateProfile(user.id, { fun_mode: newVal });
+528:             }
+529:           }}
+530:           aria-pressed={Boolean(profile?.fun_mode)}
+531:           aria-label={profile?.fun_mode ? "Desativar modo diversão" : "Ativar modo diversão"}
+532:           className={cn(
+533:             "w-12 h-7 rounded-full transition-colors relative shrink-0",
+534:             profile?.fun_mode ? "bg-background/30" : "bg-background/10"
+535:           )}
+536:         >
+537:           <span className={cn(
+538:             "absolute top-1 w-5 h-5 rounded-full bg-foreground shadow transition-transform",
+539:             profile?.fun_mode ? "left-6" : "left-1"
+540:           )} />
+541:         </button>
+542:       </div>
+543: 
+544:       {/* Copa Premium */}
+545:       <section>
+546:         <div className="flex items-center gap-1.5 mb-3">
+547:           <Crown className="w-3.5 h-3.5 text-copa-gold" />
+548:           <h3 className="text-[11px] font-bold uppercase tracking-[0.12em] text-copa-gold">{t('premium_title')}</h3>
+549:         </div>
+550:         <button
+551:           type="button"
+552:           aria-label="Abrir página do ArenaCUP Premium"
+553:           onClick={() => navigate('/premium')}
+554:           className="relative glass-card p-5 border-copa-gold/30 hover:border-copa-gold/60 transition-colors overflow-hidden group cursor-pointer w-full text-left"
+555:         >
+556:           <div className="absolute -right-4 -top-4 w-24 h-24 bg-copa-gold/10 rounded-full blur-2xl group-hover:bg-copa-gold/20 transition-colors"></div>
+557:           <div className="flex items-center justify-between relative z-10">
+558:             <div>
+559:               <h4 className="font-black text-lg text-white mb-1">{t('premium_card_title')}</h4>
+560:               <p className="text-[13px] text-muted-foreground w-4/5">{t('premium_card_desc')}</p>
+561:             </div>
+562:             <div className="w-10 h-10 rounded-full bg-copa-gold/10 flex items-center justify-center shrink-0 border border-copa-gold/30 text-copa-gold group-hover:scale-110 transition-transform">
+563:               <Star className="w-5 h-5 text-copa-gold" />
+564:             </div>
+565:           </div>
+566:         </button>
+567:       </section>
+568: 
+569:       {/* Notifications */}
+570:       <section>
+571:         <div className="flex items-center gap-1.5 mb-3">
+572:           <Bell className="w-3.5 h-3.5 text-primary" />
+573:           <h3 className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">{t('notifications_title')}</h3>
+574:         </div>
+575:         <div className="glass-card divide-y divide-border/30">
+576:           {[
+577:             { key: "notifications_goals" as const, icon: Goal, label: t('goals_notif'), desc: t('goals_notif_desc') },
+578:             { key: "notifications_news" as const, icon: Newspaper, label: t('news_notif'), desc: t('news_notif_desc') },
+579:             { key: "notifications_match_start" as const, icon: Clock, label: t('match_start_notif'), desc: t('match_start_notif_desc') },
+580:           ].map(n => (
+581:             <div key={n.key} className="flex items-center gap-3 p-3.5">
+582:               <div className="w-9 h-9 rounded-xl bg-secondary flex items-center justify-center shrink-0">
+583:                 <n.icon className="w-4 h-4 text-copa-green-light" />
+584:               </div>
+585:               <div className="flex-1">
+586:                 <span className="text-sm font-bold block">{n.label}</span>
+587:                 <span className="text-[11px] text-muted-foreground">{n.desc}</span>
+588:               </div>
+589:               <button
+590:                 onClick={async () => {
+591:                   if (!user?.id) return;
+592: 
+593:                   const targetState = !profile?.[n.key];
+594: 
+595:                   if (n.key === "notifications_goals" && targetState) {
+596:                     if (!("Notification" in window)) {
+597:                       toast({ title: t('bolao:common.error_title'), description: t('browser_notifications_unsupported'), variant: "destructive" });
+598:                       return;
+599:                     }
+600: 
+601:                     const permission = await Notification.requestPermission();
+602:                     if (permission === "granted") {
+603:                       try {
+604:                         const registration = await navigator.serviceWorker.ready;
+605:                         const vapidKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
+606:                         let subscription = await registration.pushManager.getSubscription();
+607: 
+608:                         if (!subscription && vapidKey) {
+609:                           const convertedVapidKey = urlBase64ToUint8Array(vapidKey);
+610:                           subscription = await registration.pushManager.subscribe({
+611:                             userVisibleOnly: true,
+612:                             applicationServerKey: convertedVapidKey
+613:                           });
+614:                         }
+615: 
+616:                         if (subscription) {
+617:                           const subData = JSON.parse(JSON.stringify(subscription));
+618:                           await setDoc(doc(db, 'push_subscriptions', getPushSubscriptionDocId(user.id, subscription.endpoint)), {
+619:                             user_id: user.id,
+620:                             endpoint: subscription.endpoint,
+621:                             auth: subData.keys?.auth,
+622:                             p256dh: subData.keys?.p256dh,
+623:                             created_at: new Date().toISOString(),
+624:                             updated_at: new Date().toISOString(),
+625:                           }, { merge: true });
+626:                         }
+627:                       } catch (e) {
+628:                         console.error("Push sub error", e);
+629:                       }
+630:                     } else {
+631:                       toast({ title: t('notifications_denied_title'), description: t('notifications_denied_desc'), variant: "destructive" });
+632:                       return; // Do not turn it on if denied
+633:                     }
+634:                   } else if (n.key === "notifications_goals" && !targetState) {
+635:                       try {
+636:                         // Remove sub when disabling
+637:                         const registration = await navigator.serviceWorker.ready;
+638:                         const subscription = await registration.pushManager.getSubscription();
+639:                         if (subscription) {
+640:                           await subscription.unsubscribe();
+641:                           await deleteDoc(doc(db, 'push_subscriptions', getPushSubscriptionDocId(user.id, subscription.endpoint)));
+642:                         }
+643:                       } catch (e) {
+644:                         console.error("Push unsub error", e);
+645:                     }
+646:                   }
+647: 
+648:                   setProfile(prev => prev ? { ...prev, [n.key]: targetState } : null);
+649:                   await updateProfile(user.id, { [n.key]: targetState });
+650:                 }}
+651:                 aria-pressed={Boolean(profile?.[n.key])}
+652:                 aria-label={`${profile?.[n.key] ? "Desativar" : "Ativar"} ${n.label}`}
+653:                 className={cn(
+654:                   "w-12 h-7 rounded-full transition-colors relative shrink-0",
+655:                   profile?.[n.key] ? "bg-primary" : "bg-secondary"
+656:                 )}
+657:               >
+658:                 <span className={cn(
+659:                   "absolute top-1 w-5 h-5 rounded-full bg-foreground shadow transition-transform",
+660:                   profile?.[n.key] ? "left-6" : "left-1"
+661:                 )} />
+662:               </button>
+663:             </div>
+664:           ))}
+665:         </div>
+666:       </section>
+667: 
+668:       {/* Apoie o ArenaCUP */}
+669:       <section>
+670:         <div className="flex items-center gap-1.5 mb-3">
+671:           <Heart className="w-3.5 h-3.5 text-primary" />
+672:           <h3 className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">{t('support_title')}</h3>
+673:         </div>
+674:         <div className="glass-card p-4 text-center space-y-3">
+675:           <p className="text-[12px] text-muted-foreground">{t('support_desc')}</p>
+676:           <button
+677:             onClick={() => {
+678:               navigator.clipboard.writeText("suporte@arenacup.com"); // Reemplazar con clave PIX real
+679:               toast({ title: t('support_copied_title'), description: t('support_copied_desc') });
+680:             }}
+681:             className="w-full bg-copa-live/10 text-copa-live border border-copa-live/20 font-bold text-sm py-2.5 rounded-xl hover:bg-copa-live/20 transition-colors flex items-center justify-center gap-2"
+682:           >
+683:             {t('support_action')}
+684:           </button>
+685:         </div>
+686:       </section>
+687: 
+688:       {/* Informações Legais */}
+689:       <section>
+690:         <div className="flex items-center gap-1.5 mb-3">
+691:           <BookOpen className="w-3.5 h-3.5 text-primary" />
+692:           <h3 className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">{t('help_title')}</h3>
+693:         </div>
+694:         <div className="glass-card divide-y divide-border/30 flex flex-col">
+695:           <button onClick={() => navigate('/regras')} className="p-4 text-left text-sm font-bold hover:bg-white/5 transition-colors">{t('help_rules')}</button>
+696:           <button onClick={() => navigate('/termos')} className="p-4 text-left text-sm font-bold hover:bg-white/5 transition-colors">{t('help_terms')}</button>
+697:           <button onClick={() => navigate('/privacidade')} className="p-4 text-left text-sm font-bold hover:bg-white/5 transition-colors">{t('help_privacy')}</button>
+698:         </div>
+699:       </section>
+700: 
+701:       {/* Logout */}
+702:       <button
+703:         onClick={handleSignOut}
+704:         className="w-full glass-card p-3.5 flex items-center justify-center gap-2 text-sm font-black text-copa-live uppercase tracking-wider"
+705:       >
+706:         <LogOut className="w-4 h-4" />
+707:         {t('logout')}
+708:       </button>
+709: 
+710:       <p className="text-center text-[10px] text-muted-foreground">{t('version')} 2.4.0</p>
+711:     </div>
+712:   );
+713: };
+714: 
+715: export default Perfil;
+716: 
+
+
+=== FILE: src\components\copa\CalendarioTab.tsx (138 lines) ===
+1: import { useState, useMemo, useEffect } from "react";
+2: import useEmblaCarousel from "embla-carousel-react";
+3: import { MatchCard } from "@/components/MatchCard";
+4: import { EmptyState } from "@/components/EmptyState";
+5: import { formatMatchDate, type Match } from "@/data/mockData";
+6: import { motion } from "framer-motion";
+7: import { ChevronLeft, ChevronRight } from "lucide-react";
+8: import { MatchDetailsModal } from "./MatchDetailsModal";
+9: import { useMatches } from "@/hooks/useMatches";
+10: import { useTranslation } from "react-i18next";
+11: 
+12: export function CalendarioTab() {
+13:   const { t } = useTranslation('copa');
+14:   const { data: matchesData = [], isLoading } = useMatches();
+15: 
+16:   // Group matches by date
+17:   const matchDays = useMemo(() => {
+18:     if (!matchesData.length) return [];
+19:     const grouped: Record<string, Match[]> = {};
+20:     matchesData.forEach(m => {
+21:       const dateKey = m.date.split("T")[0];
+22:       if (!grouped[dateKey]) grouped[dateKey] = [];
+23:       grouped[dateKey].push(m);
+24:     });
+25:     // Sort by date
+26:     return Object.entries(grouped)
+27:       .sort(([a], [b]) => a.localeCompare(b))
+28:       .map(([date, dayMatches]) => ({ date, matches: dayMatches }));
+29:   }, [matchesData]);
+30: 
+31:   const [dayIndex, setDayIndex] = useState(0);
+32:   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
+33: 
+34:   const [emblaRef, emblaApi] = useEmblaCarousel({
+35:     axis: 'x',
+36:     startIndex: dayIndex,
+37:     loop: false,
+38:     dragFree: false
+39:   });
+40: 
+41:   useEffect(() => {
+42:     if (emblaApi) emblaApi.scrollTo(dayIndex);
+43:   }, [dayIndex, emblaApi]);
+44: 
+45:   useEffect(() => {
+46:     if (!emblaApi) return;
+47:     const onSelect = () => {
+48:       setDayIndex(emblaApi.selectedScrollSnap());
+49:     };
+50:     emblaApi.on('select', onSelect);
+51:     return () => {
+52:       emblaApi.off('select', onSelect);
+53:     };
+54:   }, [emblaApi]);
+55: 
+56:   if (isLoading) {
+57:     return (
+58:       <div className="flex justify-center py-20">
+59:         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+60:       </div>
+61:     );
+62:   }
+63: 
+64:   const currentDay = matchDays[dayIndex];
+65:   if (!currentDay) {
+66:     return <EmptyState icon="📅" title={t('calendario.empty_title')} description={t('calendario.empty_desc')} glowColor="green" />;
+67:   }
+68: 
+69:   const dateObj = new Date(currentDay.date + "T12:00:00");
+70:   const dateLabel = dateObj.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+71: 
+72:   return (
+73:     <div className="space-y-4">
+74:       {/* Date Navigation */}
+75:       <div className="flex items-center justify-between">
+76:         <button
+77:           onClick={() => setDayIndex(Math.max(0, dayIndex - 1))}
+78:           disabled={dayIndex === 0}
+79:           aria-label={t('calendario.prev_day')}
+80:           className="p-2 rounded-lg bg-secondary disabled:opacity-30 transition-opacity"
+81:         >
+82:           <ChevronLeft className="w-4 h-4" />
+83:         </button>
+84:         <motion.div
+85:           key={dayIndex}
+86:           initial={{ opacity: 0, y: -4 }}
+87:           animate={{ opacity: 1, y: 0 }}
+88:           className="text-center"
+89:         >
+90:           <h2 className="text-base font-black capitalize">{dateLabel}</h2>
+91:           <span className="text-[10px] font-bold text-muted-foreground">
+92:             {currentDay.matches.length} {currentDay.matches.length === 1 ? "jogo" : "jogos"} • Dia {dayIndex + 1}/{matchDays.length}
+93:           </span>
+94:         </motion.div>
+95:         <button
+96:           onClick={() => setDayIndex(Math.min(matchDays.length - 1, dayIndex + 1))}
+97:           disabled={dayIndex === matchDays.length - 1}
+98:           aria-label={t('calendario.next_day')}
+99:           className="p-2 rounded-lg bg-secondary disabled:opacity-30 transition-opacity"
+100:         >
+101:           <ChevronRight className="w-4 h-4" />
+102:         </button>
+103:       </div>
+104: 
+105:       {/* Matches Carousel */}
+106:       <div className="overflow-hidden" ref={emblaRef}>
+107:         <div className="flex touch-pan-y">
+108:           {matchDays.map((day, dIdx) => (
+109:             <div key={day.date} className="min-w-0 flex-[0_0_100%] pr-1">
+110:               <motion.div
+111:                 initial={{ opacity: 0, scale: 0.98 }}
+112:                 animate={{ opacity: 1, scale: 1 }}
+113:                 transition={{ duration: 0.3 }}
+114:                 className="space-y-3 md:space-y-0 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-4 pb-2"
+115:               >
+116:                 {day.matches.map((m, i) => (
+117:                   <MatchCard
+118:                     key={m.id}
+119:                     match={m}
+120:                     index={i}
+121:                     onClick={() => setSelectedMatch(m)}
+122:                   />
+123:                 ))}
+124:               </motion.div>
+125:             </div>
+126:           ))}
+127:         </div>
+128:       </div>
+129: 
+130:       <MatchDetailsModal
+131:         match={selectedMatch}
+132:         isOpen={!!selectedMatch}
+133:         onClose={() => setSelectedMatch(null)}
+134:       />
+135:     </div>
+136:   );
+137: }
+138: 
+
+
+=== FILE: src\components\copa\GruposTab.tsx (169 lines) ===
+1: import { useState } from "react";
+2: import { useNavigate } from "react-router-dom";
+3: import { useTranslation, Trans } from "react-i18next";
+4: import { cn } from "@/lib/utils";
+5: import { Flag } from "@/components/Flag";
+6: import { groups, groupStandings, getTeam } from "@/data/mockData";
+7: import { motion, AnimatePresence } from "framer-motion";
+8: import { staggerContainer, staggerItem } from "./animations";
+9: import { useSimulacao } from "@/contexts/SimulacaoContext";
+10: import { Trophy } from "lucide-react";
+11: import { GroupDetails } from "./GroupDetails";
+12: 
+13: export function GruposTab() {
+14:   const { t } = useTranslation('copa');
+15:   const [viewMode, setViewMode] = useState<"real" | "simulacao">("real");
+16:   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
+17:   const { standings: simStandings, filledCount } = useSimulacao();
+18:   const navigate = useNavigate();
+19: 
+20:   return (
+21:     <>
+22:       <AnimatePresence>
+23:         {selectedGroup && (
+24:           <GroupDetails
+25:             groupId={selectedGroup}
+26:             onClose={() => setSelectedGroup(null)}
+27:             viewMode={viewMode}
+28:           />
+29:         )}
+30:       </AnimatePresence>
+31: 
+32:       <div>
+33:         <div className="flex rounded-full bg-secondary p-1 mb-5">
+34:           {(["real", "simulacao"] as const).map(m => (
+35:             <button
+36:               key={m}
+37:               onClick={() => setViewMode(m)}
+38:               className={cn(
+39:                 "flex-1 py-2 rounded-full text-xs font-bold transition-colors relative",
+40:                 viewMode === m ? "text-primary-foreground" : "text-muted-foreground"
+41:               )}
+42:             >
+43:               {viewMode === m && (
+44:                 <motion.div
+45:                   layoutId="gruposToggle"
+46:                   className="absolute inset-0 bg-primary rounded-full"
+47:                   transition={{ type: "spring", stiffness: 400, damping: 30 }}
+48:                 />
+49:               )}
+50:               <span className="relative z-10">{t(`groups.mode.${m}`)}</span>
+51:             </button>
+52:           ))}
+53:         </div>
+54: 
+55:         {viewMode === "simulacao" && filledCount === 0 && (
+56:           <div className="glass-card p-4 mb-4 text-center">
+57:             <span className="text-2xl mb-2 block">📊</span>
+58:             <p className="text-xs text-muted-foreground">
+59:               <Trans i18nKey="groups.simulation_hint" t={t} components={{ 1: <span className="text-primary font-bold" /> }} />
+60:             </p>
+61:           </div>
+62:         )}
+63: 
+64:         <motion.div
+65:           key={viewMode}
+66:           variants={staggerContainer}
+67:           initial="hidden"
+68:           animate="visible"
+69:           className="space-y-5 md:space-y-0 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-5"
+70:         >
+71:           {groups.map(g => {
+72:             const useSimData = viewMode === "simulacao" && simStandings[g]?.some(s => s.played > 0);
+73:             const realStandings = groupStandings[g] || [];
+74: 
+75:             const displayStandings = useSimData
+76:               ? simStandings[g].map(s => ({
+77:                 teamCode: s.teamCode,
+78:                 played: s.played,
+79:                 won: s.won,
+80:                 drawn: s.drawn,
+81:                 lost: s.lost,
+82:                 goalsFor: s.gf,
+83:                 goalsAgainst: s.ga,
+84:                 points: s.points,
+85:                 probability: 0,
+86:               }))
+87:               : realStandings;
+88: 
+89:             const status = useSimData
+90:               ? "simulated"
+91:               : displayStandings.some(s => s.played > 0) ? "in_progress" : "pending";
+92: 
+93:             return (
+94:               <motion.div
+95:                 key={g}
+96:                 variants={staggerItem}
+97:                 onClick={() => setSelectedGroup(g)}
+98:                 className="glass-card overflow-hidden border-l-2 border-l-copa-green cursor-pointer transition-all hover:bg-white/5 active:scale-[0.98]"
+99:               >
+100:                 <div className="flex items-center justify-between p-4 pb-2">
+101:                   <h3 className="text-base font-black">{t('match_details.group_label', { group: g })}</h3>
+102:                   <span className={cn(
+103:                     "text-[10px] font-bold px-2.5 py-1 rounded-full",
+104:                     status === "simulated" ? "bg-primary/20 text-primary" :
+105:                       status === "in_progress" ? "bg-copa-success/20 text-copa-success" :
+106:                         "bg-secondary text-secondary-foreground"
+107:                   )}>
+108:                     {t(`groups.status.${status}`)}
+109:                   </span>
+110:                 </div>
+111: 
+112:                 <div className="grid grid-cols-[auto_1fr_32px_32px_auto] md:grid-cols-[auto_1fr_48px_48px_auto] gap-x-2 px-4 py-1 text-[10px] md:text-xs font-bold uppercase tracking-wider text-primary">
+113:                   <span></span>
+114:                   <span>{t('groups.table.country')}</span>
+115:                   <span className="text-center">{t('groups.table.p')}</span>
+116:                   <span className="text-center">{t('groups.table.gd')}</span>
+117:                   {viewMode === "real" ? (
+118:                     <span className="text-right">FIFA</span>
+119:                   ) : (
+120:                     <span className="text-right">{t('groups.table.j')}</span>
+121:                   )}
+122:                 </div>
+123: 
+124:                 {displayStandings.map((s, i) => {
+125:                   const team = getTeam(s.teamCode);
+126:                   const gd = s.goalsFor - s.goalsAgainst;
+127:                   const qualifies = i < 2;
+128:                   return (
+129:                     <div
+130:                       key={s.teamCode}
+131:                       className={cn(
+132:                         "grid grid-cols-[auto_1fr_32px_32px_auto] md:grid-cols-[auto_1fr_48px_48px_auto] gap-x-2 items-center px-4 py-2.5",
+133:                         qualifies ? "text-foreground" : "text-muted-foreground"
+134:                       )}
+135:                     >
+136:                       <span className="text-xs font-medium w-4">
+137:                         {qualifies ? <Trophy className="w-3 h-3 text-copa-success inline" /> : (i + 1)}
+138:                       </span>
+139:                       <div
+140:                         className="flex items-center gap-2 cursor-pointer hover:underline"
+141:                         onClick={(e) => {
+142:                           e.stopPropagation();
+143:                           navigate(`/team/${team.code}`);
+144:                         }}
+145:                       >
+146:                         <Flag code={team.code} size="sm" />
+147:                         <span className={cn("text-sm", qualifies ? "font-bold" : "font-medium")}>{team.name}</span>
+148:                       </div>
+149:                       <span className={cn("text-center text-sm", qualifies && "font-black")}>{s.points}</span>
+150:                       <span className="text-center text-sm">{gd >= 0 ? `+${gd}` : gd}</span>
+151:                       {viewMode === "real" ? (
+152:                         <span className="text-right text-xs font-bold text-muted-foreground min-w-[40px]">
+153:                           {team.fifaRanking ? `#${team.fifaRanking}` : "\u2014"}
+154:                         </span>
+155:                       ) : (
+156:                         <span className="text-right text-sm min-w-[60px]">{s.played}</span>
+157:                       )}
+158:                     </div>
+159:                   );
+160:                 })}
+161:               </motion.div>
+162:             );
+163:           })}
+164:         </motion.div>
+165:       </div>
+166:     </>
+167:   );
+168: }
+169: 
+
+
+=== FILE NOT FOUND: src\components\copa\RankingTab.tsx ===

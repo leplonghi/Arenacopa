@@ -4,9 +4,9 @@ export default function Privacidade() {
     return (
         <LegalPage title="Política de Privacidade">
             <p>
-                A sua privacidade é importante para nós. É política do ArenaCopa respeitar a sua
+                A sua privacidade é importante para nós. É política do Arena CUP respeitar a sua
                 privacidade em relação a qualquer informação sua que possamos coletar no site
-                ArenaCopa, e outros sites que possuímos e operamos.
+                Arena CUP, e outros sites que possuímos e operamos.
             </p>
 
             <p>

@@ -1,133 +1,185 @@
 {
+  "tabs": {
+    "overview": "Vista",
+    "calendar": "Calendario",
+    "groups": "Grupos",
+    "bracket": "Fase Final",
+    "simulator": "Simulador",
+    "news": "Noticias",
+    "hosts": "Sedes",
+    "history": "Historia",
+    "simulacao": "Simular",
+    "calendario": "Agenda",
+    "grupos": "Grupos",
+    "chaves": "Cuadro",
+    "loading": "Cargando..."
+  },
+  "overview": {
+    "featured": "Destacado",
+    "no_featured": "Ningún partido destacado.",
+    "quick_access": {
+      "standings_title": "Clasificación",
+      "standings_desc": "Ver tabla completa",
+      "simulator_title": "Simulador",
+      "simulator_desc": "Simula el camino a la final",
+      "calendar_title": "Calendario",
+      "calendar_desc": "Todos los partidos del torneo",
+      "map_title": "Mapa",
+      "map_desc": "Estadios y ciudades sede"
+    },
+    "upcoming_matches": "Próximos Partidos",
+    "view_calendar": "Ver calendario",
+    "calculator": {
+      "title": "Calculadora",
+      "select_team": "Selecciona una Selección para Simular",
+      "status": {
+        "qualified": "Clasificado",
+        "eliminated": "Eliminado",
+        "contention": "En Disputa"
+      },
+      "messages": {
+        "qualified": "¡Clasificación matemáticamente garantizada!",
+        "eliminated": "Matemáticamente eliminado.",
+        "need_draw": "Solo necesita un empate para garantizar.",
+        "need_miracle": "Necesita ganar todos y esperar resultados paralelos.",
+        "need_wins": "Necesita {{wins}} victorias en los próximos {{games}} juegos."
+      }
+    },
+    "premium_cta": {
+      "title": "Hazte Premium",
+      "desc": "Elimina anuncios y desbloquea funciones"
+    },
+    "no_upcoming": "Sin partidos próximos ahora",
+    "no_upcoming_desc": "Pronto aparecerán nuevos partidos aquí."
+  },
+  "match_details": {
+    "sr_title": "Detalles del Partido: {{home}} vs {{away}}",
     "tabs": {
-        "overview": "Hoy",
-        "calendar": "Calendario",
-        "groups": "Grupos",
-        "bracket": "Fase Final",
-        "simulator": "Simulador",
-        "news": "Noticias",
-        "hosts": "Sedes",
-        "history": "Historia"
+      "summary": "Resumen",
+      "comparison": "Comparación"
     },
-    "overview": {
-        "featured": "Destacado",
-        "no_featured": "Ningún partido destacado.",
-        "quick_access": {
-            "standings_title": "Clasificación",
-            "standings_desc": "Ver tabla completa",
-            "simulator_title": "Simulador",
-            "simulator_desc": "Simula el camino a la final",
-            "calendar_title": "Calendario",
-            "calendar_desc": "Todos los partidos del torneo",
-            "map_title": "Mapa",
-            "map_desc": "Estadios y ciudades sede"
-        },
-        "upcoming_matches": "Próximos Partidos",
-        "view_calendar": "Ver calendario",
-        "calculator": {
-            "title": "Calculadora",
-            "select_team": "Selecciona una Selección para Simular",
-            "status": {
-                "qualified": "Clasificado",
-                "eliminated": "Eliminado",
-                "contention": "En Disputa"
-            },
-            "messages": {
-                "qualified": "¡Clasificación matemáticamente garantizada!",
-                "eliminated": "Matemáticamente eliminado.",
-                "need_draw": "Solo necesita un empate para garantizar.",
-                "need_miracle": "Necesita ganar todos y esperar resultados paralelos.",
-                "need_wins": "Necesita {{wins}} victorias en los próximos {{games}} juegos."
-            }
-        },
-        "premium_cta": {
-            "title": "Hazte Premium",
-            "desc": "Elimina anuncios y desbloquea funciones"
-        }
+    "group_label": "Grupo {{group}}",
+    "phase_label": "{{phase}}",
+    "location_title": "Ubicación",
+    "stadium_info": {
+      "capacity": "Capacidad",
+      "climate": "Clima",
+      "timezone": "Zona Horaria"
     },
-    "match_details": {
-        "sr_title": "Detalles del Partido: {{home}} vs {{away}}",
-        "tabs": {
-            "summary": "Resumen",
-            "comparison": "Comparación"
-        },
-        "group_label": "Grupo {{group}}",
-        "phase_label": "{{phase}}",
-        "location_title": "Ubicación",
-        "stadium_info": {
-            "capacity": "Capacidad",
-            "climate": "Clima",
-            "timezone": "Zona Horaria"
-        },
-        "news_title": "Últimas Noticias",
-        "comparison": {
-            "titles": "Títulos Mundiales",
-            "titles_label": "Títulos",
-            "ranking": "Ranking FIFA",
-            "ranking_label": "Posición",
-            "appearances_label": "Participaciones",
-            "best_result_label": "Mejor Resultado",
-            "demographics_title": "Datos del País",
-            "hdi": "IDH",
-            "population": "Población",
-            "gdp": "PIB (Billones)"
-        }
-    },
-    "simulator": {
-        "share": {
-            "title": "Compartir Simulación",
-            "desc": "Envía tu simulación a amigos",
-            "whatsapp": "WhatsApp",
-            "whatsapp_desc": "Enviar por mensaje",
-            "copy": "Copiar Texto",
-            "copy_desc": "Copiar simulación",
-            "more": "Más opciones",
-            "more_desc": "Compartir en otras apps",
-            "copied": "¡Copiado!",
-            "copied_desc": "Simulación copiada al portapapeles",
-            "text_intro": "⚽ Mi simulación \"{{name}}\" - Copa 2026\n\n",
-            "text_group": "📊 Grupo {{group}}:\n",
-            "text_footer": "🏆 ¡Hecho en ArenaCup!"
-        },
-        "create": {
-            "title": "Nueva Simulación",
-            "name_label": "Nombre de la Simulación",
-            "name_placeholder": "Ej: Copa de mis sueños",
-            "groups_label": "Grupos para Simular",
-            "select_all": "Seleccionar todos",
-            "button": "Crea Simulación"
-        },
-        "list": {
-            "title": "Mis Simulaciones",
-            "subtitle": "Crea y gestiona tus predicciones",
-            "new": "Nueva",
-            "empty_title": "Sin simulaciones",
-            "empty_desc": "Crea tu primera simulación para empezar",
-            "create_first": "Crear Simulación",
-            "login_title": "Inicia sesión para guardar",
-            "login_desc": "Tus simulaciones se guardarán en tu cuenta",
-            "groups_count": "{{count}} grupos",
-            "games_count": "{{filled}}/{{total}} llenos",
-            "created": "Simulación creada",
-            "deleted": "Simulación eliminada"
-        },
-        "editor": {
-            "selected_groups": "{{count}} grupo seleccionado",
-            "selected_groups_plural": "{{count}} grupos seleccionados",
-            "progress": "Progreso",
-            "games_count": "{{filled}}/{{total}} partidos",
-            "phase_groups": "Fase de Grupos",
-            "phase_knockout": "Eliminatorias",
-            "group_complete": "Completo",
-            "standings": "Clasificación"
-        },
-        "knockout": {
-            "incomplete_title": "Fase de Grupos Incompleta",
-            "incomplete_desc": "Completa todos los partidos de los 12 grupos para desbloquear las eliminatorias",
-            "penalties": "Penaltis",
-            "advances": "{{team}} avanza",
-            "defined_games": "{{filled}}/{{total}} partidos definidos",
-            "defined_games_singular": "{{filled}}/{{total}} partido definido"
-        }
+    "news_title": "Últimas Noticias",
+    "comparison": {
+      "titles": "Títulos Mundiales",
+      "titles_label": "Títulos",
+      "ranking": "Ranking FIFA",
+      "ranking_label": "Posición",
+      "appearances_label": "Participaciones",
+      "best_result_label": "Mejor Resultado",
+      "demographics_title": "Datos del País",
+      "hdi": "IDH",
+      "population": "Población",
+      "gdp": "PIB (Billones)"
     }
+  },
+  "simulator": {
+    "share": {
+      "title": "Compartir Simulación",
+      "desc": "Envía tu simulación a amigos",
+      "whatsapp": "WhatsApp",
+      "whatsapp_desc": "Enviar por mensaje",
+      "copy": "Copiar Texto",
+      "copy_desc": "Copiar simulación",
+      "more": "Más opciones",
+      "more_desc": "Compartir en otras apps",
+      "copied": "¡Copiado!",
+      "copied_desc": "Simulación copiada al portapapeles",
+      "text_intro": "⚽ Mi simulación \"{{name}}\" - Copa 2026\n\n",
+      "text_group": "📊 Grupo {{group}}:\n",
+      "text_footer": "🏆 ¡Hecho en ArenaCup!"
+    },
+    "create": {
+      "title": "Nueva Simulación",
+      "name_label": "Nombre de la Simulación",
+      "name_placeholder": "Ej: Copa de mis sueños",
+      "groups_label": "Grupos para Simular",
+      "select_all": "Seleccionar todos",
+      "button": "Crea Simulación"
+    },
+    "list": {
+      "title": "Mis Simulaciones",
+      "subtitle": "Crea y gestiona tus predicciones",
+      "new": "Nueva",
+      "empty_title": "Sin simulaciones",
+      "empty_desc": "Crea tu primera simulación para empezar",
+      "create_first": "Crear Simulación",
+      "login_title": "Inicia sesión para guardar",
+      "login_desc": "Tus simulaciones se guardarán en tu cuenta",
+      "groups_count": "{{count}} grupos",
+      "games_count": "{{filled}}/{{total}} llenos",
+      "created": "Simulación creada",
+      "deleted": "Simulación eliminada"
+    },
+    "editor": {
+      "selected_groups": "{{count}} grupo seleccionado",
+      "selected_groups_plural": "{{count}} grupos seleccionados",
+      "progress": "Progreso",
+      "games_count": "{{filled}}/{{total}} partidos",
+      "phase_groups": "Fase de Grupos",
+      "phase_knockout": "Eliminatorias",
+      "group_complete": "Completo",
+      "standings": "Clasificación"
+    },
+    "knockout": {
+      "incomplete_title": "Fase de Grupos Incompleta",
+      "incomplete_desc": "Completa todos los partidos de los 12 grupos para desbloquear las eliminatorias",
+      "penalties": "Penaltis",
+      "advances": "{{team}} avanza",
+      "defined_games": "{{filled}}/{{total}} partidos definidos",
+      "defined_games_singular": "{{filled}}/{{total}} partido definido"
+    }
+  },
+  "match_card": {
+    "live": "En Curso",
+    "next_game": "Próximo Partido",
+    "live_badge": "En Vivo",
+    "details_cta": "Ver Detalles",
+    "group": "Grupo {{group}}",
+    "my_prediction": "Tu predicción:",
+    "edit": "Editar"
+  },
+  "share_bracket": {
+    "gen_error": "Error al generar imagen del cuadro",
+    "saved": "¡Imagen guardada!",
+    "share_error": "Error al compartir",
+    "not_supported": "Compartir no compatible en este navegador",
+    "downloaded": "¡Imagen descargada! Adjunta en WhatsApp",
+    "btn_label": "Compartir"
+  },
+  "calendario": {
+    "empty_title": "Ningún partido aquí",
+    "empty_desc": "El calendario aparecerá cuando se carguen los partidos.",
+    "prev_day": "Día anterior",
+    "next_day": "Siguiente día"
+  },
+  "bracket": {
+    "third_place": "Disputa por el 3er Lugar"
+  },
+  "grupos": {
+    "no_games": "No se encontraron partidos para este grupo."
+  },
+  "noticias": {
+    "priority_team": "Prioridad de tu equipo",
+    "priority_summary_fallback": "Noticia destacada para tu equipo favorito.",
+    "open_source": "Abrir fuente",
+    "read_source": "Leer más",
+    "summary_fallback": "Noticia disponible en la fuente original.",
+    "date_unknown": "Fecha no informada",
+    "categories": {
+      "all": "Todas",
+      "general": "General",
+      "matches": "Partidos",
+      "teams": "Selecciones",
+      "travel": "Turismo",
+      "tickets": "Entradas"
+    }
+  }
 }

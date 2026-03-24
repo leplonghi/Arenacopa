@@ -177,13 +177,13 @@ export function KnockoutPhase() {
   return (
     <div className="space-y-4">
       {/* Round selector */}
-      <div className="flex gap-1.5 overflow-x-auto scrollbar-hide pb-1">
+      <div className="flex flex-wrap gap-1.5 pb-1">
         {visibleRounds.map(r => (
           <button
             key={r}
             onClick={() => setSelectedRound(r)}
             className={cn(
-              "px-3 py-1.5 rounded-full text-[11px] font-bold whitespace-nowrap transition-colors shrink-0",
+              "px-3 py-1.5 rounded-full text-[11px] font-bold transition-colors",
               selectedRound === r
                 ? "bg-primary text-primary-foreground"
                 : "bg-secondary text-muted-foreground"

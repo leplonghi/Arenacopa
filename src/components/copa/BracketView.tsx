@@ -349,7 +349,6 @@ function RoundColumn({
 
 // ─── Champion 3D Spotlight ───
 function ChampionBanner({ data }: { data: KnockoutData }) {
-  const { t } = useTranslation('copa');
   const navigate = useNavigate();
   const champion = getMatchWinner(data.final[0]);
 
@@ -426,7 +425,6 @@ function useParallaxTilt() {
 // Placed before main export to avoid undefined issues if hoisting acts up (though function declarations hoist)
 
 function MobileTeamSide({ code, isWinner, side }: { code: string | null; isWinner: boolean; side: "left" | "right" }) {
-  const { t } = useTranslation('copa');
   if (!code) {
     return (
       <div className={cn("flex flex-1 items-center gap-2", side === "right" && "flex-row-reverse")}>
@@ -532,13 +530,13 @@ function MobileRoundNav({
   onSelect: (idx: number) => void;
 }) {
   return (
-    <div className="flex items-center gap-2 overflow-x-auto scrollbar-hide pb-2 px-2 mask-linear-gradient">
+    <div className="flex flex-wrap items-center gap-2 pb-2 px-2">
       {rounds.map((r, i) => (
         <button
           key={r.key}
           onClick={() => onSelect(i)}
           className={cn(
-            "shrink-0 px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all duration-300 border backdrop-blur-md",
+            "px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all duration-300 border backdrop-blur-md",
             i === activeRound
               ? "bg-[hsl(var(--copa-gold)/0.15)] text-[hsl(var(--copa-gold))] border-[hsl(var(--copa-gold)/0.4)] shadow-[0_0_15px_-3px_hsl(var(--copa-gold)/0.2)]"
               : "bg-white/5 text-white/40 border-white/5 hover:bg-white/10"
@@ -559,7 +557,6 @@ export function BracketView({
   data: KnockoutData;
   onMatchClick?: (round: KnockoutRound, matchIdx: number, match: KnockoutMatchFull) => void;
 }) {
-  const { t } = useTranslation('copa');
   const ROUND_KEYS: KnockoutRound[] = ["r32", "r16", "quarter", "semi", "final"];
   const [mobileRound, setMobileRound] = useState(0);
   const { handleMouseMove, rotateX, rotateY } = useParallaxTilt();

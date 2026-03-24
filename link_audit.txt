@@ -1,0 +1,91 @@
+=== DEFINED ROUTES ===
+  *
+  /
+  /account
+  /auth
+  /b/:inviteCode
+  /boloes
+  /boloes/:id
+  /boloes/criar
+  /conta
+  /copa
+  /copa/:subtab
+  /copa/historia
+  /copa/noticias
+  /copa/sedes
+  /copas/central
+  /criar-bolao
+  /cup
+  /cup/:subtab
+  /destino
+  /grupos
+  /grupos/:grupoId
+  /guia
+  /guia/:subtab
+  /guide
+  /guide/:subtab
+  /perfil
+  /pools
+  /pools/:id
+  /pools/create
+  /premium
+  /privacidade
+  /privacy
+  /profile
+  /ranking
+  /regras
+  /rules
+  /simulator
+  /team/:code
+  /termos
+  /terms
+
+=== ALL LINK/NAVIGATE USAGES ===
+
+/App.tsx:
+  /auth
+  /boloes
+  /boloes/criar
+  /copa
+  /copa/simulacao
+  /guia
+  /guia/historia
+  /guia/mapa
+  /guia/noticias
+  /perfil
+  /privacidade
+  /regras
+  /termos
+
+/components/CookieBanner.tsx:
+  /privacidade
+
+/components/FabWithPending.tsx:
+  /boloes
+
+/components/Layout.tsx:
+  /perfil
+  /privacidade
+  /termos
+
+/pages/Auth.tsx:
+  /privacidade
+  /termos
+
+/pages/Boloes.tsx:
+  /boloes/criar
+  /grupos
+
+/pages/Index.tsx:
+  /boloes
+  /boloes/criar
+  /copa/calendario
+  /copa/noticias
+  /perfil
+  /ranking
+
+/pages/NotFound.tsx:
+  /
+
+
+=== POTENTIALLY BROKEN LINKS ===

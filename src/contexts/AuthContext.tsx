@@ -3,6 +3,7 @@ import { onAuthStateChanged, type User as FirebaseUser } from "firebase/auth";
 import { auth } from "@/integrations/firebase/client";
 import { ensureProfile } from "@/services/profile/profile.service";
 import { signOutUser } from "@/services/auth/auth.service";
+import { DEMO_USER_ID, DEMO_MODE_STORAGE_KEY } from "@/lib/constants";
 
 export interface User {
   id: string;
@@ -34,10 +35,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const demoMode = localStorage.getItem("demo_mode") === "true";
+    // Demo mode is only allowed in development builds.
+    // In production, localStorage can be manipulated by anyone via DevTools,
+    // so we gate this behind the Vite DEV flag to prevent auth bypass in prod.
+    const isDev = import.meta.env.DEV;
+    const demoMode = isDev && localStorage.getItem(DEMO_MODE_STORAGE_KEY) === "true";
     if (demoMode) {
       setUser({
-        id: "demo-user-id",
+        id: DEMO_USER_ID,
         email: "demo@arenacup.com",
         user_metadata: { full_name: "Usuário Demo" },
       });
@@ -84,18 +89,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const loginAsDemo = async () => {
-    localStorage.setItem("demo_mode", "true");
+    if (!import.meta.env.DEV) {
+      console.warn("Demo mode is not available in production builds.");
+      return;
+    }
+    localStorage.setItem(DEMO_MODE_STORAGE_KEY, "true");
     setSession(null);
     setUser({
-      id: "demo-user-id",
+      id: DEMO_USER_ID,
       email: "demo@arenacup.com",
       user_metadata: { full_name: "Usuário Demo" },
     });
   };
 
   const signOut = async () => {
-    if (localStorage.getItem("demo_mode")) {
-      localStorage.removeItem("demo_mode");
+    if (localStorage.getItem(DEMO_MODE_STORAGE_KEY)) {
+      localStorage.removeItem(DEMO_MODE_STORAGE_KEY);
       setUser(null);
       setSession(null);
     } else {

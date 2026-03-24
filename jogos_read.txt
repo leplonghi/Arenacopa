@@ -1,0 +1,215 @@
+--- LINES 1-60 ---
+1: import { useState, useEffect, useRef, useMemo } from "react";
+2: import { db } from "@/integrations/firebase/client";
+3: import { 
+4:     collection, 
+5:     query, 
+6:     where, 
+7:     orderBy, 
+8:     getDocs, 
+9:     onSnapshot, 
+10:     doc, 
+11:     setDoc,
+12:     serverTimestamp
+13: } from "firebase/firestore";
+14: import { useAuth } from "@/contexts/AuthContext";
+15: import { Flag } from "@/components/Flag";
+16: import { useTranslation } from "react-i18next";
+17: import { useToast } from "@/hooks/use-toast";
+18: import confetti from "canvas-confetti";
+19: import { CircleHelp, Lock, Share2, Download, Copy, MessageCircle } from "lucide-react";
+20: import { motion, AnimatePresence } from "framer-motion";
+21: import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+22: import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+23: import { ShareCardGenerator } from "./ShareCardGenerator";
+24: import { toPng } from "html-to-image";
+25: import { EmptyState } from "@/components/EmptyState";
+26: import { cn } from "@/lib/utils";
+27: import { saveBolaoPrediction } from "@/services/boloes/bolao-prediction.service";
+28: import type { BolaoMarket, BolaoPrediction } from "@/types/bolao";
+29: 
+30: type JogosTabMatch = {
+31:     id: string;
+32:     match_date: string;
+33:     stage: string;
+34:     status: "scheduled" | "live" | "finished";
+35:     home_team_code: string;
+36:     away_team_code: string;
+37: };
+38: 
+39: type ShareData = {
+40:     homeTeam: string;
+41:     awayTeam: string;
+42:     homeScore: number;
+43:     awayScore: number;
+44: };
+45: 
+46: type EditablePalpite = {
+47:     id?: string;
+48:     home: string;
+49:     away: string;
+50:     points: number;
+51:     is_exact: boolean;
+52: };
+53: 
+54: type PalpiteRealtimeRow = {
+55:     id: string;
+56:     bolao_id: string;
+57:     match_id: string;
+58:     home_score: number;
+59:     away_score: number;
+60:     points: number;
+
+--- LINES 260-360 ---
+261:                     ? String(predictionValue.away)
+262:                     : "";
+263: 
+264:             return {
+265:                 id: exactScorePrediction?.id ?? saved?.id,
+266:                 home: draft?.home ?? newModelHome ?? saved?.home ?? "",
+267:                 away: draft?.away ?? newModelAway ?? saved?.away ?? "",
+268:                 points: saved?.points ?? 0,
+269:                 is_exact: saved?.is_exact ?? false,
+270:             };
+271:         };
+272:     }, [draftPalpites, exactScoreMarketByMatchId, predictionsByMarketId, savedPalpites]);
+273: 
+274:     const handleSave = async (matchId: string, homeTeam: string, awayTeam: string) => {
+275:         if (!user) return;
+276:         const palpite = getCurrentPalpite(matchId);
+277:         const hasScoreInput = palpite.home !== "" && palpite.away !== "";
+278:         const currentFirstScorer = draftFirstScorers[matchId] ?? getSavedFirstScorer(matchId);
+279: 
+280:         if (!palpite || (!hasScoreInput && !currentFirstScorer)) return;
+281: 
+282:         const hs = hasScoreInput ? parseInt(palpite.home) : Number.NaN;
+283:         const as = hasScoreInput ? parseInt(palpite.away) : Number.NaN;
+284:         if (hasScoreInput && (isNaN(hs) || isNaN(as))) return;
+285: 
+286:         try {
+287:             setSavingMatchId(matchId);
+288:             const tasks: Promise<unknown>[] = [];
+289: 
+290:             if (hasScoreInput) {
+291:                 const docId = `${user.id}_${matchId}_${bolaoId}`;
+292:                 tasks.push(
+293:                     setDoc(doc(db, "bolao_palpites", docId), {
+294:                         bolao_id: bolaoId,
+295:                         user_id: user.id,
+296:                         match_id: matchId,
+297:                         home_score: hs,
+298:                         away_score: as,
+299:                         updated_at: serverTimestamp()
+300:                     }, { merge: true })
+301:                 );
+302: 
+303:                 const derivedMarkets = matchMarkets.filter(
+304:                     (market) => market.match_id === matchId && derivableMarketSlugs.has(market.slug)
+305:                 );
+306: 
+307:                 tasks.push(
+308:                     ...derivedMarkets.map((market) =>
+309:                         saveBolaoPrediction({
+310:                             bolaoId,
+311:                             marketId: market.id,
+312:                             userId: user.id,
+313:                             predictionValue: derivePredictionValue(market.slug, hs, as, homeTeam, awayTeam),
+314:                         })
+315:                     )
+316:                 );
+317:             }
+318: 
+319:             const firstScorerMarket = firstScorerMarketByMatchId[matchId];
+320:             const firstScorerValue =
+321:                 currentFirstScorer ||
+322:                 (hasScoreInput && hs === 0 && as === 0 ? "none" : "");
+323: 
+324:             if (firstScorerMarket && firstScorerValue) {
+325:                 tasks.push(
+326:                     saveBolaoPrediction({
+327:                         bolaoId,
+328:                         marketId: firstScorerMarket.id,
+329:                         userId: user.id,
+330:                         predictionValue: firstScorerValue,
+331:                     })
+332:                 );
+333:             }
+334: 
+335:             await Promise.all(tasks);
+336: 
+337:             setDraftPalpites((currentDrafts) => {
+338:                 const nextDrafts = { ...currentDrafts };
+339:                 delete nextDrafts[matchId];
+340:                 return nextDrafts;
+341:             });
+342:             setDraftFirstScorers((currentDrafts) => {
+343:                 const nextDrafts = { ...currentDrafts };
+344:                 delete nextDrafts[matchId];
+345:                 return nextDrafts;
+346:             });
+347: 
+348:             toast({
+349:                 title: t('palpites.saved'),
+350:                 description: hasScoreInput
+351:                     ? `${homeTeam} ${hs} x ${as} ${awayTeam}`
+352:                     : `Mercado de ${homeTeam} x ${awayTeam} atualizado.`,
+353:             });
+354:         } catch (error) {
+355:             console.error(error);
+356:             toast({ title: t('palpites.error_save'), variant: 'destructive' });
+357:         } finally {
+358:             setSavingMatchId(null);
+359:         }
+360:     };
+
+--- LINES 460-510 ---
+461:                     link.download = 'meu-palpite.png';
+462:                     link.click();
+463:                     window.setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+464:                 }
+465:             }
+466:         } catch (err) {
+467:             console.error("Erro ao compartilhar palpite:", err);
+468:             toast({ title: t('palpites.error_share'), variant: 'destructive' });
+469:         } finally {
+470:             setIsGenerating(false);
+471:             setShareModalOpen(false);
+472:         }
+473:     };
+474: 
+475:     if (!matches.length) {
+476:         return (
+477:             <EmptyState
+478:                 icon="⚽"
+479:                 title="Calendário ainda indisponível"
+480:                 description="Assim que os jogos forem carregados, seus palpites aparecem aqui."
+481:             />
+482:         );
+483:     }
+484: 
+485:     return (
+486:         <div className="space-y-4">
+487:             {matches.map(m => {
+488:                 const isStarted = m.status === 'live' || m.status === 'finished';
+489:                 const marketsForMatch = matchMarkets.filter((market) => market.match_id === m.id);
+490:                 const firstScorerMarket = firstScorerMarketByMatchId[m.id];
+491:                 const savedFirstScorer = getSavedFirstScorer(m.id);
+492:                 const currentFirstScorer = draftFirstScorers[m.id] ?? savedFirstScorer;
+493:                 const p = getCurrentPalpite(m.id);
+494:                 const savedHomeValue = savedPalpites[m.id]?.home ?? (p.id ? p.home : "");
+495:                 const savedAwayValue = savedPalpites[m.id]?.away ?? (p.id ? p.away : "");
+496:                 const scoreDirty =
+497:                     p.home !== savedHomeValue ||
+498:                     p.away !== savedAwayValue;
+499:                 const firstScorerDirty = currentFirstScorer !== savedFirstScorer;
+500:                 const hasScoreReady = p.home !== '' && p.away !== '';
+501:                 const hasSavedPrediction = Boolean(p.id || savedFirstScorer);
+502:                 const isDirty =
+503:                     scoreDirty ||
+504:                     firstScorerDirty;
+505:                 const canSave = !isStarted && ((scoreDirty && hasScoreReady) || (firstScorerDirty && currentFirstScorer !== ""));
+506:                 const isHighlighted = highlightedMatchId === m.id;
+507: 
+508:                 return (
+509:                     <div id={`match-card-${m.id}`} key={m.id} className={cn(
+510:                         "relative p-6 bg-white/[0.03] border rounded-[32px] overflow-hidden transition-all",

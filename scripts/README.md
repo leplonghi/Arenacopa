@@ -1,5 +1,5 @@
 
-# ArenaCopa Automation Scripts
+# ArenaCUP Automation Scripts
 
 ## 1. Setup Database
 Run the SQL in `setup_tables.sql` in your Supabase SQL Editor to create the necessary tables for dynamic content.

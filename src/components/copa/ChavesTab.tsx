@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 import { Flag } from "@/components/Flag";
 import { getTeam } from "@/data/mockData";
 import { motion } from "framer-motion";
@@ -15,6 +16,7 @@ import type { KnockoutData, KnockoutMatchFull, KnockoutRound, KnockoutScore } fr
 type ViewMode = "bracket" | "list";
 
 export function ChavesTab() {
+  const { t } = useTranslation('copa');
   const { knockoutData, isGroupsComplete, filledCount, updateKnockoutScore } = useSimulacao();
   const [viewMode, setViewMode] = useState<ViewMode>("bracket");
   const bracketRef = useRef<HTMLDivElement>(null);
@@ -189,7 +191,7 @@ function ListView({
     { key: "r16" as KnockoutRound, label: "Oitavas de Final", matches: data.r16 },
     { key: "quarter" as KnockoutRound, label: "Quartas de Final", matches: data.quarter },
     { key: "semi" as KnockoutRound, label: "Semifinais", matches: data.semi },
-    { key: "third" as KnockoutRound, label: "Disputa de 3º Lugar", matches: data.third },
+    { key: "third" as KnockoutRound, label: t('bracket.third_place'), matches: data.third },
     { key: "final" as KnockoutRound, label: "Grande Final", matches: data.final },
   ];
 

@@ -1,0 +1,55 @@
+
+
+=== \components\BolaoCard.tsx === NOT FOUND
+
+
+=== \components\copa\bolao\BolaoTabs.tsx === NOT FOUND
+
+
+=== \components\copa\bolao\RankingTab.tsx ===
+
+
+=== \components\copa\bolao\JogosTab.tsx ===
+
+
+=== \components\copa\ChavesTab.tsx ===
+  2: import { useNavigate } from "react-router-dom";
+  188:   const navigate = useNavigate();
+  246:                         onClick={(e) => { e.stopPropagation(); navigate(`/team/${home.code}`); }}
+  277:                         onClick={(e) => { e.stopPropagation(); navigate(`/team/${away.code}`); }}
+
+
+=== \components\copa\GruposTab.tsx ===
+  2: import { useNavigate } from "react-router-dom";
+  18:   const navigate = useNavigate();
+  143:                           navigate(`/team/${team.code}`);
+
+
+=== Search for specific broken patterns ===
+  \App.tsx:144: <Route path="/copa/noticias" element={<ProtectedRoute><Navigate to="/guia/noticias" replace /></ProtectedRoute>} />
+  \App.tsx:143: <Route path="/copa/historia" element={<ProtectedRoute><Navigate to="/guia/historia" replace /></ProtectedRoute>} />
+  \App.tsx:142: <Route path="/copa/sedes" element={<ProtectedRoute><Navigate to="/guia/mapa" replace /></ProtectedRoute>} />
+  \App.tsx:144: <Route path="/copa/noticias" element={<ProtectedRoute><Navigate to="/guia/noticias" replace /></ProtectedRoute>} />
+  \App.tsx:143: <Route path="/copa/historia" element={<ProtectedRoute><Navigate to="/guia/historia" replace /></ProtectedRoute>} />
+  \App.tsx:142: <Route path="/copa/sedes" element={<ProtectedRoute><Navigate to="/guia/mapa" replace /></ProtectedRoute>} />
+  \App.tsx:143: <Route path="/copa/historia" element={<ProtectedRoute><Navigate to="/guia/historia" replace /></ProtectedRoute>} />
+  \App.tsx:144: <Route path="/copa/noticias" element={<ProtectedRoute><Navigate to="/guia/noticias" replace /></ProtectedRoute>} />
+  \App.tsx:161: <Route path="/guide" element={<ProtectedRoute><LegacyRedirect to="/guia" /></ProtectedRoute>} />
+  \App.tsx:151: <Route path="/boloes/criar" element={<ProtectedRoute><Layout><CriarBolao /></Layout></ProtectedRoute>} />
+  \App.tsx:153: <Route path="/criar-bolao" element={<ProtectedRoute><LegacyRedirect to="/boloes/criar" /></ProtectedRoute>} />
+  \App.tsx:155: <Route path="/pools/create" element={<ProtectedRoute><LegacyRedirect to="/boloes/criar" /></ProtectedRoute>} />
+  \App.tsx:169: <Route path="/regras" element={<ProtectedRoute><Layout><Rules /></Layout></ProtectedRoute>} />
+  \App.tsx:170: <Route path="/rules" element={<ProtectedRoute><LegacyRedirect to="/regras" /></ProtectedRoute>} />
+  \components\BolaoExpressSheet.tsx:127: onClick={() => { onClose(); navigate("/boloes/criar"); }}
+  \components\Layout.tsx:90: if (path === "/boloes/criar") return t('header.titles.create_bolao');
+  \components\Layout.tsx:293: const hideBottomNav = location.pathname === "/boloes/criar";
+  \pages\Boloes.tsx:388: <Link to="/grupos" className="mb-6 flex items-center justify-between gap-3 rounded-[24px] border border-primary/20 bg-primary/5 px-5 py-4 transition-all hover:bg-primary/10">
+  \pages\Boloes.tsx:378: to="/boloes/criar"
+  \pages\Guia.tsx:51: else if (mode === "noticias") navigate("/guia/noticias");
+  \pages\Guia.tsx:50: if (mode === "historia") navigate("/guia/historia");
+  \pages\Index.tsx:496: <Link to="/copa/noticias" className="text-[11px] text-gray-400 font-black uppercase tracking-[0.12em] hover:text-white transition-colors">
+  \pages\Index.tsx:73: <a href="/boloes/criar">
+  \pages\Index.tsx:416: <Link to="/boloes/criar" className="group block">
+  \pages\Menu.tsx:34: onClick={() => navigate("/regras")}
+  \pages\Menu.tsx:75: onClick={() => navigate("/regras")}
+  \pages\Perfil.tsx:695: <button onClick={() => navigate('/regras')} className="p-4 text-left text-sm font-bold hover:bg-white/5 transition-colors">{t('help_rules')}</button>

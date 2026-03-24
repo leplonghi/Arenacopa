@@ -1,165 +1,217 @@
 {
-    "tabs": {
-        "overview": "Today",
-        "calendar": "Calendar",
-        "groups": "Groups",
-        "bracket": "Bracket",
-        "simulator": "Simulator",
-        "news": "News",
-        "hosts": "Host cities",
-        "history": "History"
-    },
-    "groups": {
-        "table": {
-            "country": "Country",
-            "j": "P",
-            "w": "W",
-            "gd": "GD",
-            "p": "Pts"
-        }
-    },
-    "simulator": {
-        "share": {
-            "text_intro": "Check out my simulation for World Cup {{name}}!",
-            "text_group": "Group {{group}}:",
-            "text_footer": "\\nSimulate yours at: https://arenacup.app/copa/simulacao",
-            "copied": "Copied!",
-            "copied_desc": "Simulation text copied to clipboard.",
-            "title": "Share Simulation",
-            "desc": "Share your predictions with your friends.",
-            "whatsapp": "WhatsApp",
-            "whatsapp_desc": "Send via message",
-            "copy": "Copy Text",
-            "copy_desc": "Copy to paste anywhere",
-            "more": "More Options",
-            "more_desc": "Use system share"
-        },
-        "create": {
-            "title": "New Simulation",
-            "name_label": "SIMULATION NAME",
-            "name_placeholder": "My Prediction #1",
-            "groups_label": "GROUPS TO SIMULATE",
-            "select_all": "Select All",
-            "button": "Create Simulation"
-        },
-        "list": {
-            "created": "Simulation created!",
-            "deleted": "Simulation deleted.",
-            "login_title": "Login to Save",
-            "login_desc": "Create an account to save your simulations.",
-            "title": "Your Simulations",
-            "subtitle": "Create and manage your World Cup predictions.",
-            "new": "New",
-            "empty_title": "No simulations yet",
-            "empty_desc": "Create your first simulation to start predicting results.",
-            "create_first": "Create First Simulation",
-            "groups_count": "{{count}} Groups",
-            "games_count": "{{filled}}/{{total}} Games"
-        },
-        "editor": {
-            "selected_groups": "{{count}} groups selected",
-            "progress": "PROGRESS",
-            "games_count": "{{filled}}/{{total}}",
-            "phase_groups": "Group Stage",
-            "phase_knockout": "Knockout Stage",
-            "group_complete": "Complete",
-            "standings": "STANDINGS"
-        }
-    },
-    "overview": {
-        "featured": "Featured",
-        "no_featured": "No featured match.",
-        "quick_access": {
-            "standings_title": "Standings",
-            "standings_desc": "View full table",
-            "simulator_title": "Simulator",
-            "simulator_desc": "Simulate the path to the final",
-            "calendar_title": "Calendar",
-            "calendar_desc": "All tournament matches",
-            "map_title": "Map",
-            "map_desc": "Stadiums and host cities"
-        },
-        "upcoming_matches": "Upcoming Matches",
-        "view_calendar": "View calendar",
-        "calculator": {
-            "title": "Calculator",
-            "select_team": "Select a Team to Simulate",
-            "status": {
-                "qualified": "Qualified",
-                "eliminated": "Eliminated",
-                "contention": "In Contention"
-            },
-            "messages": {
-                "qualified": "Qualification mathematically guaranteed!",
-                "eliminated": "Mathematically eliminated.",
-                "need_draw": "Needs only a draw to guarantee.",
-                "need_miracle": "Needs to win all matches and hope for other results.",
-                "need_wins": "Needs {{wins}} wins in the next {{games}} games."
-            }
-        },
-        "premium_cta": {
-            "title": "Go Premium",
-            "desc": "Remove ads and unlock features"
-        }
-    },
-    "match_details": {
-        "sr_title": "Match Details: {{home}} vs {{away}}",
-        "tabs": {
-            "summary": "Summary",
-            "comparison": "Comparison"
-        },
-        "group_label": "Group {{group}}",
-        "phase_label": "{{phase}}",
-        "location_title": "Venue",
-        "stadium_info": {
-            "capacity": "Capacity",
-            "climate": "Climate",
-            "timezone": "Timezone"
-        },
-        "news_title": "Latest News",
-        "editor": {
-            "selected_groups": "{{count}} group selected",
-            "selected_groups_plural": "{{count}} groups selected",
-            "progress": "Progress",
-            "games_count": "{{filled}}/{{total}} games",
-            "phase_groups": "Group Stage",
-            "phase_knockout": "Knockout Stage",
-            "group_complete": "Complete",
-            "standings": "Standings"
-        },
-        "list": {
-            "title": "My Simulations",
-            "subtitle": "Create and manage your predictions",
-            "new": "New",
-            "empty_title": "No simulations",
-            "empty_desc": "Create your first simulation to start",
-            "create_first": "Create Simulation",
-            "login_title": "Login to save",
-            "login_desc": "Your simulations will be saved to your account",
-            "groups_count": "{{count}} groups",
-            "games_count": "{{filled}}/{{total}} filled",
-            "created": "Simulation created",
-            "deleted": "Simulation deleted"
-        },
-        "knockout": {
-            "incomplete_title": "Group Stage Incomplete",
-            "incomplete_desc": "Fill in all games from the 12 groups to unlock the knockout stage",
-            "penalties": "Penalties",
-            "advances": "{{team}} advances",
-            "defined_games": "{{filled}}/{{total}} games defined",
-            "defined_games_singular": "{{filled}}/{{total}} game defined"
-        },
-        "comparison": {
-            "titles": "World Cup Titles",
-            "titles_label": "Titles",
-            "ranking": "FIFA Ranking",
-            "ranking_label": "Position",
-            "appearances_label": "Appearances",
-            "best_result_label": "Best Result",
-            "demographics_title": "Country Stats",
-            "hdi": "HDI",
-            "population": "Population",
-            "gdp": "GDP (Billion)"
-        }
+  "tabs": {
+    "overview": "Overview",
+    "calendar": "Calendar",
+    "groups": "Groups",
+    "bracket": "Bracket",
+    "simulator": "Simulator",
+    "news": "News",
+    "hosts": "Host cities",
+    "history": "History",
+    "simulacao": "Simulate",
+    "calendario": "Schedule",
+    "grupos": "Groups",
+    "chaves": "Bracket",
+    "loading": "Loading..."
+  },
+  "groups": {
+    "table": {
+      "country": "Country",
+      "j": "P",
+      "w": "W",
+      "gd": "GD",
+      "p": "Pts"
     }
+  },
+  "simulator": {
+    "share": {
+      "text_intro": "Check out my simulation for World Cup {{name}}!",
+      "text_group": "Group {{group}}:",
+      "text_footer": "\\nSimulate yours at: https://arenacup.app/copa/simulacao",
+      "copied": "Copied!",
+      "copied_desc": "Simulation text copied to clipboard.",
+      "title": "Share Simulation",
+      "desc": "Share your predictions with your friends.",
+      "whatsapp": "WhatsApp",
+      "whatsapp_desc": "Send via message",
+      "copy": "Copy Text",
+      "copy_desc": "Copy to paste anywhere",
+      "more": "More Options",
+      "more_desc": "Use system share"
+    },
+    "create": {
+      "title": "New Simulation",
+      "name_label": "SIMULATION NAME",
+      "name_placeholder": "My Prediction #1",
+      "groups_label": "GROUPS TO SIMULATE",
+      "select_all": "Select All",
+      "button": "Create Simulation"
+    },
+    "list": {
+      "created": "Simulation created!",
+      "deleted": "Simulation deleted.",
+      "login_title": "Login to Save",
+      "login_desc": "Create an account to save your simulations.",
+      "title": "Your Simulations",
+      "subtitle": "Create and manage your World Cup predictions.",
+      "new": "New",
+      "empty_title": "No simulations yet",
+      "empty_desc": "Create your first simulation to start predicting results.",
+      "create_first": "Create First Simulation",
+      "groups_count": "{{count}} Groups",
+      "games_count": "{{filled}}/{{total}} Games"
+    },
+    "editor": {
+      "selected_groups": "{{count}} groups selected",
+      "progress": "PROGRESS",
+      "games_count": "{{filled}}/{{total}}",
+      "phase_groups": "Group Stage",
+      "phase_knockout": "Knockout Stage",
+      "group_complete": "Complete",
+      "standings": "STANDINGS"
+    }
+  },
+  "overview": {
+    "featured": "Featured",
+    "no_featured": "No featured match.",
+    "quick_access": {
+      "standings_title": "Standings",
+      "standings_desc": "View full table",
+      "simulator_title": "Simulator",
+      "simulator_desc": "Simulate the path to the final",
+      "calendar_title": "Calendar",
+      "calendar_desc": "All tournament matches",
+      "map_title": "Map",
+      "map_desc": "Stadiums and host cities"
+    },
+    "upcoming_matches": "Upcoming Matches",
+    "view_calendar": "View calendar",
+    "calculator": {
+      "title": "Calculator",
+      "select_team": "Select a Team to Simulate",
+      "status": {
+        "qualified": "Qualified",
+        "eliminated": "Eliminated",
+        "contention": "In Contention"
+      },
+      "messages": {
+        "qualified": "Qualification mathematically guaranteed!",
+        "eliminated": "Mathematically eliminated.",
+        "need_draw": "Needs only a draw to guarantee.",
+        "need_miracle": "Needs to win all matches and hope for other results.",
+        "need_wins": "Needs {{wins}} wins in the next {{games}} games."
+      }
+    },
+    "premium_cta": {
+      "title": "Go Premium",
+      "desc": "Remove ads and unlock features"
+    },
+    "no_upcoming": "No upcoming matches right now",
+    "no_upcoming_desc": "New games will appear here soon."
+  },
+  "match_details": {
+    "sr_title": "Match Details: {{home}} vs {{away}}",
+    "tabs": {
+      "summary": "Summary",
+      "comparison": "Comparison"
+    },
+    "group_label": "Group {{group}}",
+    "phase_label": "{{phase}}",
+    "location_title": "Venue",
+    "stadium_info": {
+      "capacity": "Capacity",
+      "climate": "Climate",
+      "timezone": "Timezone"
+    },
+    "news_title": "Latest News",
+    "editor": {
+      "selected_groups": "{{count}} group selected",
+      "selected_groups_plural": "{{count}} groups selected",
+      "progress": "Progress",
+      "games_count": "{{filled}}/{{total}} games",
+      "phase_groups": "Group Stage",
+      "phase_knockout": "Knockout Stage",
+      "group_complete": "Complete",
+      "standings": "Standings"
+    },
+    "list": {
+      "title": "My Simulations",
+      "subtitle": "Create and manage your predictions",
+      "new": "New",
+      "empty_title": "No simulations",
+      "empty_desc": "Create your first simulation to start",
+      "create_first": "Create Simulation",
+      "login_title": "Login to save",
+      "login_desc": "Your simulations will be saved to your account",
+      "groups_count": "{{count}} groups",
+      "games_count": "{{filled}}/{{total}} filled",
+      "created": "Simulation created",
+      "deleted": "Simulation deleted"
+    },
+    "knockout": {
+      "incomplete_title": "Group Stage Incomplete",
+      "incomplete_desc": "Fill in all games from the 12 groups to unlock the knockout stage",
+      "penalties": "Penalties",
+      "advances": "{{team}} advances",
+      "defined_games": "{{filled}}/{{total}} games defined",
+      "defined_games_singular": "{{filled}}/{{total}} game defined"
+    },
+    "comparison": {
+      "titles": "World Cup Titles",
+      "titles_label": "Titles",
+      "ranking": "FIFA Ranking",
+      "ranking_label": "Position",
+      "appearances_label": "Appearances",
+      "best_result_label": "Best Result",
+      "demographics_title": "Country Stats",
+      "hdi": "HDI",
+      "population": "Population",
+      "gdp": "GDP (Billion)"
+    }
+  },
+  "match_card": {
+    "live": "In Progress",
+    "next_game": "Next Match",
+    "live_badge": "Live",
+    "details_cta": "Match Details",
+    "group": "Group {{group}}",
+    "my_prediction": "Your prediction:",
+    "edit": "Edit"
+  },
+  "share_bracket": {
+    "gen_error": "Error generating bracket image",
+    "saved": "Image saved!",
+    "share_error": "Error sharing",
+    "not_supported": "Sharing not supported in this browser",
+    "downloaded": "Image downloaded! Attach in WhatsApp",
+    "btn_label": "Share"
+  },
+  "calendario": {
+    "empty_title": "No games here yet",
+    "empty_desc": "The calendar will appear once matches are loaded.",
+    "prev_day": "Previous day",
+    "next_day": "Next day"
+  },
+  "bracket": {
+    "third_place": "Third Place Match"
+  },
+  "grupos": {
+    "no_games": "No games found for this group."
+  },
+  "noticias": {
+    "priority_team": "Your team's spotlight",
+    "priority_summary_fallback": "Featured news for your favorite team.",
+    "open_source": "Open source",
+    "read_source": "Read more",
+    "summary_fallback": "News available at the original source.",
+    "date_unknown": "Date unavailable",
+    "categories": {
+      "all": "All",
+      "general": "General",
+      "matches": "Matches",
+      "teams": "Teams",
+      "travel": "Travel",
+      "tickets": "Tickets"
+    }
+  }
 }

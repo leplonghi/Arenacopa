@@ -1,5 +1,5 @@
 export const FAVORITE_TEAM_STORAGE_KEY = "favorite_team";
-export const FAVORITE_TEAM_UPDATED_EVENT = "arenacopa:favorite-team-updated";
+export const FAVORITE_TEAM_UPDATED_EVENT = "arenacup:favorite-team-updated";
 
 type FavoriteTeamUpdatedDetail = {
   teamCode: string | null;

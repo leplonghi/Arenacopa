@@ -1,7 +1,7 @@
 # Plano de Enriquecimento de Conteúdo: Sedes da Copa 2026
 
 ## Objetivo
-Transformar a seção de sedes do ArenaCopa no guia mais completo e rico em informações disponível, unificando dados técnicos, turísticos e logísticos em um formato padronizado e multi-idioma (Globalizado).
+Transformar a seção de sedes do ArenaCUP no guia mais completo e rico em informações disponível, unificando dados técnicos, turísticos e logísticos em um formato padronizado e multi-idioma (Globalizado).
 
 ## Estrutura de Dados (HostCity Premium)
 Cada sede agora seguirá este padrão rigoroso:

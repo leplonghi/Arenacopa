@@ -5,6 +5,7 @@ import { Clock, Trophy } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { db } from "@/integrations/firebase/client";
 import { collection, getDocs, onSnapshot, orderBy, query, where } from "firebase/firestore";
+import { useTranslation } from "react-i18next";
 
 type MatchCardRow = {
     id: string;
@@ -52,6 +53,7 @@ const normalizeStatus = (status?: string): MatchCardRow["status"] => {
 export function LiveMatchCard() {
     const { user } = useAuth();
     const navigate = useNavigate();
+    const { t } = useTranslation('home');
     const [liveMatch, setLiveMatch] = useState<MatchCardRow | null>(null);
     const [nextMatch, setNextMatch] = useState<MatchCardRow | null>(null);
     const [hasPrediction, setHasPrediction] = useState<boolean>(false);
@@ -113,7 +115,7 @@ export function LiveMatchCard() {
 
             if (distance < 0) {
                 clearInterval(intervalId);
-                setCountdown("CARREGANDO...");
+                setCountdown(t('live_card.loading'));
                 return;
             }
 
@@ -135,15 +137,15 @@ export function LiveMatchCard() {
 
     if (liveMatch) {
         return (
-            <div className="w-full glass-card p-4 rounded-[32px] border-copa-live/30 mb-6 bg-gradient-to-br from-background/90 to-copa-live/5 relative overflow-hidden">
-                <div className="absolute top-0 right-0 left-0 bg-copa-live/20 h-1/2 blur-2xl pointer-events-none" />
+            <div className="w-full p-4 rounded-[32px] border border-copa-live/30 mb-6 bg-gradient-to-br from-white/[0.08] to-copa-live/10 backdrop-blur-xl relative overflow-hidden shadow-2xl">
+                <div className="absolute top-0 right-0 left-0 bg-copa-live/15 h-1/2 blur-2xl pointer-events-none" />
 
                 <div className="flex justify-between items-center mb-4 relative z-10">
                     <div className="flex items-center gap-2">
                         <div className="w-2 h-2 rounded-full bg-copa-live animate-pulse shadow-[0_0_8px_rgba(255,59,48,0.8)]" />
                         <span className="text-copa-live font-black text-xs uppercase tracking-widest">LIVE</span>
                     </div>
-                    <span className="text-copa-live/80 font-bold text-xs">Ao vivo</span>
+                    <span className="text-copa-live/80 font-bold text-xs">{t('live_card.live_label')}</span>
                 </div>
 
                 <div className="flex items-center justify-between relative z-10 mb-4 px-2">
@@ -172,7 +174,7 @@ export function LiveMatchCard() {
                         className="w-full mt-2 bg-copa-live/10 text-copa-live border border-copa-live/20 font-bold text-xs py-2.5 rounded-xl hover:bg-copa-live/20 transition-colors flex items-center justify-center gap-2 uppercase tracking-wider relative z-10"
                     >
                         <Trophy className="w-4 h-4" />
-                        Acompanhar no Bolão
+                        {t('live_card.follow_btn')}
                     </button>
                 )}
             </div>
@@ -181,11 +183,11 @@ export function LiveMatchCard() {
 
     // Next Match View
     return (
-        <div className="w-full glass-card p-5 rounded-[32px] mb-6 relative overflow-hidden border-white/10 hover:border-white/20 transition-colors">
+        <div className="w-full surface-card-soft p-5 rounded-[32px] mb-6 relative overflow-hidden border-white/10 hover:border-white/20 transition-colors">
             <div className="flex justify-between items-center mb-4">
                 <div className="flex items-center gap-2">
                     <Clock className="w-4 h-4 text-primary" />
-                    <span className="text-primary font-black text-xs uppercase tracking-widest">Próximo Jogo</span>
+                    <span className="text-primary font-black text-xs uppercase tracking-widest">{t('live_card.next_game')}</span>
                 </div>
                 <span className="text-muted-foreground font-bold text-xs font-mono">{countdown}</span>
             </div>

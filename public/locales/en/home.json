@@ -1,66 +1,93 @@
 {
-    "welcome": "Welcome,",
-    "pending": {
-        "title_one": "You have {{count}} pending prediction",
-        "title_other": "You have {{count}} pending predictions",
-        "subtitle": "Tap to bet before the matches"
-    },
-    "stats": {
-        "rank": "Rank",
-        "points": "Points",
-        "pools": "Pools"
-    },
-    "my_team": {
-        "title": "My Team",
-        "view_group": "View group",
-        "group": "Group {{group}}",
-        "next_match": "Next",
-        "no_matches": "No matches"
-    },
-    "my_pools": {
-        "title": "My Pools",
-        "manage": "Manage",
-        "join_title": "Join a Pool",
-        "join_desc": "Create your league or join an existing one.",
-        "start_now": "Start now",
-        "rank_place": "#{{rank}}",
-        "pts": "pts"
-    },
-    "highlights": {
-        "title": "Highlights",
-        "view_all": "View all",
-        "general": "General"
-    },
-    "dashboard_partial": {
-        "title": "Partial dashboard",
-        "desc": "I couldn't refresh your dashboard right now. Some sections may appear empty.",
-        "retry": "Try again"
-    },
-    "hero": {
-        "kicker": "Central dashboard",
-        "get_elite": "Get Elite",
-        "elite_member": "Elite member"
-    },
-    "quick_panel": {
-        "section_title": "Your pace",
-        "view_ranking": "View ranking",
-        "kicker": "Quick season view",
-        "title": "Your competitive panel",
-        "description": "See your overall position, track the evolution of your pools and jump into the full ranking whenever you want.",
-        "best_rank": "Best rank",
-        "points": "Points",
-        "pools": "Pools"
-    },
-    "upcoming": {
-        "title": "Upcoming matches",
-        "view_calendar": "View calendar",
-        "empty": "There are no upcoming matches loaded to show here yet.",
-        "favorite_team": "Your team: {{team}}",
-        "next_round": "Next round"
-    },
-    "news": {
-        "title": "Latest updates",
-        "view_all": "News center"
-    },
-    "cta_predict": "Make Predictions"
+  "welcome": "Welcome,",
+  "pending": {
+    "title_one": "You have {{count}} pending prediction",
+    "title_other": "You have {{count}} pending predictions",
+    "subtitle": "Tap to bet before the matches"
+  },
+  "stats": {
+    "rank": "Rank",
+    "points": "Points",
+    "pools": "Pools"
+  },
+  "my_team": {
+    "title": "My Team",
+    "view_group": "View group",
+    "group": "Group {{group}}",
+    "next_match": "Next",
+    "no_matches": "No matches"
+  },
+  "my_pools": {
+    "title": "My Pools",
+    "manage": "Manage",
+    "join_title": "Join a Pool",
+    "join_desc": "Create your league or join an existing one.",
+    "start_now": "Start now",
+    "rank_place": "#{{rank}}",
+    "pts": "pts",
+    "members": "{{count}} members"
+  },
+  "highlights": {
+    "title": "Highlights",
+    "view_all": "View all",
+    "general": "General"
+  },
+  "dashboard_partial": {
+    "title": "Partial dashboard",
+    "desc": "I couldn't refresh your dashboard right now. Some sections may appear empty.",
+    "retry": "Try again"
+  },
+  "hero": {
+    "kicker": "Central dashboard",
+    "get_elite": "Get Elite",
+    "elite_member": "Elite member",
+    "default_name": "Fan"
+  },
+  "quick_panel": {
+    "section_title": "Your pace",
+    "view_ranking": "View ranking",
+    "kicker": "Quick season view",
+    "title": "Your competitive panel",
+    "description": "See your overall position, track the evolution of your pools and jump into the full ranking whenever you want.",
+    "best_rank": "Best rank",
+    "points": "Points",
+    "pools": "Pools"
+  },
+  "upcoming": {
+    "title": "Upcoming matches",
+    "view_calendar": "View calendar",
+    "empty": "There are no upcoming matches loaded to show here yet.",
+    "favorite_team": "Your team: {{team}}",
+    "next_round": "Next round",
+    "match_aria": "Match details: {{home}} vs {{away}}"
+  },
+  "news": {
+    "title": "Latest updates",
+    "view_all": "News center",
+    "tab_copa": "Copa 2026",
+    "tab_team": "My Team",
+    "team_empty": "No recent news about {{team}}",
+    "team_no_fav": "Set your team in your profile to see personalized news",
+    "live_badge": "Live"
+  },
+  "cta_predict": "Make Predictions",
+  "live_card": {
+    "loading": "Loading...",
+    "live_label": "Live now",
+    "follow_btn": "Follow in Pool",
+    "next_game": "Next Match"
+  },
+  "action_of_day": {
+    "pending_title": "Pending picks",
+    "pending_desc": "{count} match{es} waiting for your pick",
+    "pending_cta": "Pick now",
+    "no_bolao_title": "Create your first pool",
+    "no_bolao_desc": "Compete with friends in Copa 2026",
+    "no_bolao_cta": "Create pool",
+    "today_match_title": "Game today!",
+    "today_match_desc": "Have you made your pick for today?",
+    "today_match_cta": "See games",
+    "ready_title": "All set!",
+    "ready_desc": "Your picks are done. Good luck!"
+  }
 }

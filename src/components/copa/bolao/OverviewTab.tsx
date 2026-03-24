@@ -440,7 +440,7 @@ export function OverviewTab({ bolao, members, palpites, markets, marketPredictio
             <motion.div variants={staggerItem} className="px-6 pb-8">
                 <div className="h-px w-full bg-white/5 mb-6" />
                 <p className="text-[10px] text-gray-600 leading-relaxed text-center font-bold font-mono tracking-tight">
-                    ARENACOPA PROTOCOL V2.5 <span className="mx-2">·</span>
+                    ARENACUP PROTOCOL V2.5 <span className="mx-2">·</span>
                     {t('overview.disclaimer').toUpperCase()}
                 </p>
             </motion.div>

@@ -4,9 +4,9 @@ import { getFirestore, doc, setDoc, getDoc } from "firebase/firestore";
 // Firebase configuration from environment
 const firebaseConfig = {
   apiKey: "AIzaSyBDGM-km8sVo-IYVPtCGcTCV2uwzBAYdrk",
-  authDomain: "arenacopa-web-2026.firebaseapp.com",
-  projectId: "arenacopa-web-2026",
-  storageBucket: "arenacopa-web-2026.firebasestorage.app",
+  authDomain: "arenacup-web-2026.firebaseapp.com",
+  projectId: "arenacup-web-2026",
+  storageBucket: "arenacup-web-2026.firebasestorage.app",
   messagingSenderId: "388695676084",
   appId: "1:388695676084:web:e43e4a73b3645e0b68b3e1"
 };

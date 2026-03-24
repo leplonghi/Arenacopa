@@ -13,11 +13,11 @@ import { BracketPickCard } from "./BracketPickCard";
 import { MarketTooltip } from "./MarketTooltip";
 import type { BolaoMarket, BolaoPrediction } from "@/types/bolao";
 
-function getSpecialStatusLabel(market: BolaoMarket, prediction?: BolaoPrediction) {
-    if (market.status === "resolved") return "Pontuado";
-    if (market.status === "closed") return "Encerrado";
-    if (prediction) return "Salvo";
-    return "Aberto";
+function getSpecialStatusLabel(market: BolaoMarket, prediction: BolaoPrediction | undefined, t: (k: string) => string) {
+    if (market.status === "resolved") return t('special_markets.status_resolved');
+    if (market.status === "closed") return t('special_markets.status_closed');
+    if (prediction) return t('special_markets.status_saved');
+    return t('special_markets.status_open');
 }
 
 function getPredictionLabel(prediction?: BolaoPrediction) {
@@ -31,7 +31,7 @@ function getPredictionLabel(prediction?: BolaoPrediction) {
             : [];
         const maybeChampion = typeof value.champion === "string" ? value.champion : "";
         if (maybeFinalists.length > 0 || maybeChampion) {
-            const finalistsLabel = maybeFinalists.length > 0 ? maybeFinalists.join(" x ") : "Final indefinida";
+            const finalistsLabel = maybeFinalists.length > 0 ? maybeFinalists.join(" x ") : t('special_markets.final_undefined');
             return `${finalistsLabel}${maybeChampion ? ` | Campeão: ${maybeChampion}` : ""}`;
         }
     }
@@ -204,7 +204,7 @@ export function SpecialMarketsTab({
                                     <p className="mt-2 text-sm text-zinc-400">{market.description}</p>
                                 </div>
                                 <div className="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-primary">
-                                    {getSpecialStatusLabel(market, prediction)}
+                                    {getSpecialStatusLabel(market, prediction, t)}
                                 </div>
                             </div>
 
@@ -356,7 +356,7 @@ export function SpecialMarketsTab({
 
                                     {savedValue && (
                                         <div className="rounded-2xl border border-white/5 bg-black/10 p-4">
-                                            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-zinc-500">Salvo no momento</p>
+                                            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-zinc-500">{t('special_markets.saved_at')}</p>
                                             <p className="mt-2 text-sm font-black text-white">{savedValue}</p>
                                         </div>
                                     )}

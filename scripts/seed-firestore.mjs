@@ -21,8 +21,8 @@ if (existsSync(SA_PATH)) {
   // Use project ID only — works with GOOGLE_APPLICATION_CREDENTIALS or
   // when running inside Firebase Functions emulator
   process.env.FIRESTORE_EMULATOR_HOST = undefined;
-  app = initializeApp({ projectId: "arenacopa-web-2026" });
-  console.log("ℹ️  Usando Application Default Credentials (projeto arenacopa-web-2026)");
+  app = initializeApp({ projectId: "arenacup-web-2026" });
+  console.log("ℹ️  Usando Application Default Credentials (projeto arenacup-web-2026)");
 }
 
 const db = getFirestore(app);
@@ -111,7 +111,7 @@ async function setDocWithCheck(collection, id, data) {
 }
 
 async function seed() {
-  console.log("\n🌱 Starting Firestore seed for arenacopa-web-2026...\n");
+  console.log("\n🌱 Starting Firestore seed for arenacup-web-2026...\n");
 
   console.log("📰 Seeding copa_news...");
   for (const { id, ...data } of news) {
@@ -129,14 +129,14 @@ async function seed() {
   console.log(`   📰 copa_news: ${news.length} artigos`);
   console.log(`   ⚽ matches: ${matchesData.length} jogos`);
   console.log("\n💡 Acesse o Firebase Console para verificar:");
-  console.log("   https://console.firebase.google.com/project/arenacopa-web-2026/firestore\n");
+  console.log("   https://console.firebase.google.com/project/arenacup-web-2026/firestore\n");
   process.exit(0);
 }
 
 seed().catch((err) => {
   console.error("\n❌ Seed falhou:", err.message || err);
   console.error("\nSolução: Gere um serviceAccountKey.json e salve na raiz do projeto");
-  console.error("  1. Acesse: https://console.firebase.google.com/project/arenacopa-web-2026/settings/serviceaccounts/adminsdk");
+  console.error("  1. Acesse: https://console.firebase.google.com/project/arenacup-web-2026/settings/serviceaccounts/adminsdk");
   console.error("  2. Clique em 'Gerar nova chave privada'");
   console.error("  3. Salve como serviceAccountKey.json na raiz do projeto\n");
   process.exit(1);

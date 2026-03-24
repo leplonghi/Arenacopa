@@ -516,12 +516,24 @@ export const stadiumDetails: StadiumDetail[] = [
 // ═══════════════════════════════════════════
 
 export const historicRecords = [
-    { category: "Maior goleada", record: "Hungria 10 x 1 El Salvador", year: 1982, icon: "Zap" },
-    { category: "Mais gols em uma Copa", record: "171 gols (1998, 2014)", year: 2014, icon: "Target" },
-    { category: "Final mais assistida", record: "~1.5 bilhão de espectadores", year: 2022, icon: "Eye" },
-    { category: "Jogador com mais Copas", record: "Antonio Carbajal, Lothar Matthäus, Rafael Márquez (5)", year: 2022, icon: "User" },
-    { category: "Seleção mais jovem campeã", record: "Brasil 1958 (com Pelé, 17 anos)", year: 1958, icon: "Baby" },
-    { category: "Hat-trick mais rápido", record: "László Kiss (7 min, Hungria)", year: 1982, icon: "Clock" },
-    { category: "Gol mais rápido", record: "Hakan Şükür (11 segundos)", year: 2002, icon: "Bolt" },
-    { category: "Maior público em uma Copa", record: "USA 1994 — 3.587.538 espectadores", year: 1994, icon: "Users" },
+    // Recordes originais
+    { category: "Maior goleada", record: "Hungria 10 × 1 El Salvador", year: 1982, icon: "Zap" },
+    { category: "Mais gols em uma Copa", record: "171 gols — empatado entre 1998 e 2014", year: 2014, icon: "Target" },
+    { category: "Final mais assistida", record: "∼1,5 bilhão de espectadores (Catar 2022)", year: 2022, icon: "Eye" },
+    { category: "Jogador com mais Copas", record: "Carbajal, Matthäus e Márquez — 5 edições cada", year: 2022, icon: "User" },
+    { category: "Campleã mais jovem da história", record: "Brasil 1958, com Pelé (17 anos)", year: 1958, icon: "Baby" },
+    { category: "Hat-trick mais rápido", record: "László Kiss — 7 min (Hungria vs El Salvador, 1982)", year: 1982, icon: "Clock" },
+    { category: "Gol mais rápido", record: "Hakan Şükür — 11 segundos (Türquia vs Coreia, 2002)", year: 2002, icon: "Bolt" },
+    { category: "Maior público total", record: "EUA 1994 — 3.587.538 espectadores no total", year: 1994, icon: "Users" },
+    // Novos recordes válidos e factíveis
+    { category: "Único país em TODAS as Copas", record: "Brasil — presente nas 22 edições (1930–2022)", year: 2022, icon: "Globe" },
+    { category: "Maior artilheiro de uma edição", record: "Just Fontaine — 13 gols (França, 1958)", year: 1958, icon: "Crosshair" },
+    { category: "Jogo com mais gols", record: "Áustria 7 × 5 Suíça — 12 gols (quartas, 1954)", year: 1954, icon: "Hash" },
+    { category: "Final com mais gols", record: "Brasil 5 × 2 Suécia — 7 gols (1958)", year: 1958, icon: "Trophy" },
+    { category: "Seleção com mais finais", record: "Alemanha — 8 finais disputadas (4 títulos)", year: 2014, icon: "Medal" },
+    { category: "Guarda-redes imbatível", record: "Walter Zenga (Itália) — 517 min sem sofrer gol (1990)", year: 1990, icon: "Swords" },
+    { category: "Gol mais tardio em uma final", record: "Mario Götze (ALE) no 113º min vs Argentina (2014)", year: 2014, icon: "Clock" },
+    { category: "Bicampeões consecutivos", record: "Itália (1934/38) e Brasil (1958/62)", year: 1962, icon: "Crown" },
+    { category: "Copa 2026 — Inédito", record: "Primeiro torneio com 48 seleções e 3 países-sede", year: 2026, icon: "Star" },
+    { category: "Primeira Copa do Mundo", record: "Urugüai 1930 — 13 seleções, 18 jogos, sem fase de grupos", year: 1930, icon: "Calendar" },
 ];

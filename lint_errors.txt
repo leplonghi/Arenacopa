@@ -1,5 +1,5 @@
 
-C:\Users\eduar\OneDrive\Desktop\Antigravity\ArenaCopa\Arenacopa\src\types\supabase.ts
+C:\Users\eduar\OneDrive\Desktop\Antigravity\ArenaCUP\ArenaCUP\src\types\supabase.ts
   1:0  error  Parsing error: Unexpected keyword or identifier
 
 Ô£û 1 problem (1 error, 0 warnings)

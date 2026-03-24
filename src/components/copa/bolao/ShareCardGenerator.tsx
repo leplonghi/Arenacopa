@@ -1,6 +1,8 @@
 import React, { forwardRef, useEffect, useState } from "react";
 import * as htmlToImage from "html-to-image";
 import { Flag } from "@/components/Flag";
+import { useTranslation } from "react-i18next";
+import { useToast } from "@/hooks/use-toast";
 
 export type ShareCardType = 'join_bolao' | 'my_palpite' | 'goal_reaction' | 'exact_score' | 'leader_rank' | 'phase_summary' | 'champion';
 export type ShareCardFormat = 'story' | 'feed' | 'twitter';
@@ -22,6 +24,8 @@ interface ShareCardProps {
 }
 
 export const ShareCardGenerator = forwardRef<HTMLDivElement, ShareCardProps>(({ type, format, data, onReady }, ref) => {
+    const { t } = useTranslation('bolao');
+    const { toast } = useToast();
     const [dataUrl, setDataUrl] = useState<string | null>(null);
 
     const getContainerSize = () => {
@@ -57,6 +61,7 @@ export const ShareCardGenerator = forwardRef<HTMLDivElement, ShareCardProps>(({ 
                 })
                 .catch((err) => {
                     console.error("Error generating share card", err);
+                    toast({ title: t('palpites.error_generate'), variant: 'destructive' });
                 });
         }, 800);
 
@@ -120,7 +125,7 @@ export const ShareCardGenerator = forwardRef<HTMLDivElement, ShareCardProps>(({ 
 
                         <div className="mt-16 text-[32px] font-black text-white flex items-center gap-4">
                             <div className="w-16 h-16 bg-primary rounded-xl flex items-center justify-center text-black">🎯</div>
-                            ArenaCopa 2026
+                            Arena CUP 2026
                         </div>
                     </div>
                 )}

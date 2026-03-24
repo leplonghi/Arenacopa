@@ -1,16 +1,21 @@
 import { db } from "@/integrations/firebase/client";
-import { 
-  collection, 
-  query, 
-  where, 
-  getDocs, 
-  orderBy, 
-  limit, 
-  doc, 
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  doc,
   getDoc,
   getCountFromServer
 } from "firebase/firestore";
 import { getProfile } from "@/services/profile/profile.service";
+import type { BolaoData } from "@/types/bolao";
+
+/** Shape of the ranking document stored at bolao_rankings/{userId}_{bolaoId} */
+interface BolaoRankingDoc {
+  total_points?: number;
+  rank?: number;
+}
 
 export interface DashboardBolaoSummary {
   id: string;
@@ -30,95 +35,120 @@ export interface DashboardNewsItem {
   url: string;
 }
 
+/**
+ * Count how many of the given scheduled match IDs the user has already
+ * predicted in a specific bolão.
+ *
+ * Firestore `in` queries are capped at 30 items, so we batch the IDs and run
+ * the sub-queries in parallel, then sum the counts.
+ */
+async function countPredictedScheduledMatches(
+  userId: string,
+  bolaoId: string,
+  scheduledMatchIds: string[]
+): Promise<number> {
+  if (scheduledMatchIds.length === 0) return 0;
+
+  const CHUNK = 30;
+  const batches: string[][] = [];
+  for (let i = 0; i < scheduledMatchIds.length; i += CHUNK) {
+    batches.push(scheduledMatchIds.slice(i, i + CHUNK));
+  }
+
+  const counts = await Promise.all(
+    batches.map((batch) =>
+      getCountFromServer(
+        query(
+          collection(db, "bolao_palpites"),
+          where("user_id", "==", userId),
+          where("bolao_id", "==", bolaoId),
+          where("match_id", "in", batch)
+        )
+      )
+    )
+  );
+
+  return counts.reduce((sum, snap) => sum + snap.data().count, 0);
+}
+
 export async function getDashboardData(userId: string) {
   try {
     const profilePromise = getProfile(userId);
-    
-    // 1. Get user memberships
-    const membershipsQuery = query(collection(db, "bolao_members"), where("user_id", "==", userId));
-    const membershipsPromise = getDocs(membershipsQuery);
-    
-    // 2. Get latest news
-    const newsQuery = query(
-      collection(db, "copa_news"), 
-      orderBy("published_at", "desc"), 
-      limit(3)
-    );
-    const newsPromise = getDocs(newsQuery);
-    
-    // 3. Get scheduled matches count
-    const matchesQuery = query(collection(db, "matches"), where("status", "==", "scheduled"));
-    const scheduledMatchesPromise = getCountFromServer(matchesQuery);
 
-    const [membershipsSnap, newsSnap, scheduledMatchesSnap, profile] = await Promise.all([
+    // 1. Get user memberships
+    const membershipsQuery = query(
+      collection(db, "bolao_members"),
+      where("user_id", "==", userId)
+    );
+    const membershipsPromise = getDocs(membershipsQuery);
+
+    // 2. Get scheduled matches — fetch docs (not just count) so we have IDs
+    //    for accurate per-bolão pending prediction counting.
+    const matchesQuery = query(
+      collection(db, "matches"),
+      where("status", "==", "scheduled")
+    );
+    const scheduledMatchesPromise = getDocs(matchesQuery);
+
+    const [membershipsSnap, scheduledMatchesSnap, profile] = await Promise.all([
       membershipsPromise,
-      newsPromise,
       scheduledMatchesPromise,
-      profilePromise
+      profilePromise,
     ]);
 
-    const bolaoIds = membershipsSnap.docs.map(doc => doc.data().bolao_id);
-    const scheduledMatchesCount = scheduledMatchesSnap.data().count;
-
-    const news = newsSnap.docs.map(doc => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        title: data.title,
-        category: data.source_name || "Geral",
-        publishedAt: data.published_at,
-        imageUrl: data.url_to_image,
-        url: data.url,
-      } as DashboardNewsItem;
-    });
+    const bolaoIds = membershipsSnap.docs.map((d) => d.data().bolao_id);
+    // IDs of every match still waiting to be played
+    const scheduledMatchIds = scheduledMatchesSnap.docs.map((d) => d.id);
+    const scheduledMatchesCount = scheduledMatchIds.length;
 
     if (!bolaoIds.length) {
       return {
         profile,
         favoriteTeam: profile?.favorite_team || null,
         myBoloes: [] as DashboardBolaoSummary[],
-        news,
         scheduledMatchesCount,
       };
     }
 
-    // 4. Fetch details for each bolao the user is in
-    const myBoloes = await Promise.all(bolaoIds.map(async (bolaoId) => {
-      // Get Bolao info
-      const bolaoDoc = await getDoc(doc(db, "boloes", bolaoId));
-      const bolaoData = bolaoDoc.data();
-      
-      // Get member count
-      const membersCountSnap = await getCountFromServer(query(collection(db, "bolao_members"), where("bolao_id", "==", bolaoId)));
-      
-      // Get my ranking/points
-      // Firestore doesn't support easy 'my rank' without fetching all or using a separate 'rankings' collection
-      // I'll look for a document in bolao_rankings with ID 'userId_bolaoId'
-      const rankingDoc = await getDoc(doc(db, "bolao_rankings", `${userId}_${bolaoId}`));
-      const rankingData = rankingDoc.data();
-      
-      // Get my predictions for this bolao to calculate pending
-      const predictionsSnap = await getCountFromServer(query(
-        collection(db, "bolao_palpites"), 
-        where("user_id", "==", userId),
-        where("bolao_id", "==", bolaoId)
-      ));
+    // 3. Fetch details for each bolão the user is in.
+    //    All sub-queries per bolão run in parallel to avoid N+1 roundtrips.
+    const myBoloes = await Promise.all(
+      bolaoIds.map(async (bolaoId) => {
+        const [bolaoDoc, membersCountSnap, rankingDoc, predictedCount] =
+          await Promise.all([
+            getDoc(doc(db, "boloes", bolaoId)),
+            getCountFromServer(
+              query(
+                collection(db, "bolao_members"),
+                where("bolao_id", "==", bolaoId)
+              )
+            ),
+            getDoc(doc(db, "bolao_rankings", `${userId}_${bolaoId}`)),
+            // Count only predictions for STILL-SCHEDULED matches.
+            // This fixes the bug where predictions for finished matches were
+            // subtracted from scheduledMatchesCount, causing pendingCount to
+            // be underestimated as the Copa progressed.
+            countPredictedScheduledMatches(userId, bolaoId, scheduledMatchIds),
+          ]);
 
-      return {
-        id: bolaoId,
-        name: bolaoData?.name || "Bolão",
-        memberCount: membersCountSnap.data().count,
-        myPoints: rankingData?.total_points || 0,
-        myRank: rankingData?.rank || 0, // Assuming rank is pre-calculated/updated by a cloud function or similar
-        pendingCount: Math.max(scheduledMatchesCount - predictionsSnap.data().count, 0),
-      };
-    }));
+        const bolaoData = bolaoDoc.data() as BolaoData | undefined;
+        const rankingData = rankingDoc.data() as BolaoRankingDoc | undefined;
+
+        return {
+          id: bolaoId,
+          name: bolaoData?.name || "Bolão",
+          memberCount: membersCountSnap.data().count,
+          myPoints: rankingData?.total_points || 0,
+          myRank: rankingData?.rank || 0,
+          pendingCount: Math.max(scheduledMatchesCount - predictedCount, 0),
+        };
+      })
+    );
 
     return {
       profile,
       favoriteTeam: profile?.favorite_team || null,
       myBoloes,
-      news,
       scheduledMatchesCount,
     };
   } catch (error) {
@@ -126,4 +156,3 @@ export async function getDashboardData(userId: string) {
     throw error;
   }
 }
-

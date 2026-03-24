@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -30,8 +31,19 @@ const Grupos = lazy(() => import("./pages/Grupos"));
 const GrupoDetail = lazy(() => import("./pages/GrupoDetail"));
 const Privacidade = lazy(() => import("./pages/Privacidade"));
 const Termos = lazy(() => import("./pages/Termos"));
+const Noticias = lazy(() => import("./pages/Noticias"));
+const ExcluirConta = lazy(() => import("./pages/ExcluirConta"));
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000,   // 5 min — don't re-fetch while data is fresh
+      gcTime:    10 * 60 * 1000,  // 10 min — keep in cache after unmount
+      retry: 1,
+      refetchOnWindowFocus: false, // don't spam Firestore on tab switch
+    },
+  },
+});
 
 const legacyCopaMap: Record<string, string> = {
   overview: "",
@@ -104,10 +116,19 @@ function PushNotificationListener() {
 }
 
 const LoadingScreen = () => (
-  <div className="flex h-screen w-full items-center justify-center bg-[#082016] text-white">
-    <div className="flex flex-col items-center gap-4">
-      <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
-      <p className="animate-pulse font-medium text-primary">Carregando ArenaCopa...</p>
+  <div className="flex h-screen w-full items-center justify-center bg-[#061a10] text-white">
+    <div className="flex flex-col items-center gap-6">
+      <div className="relative">
+        <img
+          src="/logo.png?v=20260316"
+          alt="Arena CUP"
+          className="h-20 w-20 object-contain drop-shadow-[0_0_24px_rgba(34,197,94,0.45)]"
+        />
+        <div className="absolute inset-0 rounded-full animate-ping bg-primary/10 pointer-events-none" />
+      </div>
+      <div className="h-1 w-24 rounded-full bg-white/10 overflow-hidden">
+        <div className="h-full w-full animate-[shimmer_1.4s_ease-in-out_infinite] bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
+      </div>
     </div>
   </div>
 );
@@ -131,16 +152,21 @@ function AuthRoute({ children }: { children: React.ReactNode }) {
 const AppRoutes = () => (
   <Routes>
     <Route path="/auth" element={<AuthRoute><Auth /></AuthRoute>} />
-    <Route path="/b/:inviteCode" element={<PublicInvite />} />
+    {/* /b/:inviteCode — shareable invite link. ProtectedRoute handles the redirect
+        to /auth?redirect=/b/:inviteCode so the user lands back here after login. */}
+    <Route path="/b/:inviteCode" element={<ProtectedRoute><PublicInvite /></ProtectedRoute>} />
+    {/* Legal / compliance pages — intentionally PUBLIC (Play Store / App Store requirement).
+        /excluir-conta must be public so unauthenticated users can still request deletion. */}
     <Route path="/privacidade" element={<Privacidade />} />
     <Route path="/termos" element={<Termos />} />
+    <Route path="/excluir-conta" element={<ExcluirConta />} />
     <Route path="/privacy" element={<LegacyRedirect to="/privacidade" />} />
     <Route path="/terms" element={<LegacyRedirect to="/termos" />} />
     <Route path="/" element={<ProtectedRoute><Layout><Index /></Layout></ProtectedRoute>} />
     <Route path="/copa" element={<ProtectedRoute><Layout><Copa /></Layout></ProtectedRoute>} />
-    <Route path="/copa/sedes" element={<ProtectedRoute><Navigate to="/guia/mapa" replace /></ProtectedRoute>} />
+    <Route path="/copa/sedes" element={<ProtectedRoute><Navigate to="/guia" replace /></ProtectedRoute>} />
     <Route path="/copa/historia" element={<ProtectedRoute><Navigate to="/guia/historia" replace /></ProtectedRoute>} />
-    <Route path="/copa/noticias" element={<ProtectedRoute><Navigate to="/guia/noticias" replace /></ProtectedRoute>} />
+    <Route path="/copa/noticias" element={<ProtectedRoute><Navigate to="/noticias" replace /></ProtectedRoute>} />
     <Route path="/copa/:subtab" element={<ProtectedRoute><Layout><Copa /></Layout></ProtectedRoute>} />
     <Route path="/cup" element={<ProtectedRoute><LegacyRedirect to="/copa" /></ProtectedRoute>} />
     <Route path="/cup/:subtab" element={<ProtectedRoute><LegacyCopaRedirect /></ProtectedRoute>} />
@@ -165,10 +191,11 @@ const AppRoutes = () => (
     <Route path="/account" element={<ProtectedRoute><LegacyRedirect to="/perfil" /></ProtectedRoute>} />
     <Route path="/conta" element={<ProtectedRoute><LegacyRedirect to="/perfil" /></ProtectedRoute>} />
     <Route path="/ranking" element={<ProtectedRoute><Layout><Ranking /></Layout></ProtectedRoute>} />
+    <Route path="/noticias" element={<ProtectedRoute><Layout><Noticias /></Layout></ProtectedRoute>} />
     <Route path="/regras" element={<ProtectedRoute><Layout><Rules /></Layout></ProtectedRoute>} />
     <Route path="/rules" element={<ProtectedRoute><LegacyRedirect to="/regras" /></ProtectedRoute>} />
     <Route path="/premium" element={<ProtectedRoute><Layout><Premium /></Layout></ProtectedRoute>} />
-    <Route path="*" element={<NotFound />} />
+    <Route path="*" element={<ProtectedRoute><NotFound /></ProtectedRoute>} />
   </Routes>
 );
 

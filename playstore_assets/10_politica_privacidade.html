@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pol&iacute;tica de Privacidade &mdash; ArenaCopa 2026</title>
+<style>
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #082016; color: #e8f5ee; max-width: 760px; margin: 0 auto; padding: 40px 24px 80px; line-height: 1.75; }
+  header { text-align: center; padding: 40px 0 32px; border-bottom: 1px solid #2D7A4530; margin-bottom: 40px; }
+  h1 { font-size: 28px; color: #E8B840; margin-bottom: 6px; }
+  h2 { font-size: 18px; color: #E8B840; margin: 36px 0 12px; padding-left: 14px; border-left: 3px solid #D4970D; }
+  p { margin-bottom: 12px; }
+  ul, ol { margin: 10px 0 16px 22px; }
+  li { margin-bottom: 6px; }
+  .box { background: #0E2820; border: 1px solid #2D7A4530; border-radius: 10px; padding: 16px 20px; margin: 20px 0; }
+  .box strong { color: #E8B840; }
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14px; }
+  th { background: #0E2820; color: #E8B840; padding: 10px 14px; text-align: left; border: 1px solid #2D7A4530; }
+  td { padding: 10px 14px; border: 1px solid #2D7A4530; vertical-align: top; }
+  a { color: #E8B840; }
+  footer { margin-top: 60px; padding-top: 24px; border-top: 1px solid #2D7A4530; color: #8CA090; font-size: 13px; text-align: center; }
+  .deploy { background: #1A3A25; border: 1px solid #2D7A4560; border-radius: 12px; padding: 20px 24px; margin-bottom: 36px; }
+  .deploy h3 { color: #3CA05A; font-size: 15px; margin-bottom: 10px; }
+  .deploy code { display: block; background: #082016; border-radius: 6px; padding: 8px 12px; font-family: monospace; font-size: 13px; color: #E8B840; margin: 6px 0; }
+  .deploy p { font-size: 13px; color: #8CA090; margin: 4px 0; }
+</style>
+</head>
+<body>
+
+<div class="deploy">
+  <h3>INSTRUCAO: Como publicar esta politica online (Google Play exige URL publica)</h3>
+  <p><strong>Opcao 1 &mdash; Firebase Hosting (recomendado):</strong></p>
+  <code>Copie este arquivo para a pasta public/ do seu projeto Firebase</code>
+  <code>firebase deploy --only hosting</code>
+  <p>URL final: https://SEU-PROJETO.web.app/politica-privacidade.html</p>
+  <br>
+  <p><strong>Opcao 2 &mdash; GitHub Pages:</strong></p>
+  <code>Crie repositorio publico &gt; Settings &gt; Pages &gt; Deploy from main</code>
+  <p>URL final: https://SEU-USUARIO.github.io/arenacopa-privacy</p>
+  <br>
+  <p>Informe a URL no Play Console em: Ficha do app &gt; Politica de Privacidade</p>
+</div>
+
+<header>
+  <div style="font-size:26px;font-weight:700;color:#E8B840;margin-bottom:12px">ArenaCopa 2026</div>
+  <h1>Pol&iacute;tica de Privacidade</h1>
+  <p style="color:#8CA090;font-size:14px">Ultima atualizacao: 22 de marco de 2026 &nbsp;|&nbsp; Versao 1.0</p>
+</header>
+
+<h2>1. Introducao</h2>
+<p>Esta Politica de Privacidade descreve como o aplicativo <strong>ArenaCopa 2026</strong>, desenvolvido por <strong>Antigravity</strong>, coleta, usa e protege as informacoes dos usuarios. Ao utilizar o ArenaCopa, voce concorda com os termos desta Politica.</p>
+
+<h2>2. Informacoes que Coletamos</h2>
+<table>
+  <tr><th>Tipo de dado</th><th>Como coletamos</th><th>Por que coletamos</th></tr>
+  <tr><td><strong>E-mail</strong></td><td>Fornecido no cadastro (Firebase Auth)</td><td>Autenticacao da conta</td></tr>
+  <tr><td><strong>Nome de exibicao</strong></td><td>Fornecido voluntariamente</td><td>Ranking e boloes</td></tr>
+  <tr><td><strong>Palpites</strong></td><td>Inseridos pelo usuario</td><td>Funcionamento dos boloes</td></tr>
+  <tr><td><strong>Dados de uso</strong></td><td>Firebase Analytics (anonimo)</td><td>Melhorar o app</td></tr>
+  <tr><td><strong>Token de notificacao</strong></td><td>Gerado pelo dispositivo (FCM)</td><td>Notificacoes push</td></tr>
+</table>
+<div class="box">
+  <strong>Nao coletamos:</strong> localizacao, contatos, historico de navegacao, fotos, arquivos, dados bancarios ou dados de saude.
+</div>
+
+<h2>3. Como Usamos as Informacoes</h2>
+<ul>
+  <li>Autenticar e gerenciar sua conta</li>
+  <li>Exibir nome e pontuacao nos boloes</li>
+  <li>Enviar notificacoes de jogos e gols (somente com sua autorizacao)</li>
+  <li>Melhorar o desempenho do app via analytics anonimos</li>
+</ul>
+
+<h2>4. Compartilhamento de Dados</h2>
+<p><strong>Nao vendemos nem comercializamos seus dados pessoais.</strong> Seus dados podem ser processados pelos servicos abaixo:</p>
+<table>
+  <tr><th>Servico</th><th>Finalidade</th><th>Politica</th></tr>
+  <tr><td>Google Firebase</td><td>Autenticacao, banco de dados, notificacoes e analytics</td><td><a href="https://firebase.google.com/support/privacy" target="_blank">Ver politica</a></td></tr>
+  <tr><td>Google Analytics</td><td>Analise anonima de uso</td><td><a href="https://policies.google.com/privacy" target="_blank">Ver politica</a></td></tr>
+</table>
+
+<h2>5. Armazenamento e Seguranca</h2>
+<p>Dados armazenados na infraestrutura do Google Firebase (padroes SOC 2, ISO 27001). Medidas adotadas:</p>
+<ul>
+  <li>Comunicacao criptografada via HTTPS/TLS</li>
+  <li>Regras Firestore: cada usuario acessa apenas seus proprios dados</li>
+  <li>Autenticacao obrigatoria para todas as operacoes de escrita</li>
+  <li>Senhas nunca armazenadas &mdash; gerenciadas pelo Firebase Auth</li>
+</ul>
+
+<h2>6. Seus Direitos (LGPD)</h2>
+<p>Nos termos da Lei Geral de Protecao de Dados (Lei 13.709/2018), voce tem direito de:</p>
+<ul>
+  <li><strong>Acessar</strong> os dados que temos sobre voce</li>
+  <li><strong>Corrigir</strong> informacoes incorretas</li>
+  <li><strong>Excluir</strong> sua conta e todos os dados associados</li>
+  <li><strong>Revogar</strong> o consentimento para notificacoes a qualquer momento</li>
+</ul>
+<div class="box">
+  Para exercer esses direitos, envie e-mail para <strong><a href="mailto:luis.longhi@undb.edu.br">luis.longhi@undb.edu.br</a></strong> com assunto <em>"Privacidade ArenaCopa"</em>. Responderemos em ate 15 dias uteis.
+</div>
+
+<h2>7. Como Excluir sua Conta</h2>
+<ol>
+  <li>Acesse o app ArenaCopa</li>
+  <li>Va em <strong>Perfil &gt; Configuracoes &gt; Excluir Conta</strong></li>
+  <li>Confirme &mdash; todos os dados serao removidos em ate 30 dias</li>
+</ol>
+
+<h2>8. Notificacoes Push</h2>
+<p>Voce pode revogar permissao de notificacoes a qualquer momento em: <strong>Configuracoes do Android &gt; Aplicativos &gt; ArenaCopa &gt; Notificacoes</strong>.</p>
+
+<h2>9. Menores de Idade</h2>
+<p>O ArenaCopa nao e direcionado a menores de 13 anos. Se identificarmos dados coletados de criancas abaixo dessa idade, excluiremos imediatamente.</p>
+
+<h2>10. Alteracoes nesta Politica</h2>
+<p>Podemos atualizar esta Politica periodicamente. A data de atualizacao esta sempre no topo desta pagina. O uso continuado do app apos alteracoes constitui aceitacao da nova politica.</p>
+
+<h2>11. Contato</h2>
+<div class="box">
+  <strong>Responsavel pelo tratamento de dados:</strong><br>
+  Eduardo Longhi &mdash; Antigravity<br>
+  Sao Luis, Maranhao, Brasil<br><br>
+  <strong>E-mail:</strong> <a href="mailto:luis.longhi@undb.edu.br">luis.longhi@undb.edu.br</a><br>
+  <strong>Assunto:</strong> Privacidade ArenaCopa 2026
+</div>
+
+<h2>12. Lei Aplicavel</h2>
+<p>Esta Politica e regida pela legislacao brasileira, especialmente pela LGPD (Lei 13.709/2018). Foro eleito: Sao Luis/MA.</p>
+
+<footer>
+  <p>&copy; 2026 ArenaCopa &mdash; Desenvolvido por Antigravity &middot; Sao Luis, MA, Brasil</p>
+  <p style="margin-top:6px">Em conformidade com a LGPD (Lei 13.709/2018) e os requisitos do Google Play Store.</p>
+</footer>
+
+</body>
+</html>

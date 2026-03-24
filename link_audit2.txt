@@ -1,0 +1,305 @@
+=== App.tsx ===
+import { useTranslation } from 'react-i18next';
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import "./i18n/config";
+import { Suspense, lazy, useEffect } from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
+import { App as CapacitorApp } from '@capacitor/app';
+import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { Layout } from "@/components/Layout";
+import { TermsGuard } from "@/components/TermsGuard";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { MonetizationProvider } from "@/contexts/MonetizationContext";
+import FieldBackground from "@/components/FieldBackground";
+const Index = lazy(() => import("./pages/Index"));
+const Copa = lazy(() => import("./pages/Copa"));
+const Boloes = lazy(() => import("./pages/Boloes"));
+const CriarBolao = lazy(() => import("./pages/CriarBolao"));
+const BolaoDetail = lazy(() => import("./pages/BolaoDetail"));
+const Perfil = lazy(() => import("./pages/Perfil"));
+const Ranking = lazy(() => import("./pages/Ranking"));
+const Rules = lazy(() => import("./pages/Rules"));
+const TeamDetails = lazy(() => import("./pages/TeamDetails"));
+const Auth = lazy(() => import("./pages/Auth"));
+const Guia = lazy(() => import("./pages/Guia"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+const Premium = lazy(() => import("./pages/Premium"));
+const PublicInvite = lazy(() => import("./pages/PublicInvite"));
+const Grupos = lazy(() => import("./pages/Grupos"));
+const GrupoDetail = lazy(() => import("./pages/GrupoDetail"));
+const Privacidade = lazy(() => import("./pages/Privacidade"));
+const Termos = lazy(() => import("./pages/Termos"));
+
+const queryClient = new QueryClient();
+
+const legacyCopaMap: Record<string, string> = {
+  overview: "",
+  today: "",
+  calendar: "calendario",
+  groups: "grupos",
+  bracket: "chaves",
+  simulator: "simulacao",
+  hosts: "sedes",
+  news: "noticias",
+  history: "historia",
+};
+
+const legacyGuiaMap: Record<string, string> = {
+  map: "mapa",
+  cities: "",
+  city: "",
+  stadiums: "estadios",
+  hosts: "estadios",
+};
+
+function LegacyRedirect({ to }: { to: string }) {
+  return <Navigate to={to} replace />;
+}
+
+function LegacyCopaRedirect() {
+  const location = useLocation();
+  const slug = location.pathname.split("/").filter(Boolean)[1] ?? "";
+  const mapped = legacyCopaMap[slug] ?? "";
+  return <Navigate to={mapped ? `/copa/${mapped}` : "/copa"} replace />;
+}
+
+function LegacyGuiaRedirect() {
+  const location = useLocation();
+  const slug = location.pathname.split("/").filter(Boolean)[1] ?? "";
+  const mapped = legacyGuiaMap[slug] ?? "";
+  return <Navigate to={mapped ? `/guia/${mapped}` : "/guia"} replace />;
+}
+
+function LegacyPoolDetailRedirect() {
+  const location = useLocation();
+  const segments = location.pathname.split("/").filter(Boolean);
+  const poolId = segments[1];
+  return <Navigate to={poolId ? `/boloes/${poolId}` : "/boloes"} replace />;
+}
+
+function DeepLinkListener() {
+  const navigate = useNavigate();
+  useEffect(() => {
+    const listener = CapacitorApp.addListener('appUrlOpen', data => {
+      console.log('App opened with URL:', data);
+      const url = new URL(data.url);
+      const path = url.pathname;
+      if (path && path !== '/') {
+        navigate(path);
+      }
+    });
+
+    return () => {
+      void listener.then((handle) => handle.remove());
+    };
+  }, [navigate]);
+
+  return null;
+}
+
+function PushNotificationListener() {
+  usePushNotifications();
+  return null;
+}
+
+const LoadingScreen = () => (
+  <div className="flex h-screen w-full items-center justify-center bg-[#082016] text-white">
+    <div className="flex flex-col items-center gap-4">
+      <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+      <p className="animate-pulse font-medium text-primary">ArenaCUP</p>
+    </div>
+  </div>
+);
+
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
+  if (loading) return <LoadingScreen />;
+  if (!user) return <Navigate to="/auth" replace />;
+  return <TermsGuard>{children}</TermsGuard>;
+}
+
+function AuthRoute({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
+  const location = useLocation();
+  if (loading) return <LoadingScreen />;
+  const redirectTo = new URLSearchParams(location.search).get("redirect") || "/";
+  if (user) return <Navigate to={redirectTo} replace />;
+  return <>{children}</>;
+}
+
+const AppRoutes = () => (
+  <Routes>
+    <Route path="/auth" element={<AuthRoute><Auth /></AuthRoute>} />
+    <Route path="/b/:inviteCode" element={<PublicInvite />} />
+    <Route path="/privacidade" element={<Privacidade />} />
+    <Route path="/termos" element={<Termos />} />
+    <Route path="/privacy" element={<LegacyRedirect to="/privacidade" />} />
+    <Route path="/terms" element={<LegacyRedirect to="/termos" />} />
+    <Route path="/" element={<ProtectedRoute><Layout><Index /></Layout></ProtectedRoute>} />
+    <Route path="/copa" element={<ProtectedRoute><Layout><Copa /></Layout></ProtectedRoute>} />
+    <Route path="/copa/sedes" element={<ProtectedRoute><Navigate to="/guia/mapa" replace /></ProtectedRoute>} />
+    <Route path="/copa/historia" element={<ProtectedRoute><Navigate to="/guia/historia" replace /></ProtectedRoute>} />
+    <Route path="/copa/noticias" element={<ProtectedRoute><Navigate to="/guia/noticias" replace /></ProtectedRoute>} />
+    <Route path="/copa/:subtab" element={<ProtectedRoute><Layout><Copa /></Layout></ProtectedRoute>} />
+    <Route path="/cup" element={<ProtectedRoute><LegacyRedirect to="/copa" /></ProtectedRoute>} />
+    <Route path="/cup/:subtab" element={<ProtectedRoute><LegacyCopaRedirect /></ProtectedRoute>} />
+    <Route path="/simulator" element={<ProtectedRoute><LegacyRedirect to="/copa/simulacao" /></ProtectedRoute>} />
+    <Route path="/copas/central" element={<ProtectedRoute><LegacyRedirect to="/copa" /></ProtectedRoute>} />
+    <Route path="/boloes" element={<ProtectedRoute><Layout><Boloes /></Layout></ProtectedRoute>} />
+    <Route path="/boloes/criar" element={<ProtectedRoute><Layout><CriarBolao /></Layout></ProtectedRoute>} />
+    <Route path="/boloes/:id" element={<ProtectedRoute><Layout><BolaoDetail /></Layout></ProtectedRoute>} />
+    <Route path="/criar-bolao" element={<ProtectedRoute><LegacyRedirect to="/boloes/criar" /></ProtectedRoute>} />
+    <Route path="/pools" element={<ProtectedRoute><LegacyRedirect to="/boloes" /></ProtectedRoute>} />
+    <Route path="/pools/create" element={<ProtectedRoute><LegacyRedirect to="/boloes/criar" /></ProtectedRoute>} />
+    <Route path="/pools/:id" element={<ProtectedRoute><LegacyPoolDetailRedirect /></ProtectedRoute>} />
+    <Route path="/grupos" element={<ProtectedRoute><Layout><Grupos /></Layout></ProtectedRoute>} />
+    <Route path="/grupos/:grupoId" element={<ProtectedRoute><Layout><GrupoDetail /></Layout></ProtectedRoute>} />
+    <Route path="/guia" element={<ProtectedRoute><Layout><Guia /></Layout></ProtectedRoute>} />
+    <Route path="/guia/:subtab" element={<ProtectedRoute><Layout><Guia /></Layout></ProtectedRoute>} />
+    <Route path="/guide" element={<ProtectedRoute><LegacyRedirect to="/guia" /></ProtectedRoute>} />
+    <Route path="/guide/:subtab" element={<ProtectedRoute><LegacyGuiaRedirect /></ProtectedRoute>} />
+    <Route path="/team/:code" element={<ProtectedRoute><Layout><TeamDetails /></Layout></ProtectedRoute>} />
+    <Route path="/perfil" element={<ProtectedRoute><Layout><Perfil /></Layout></ProtectedRoute>} />
+    <Route path="/profile" element={<ProtectedRoute><LegacyRedirect to="/perfil" /></ProtectedRoute>} />
+    <Route path="/account" element={<ProtectedRoute><LegacyRedirect to="/perfil" /></ProtectedRoute>} />
+    <Route path="/conta" element={<ProtectedRoute><LegacyRedirect to="/perfil" /></ProtectedRoute>} />
+    <Route path="/ranking" element={<ProtectedRoute><Layout><Ranking /></Layout></ProtectedRoute>} />
+    <Route path="/regras" element={<ProtectedRoute><Layout><Rules /></Layout></ProtectedRoute>} />
+    <Route path="/rules" element={<ProtectedRoute><LegacyRedirect to="/regras" /></ProtectedRoute>} />
+    <Route path="/premium" element={<ProtectedRoute><Layout><Premium /></Layout></ProtectedRoute>} />
+    <Route path="*" element={<NotFound />} />
+  </Routes>
+);
+
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <TooltipProvider>
+      <Toaster />
+      <Sonner />
+      <AuthProvider>
+        <MonetizationProvider>
+          <Suspense fallback={<LoadingScreen />}>
+            <FieldBackground />
+            <BrowserRouter>
+              <DeepLinkListener />
+              <PushNotificationListener />
+              <AppRoutes />
+            </BrowserRouter>
+          </Suspense>
+        </MonetizationProvider>
+      </AuthProvider>
+    </TooltipProvider>
+  </QueryClientProvider>
+);
+
+export default App;
+
+
+=== main.tsx ===
+import { createRoot } from "react-dom/client";
+import App from "./App.tsx";
+import "./index.css";
+import { ErrorBoundary } from "./components/ErrorBoundary";
+
+createRoot(document.getElementById("root")!).render(
+  <ErrorBoundary>
+    <App />
+  </ErrorBoundary>
+);
+
+
+
+
+=== \pages\Boloes.tsx ===
+  2: import { Link, useNavigate } from "react-router-dom";
+  74:   const navigate = useNavigate();
+  343:         navigate(`/boloes/${bolaoId}`);
+  378:             to="/boloes/criar"
+  388:       <Link to="/grupos" className="mb-6 flex items-center justify-between gap-3 rounded-[24px] border border-primary/20 bg-primary/5 px-5 py-4 transition-all hover:bg-primary/10">
+  466:                   <BolaoCard key={b.id} bolao={b} href={`/boloes/${b.id}`} />
+  480:                   <BolaoCard key={b.id} bolao={b} href={`/boloes/${b.id}`} />
+
+
+=== \pages\BolaoDetail.tsx ===
+  2: import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+  45:   const navigate = useNavigate();
+  104:         navigate("/boloes");
+  352:     const inviteUrl = `${window.location.origin}/b/${bolao.invite_code}`;
+  493:             onClick={() => navigate("/boloes")}
+
+
+=== \pages\Copa.tsx ===
+  2: import { useParams, useNavigate } from "react-router-dom";
+  27:   const navigate = useNavigate();
+  43:       navigate("/copa", { replace: true });
+  54:     navigate(newTab === "overview" ? "/copa" : `/copa/${newTab}`);
+
+
+=== \pages\Index.tsx ===
+  1: import { Link } from "react-router-dom";
+  52:       <a href={firstBolaoWithPending ? `/boloes/${firstBolaoWithPending}` : "/boloes"}>
+  73:       <a href="/boloes/criar">
+  94:       <a href="/copa/calendario">
+  297:           <Link to="/perfil" aria-label="Abrir perfil">
+  311:             <Link to="/boloes">
+  337:           <Link to="/ranking" className="block group">
+  348:             <Link to="/copa/calendario" className="text-[11px] text-gray-400 font-black uppercase tracking-[0.12em] hover:text-white transition-colors">
+  405:             <Link to="/boloes" className="text-[11px] text-gray-400 font-black uppercase tracking-[0.12em] hover:text-white transition-colors">
+  416:             <Link to="/boloes/criar" className="group block">
+  437:                 <Link key={bolao.id} to={`/boloes/${bolao.id}`} className="group relative">
+  496:             <Link to="/copa/noticias" className="text-[11px] text-gray-400 font-black uppercase tracking-[0.12em] hover:text-white transition-colors">
+  503:                 <a key={item.id} href={item.url} target="_blank" rel="noopener noreferrer" className="group flex gap-6 p-5 rounded-[28px] bg-white/[0.02] border border-white/5 hover:bg-white/[0.04] transition-all backdrop-blur-md shadow-lg">
+  533:             to="/boloes"
+
+
+=== \components\copa\SimulacaoTab.tsx ===
+  3: import { useNavigate } from "react-router-dom";
+  343:   const navigate = useNavigate();
+  497:                               onClick={() => navigate(`/team/${home.code}`)}
+  507:                               onClick={() => navigate(`/team/${away.code}`)}
+  540:                                 onClick={() => navigate(`/team/${team.code}`)}
+
+
+=== \components\copa\CopaOverview.tsx ===
+  23: import { useNavigate } from "react-router-dom";
+  82:     const navigate = useNavigate();
+  128:         navigate(`/copa/${tab}`);
+
+
+=== \components\Layout.tsx ===
+  1: import { NavLink, useLocation, useNavigate } from "react-router-dom";
+  32:   const navigate = useNavigate();
+  105:           <button aria-label="Voltar" onClick={() => navigate(-1)} className="p-1.5 -ml-1.5 rounded-lg hover:bg-secondary md:hidden">
+  122:             <button aria-label="Voltar" onClick={() => navigate(-1)} className="p-1.5 -ml-1.5 rounded-lg hover:bg-secondary hidden md:flex">
+  148:           <NavLink to="/perfil" aria-label="Abrir conta" className="md:hidden">
+  155:           </NavLink>
+  158:           <NavLink to="/perfil" aria-label="Abrir conta" className="hidden md:block">
+  168:           </NavLink>
+  202:             <NavLink
+  219:             </NavLink>
+  274:                     <NavLink to={tab.path}>
+  277:                     </NavLink>
+  314:                   <NavLink to="/termos" className="hover:text-primary transition-colors">Termos de Uso</NavLink>
+  315:                   <NavLink to="/privacidade" className="hover:text-primary transition-colors">Política de Privacidade</NavLink>
+  316:                   <a href="mailto:contato@arenacup.com" className="hover:text-primary transition-colors">Contato</a>
+
+
+=== \components\FabWithPending.tsx ===
+  2: import { NavLink, useNavigate } from "react-router-dom";
+  55:   const navigate = useNavigate();
+  183:     navigate(`/boloes/${targetBolaoId}?match=${item.match.id}&tab=jogos`);
+  210:       <NavLink
+  211:         to="/boloes"
+  220:       </NavLink>
+
+
+=== \components\BolaoExpressSheet.tsx ===
+  2: import { useNavigate } from "react-router-dom";
+  18:   const navigate = useNavigate();
+  79:     const url = `${window.location.origin}/b/${createdCode}`;
+  90:           <button onClick={() => { navigator.clipboard.writeText(url); toast({ title: "Link copiado!" }); }}
+  92:           <button onClick={() => { handleClose(); navigate(`/boloes/${createdId}`); }}
+  127:                 onClick={() => { onClose(); navigate("/boloes/criar"); }}

@@ -367,7 +367,7 @@ const Perfil = () => {
         {/* Achievements Horizontal Scroll */}
         <div className="space-y-2">
           <p className="text-[11px] text-gray-300 font-bold uppercase tracking-[0.12em] px-1">{t('achievements_title')}</p>
-          <div className="flex gap-3 overflow-x-auto pb-4 snap-x hide-scrollbar">
+          <div className="grid grid-cols-3 gap-3 pb-2">
             {[
               { id: "primeiro_palpite", title: "Chute Inicial", desc: "Deu seu primeiro palpite", icon: <Goal className="w-6 h-6 text-primary" />, color: "primary", unlocked: (stats?.totalPredictions || 0) > 0 },
               { id: "placar_exato", title: "Na Mosca", desc: "Acertou 1 placar exato", icon: <Target className="w-6 h-6 text-blue-400" />, color: "blue-500", unlocked: (stats?.exactScores || 0) > 0 },
@@ -378,7 +378,7 @@ const Perfil = () => {
               <div
                 key={ach.id}
                 className={cn(
-                  "snap-center shrink-0 w-[140px] p-4 rounded-3xl border flex flex-col items-center justify-center text-center transition-all",
+                  "p-4 rounded-3xl border flex flex-col items-center justify-center text-center transition-all",
                   ach.unlocked
                     ? "bg-white/10 border-white/20 shadow-xl"
                     : "bg-white/[0.02] border-white/5 opacity-50 grayscale"
@@ -549,7 +549,7 @@ const Perfil = () => {
         </div>
         <button
           type="button"
-          aria-label="Abrir página do ArenaCopa Premium"
+          aria-label="Abrir página do Arena CUP Premium"
           onClick={() => navigate('/premium')}
           className="relative glass-card p-5 border-copa-gold/30 hover:border-copa-gold/60 transition-colors overflow-hidden group cursor-pointer w-full text-left"
         >
@@ -665,7 +665,7 @@ const Perfil = () => {
         </div>
       </section>
 
-      {/* Apoie o ArenaCopa */}
+      {/* Apoie o Arena CUP */}
       <section>
         <div className="flex items-center gap-1.5 mb-3">
           <Heart className="w-3.5 h-3.5 text-primary" />
@@ -675,7 +675,7 @@ const Perfil = () => {
           <p className="text-[12px] text-muted-foreground">{t('support_desc')}</p>
           <button
             onClick={() => {
-              navigator.clipboard.writeText("suporte@arenacopa.com"); // Reemplazar con clave PIX real
+              navigator.clipboard.writeText("suporte@arenacup.com"); // Reemplazar con clave PIX real
               toast({ title: t('support_copied_title'), description: t('support_copied_desc') });
             }}
             className="w-full bg-copa-live/10 text-copa-live border border-copa-live/20 font-bold text-sm py-2.5 rounded-xl hover:bg-copa-live/20 transition-colors flex items-center justify-center gap-2"

@@ -118,7 +118,7 @@ export function PalpitesTab({ bolaoId, palpites, setPalpites, userId }: Palpites
                     <Filter className="w-3.5 h-3.5 text-gray-500" />
                     <span className="text-[10px] font-black uppercase tracking-[0.2em] text-gray-500">{t('common.filter_group')}</span>
                 </div>
-                <div className="flex gap-2 overflow-x-auto pb-2 -mx-2 px-2 scrollbar-none snap-x h-12 items-center">
+                <div className="flex flex-wrap gap-2 pb-2">
                     {groups.map(g => {
                         const groupMatchIds = matches.filter(m => m.group === g && m.phase === "groups").map(m => m.id);
                         const done = palpites.filter(p => p.user_id === userId && groupMatchIds.includes(p.match_id)).length;
@@ -131,7 +131,7 @@ export function PalpitesTab({ bolaoId, palpites, setPalpites, userId }: Palpites
                                 whileTap={{ scale: 0.95 }}
                                 onClick={() => setSelectedGroup(g)}
                                 className={cn(
-                                    "px-5 py-2 rounded-2xl text-xs font-black transition-all snap-start relative flex items-center gap-2",
+                                    "px-5 py-2 rounded-2xl text-xs font-black transition-all relative flex items-center gap-2",
                                     isSelected
                                         ? "bg-primary text-primary-foreground shadow-[0_5px_15px_rgba(var(--primary-rgb),0.3)] scale-110 z-10"
                                         : "bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white border border-white/5"

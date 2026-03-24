@@ -1,43 +1,61 @@
 {
-    "title": "Ranking Geral",
-    "subtitle": "Os maiores palpiteiros da Copa do Mundo 2026. Suba na classificação e conquiste a glória eterna.",
-    "hall_of_fame": "HALL OF FAME",
-    "tabs": {
-        "global": "Global",
-        "boloes": "Bolões",
-        "historico": "Histórico",
-        "stats": "Stats"
-    },
-    "user_section": {
-        "podium_desc": "Elite Global",
-        "my_performance": "Sua Performance",
-        "status_protective": "Status Protetivo",
-        "climbing": "SUBINDO",
-        "points": "PONTOS",
-        "accuracy": "PRECISÃO",
-        "rank_sync": "Sincronizado há {{time}}",
-        "top_50": "Classificação Top 50"
-    },
-    "boloes_section": {
-        "elite": "Elite dos Bolões",
-        "members": "MEMBROS",
-        "accuracy": "ACC",
-        "total_prize": "PRÊMIO TOTAL"
-    },
-    "history_section": {
-        "legendary_winners": "CAMPEÕES LENDÁRIOS",
-        "panorama": "PANORAMA HISTÓRICO",
-        "titles": "TÍTULOS",
-        "participations": "PARTICIPAÇÕES",
-        "goals": "GOLS"
-    },
-    "stats_section": {
-        "top_scorers": "ARTILHEIROS HISTÓRICOS",
-        "records": {
-            "most_titles": "Seleção com mais títulos",
-            "most_wins": "Maior número de vitórias",
-            "goals_record": "Recorde de gols marcados",
-            "biggest_rout": "Maior goleada histórica"
-        }
+  "title": "Torcedores em alta",
+  "subtitle": "Os maiores palpiteiros da Copa do Mundo 2026. Suba na classificação e conquiste a glória eterna.",
+  "hall_of_fame": "HALL OF FAME",
+  "tabs": {
+    "global": "Global",
+    "boloes": "Bolões",
+    "historico": "Histórico",
+    "stats": "Stats"
+  },
+  "user_section": {
+    "podium_desc": "Elite Global",
+    "my_performance": "Sua Performance",
+    "status_protective": "Status Protetivo",
+    "climbing": "SUBINDO",
+    "points": "PONTOS",
+    "accuracy": "PRECISÃO",
+    "rank_sync": "Sincronizado há {{time}}",
+    "top_50": "Classificação Top 50"
+  },
+  "boloes_section": {
+    "elite": "Elite dos Bolões",
+    "members": "MEMBROS",
+    "accuracy": "ACC",
+    "total_prize": "PRÊMIO TOTAL"
+  },
+  "history_section": {
+    "legendary_winners": "CAMPEÕES LENDÁRIOS",
+    "panorama": "PANORAMA HISTÓRICO",
+    "titles": "TÍTULOS",
+    "participations": "PARTICIPAÇÕES",
+    "goals": "GOLS"
+  },
+  "stats_section": {
+    "top_scorers": "ARTILHEIROS HISTÓRICOS",
+    "records": {
+      "most_titles": "Seleção com mais títulos",
+      "most_wins": "Maior número de vitórias",
+      "goals_record": "Recorde de gols marcados",
+      "biggest_rout": "Maior goleada histórica"
     }
+  },
+  "label": "Ranking",
+  "your_position": "Sua posição atual",
+  "leader": "Líder",
+  "vice_leader": "Vice-líder",
+  "top3": "Top 3",
+  "favorite_team": "Time favorito: {{team}}",
+  "no_favorite_team": "Time favorito não informado",
+  "no_favorite_team_short": "Sem time favorito",
+  "empty_title": "Ranking ainda vazio",
+  "empty_desc": "Assim que os bolões começarem a pontuar, o ranking global aparece aqui.",
+  "overall": "Classificação geral",
+  "page_label": "Ranking",
+  "page_title": "Torcedores em alta",
+  "page_desc": "Dados agregados dos bolões já pontuados.",
+  "my_position": "Sua posição atual",
+  "overall_title": "Classificação geral",
+  "favorite_team_short": "Time favorito: {team}",
+  "filter_global": "Global"
 }

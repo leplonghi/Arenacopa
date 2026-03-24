@@ -7,6 +7,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { motion } from "framer-motion";
 import { Loader2, Target } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 
 type PublicInviteBolao = {
     id: string;
@@ -21,7 +22,8 @@ export default function PublicInvite() {
     const { inviteCode } = useParams();
     const navigate = useNavigate();
     const { user } = useAuth();
-    const { toast } = useToast();
+    const { t } = useTranslation('bolao');
+  const { toast } = useToast();
 
     const [bolao, setBolao] = useState<PublicInviteBolao | null>(null);
     const [loading, setLoading] = useState(true);
@@ -36,7 +38,7 @@ export default function PublicInvite() {
             const querySnapshot = await getDocs(q);
 
             if (querySnapshot.empty) {
-                toast({ title: "Bolão não encontrado", variant: "destructive" });
+                toast({ title: t('invite.bolao_not_found'), variant: "destructive" });
                 navigate('/');
                 return;
             }
@@ -71,7 +73,7 @@ export default function PublicInvite() {
             });
         } catch (error) {
             console.error("Error loading bolao:", error);
-            toast({ title: "Erro ao carregar bolão", variant: "destructive" });
+            toast({ title: t('invite.load_error'), variant: "destructive" });
         } finally {
             setLoading(false);
         }
@@ -98,11 +100,11 @@ export default function PublicInvite() {
                 payment_status: "exempt",
                 joined_at: new Date().toISOString()
             });
-            toast({ title: "Entrou com sucesso!", className: "bg-emerald-500 text-white" });
+            toast({ title: t('invite.joined'), className: "bg-emerald-500 text-white" });
             navigate(`/boloes/${bolao.id}`);
         } catch (error) {
             console.error("Error joining bolao:", error);
-            toast({ title: "Erro ao entrar.", variant: "destructive" });
+            toast({ title: t('invite.join_error'), variant: "destructive" });
         }
     };
 

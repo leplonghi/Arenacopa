@@ -55,10 +55,10 @@
     --copa-surface: 155 28% 14%;
     --surface-border: rgba(255, 255, 255, 0.1);
     --surface-border-strong: rgba(255, 255, 255, 0.14);
-    --surface-fill: linear-gradient(180deg, rgba(18, 42, 30, 0.78) 0%, rgba(8, 20, 14, 0.84) 100%);
-    --surface-fill-hover: linear-gradient(180deg, rgba(24, 52, 37, 0.82) 0%, rgba(10, 24, 17, 0.88) 100%);
-    --surface-fill-strong: linear-gradient(180deg, rgba(10, 24, 17, 0.9) 0%, rgba(4, 12, 9, 0.96) 100%);
-    --surface-fill-soft: linear-gradient(180deg, rgba(28, 58, 42, 0.48) 0%, rgba(10, 24, 17, 0.62) 100%);
+    --surface-fill: linear-gradient(180deg, rgba(20, 48, 34, 0.44) 0%, rgba(10, 24, 17, 0.65) 100%);
+    --surface-fill-hover: linear-gradient(180deg, rgba(30, 70, 50, 0.52) 0%, rgba(15, 36, 26, 0.74) 100%);
+    --surface-fill-strong: linear-gradient(180deg, rgba(12, 32, 22, 0.72) 0%, rgba(6, 16, 12, 0.84) 100%);
+    --surface-fill-soft: linear-gradient(180deg, rgba(35, 80, 55, 0.28) 0%, rgba(15, 36, 26, 0.48) 100%);
   }
 }
 
@@ -69,6 +69,8 @@
 
   html {
     background: #082016;
+    overflow-x: hidden;
+    max-width: 100vw;
   }
 
 
@@ -81,6 +83,7 @@
     overscroll-behavior: none;
     -webkit-tap-highlight-color: transparent;
     overflow-x: hidden;
+    max-width: 100vw;
     position: relative;
     -webkit-user-select: none;
     user-select: none;
@@ -101,6 +104,13 @@
   }
 }
 
+/* Prevent any element from causing horizontal scroll */
+#root {
+  overflow-x: hidden;
+  max-width: 100vw;
+  width: 100%;
+}
+
 @layer utilities {
   .surface-card {
     background: var(--surface-fill);
@@ -114,11 +124,11 @@
 
   .surface-card-soft {
     background: var(--surface-fill-soft);
-    @apply rounded-3xl border backdrop-blur-lg;
-    border-color: rgba(255, 255, 255, 0.08);
+    @apply rounded-3xl border backdrop-blur-md;
+    border-color: rgba(255, 255, 255, 0.06);
     box-shadow:
-      0 14px 34px -20px rgba(0, 0, 0, 0.48),
-      inset 0 1px 0 rgba(255, 255, 255, 0.04);
+      0 12px 32px -16px rgba(0, 0, 0, 0.4),
+      inset 0 1px 0 rgba(255, 255, 255, 0.03);
   }
 
   .surface-card-strong {
@@ -129,6 +139,22 @@
       0 28px 60px -22px rgba(0, 0, 0, 0.72),
       0 12px 28px -18px rgba(0, 0, 0, 0.55),
       inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  }
+
+  .glass-card {
+    @apply rounded-3xl border backdrop-blur-xl transition-all duration-300;
+    background: rgba(255, 255, 255, 0.035);
+    border-color: rgba(255, 255, 255, 0.06);
+    box-shadow: 
+      0 8px 32px 0 rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  }
+
+  .glass-card-strong {
+    @apply rounded-3xl border backdrop-blur-2xl transition-all duration-300;
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.45);
   }
 
   .surface-card-hover {
@@ -211,4 +237,9 @@
   .safe-bottom {
     padding-bottom: var(--safe-area-bottom);
   }
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
 }

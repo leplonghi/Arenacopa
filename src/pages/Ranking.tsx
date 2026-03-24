@@ -2,9 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import { Award, Crown, Medal, Trophy } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { db } from "@/integrations/firebase/client";
-import { collection, query, orderBy, limit, getDocs, where } from "firebase/firestore";
+import { collection, query, orderBy, limit, getDocs, where, documentId } from "firebase/firestore";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/EmptyState";
+import { useTranslation } from "react-i18next";
 
 type UserStanding = {
   userId: string;
@@ -23,6 +24,7 @@ type ProfileSummary = {
 };
 
 export default function Ranking() {
+  const { t } = useTranslation('ranking');
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [globalRows, setGlobalRows] = useState<UserStanding[]>([]);
@@ -76,7 +78,7 @@ export default function Ranking() {
             const profile = profileMap.get(userId);
             return {
               userId,
-              name: profile?.name || profile?.nickname || "Torcedor",
+              name: profile?.name || profile?.nickname || t('label'),
               avatar: profile?.avatar_url || "🏆",
               favoriteTeam: profile?.favorite_team || null,
               points: totals.get(userId) || 0,
@@ -96,14 +98,100 @@ export default function Ranking() {
     load();
   }, []);
 
+  // ── Bolão filter ──────────────────────────────────────────────────────────
+  const [selectedBolaoId, setSelectedBolaoId] = useState<string | null>(null);
+  const [userBoloes, setUserBoloes] = useState<{ id: string; name: string }[]>([]);
+  const [bolaoRows, setBolaoRows] = useState<UserStanding[]>([]);
+  const [bolaoLoading, setBolaoLoading] = useState(false);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    const fetchBoloes = async () => {
+      try {
+        const membSnap = await getDocs(
+          query(collection(db, "bolao_members"), where("user_id", "==", user.id))
+        );
+        const bolaoIds = membSnap.docs.map((d) => d.data().bolao_id as string);
+        if (!bolaoIds.length) return;
+        const names: { id: string; name: string }[] = [];
+        for (let i = 0; i < bolaoIds.length; i += 30) {
+          const batch = bolaoIds.slice(i, i + 30);
+          const snap = await getDocs(
+            query(collection(db, "boloes"), where(documentId(), "in", batch))
+          );
+          snap.docs.forEach((d) => names.push({ id: d.id, name: d.data().name as string }));
+        }
+        setUserBoloes(names);
+      } catch (e) {
+        console.error("Error fetching user boloes:", e);
+      }
+    };
+    fetchBoloes();
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (!selectedBolaoId) return;
+    const fetchBolaoRanking = async () => {
+      setBolaoLoading(true);
+      try {
+        const rankSnap = await getDocs(
+          query(
+            collection(db, "bolao_rankings"),
+            where("bolao_id", "==", selectedBolaoId),
+            orderBy("total_points", "desc")
+          )
+        );
+        const totalsMap = new Map<string, number>();
+        rankSnap.docs.forEach((d) => {
+          const uid = d.data().user_id as string;
+          totalsMap.set(uid, (totalsMap.get(uid) || 0) + ((d.data().total_points as number) || 0));
+        });
+        const uids = [...totalsMap.entries()].sort((a, b) => b[1] - a[1]);
+        if (!uids.length) { setBolaoRows([]); setBolaoLoading(false); return; }
+        const profileMap = new Map<string, ProfileSummary>();
+        for (let i = 0; i < uids.length; i += 30) {
+          const batch = uids.slice(i, i + 30).map(([id]) => id);
+          const ps = await getDocs(
+            query(collection(db, "profiles"), where("user_id", "in", batch))
+          );
+          ps.docs.forEach((doc) => {
+            const data = doc.data();
+            profileMap.set(data.user_id as string, data as ProfileSummary);
+          });
+        }
+        setBolaoRows(
+          uids.map(([userId, points]) => {
+            const p = profileMap.get(userId);
+            return {
+              userId,
+              name: p?.name || p?.nickname || t("label"),
+              avatar: p?.avatar_url || "?",
+              favoriteTeam: p?.favorite_team || null,
+              points,
+            };
+          })
+        );
+      } catch (e) {
+        console.error("Error fetching bolao ranking:", e);
+        setBolaoRows([]);
+      } finally {
+        setBolaoLoading(false);
+      }
+    };
+    fetchBolaoRanking();
+  }, [selectedBolaoId, t]);
+
+  const displayRows = selectedBolaoId ? bolaoRows : globalRows;
+  const isLoadingDisplay = loading || bolaoLoading;
+
   const myPosition = useMemo(() => {
     if (!user?.id) return null;
-    const index = globalRows.findIndex((row) => row.userId === user.id);
+    const index = displayRows.findIndex((row) => row.userId === user.id);
     if (index === -1) return null;
-    return { rank: index + 1, ...globalRows[index] };
-  }, [globalRows, user?.id]);
+    return { rank: index + 1, ...displayRows[index] };
+  }, [displayRows, user?.id]);
 
-  if (loading) {
+  if (isLoadingDisplay) {
     return (
       <div className="mx-auto max-w-5xl px-4 py-6">
         <Skeleton className="mb-4 h-20 rounded-3xl bg-white/10" />
@@ -113,33 +201,56 @@ export default function Ranking() {
     );
   }
 
-  if (!globalRows.length) {
+  if (!displayRows.length && !isLoadingDisplay) {
     return (
       <div className="mx-auto max-w-4xl px-4 py-6">
         <EmptyState
           icon="🏆"
-          title="Ranking ainda vazio"
-          description="Assim que os bolões começarem a pontuar, o ranking global aparece aqui com dados reais."
+          {...{ title: t('empty_title') }}
+          description={t('empty_desc')}
         />
       </div>
     );
   }
 
-  const podium = globalRows.slice(0, 3);
+  const podium = displayRows.slice(0, 3);
 
   return (
     <div className="mx-auto max-w-5xl px-4 pb-28 pt-6 text-white">
       <div className="mb-6">
-        <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">Ranking</p>
-        <h1 className="mt-1 text-3xl font-black">Torcedores em alta</h1>
-        <p className="mt-2 text-sm text-zinc-400">
-          Dados agregados dos bolões já pontuados. Nada de ranking cenográfico fantasiado de métrica.
-        </p>
+        <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">{t('page_label')}</p>
+        <h1 className="mt-1 text-3xl font-black">{t('page_title')}</h1>
+        <p className="mt-2 text-sm text-zinc-400">{t('page_desc')}</p>
       </div>
+
+      {/* Bolão filter pills */}
+      {userBoloes.length > 0 && (
+        <div className="mb-6 flex flex-wrap gap-2 pb-1">
+          <button
+            onClick={() => setSelectedBolaoId(null)}
+            className={`rounded-full px-4 py-2 text-xs font-black uppercase tracking-[0.14em] transition-colors ${
+              selectedBolaoId === null ? "bg-primary text-black" : "bg-white/10 text-zinc-400 hover:bg-white/20"
+            }`}
+          >
+            {t('filter_global')}
+          </button>
+          {userBoloes.map((b) => (
+            <button
+              key={b.id}
+              onClick={() => setSelectedBolaoId(b.id)}
+              className={`max-w-[160px] truncate rounded-full px-4 py-2 text-xs font-black uppercase tracking-[0.14em] transition-colors ${
+                selectedBolaoId === b.id ? "bg-primary text-black" : "bg-white/10 text-zinc-400 hover:bg-white/20"
+              }`}
+            >
+              {b.name}
+            </button>
+          ))}
+        </div>
+      )}
 
       {myPosition && (
         <div className="mb-6 rounded-[28px] border border-primary/30 bg-primary/10 p-5">
-          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">Sua posição atual</p>
+          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">{t('my_position')}</p>
           <div className="mt-3 flex items-center justify-between gap-4">
             <div>
               <h2 className="text-2xl font-black">#{myPosition.rank}</h2>
@@ -159,10 +270,10 @@ export default function Ranking() {
               {index === 0 ? <Crown className="h-5 w-5" /> : index === 1 ? <Trophy className="h-5 w-5" /> : <Medal className="h-5 w-5" />}
             </div>
             <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">
-              {index === 0 ? "Líder" : index === 1 ? "Vice-líder" : "Top 3"}
+              {index === 0 ? t('leader') : index === 1 ? t('vice_leader') : t('top3')}
             </p>
             <h2 className="mt-2 text-xl font-black">{row.name}</h2>
-            <p className="mt-1 text-sm text-zinc-400">{row.favoriteTeam ? `Time favorito: ${row.favoriteTeam}` : "Time favorito não informado"}</p>
+            <p className="mt-1 text-sm text-zinc-400">{row.favoriteTeam ? t('favorite_team', { team: row.favoriteTeam }) : t('no_favorite_team')}</p>
             <div className="mt-4 inline-flex rounded-full bg-white/10 px-4 py-2 text-sm font-black">
               {row.points} pts
             </div>
@@ -173,11 +284,11 @@ export default function Ranking() {
       <div className="surface-card-strong rounded-[32px] p-4 md:p-6">
         <div className="mb-4 flex items-center gap-2">
           <Award className="h-4 w-4 text-primary" />
-          <h2 className="text-sm font-black uppercase tracking-[0.18em] text-primary">Classificação geral</h2>
+          <h2 className="text-sm font-black uppercase tracking-[0.18em] text-primary">{t('overall_title')}</h2>
         </div>
 
         <div className="space-y-3">
-          {globalRows.map((row, index) => (
+          {displayRows.map((row, index) => (
             <div
               key={row.userId}
               className="surface-card-soft flex items-center justify-between gap-4 rounded-2xl px-4 py-4"
@@ -186,7 +297,7 @@ export default function Ranking() {
                 <div className="w-10 text-center text-lg font-black text-primary">#{index + 1}</div>
                 <div>
                   <div className="font-black">{row.name}</div>
-                  <div className="text-sm text-zinc-400">{row.favoriteTeam ? `Time favorito: ${row.favoriteTeam}` : "Sem time favorito"}</div>
+                  <div className="text-sm text-zinc-400">{row.favoriteTeam ? t('favorite_team_short', { team: row.favoriteTeam }) : t('no_favorite_team_short')}</div>
                 </div>
               </div>
               <div className="rounded-full bg-white/10 px-4 py-2 text-sm font-black">{row.points} pts</div>

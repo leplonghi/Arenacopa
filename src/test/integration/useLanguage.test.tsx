@@ -61,7 +61,7 @@ describe("useLanguage", () => {
     useAuthMock.mockReturnValue({
       user: {
         id: "demo-user-id",
-        email: "demo@arenacopa.com",
+        email: "demo@arenacup.com",
       },
     });
 

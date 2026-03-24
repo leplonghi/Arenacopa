@@ -3,7 +3,7 @@ import re
 import json
 
 def extract_matches():
-    file_path = r'c:\Users\eduar\OneDrive\Desktop\Antigravity\ArenaCopa\Arenacopa\src\data\mockData.ts'
+    file_path = r'c:\Users\eduar\OneDrive\Desktop\Antigravity\ArenaCUP\ArenaCUP\src\data\mockData.ts'
     with open(file_path, 'r', encoding='utf-8') as f:
         content = f.read()
 

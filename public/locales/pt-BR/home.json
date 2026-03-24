@@ -1,66 +1,93 @@
 {
-    "welcome": "Bem-vindo,",
-    "pending": {
-        "title_one": "Você tem {{count}} palpite pendente",
-        "title_other": "Você tem {{count}} palpites pendentes",
-        "subtitle": "Toque para apostar antes dos jogos"
-    },
-    "stats": {
-        "rank": "Rank",
-        "points": "Pontos",
-        "pools": "Bolões"
-    },
-    "my_team": {
-        "title": "Meu Time",
-        "view_group": "Ver grupo",
-        "group": "Grupo {{group}}",
-        "next_match": "Próximo",
-        "no_matches": "Sem jogos"
-    },
-    "my_pools": {
-        "title": "Meus Bolões",
-        "manage": "Gerenciar",
-        "join_title": "Participe de um Bolão",
-        "join_desc": "Crie sua liga ou entre em uma existente.",
-        "start_now": "Começar agora",
-        "rank_place": "{{rank}}º Lugar",
-        "pts": "pts"
-    },
-    "highlights": {
-        "title": "Destaques",
-        "view_all": "Ver tudo",
-        "general": "Geral"
-    },
-    "dashboard_partial": {
-        "title": "Painel parcial",
-        "desc": "Não consegui atualizar seu painel agora. Alguns blocos podem aparecer vazios.",
-        "retry": "Tentar de novo"
-    },
-    "hero": {
-        "kicker": "Dashboard central",
-        "get_elite": "Obter Elite",
-        "elite_member": "Membro Elite"
-    },
-    "quick_panel": {
-        "section_title": "Seu ritmo",
-        "view_ranking": "Ver ranking",
-        "kicker": "Visão rápida da temporada",
-        "title": "Seu painel competitivo",
-        "description": "Veja sua posição geral, acompanhe a evolução dos seus bolões e entre no ranking completo quando quiser.",
-        "best_rank": "Melhor rank",
-        "points": "Pontos",
-        "pools": "Bolões"
-    },
-    "upcoming": {
-        "title": "Próximos jogos",
-        "view_calendar": "Ver calendário",
-        "empty": "Ainda não há partidas futuras carregadas para exibir aqui.",
-        "favorite_team": "Seu time: {{team}}",
-        "next_round": "Próxima rodada"
-    },
-    "news": {
-        "title": "Últimas do front",
-        "view_all": "Central de notícias"
-    },
-    "cta_predict": "Fazer Palpites"
+  "welcome": "Bem-vindo,",
+  "pending": {
+    "title_one": "Você tem {{count}} palpite pendente",
+    "title_other": "Você tem {{count}} palpites pendentes",
+    "subtitle": "Toque para apostar antes dos jogos"
+  },
+  "stats": {
+    "rank": "Rank",
+    "points": "Pontos",
+    "pools": "Bolões"
+  },
+  "my_team": {
+    "title": "Meu Time",
+    "view_group": "Ver grupo",
+    "group": "Grupo {{group}}",
+    "next_match": "Próximo",
+    "no_matches": "Sem jogos"
+  },
+  "my_pools": {
+    "title": "Meus Bolões",
+    "manage": "Gerenciar",
+    "join_title": "Participe de um Bolão",
+    "join_desc": "Crie sua liga ou entre em uma existente.",
+    "start_now": "Começar agora",
+    "rank_place": "{{rank}}º Lugar",
+    "pts": "pts",
+    "members": "{{count}} membros"
+  },
+  "highlights": {
+    "title": "Destaques",
+    "view_all": "Ver tudo",
+    "general": "Geral"
+  },
+  "dashboard_partial": {
+    "title": "Painel parcial",
+    "desc": "Não consegui atualizar seu painel agora. Alguns blocos podem aparecer vazios.",
+    "retry": "Tentar de novo"
+  },
+  "hero": {
+    "kicker": "Dashboard central",
+    "get_elite": "Obter Elite",
+    "elite_member": "Membro Elite",
+    "default_name": "Torcedor"
+  },
+  "quick_panel": {
+    "section_title": "Seu ritmo",
+    "view_ranking": "Ver ranking",
+    "kicker": "Visão rápida da temporada",
+    "title": "Seu painel competitivo",
+    "description": "Veja sua posição geral, acompanhe a evolução dos seus bolões e entre no ranking completo quando quiser.",
+    "best_rank": "Melhor rank",
+    "points": "Pontos",
+    "pools": "Bolões"
+  },
+  "upcoming": {
+    "title": "Próximos jogos",
+    "view_calendar": "Ver calendário",
+    "empty": "Ainda não há partidas futuras carregadas para exibir aqui.",
+    "favorite_team": "Seu time: {{team}}",
+    "next_round": "Próxima rodada",
+    "match_aria": "Ver detalhes: {{home}} vs {{away}}"
+  },
+  "news": {
+    "title": "Últimas do front",
+    "view_all": "Central de notícias",
+    "tab_copa": "Copa 2026",
+    "tab_team": "Meu Time",
+    "team_empty": "Sem notícias recentes sobre {{team}}",
+    "team_no_fav": "Defina seu time no perfil para ver notícias personalizadas",
+    "live_badge": "Ao vivo"
+  },
+  "cta_predict": "Fazer Palpites",
+  "live_card": {
+    "loading": "Carregando...",
+    "live_label": "Ao vivo",
+    "follow_btn": "Acompanhar no Bolão",
+    "next_game": "Próximo Jogo"
+  },
+  "action_of_day": {
+    "pending_title": "Palpites pendentes",
+    "pending_desc": "{count} jogo{s} esperando seu palpite",
+    "pending_cta": "Palpitar agora",
+    "no_bolao_title": "Crie seu primeiro bolão",
+    "no_bolao_desc": "Dispute com amigos na Copa 2026",
+    "no_bolao_cta": "Criar bolão",
+    "today_match_title": "Jogo hoje!",
+    "today_match_desc": "Já fez seu palpite para hoje?",
+    "today_match_cta": "Ver jogos",
+    "ready_title": "Tudo em dia!",
+    "ready_desc": "Seus palpites estão feitos. Boa sorte!"
+  }
 }

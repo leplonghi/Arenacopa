@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { X, Trophy, CalendarDays } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 import { Flag } from "@/components/Flag";
 import { MatchCard } from "@/components/MatchCard";
 import { matches as mockMatches, groupStandings, getTeam } from "@/data/mockData";
@@ -14,7 +15,9 @@ interface GroupDetailsProps {
     viewMode?: "real" | "simulacao";
 }
 
-export function GroupDetails({ groupId, onClose, viewMode = "real" }: GroupDetailsProps) {
+export function GroupDetails({
+  groupId, onClose, viewMode = "real" }: GroupDetailsProps) {
+    const { t } = useTranslation('copa');
     const { standings: simStandings } = useSimulacao();
     const { data: supabaseMatches, isLoading } = useMatches();
 

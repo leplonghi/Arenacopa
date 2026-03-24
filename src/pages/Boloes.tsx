@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Compass, Loader2, Plus, Search, Trophy, UserPlus, Users, Users2, Zap } from "lucide-react";
+import { BarChart2, Compass, Loader2, Plus, Search, Trophy, UserPlus, Users, Users2, X, Zap } from "lucide-react";
+import RankingPage from "./Ranking";
 import { BolaoExpressSheet } from "@/components/BolaoExpressSheet";
 import { db } from "@/integrations/firebase/client";
 import { 
@@ -19,6 +20,7 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { EmptyState } from "@/components/EmptyState";
+import { DEMO_MODE_STORAGE_KEY, BOLOES_INTRO_SEEN_KEY } from "@/lib/constants";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslation } from "react-i18next";
 
@@ -73,6 +75,7 @@ export default function Boloes() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { t } = useTranslation('bolao');
+  const [activeView, setActiveView] = useState<"boloes" | "ranking">("boloes");
 
   const [boloes, setBoloes] = useState<BolaoRow[]>([]);
   const [publicBoloes, setPublicBoloes] = useState<PublicBolaoRow[]>([]);
@@ -84,7 +87,21 @@ export default function Boloes() {
   const [searchQuery, setSearchQuery] = useState("");
   const [publicBoloesUnavailable, setPublicBoloesUnavailable] = useState(false);
   const [expressOpen, setExpressOpen] = useState(false);
-  const isDemoMode = localStorage.getItem("demo_mode") === "true";
+  const [showIntroBanner, setShowIntroBanner] = useState(() =>
+    !localStorage.getItem(BOLOES_INTRO_SEEN_KEY)
+  );
+  const dismissBanner = () => {
+    localStorage.setItem(BOLOES_INTRO_SEEN_KEY, "true");
+    setShowIntroBanner(false);
+  };
+  // Demo mode is DEV-only (gate matches AuthContext)
+  const isDemoMode = import.meta.env.DEV && localStorage.getItem(DEMO_MODE_STORAGE_KEY) === "true";
+  // Mounted ref — prevents setState calls after navigation away mid-fetch
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => { mountedRef.current = false; };
+  }, []);
 
   const loadData = useCallback(async () => {
     if (!user) return;
@@ -188,7 +205,7 @@ export default function Boloes() {
         variant: "destructive",
       });
     } finally {
-      setLoading(false);
+      if (mountedRef.current) setLoading(false);
     }
 
     try {
@@ -207,26 +224,29 @@ export default function Boloes() {
         return !membershipIds.includes(docSnapshot.id) && statusWhitelist.includes(data.status);
       });
 
+      // For each public bolão, fetch member count AND top-ranking in parallel
+      // to avoid 2× sequential roundtrips per item (N+1 → N parallel pairs).
       const enrichedPublic = await Promise.all(
         filteredPublicData.map(async (docElem) => {
           const b = docElem.data();
 
           const countQuery = query(collection(db, "bolao_members"), where("bolao_id", "==", docElem.id));
-          const countSnap = await getCountFromServer(countQuery);
+          const rankingQuery = query(
+            collection(db, "bolao_rankings"),
+            where("bolao_id", "==", docElem.id),
+            orderBy("total_points", "desc"),
+            limit(1)
+          );
 
-          let leaderScore = 0;
-          try {
-            const rankingQuery = query(
-              collection(db, "bolao_rankings"),
-              where("bolao_id", "==", docElem.id),
-              orderBy("total_points", "desc"),
-              limit(1)
-            );
-            const rankingSnap = await getDocs(rankingQuery);
-            leaderScore = rankingSnap.docs[0]?.data()?.total_points ?? 0;
-          } catch (rankingError) {
-            console.error("Erro ao carregar ranking público do bolão:", rankingError);
-          }
+          const [countSnap, rankingSnap] = await Promise.all([
+            getCountFromServer(countQuery),
+            getDocs(rankingQuery).catch((rankingError) => {
+              console.error("Erro ao carregar ranking público do bolão:", rankingError);
+              return null;
+            }),
+          ]);
+
+          const leaderScore = rankingSnap?.docs[0]?.data()?.total_points ?? 0;
 
           return {
             id: docElem.id,
@@ -245,11 +265,13 @@ export default function Boloes() {
         })
       );
 
-      setPublicBoloes(enrichedPublic);
+      if (mountedRef.current) setPublicBoloes(enrichedPublic);
     } catch (error) {
       console.error("Erro ao carregar bolões públicos:", error);
-      setPublicBoloes([]);
-      setPublicBoloesUnavailable(true);
+      if (mountedRef.current) {
+        setPublicBoloes([]);
+        setPublicBoloesUnavailable(true);
+      }
     }
   }, [isDemoMode, session, t, toast, user]);
 
@@ -357,30 +379,107 @@ export default function Boloes() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 pb-28 pt-6 text-white">
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+      {/* ── Tab switcher ─────────────────────────────────────── */}
+      <div className="mb-6 flex items-center justify-between gap-4">
+        <div className="flex gap-1 rounded-2xl bg-white/5 border border-white/10 p-1">
+          <button
+            onClick={() => setActiveView("boloes")}
+            className={`flex items-center gap-2 rounded-xl px-5 py-2.5 text-[11px] font-black uppercase tracking-[0.16em] transition-all ${
+              activeView === "boloes"
+                ? "bg-primary text-black shadow-md shadow-primary/25"
+                : "text-zinc-400 hover:text-zinc-200"
+            }`}
+          >
+            <Trophy className="h-3.5 w-3.5" />
+            Bolões
+          </button>
+          <button
+            onClick={() => setActiveView("ranking")}
+            className={`flex items-center gap-2 rounded-xl px-5 py-2.5 text-[11px] font-black uppercase tracking-[0.16em] transition-all ${
+              activeView === "ranking"
+                ? "bg-primary text-black shadow-md shadow-primary/25"
+                : "text-zinc-400 hover:text-zinc-200"
+            }`}
+          >
+            <BarChart2 className="h-3.5 w-3.5" />
+            Ranking
+          </button>
+        </div>
+
+        {activeView === "boloes" && (
+          <div className="flex gap-2">
+            <button
+              onClick={() => setExpressOpen(true)}
+              className="inline-flex items-center gap-2 rounded-2xl bg-white/10 border border-white/10 px-4 py-3 text-[11px] font-black uppercase tracking-[0.18em] hover:bg-white/20 transition-colors"
+            >
+              <Zap className="h-4 w-4 text-primary" />
+              Express
+            </button>
+            <Link
+              to="/boloes/criar"
+              className="inline-flex items-center gap-2 rounded-2xl bg-primary px-5 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-black"
+            >
+              <Plus className="h-4 w-4" />
+              {t('page.create')}
+            </Link>
+          </div>
+        )}
+      </div>
+
+      {/* ── First-visit intro banner ─────────────────────────── */}
+      {showIntroBanner && activeView === "boloes" && (
+        <div className="mb-6 relative rounded-[24px] border border-emerald-500/20 bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 p-5 pr-12">
+          <button
+            onClick={dismissBanner}
+            aria-label="Fechar"
+            className="absolute right-4 top-4 rounded-full p-1 text-white/40 hover:text-white transition-colors"
+          >
+            <X className="h-4 w-4" />
+          </button>
+          <div className="flex gap-4">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/15 text-2xl">⚽</div>
+            <div>
+              <p className="text-sm font-black text-white">O que é um bolão?</p>
+              <p className="mt-1 text-xs text-zinc-400 leading-relaxed">
+                Um bolão é uma competição entre amigos onde cada um faz seus palpites nos jogos da Copa. Crie o seu, convide a galera e veja quem manda mais de futebol!
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Link
+                  to="/boloes/criar"
+                  onClick={dismissBanner}
+                  className="inline-flex items-center gap-1.5 rounded-2xl bg-emerald-500 px-4 py-2 text-[11px] font-black uppercase tracking-[0.14em] text-black"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Criar bolão
+                </Link>
+                <button
+                  onClick={dismissBanner}
+                  className="inline-flex items-center gap-1.5 rounded-2xl bg-white/10 px-4 py-2 text-[11px] font-black uppercase tracking-[0.14em] text-white/70"
+                >
+                  Entendi
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Ranking View ─────────────────────────────────────── */}
+      {activeView === "ranking" && (
+        <div className="-mx-4">
+          <RankingPage />
+        </div>
+      )}
+
+      {/* ── Bolões View ──────────────────────────────────────── */}
+      {activeView === "boloes" && <>
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">{t('page.kicker')}</p>
           <h1 className="mt-1 text-3xl font-black">{t('page.kicker')}</h1>
           <p className="mt-2 max-w-2xl text-sm text-zinc-400">
             {t('page.description')}
           </p>
-        </div>
-
-        <div className="flex gap-2">
-          <button
-            onClick={() => setExpressOpen(true)}
-            className="inline-flex items-center gap-2 rounded-2xl bg-white/10 border border-white/10 px-4 py-3 text-[11px] font-black uppercase tracking-[0.18em] hover:bg-white/20 transition-colors"
-          >
-            <Zap className="h-4 w-4 text-primary" />
-            Express
-          </button>
-          <Link
-            to="/boloes/criar"
-            className="inline-flex items-center gap-2 rounded-2xl bg-primary px-5 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-black"
-          >
-            <Plus className="h-4 w-4" />
-            {t('page.create')}
-          </Link>
         </div>
       </div>
 
@@ -548,6 +647,7 @@ export default function Boloes() {
       )}
 
       <BolaoExpressSheet open={expressOpen} onClose={() => setExpressOpen(false)} />
+      </> /* end boloes view */}
     </div>
   );
 }
