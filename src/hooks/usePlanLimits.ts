@@ -16,6 +16,7 @@ import {
 import { db } from "@/integrations/firebase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMonetization } from "@/contexts/MonetizationContext";
+import { logger } from "@/lib/logger";
 
 export const FREE_GRUPO_LIMIT = 1;
 
@@ -57,7 +58,7 @@ export function usePlanLimits(): PlanLimits {
         );
         if (!cancelled) setAdminGroupCount(snap.data().count);
       } catch (e) {
-        console.error("[usePlanLimits] Failed to fetch group count:", e);
+        logger.error("[usePlanLimits] Failed to fetch group count", { userId: user.id, error: e });
       } finally {
         if (!cancelled) setLoadingLimits(false);
       }

@@ -8,6 +8,7 @@ import {
   limit 
 } from "firebase/firestore";
 import { monetizationEnv } from "@/lib/env";
+import { logger } from "@/lib/logger";
 
 export type PremiumSubscriptionStatus = "inactive" | "pending" | "active" | "expired" | "canceled" | "failed";
 
@@ -66,7 +67,7 @@ export async function getPremiumStatus(userId: string): Promise<PremiumStatusRes
     const data = querySnapshot.docs[0].data() as PremiumSubscriptionRow;
     return mapSubscriptionRow(data);
   } catch (error) {
-    console.error("Error getting premium status:", error);
+    logger.error("Error getting premium status", { userId, error });
     return inactiveStatus;
   }
 }

@@ -6,8 +6,8 @@ import { cn } from "@/lib/utils";
 import { type MemberData, type Palpite, type ExtraBet, type ScoringRules } from "@/types/bolao";
 import { EmptyState } from "@/components/EmptyState";
 import { calculatePoints } from "@/utils/bolaoUtils";
-import { motion, AnimatePresence } from "framer-motion";
-import { Trophy, Target, Check, Award, Crown, Minus, TrendingUp, Star, ChevronRight } from "lucide-react";
+import { motion } from "framer-motion";
+import { Trophy, Target, Check, Award, Crown, Minus, TrendingUp, Star } from "lucide-react";
 import { staggerContainer, staggerItem } from "../animations";
 import { useMatches } from "@/hooks/useMatches";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -22,9 +22,9 @@ interface RankingTabProps {
 export function RankingTab({ members, palpites, extraBets = [], scoringRules }: RankingTabProps) {
     const { t } = useTranslation('bolao');
     const { user } = useAuth();
-    const { data: supabaseMatches, isLoading } = useMatches();
+    const { data: firebaseMatches, isLoading } = useMatches();
 
-    const matches = supabaseMatches || mockMatches;
+    const matches = firebaseMatches || mockMatches;
     const finishedMatches = useMemo(() => matches.filter(m => m.status === "finished"), [matches]);
 
     const ranking = useMemo(() => {

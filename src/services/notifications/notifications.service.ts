@@ -1,14 +1,16 @@
 import { db } from "@/integrations/firebase/client";
-import { 
-  collection, 
-  query, 
-  where, 
-  getDocs, 
-  orderBy, 
-  doc, 
-  updateDoc, 
-  writeBatch 
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  orderBy,
+  doc,
+  updateDoc,
+  writeBatch,
 } from "firebase/firestore";
+import { mapFirebaseError } from "@/services/errors/AppError";
+import { logger } from "@/lib/logger";
 
 export type NotificationRecord = {
   id: string;
@@ -29,13 +31,13 @@ export async function listNotifications(userId: string) {
       orderBy("created_at", "desc")
     );
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
+    return querySnapshot.docs.map((d) => ({
+      id: d.id,
+      ...d.data(),
     })) as NotificationRecord[];
   } catch (error) {
-    console.error("Error listing notifications:", error);
-    throw error;
+    logger.error("Error listing notifications", { userId, error });
+    throw mapFirebaseError(error, "UNKNOWN");
   }
 }
 
@@ -44,8 +46,8 @@ export async function markNotificationAsRead(notificationId: string, userId: str
     const docRef = doc(db, "notifications", notificationId);
     await updateDoc(docRef, { read: true });
   } catch (error) {
-    console.error("Error marking notification as read:", error);
-    throw error;
+    logger.error("Error marking notification as read", { notificationId, userId, error });
+    throw mapFirebaseError(error, "UNKNOWN");
   }
 }
 
@@ -57,16 +59,15 @@ export async function markAllNotificationsAsRead(userId: string) {
       where("read", "==", false)
     );
     const querySnapshot = await getDocs(q);
-    
+
     const batch = writeBatch(db);
-    querySnapshot.docs.forEach((doc) => {
-      batch.update(doc.ref, { read: true });
+    querySnapshot.docs.forEach((d) => {
+      batch.update(d.ref, { read: true });
     });
-    
+
     await batch.commit();
   } catch (error) {
-    console.error("Error marking all notifications as read:", error);
-    throw error;
+    logger.error("Error marking all notifications as read", { userId, error });
+    throw mapFirebaseError(error, "UNKNOWN");
   }
 }
-

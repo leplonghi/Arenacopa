@@ -17,9 +17,9 @@ interface GroupDetailsProps {
 
 export function GroupDetails({
   groupId, onClose, viewMode = "real" }: GroupDetailsProps) {
-    const { t } = useTranslation('copa');
+    const { t: _t } = useTranslation('copa');
     const { standings: simStandings } = useSimulacao();
-    const { data: supabaseMatches, isLoading } = useMatches();
+    const { data: firebaseMatches, isLoading } = useMatches();
 
     const realStandings = groupStandings[groupId] || [];
     const simulatedGroupStandings = simStandings[groupId] || [];
@@ -40,7 +40,7 @@ export function GroupDetails({
         }))
         : realStandings;
 
-    const matches = supabaseMatches || mockMatches;
+    const matches = firebaseMatches || mockMatches;
     const groupMatches = matches
         .filter(m => m.group === groupId)
         .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());

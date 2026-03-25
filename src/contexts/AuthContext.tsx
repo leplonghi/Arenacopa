@@ -4,6 +4,7 @@ import { auth } from "@/integrations/firebase/client";
 import { ensureProfile } from "@/services/profile/profile.service";
 import { signOutUser } from "@/services/auth/auth.service";
 import { DEMO_USER_ID, DEMO_MODE_STORAGE_KEY } from "@/lib/constants";
+import { logger } from "@/lib/logger";
 
 export interface User {
   id: string;
@@ -75,7 +76,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             email: mappedUser.email,
             user_metadata: mappedUser.user_metadata,
           }).catch((error) => {
-            console.error("Error ensuring profile:", error);
+            logger.error("Error ensuring profile", { userId: mappedUser.id, error });
           });
         }
       } else {
@@ -90,7 +91,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loginAsDemo = async () => {
     if (!import.meta.env.DEV) {
-      console.warn("Demo mode is not available in production builds.");
+      logger.warn("Demo mode is not available in production builds.");
       return;
     }
     localStorage.setItem(DEMO_MODE_STORAGE_KEY, "true");

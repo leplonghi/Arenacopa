@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils";
 import { type BolaoActivity, type BolaoData, type BolaoMarket, type BolaoPrediction, type MemberData, type Palpite } from "@/types/bolao";
 import { MatchDetailsModal } from "@/components/copa/MatchDetailsModal";
 import { useDateLocale } from "@/hooks/useDateLocale";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { staggerContainer, staggerItem } from "../animations";
 
 interface OverviewTabProps {
@@ -54,10 +54,10 @@ export function OverviewTab({ bolao, members, palpites, markets, marketPredictio
     const { t } = useTranslation('bolao');
     const dateLocale = useDateLocale();
     const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
-    const navigate = useNavigate();
-    const { data: supabaseMatches, isLoading } = useMatches();
+    const _navigate = useNavigate();
+    const { data: firebaseMatches, isLoading } = useMatches();
 
-    const matches = supabaseMatches || mockMatches;
+    const matches = firebaseMatches || mockMatches;
     const matchMarkets = markets.filter((market) => market.scope === "match");
     const uniqueMatchMarketIds = Array.from(new Set(matchMarkets.map((market) => market.match_id).filter(Boolean)));
     const exactScoreMarkets = matchMarkets.filter((market) => market.slug === "exact_score");
@@ -224,7 +224,7 @@ export function OverviewTab({ bolao, members, palpites, markets, marketPredictio
                     </div>
 
                     <div className="grid gap-3">
-                        {nextMatches.map((m, idx) => {
+                        {nextMatches.map((m, _idx) => {
                             const home = getTeam(m.homeTeam);
                             const away = getTeam(m.awayTeam);
                             const hasPalpite = myPalpites.some(p => p.match_id === m.id);
@@ -448,7 +448,7 @@ export function OverviewTab({ bolao, members, palpites, markets, marketPredictio
     );
 }
 
-function StatCard({ icon, value, label, subLabel, color, delay }: { icon: React.ReactNode; value: string | number; label: string; subLabel: string; color: "emerald" | "amber" | "blue"; delay: number }) {
+function StatCard({ icon, value, label: _label, subLabel, color, delay: _delay }: { icon: React.ReactNode; value: string | number; label: string; subLabel: string; color: "emerald" | "amber" | "blue"; delay: number }) {
     const colorConfigs = {
         emerald: {
             bg: "from-emerald-500/10 to-transparent border-emerald-500/10",

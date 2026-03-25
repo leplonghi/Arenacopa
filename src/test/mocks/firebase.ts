@@ -43,6 +43,18 @@ export const mockCollection = vi.fn((db: unknown, name: string) => ({
 export const mockQuery = vi.fn((...args: unknown[]) => args[0]);
 export const mockWhere = vi.fn();
 
+// writeBatch mock
+const mockBatchUpdate = vi.fn();
+const mockBatchSet = vi.fn();
+const mockBatchDelete = vi.fn();
+const mockBatchCommit = vi.fn(async () => undefined);
+export const mockWriteBatch = vi.fn(() => ({
+  update: mockBatchUpdate,
+  set: mockBatchSet,
+  delete: mockBatchDelete,
+  commit: mockBatchCommit,
+}));
+
 vi.mock("firebase/firestore", () => ({
   getFirestore: vi.fn(() => ({})),
   doc: mockDoc,
@@ -57,6 +69,7 @@ vi.mock("firebase/firestore", () => ({
   query: mockQuery,
   where: mockWhere,
   getCountFromServer: mockGetCountFromServer,
+  writeBatch: mockWriteBatch,
   orderBy: vi.fn(),
   limit: vi.fn(),
   onSnapshot: vi.fn(),
