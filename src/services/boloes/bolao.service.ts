@@ -1,13 +1,14 @@
 import { db } from "@/integrations/firebase/client";
-import { 
-  doc, 
-  setDoc, 
-  updateDoc, 
-  deleteDoc, 
+import {
+  doc,
+  setDoc,
+  updateDoc,
+  deleteDoc,
   getDoc,
-  serverTimestamp 
+  serverTimestamp,
 } from "firebase/firestore";
 import type { MemberData, Palpite } from "@/types/bolao";
+import { mapFirebaseError } from "@/services/errors/AppError";
 
 export async function saveBolaoPalpite(input: {
   bolaoId: string;
@@ -19,10 +20,9 @@ export async function saveBolaoPalpite(input: {
   existingId?: string;
 }) {
   try {
-    // We can use a deterministic ID: userId_bolaoId_matchId to avoid duplicates
     const palpiteId = input.existingId || `${input.userId}_${input.bolaoId}_${input.matchId}`;
     const docRef = doc(db, "bolao_palpites", palpiteId);
-    
+
     const payload = {
       bolao_id: input.bolaoId,
       user_id: input.userId,
@@ -46,22 +46,24 @@ export async function saveBolaoPalpite(input: {
 
     const updatedDoc = await getDoc(docRef);
     const data = updatedDoc.data();
-    
+
     return {
       id: updatedDoc.id,
       ...data,
       is_power_play: data?.is_power_play ?? false,
     } as Palpite;
   } catch (error) {
-    console.error("Error saving palpite:", error);
-    throw error;
+    throw mapFirebaseError(error, "BOLAO_SAVE_PALPITE_FAILED");
   }
 }
 
 export async function removeBolaoMember(bolaoId: string, userId: string) {
-  // Strategy: assume member doc ID is userId_bolaoId
-  const memberId = `${userId}_${bolaoId}`;
-  await deleteDoc(doc(db, "bolao_members", memberId));
+  try {
+    const memberId = `${userId}_${bolaoId}`;
+    await deleteDoc(doc(db, "bolao_members", memberId));
+  } catch (error) {
+    throw mapFirebaseError(error, "BOLAO_REMOVE_MEMBER_FAILED");
+  }
 }
 
 export async function updateBolaoMemberPaymentStatus(input: {
@@ -69,8 +71,11 @@ export async function updateBolaoMemberPaymentStatus(input: {
   userId: string;
   paymentStatus: NonNullable<MemberData["payment_status"]>;
 }) {
-  const memberId = `${input.userId}_${input.bolaoId}`;
-  const docRef = doc(db, "bolao_members", memberId);
-  await updateDoc(docRef, { payment_status: input.paymentStatus });
+  try {
+    const memberId = `${input.userId}_${input.bolaoId}`;
+    const docRef = doc(db, "bolao_members", memberId);
+    await updateDoc(docRef, { payment_status: input.paymentStatus });
+  } catch (error) {
+    throw mapFirebaseError(error, "BOLAO_UPDATE_PAYMENT_FAILED");
+  }
 }
-

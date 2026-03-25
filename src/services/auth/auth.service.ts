@@ -1,35 +1,47 @@
 import { auth } from "@/integrations/firebase/client";
-import { 
-  signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword, 
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
   signOut,
   GoogleAuthProvider,
   signInWithPopup,
-  updateProfile
+  updateProfile,
 } from "firebase/auth";
+import { mapFirebaseError } from "@/services/errors/AppError";
 
 export async function signInWithPassword(email: string, password: string) {
-  const userCredential = await signInWithEmailAndPassword(auth, email, password);
-  return userCredential.user;
+  try {
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    return userCredential.user;
+  } catch (error) {
+    throw mapFirebaseError(error, "AUTH_INVALID_CREDENTIALS");
+  }
 }
 
 export async function signUpWithPassword(email: string, password: string, name: string) {
-  const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-  
-  // Update display name
-  await updateProfile(userCredential.user, {
-    displayName: name
-  });
-
-  return userCredential.user;
+  try {
+    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+    await updateProfile(userCredential.user, { displayName: name });
+    return userCredential.user;
+  } catch (error) {
+    throw mapFirebaseError(error, "AUTH_UNKNOWN");
+  }
 }
 
 export async function signInWithGoogle() {
-  const provider = new GoogleAuthProvider();
-  const result = await signInWithPopup(auth, provider);
-  return result.user;
+  try {
+    const provider = new GoogleAuthProvider();
+    const result = await signInWithPopup(auth, provider);
+    return result.user;
+  } catch (error) {
+    throw mapFirebaseError(error, "AUTH_UNKNOWN");
+  }
 }
 
 export async function signOutUser() {
-  await signOut(auth);
+  try {
+    await signOut(auth);
+  } catch (error) {
+    throw mapFirebaseError(error, "AUTH_UNKNOWN");
+  }
 }

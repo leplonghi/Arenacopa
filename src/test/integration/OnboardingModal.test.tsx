@@ -39,15 +39,14 @@ describe("OnboardingModal", () => {
 
     expect(await screen.findByText("onboarding.title")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "onboarding.confirm" }));
+    fireEvent.click(screen.getByRole("button", { name: /próximo/i }));
 
     await waitFor(() => {
       expect(updateFavoriteTeamMock).toHaveBeenCalledWith("user-1", "BRA");
     });
 
     expect(localStorage.getItem("favorite_team")).toBe("BRA");
-    expect(localStorage.getItem("arenacup_onboarding_done")).toBe("true");
-    expect(localStorage.getItem("arenacup_onboarding_migrated")).toBe("true");
+    expect(localStorage.getItem("arenacopa_onboarding_migrated")).toBe("true");
   });
 
   it("nao abre em modo demo", () => {

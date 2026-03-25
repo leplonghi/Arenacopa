@@ -5,6 +5,49 @@ admin.initializeApp();
 
 const db = admin.firestore();
 
+// ─── Input Validation Helpers ─────────────────────────────────────────────────
+
+function validateString(value, name) {
+    if (!value || typeof value !== "string" || !value.trim()) {
+        throw new Error(`Validation error: "${name}" must be a non-empty string.`);
+    }
+    return value.trim();
+}
+
+function validateNumber(value, name) {
+    if (typeof value !== "number" || !Number.isFinite(value)) {
+        throw new Error(`Validation error: "${name}" must be a finite number.`);
+    }
+    return value;
+}
+
+function validateMatchData(matchData) {
+    if (!matchData || typeof matchData !== "object") {
+        throw new Error("Validation error: matchData must be an object.");
+    }
+    const homeScore = normalizeNumber(matchData.home_score);
+    const awayScore = normalizeNumber(matchData.away_score);
+    if (typeof matchData.home_score === "number" && !Number.isFinite(matchData.home_score)) {
+        throw new Error("Validation error: home_score must be a finite number.");
+    }
+    if (typeof matchData.away_score === "number" && !Number.isFinite(matchData.away_score)) {
+        throw new Error("Validation error: away_score must be a finite number.");
+    }
+    return { homeScore, awayScore };
+}
+
+function validateUserAndBolao(userId, bolaoId, context) {
+    if (!userId || typeof userId !== "string") {
+        functions.logger.warn(`${context}: Missing or invalid userId`, { userId });
+        return false;
+    }
+    if (!bolaoId || typeof bolaoId !== "string") {
+        functions.logger.warn(`${context}: Missing or invalid bolaoId`, { bolaoId });
+        return false;
+    }
+    return true;
+}
+
 const SCORING = {
     EXACT: 5,
     WINNER: 3,
@@ -464,6 +507,7 @@ async function recalculateBolaoRankingForUser({ bolaoId, userId }) {
 exports.onMatchResultUpdated = functions.firestore
     .document("matches/{matchId}")
     .onUpdate(async (change, context) => {
+        try {
         const newValue = change.after.data();
         const previousValue = change.before.data();
 
@@ -609,6 +653,13 @@ exports.onMatchResultUpdated = functions.firestore
             affectedRankings: affectedRankings.size,
         });
         return null;
+        } catch (err) {
+            functions.logger.error("onMatchResultUpdated: Unhandled error", {
+                matchId: context.params.matchId,
+                error: err && err.message ? err.message : String(err),
+            });
+            return null;
+        }
     });
 
 /**
@@ -617,6 +668,7 @@ exports.onMatchResultUpdated = functions.firestore
 exports.onBolaoMarketWrite = functions.firestore
     .document("bolao_markets/{marketId}")
     .onWrite(async (change, context) => {
+        try {
         const afterData = change.after.exists ? change.after.data() : null;
         const beforeData = change.before.exists ? change.before.data() : null;
         const marketData = afterData || beforeData;
@@ -705,6 +757,13 @@ exports.onBolaoMarketWrite = functions.firestore
         }
 
         return null;
+        } catch (err) {
+            functions.logger.error("onBolaoMarketWrite: Unhandled error", {
+                marketId: context.params.marketId,
+                error: err && err.message ? err.message : String(err),
+            });
+            return null;
+        }
     });
 
 /**
@@ -714,11 +773,12 @@ exports.onBolaoMarketWrite = functions.firestore
 exports.onNewBolaoMember = functions.firestore
     .document("bolao_members/{memberId}")
     .onCreate(async (snap) => {
+        try {
         const data = snap.data();
         const userId = data.user_id;
         const bolaoId = data.bolao_id;
 
-        if (!userId || !bolaoId) return null;
+        if (!validateUserAndBolao(userId, bolaoId, "onNewBolaoMember")) return null;
 
         const rankingRef = db.collection("bolao_rankings").doc(`${userId}_${bolaoId}`);
         const rankingDoc = await rankingRef.get();
@@ -759,6 +819,13 @@ exports.onNewBolaoMember = functions.firestore
 
         await recalculateBolaoRankingForUser({ bolaoId, userId });
         return null;
+        } catch (err) {
+            functions.logger.error("onNewBolaoMember: Unhandled error", {
+                memberId: snap.id,
+                error: err && err.message ? err.message : String(err),
+            });
+            return null;
+        }
     });
 
 /**
@@ -767,12 +834,13 @@ exports.onNewBolaoMember = functions.firestore
 exports.onBolaoPalpiteWrite = functions.firestore
     .document("bolao_palpites/{palpiteId}")
     .onWrite(async (change) => {
+        try {
         const afterData = change.after.exists ? change.after.data() : null;
         const beforeData = change.before.exists ? change.before.data() : null;
         const userId = afterData?.user_id || beforeData?.user_id;
         const bolaoId = afterData?.bolao_id || beforeData?.bolao_id;
 
-        if (!userId || !bolaoId) {
+        if (!validateUserAndBolao(userId, bolaoId, "onBolaoPalpiteWrite")) {
             return null;
         }
 
@@ -797,6 +865,12 @@ exports.onBolaoPalpiteWrite = functions.firestore
         }
 
         return null;
+        } catch (err) {
+            functions.logger.error("onBolaoPalpiteWrite: Unhandled error", {
+                error: err && err.message ? err.message : String(err),
+            });
+            return null;
+        }
     });
 
 /**
@@ -805,12 +879,13 @@ exports.onBolaoPalpiteWrite = functions.firestore
 exports.onBolaoPredictionWrite = functions.firestore
     .document("bolao_predictions/{predictionId}")
     .onWrite(async (change) => {
+        try {
         const afterData = change.after.exists ? change.after.data() : null;
         const beforeData = change.before.exists ? change.before.data() : null;
         const userId = afterData?.user_id || beforeData?.user_id;
         const bolaoId = afterData?.bolao_id || beforeData?.bolao_id;
 
-        if (!userId || !bolaoId) {
+        if (!validateUserAndBolao(userId, bolaoId, "onBolaoPredictionWrite")) {
             return null;
         }
 
@@ -842,6 +917,12 @@ exports.onBolaoPredictionWrite = functions.firestore
         }
 
         return null;
+        } catch (err) {
+            functions.logger.error("onBolaoPredictionWrite: Unhandled error", {
+                error: err && err.message ? err.message : String(err),
+            });
+            return null;
+        }
     });
 
 
