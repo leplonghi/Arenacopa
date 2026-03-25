@@ -73,7 +73,7 @@ function formatDate(iso?: string): string {
 // ── Component ─────────────────────────────────────────────────────────────────
 export default function Noticias() {
   const { user } = useAuth();
-  const { i18n } = useTranslation();
+  useTranslation();
 
   // Firestore real-time feed (manually curated / admin-pushed articles)
   const { news: firestoreNews, isLoading: firestoreLoading } = useRealtimeNews({ limitCount: 60 });

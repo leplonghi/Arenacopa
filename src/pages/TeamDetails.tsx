@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { teams, getTeam, getStadium } from "@/data/mockData";
+import { getTeam, getStadium } from "@/data/mockData";
 import { Flag } from "@/components/Flag";
 import { ArrowLeft, Trophy, Users, MapPin, Coins, Info, Globe, Calendar, MapPin as StadiumIcon, TrendingUp } from "lucide-react";
 import { formatMatchDate, formatMatchTime } from "@/data/mockData";

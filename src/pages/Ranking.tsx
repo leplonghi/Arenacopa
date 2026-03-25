@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Award, Crown, Medal, Trophy } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { db } from "@/integrations/firebase/client";
-import { collection, query, orderBy, limit, getDocs, where, documentId } from "firebase/firestore";
+import { collection, query, orderBy, getDocs, where, documentId } from "firebase/firestore";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/EmptyState";
 import { useTranslation } from "react-i18next";
@@ -96,6 +96,7 @@ export default function Ranking() {
     };
 
     load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ── Bolão filter ──────────────────────────────────────────────────────────

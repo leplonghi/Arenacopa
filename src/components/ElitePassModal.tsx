@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Crown, Sparkles, X, CheckCircle2, Zap, ShieldCheck, Trophy, Loader2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { useMonetization } from '@/contexts/MonetizationContext';
 import { useToast } from '@/hooks/use-toast';
 import { monetizationEnv } from '@/lib/env';
@@ -10,7 +9,7 @@ import { PREMIUM_CHECKOUT_UNAVAILABLE_MESSAGE } from '@/services/monetization/st
 export function ElitePassModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
     const { purchasePremium, isLoading, isPremium } = useMonetization();
     const { toast } = useToast();
-    const [isHovering, setIsHovering] = useState(false);
+    const [_isHovering, setIsHovering] = useState(false);
     const canStartPremiumCheckout = monetizationEnv.enablePremiumSimulation || monetizationEnv.premiumCheckoutEnabled;
 
     // If they already bought it, no need to show the sales pitch again
@@ -26,7 +25,7 @@ export function ElitePassModal({ isOpen, onClose }: { isOpen: boolean; onClose: 
                 return;
             }
             onClose();
-        } catch (e) {
+        } catch {
             toast({
                 title: "Erro na transação",
                 description: "Não foi possível concluir a ativação do passe.",

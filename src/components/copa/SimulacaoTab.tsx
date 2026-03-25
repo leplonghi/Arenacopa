@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -11,7 +11,6 @@ import {
   Trash2, Share2, MessageCircle, Link2, X, Pencil, Check, Sparkles
 } from "lucide-react";
 import { useSimulacao } from "@/contexts/SimulacaoContext";
-import { calcStandings } from "@/utils/simulacaoUtils";
 import { KnockoutPhase } from "./KnockoutPhase";
 import { useAuth } from "@/contexts/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";

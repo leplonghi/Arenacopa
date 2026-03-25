@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Loader2, Plus, Users2, X, Crown, CheckCircle2 } from "lucide-react";
 import {
   collection, query, where, getDocs, addDoc,
-  doc, setDoc, getDoc, orderBy, limit, getCountFromServer,
+  doc, setDoc, getDoc, limit,
 } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { useMonetization } from "@/contexts/MonetizationContext";
@@ -27,7 +27,7 @@ const EMOJIS_G = ["👥", "⚽", "🏆", "🔥", "🎯", "🦁", "🎉", "💪"]
 export default function Grupos() {
   const { t } = useTranslation('bolao');
   const { user } = useAuth();
-  const { isPremium, purchasePremium, isLoading: isPurchasing } = useMonetization();
+  const { purchasePremium, isLoading: isPurchasing } = useMonetization();
   const canStartCheckout = monetizationEnv.enablePremiumSimulation || monetizationEnv.premiumCheckoutEnabled;
   const { canCreateGrupo } = usePlanLimits();
   const { toast } = useToast();
@@ -44,7 +44,7 @@ export default function Grupos() {
   const [newName, setNewName] = useState("");
   const [newEmoji, setNewEmoji] = useState("👥");
   const [newDesc, setNewDesc] = useState("");
-  const [newCategory, setNewCategory] = useState<"private" | "public">("private");
+  const [newCategory] = useState<"private" | "public">("private");
 
   const loadGrupos = useCallback(async () => {
     if (!user) return;
@@ -93,7 +93,7 @@ export default function Grupos() {
       toast({ title: t('grupos.created'), className: "bg-emerald-500 text-white font-black" });
       setShowCreate(false); setNewName(""); setNewDesc("");
       navigate(`/grupos/${grupoRef.id}`);
-    } catch (e) {
+    } catch {
       toast({ title: t('grupos.create_error'), variant: "destructive" });
     } finally { setCreating(false); }
   };
@@ -115,7 +115,7 @@ export default function Grupos() {
       toast({ title: t('grupos.joined'), className: "bg-emerald-500 text-white font-black" });
       setShowJoin(false); setJoinCode("");
       navigate(`/grupos/${gDoc.id}`);
-    } catch (e) {
+    } catch {
       toast({ title: t('grupos.invalid_code'), description: t('grupos.invalid_code_desc'), variant: "destructive" });
     } finally { setJoining(false); }
   };

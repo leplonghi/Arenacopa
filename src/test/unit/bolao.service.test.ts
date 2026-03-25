@@ -1,12 +1,10 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import "../mocks/firebase";
 import {
-  mockGetDoc,
   mockSetDoc,
   mockUpdateDoc,
   mockDeleteDoc,
   mockDoc,
-  mockServerTimestamp,
   mockDocData,
   resetFirebaseMocks,
 } from "../mocks/firebase";
@@ -67,7 +65,7 @@ describe("bolao.service", () => {
       const palpiteId = "user-123_bolao-1_match-1";
       mockDocData[`bolao_palpites/${palpiteId}`] = createMockPalpite({ is_power_play: true });
 
-      const result = await saveBolaoPalpite({ ...baseInput, isPowerPlay: true });
+      await saveBolaoPalpite({ ...baseInput, isPowerPlay: true });
 
       const setDocCall = mockSetDoc.mock.calls[0];
       expect(setDocCall[1]).toMatchObject({ is_power_play: true });

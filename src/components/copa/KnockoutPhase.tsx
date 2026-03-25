@@ -9,7 +9,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   type KnockoutRound, type KnockoutMatchFull, type KnockoutScore,
-  KNOCKOUT_ROUNDS, ROUND_LABELS, ROUND_FULL_LABELS,
+  ROUND_LABELS, ROUND_FULL_LABELS,
   isDrawRegulation, getMatchWinner,
 } from "@/utils/knockoutBracket";
 

@@ -3,10 +3,11 @@ type LogContext = Record<string, unknown>;
 
 const isDev = typeof import.meta !== "undefined" && import.meta.env?.DEV;
 
-function formatMessage(level: LogLevel, message: string, context?: LogContext): string {
+function formatMessage(level: LogLevel, message: string): string {
   return `[${level.toUpperCase()}] ${message}`;
 }
 
+/* eslint-disable no-console */
 export const logger = {
   debug(message: string, context?: LogContext): void {
     if (isDev) {
@@ -26,3 +27,4 @@ export const logger = {
     console.error(formatMessage("error", message), context ?? "");
   },
 };
+/* eslint-enable no-console */

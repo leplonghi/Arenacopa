@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback } from "react";
 import { toPng } from "html-to-image";
 import { Share2, MessageCircle, Download, Loader2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -31,6 +31,7 @@ export function ShareBracket({ bracketRef }: ShareBracketProps) {
     } finally {
       setIsGenerating(false);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [bracketRef]);
 
   const handleDownload = useCallback(async () => {
@@ -44,7 +45,8 @@ export function ShareBracket({ bracketRef }: ShareBracketProps) {
     URL.revokeObjectURL(url);
     toast.success(t('share_bracket.saved'));
     setIsOpen(false);
-  }, [generateImage]);
+     
+  }, [generateImage, t]);
 
   const handleNativeShare = useCallback(async () => {
     const blob = await generateImage();
@@ -65,7 +67,8 @@ export function ShareBracket({ bracketRef }: ShareBracketProps) {
     } else {
       toast.error(t('share_bracket.not_supported'));
     }
-  }, [generateImage]);
+     
+  }, [generateImage, t]);
 
   const handleWhatsApp = useCallback(async () => {
     // WhatsApp doesn't support file sharing via URL, so download + open WhatsApp
@@ -83,7 +86,8 @@ export function ShareBracket({ bracketRef }: ShareBracketProps) {
     window.open(`https://wa.me/?text=${text}`, "_blank");
     toast.success(t('share_bracket.downloaded'));
     setIsOpen(false);
-  }, [generateImage]);
+     
+  }, [generateImage, t]);
 
   return (
     <div className="relative">

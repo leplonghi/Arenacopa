@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Flag } from "@/components/Flag";
 import { getTeam } from "@/data/mockData";
 import { Minus, Plus } from "lucide-react";
-import { cn } from "@/lib/utils";
 import type { KnockoutMatchFull, KnockoutRound, KnockoutScore } from "@/utils/knockoutBracket";
 import { ROUND_FULL_LABELS } from "@/utils/knockoutBracket";
 

@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-    MapPin, Users, Trophy, Globe, TrendingUp, X,
-    Thermometer, DollarSign, Plane, Star, Building2,
-    Camera, Bus, AlertTriangle, Cloud, Zap, Search
+    Users, Trophy, Globe, TrendingUp, X,
+    Thermometer, DollarSign, Star, Building2,
+    Camera, AlertTriangle, Zap, Search
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { hostCountries, generalCuriosities, type HostCity } from "@/data/guiaData";
@@ -47,7 +47,7 @@ export function GuiaTab() {
 
     const [searchQuery, setSearchQuery] = useState("");
 
-    const activeCountry = hostCountries.find(c => c.code === selectedCountryCode)!;
+    const activeCountry = hostCountries.find(c => c.code === selectedCountryCode) as typeof hostCountries[0];
 
     const filteredCities = activeCountry.cities.filter(city => 
         city.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -213,7 +213,7 @@ export function GuiaTab() {
     );
 }
 
-function CityCard({ city, idx, onClick, status, t }: { city: HostCity, idx: number, onClick: () => void, status?: CityStatusData, t: any }) {
+function CityCard({ city, idx, onClick, status, t }: { city: HostCity, idx: number, onClick: () => void, status?: CityStatusData, t: (key: string, options?: Record<string, unknown>) => string }) {
     const bgImage = city.image || "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?auto=format&fit=crop&w=800&q=80";
 
     return (
@@ -291,7 +291,7 @@ interface TranslatedCityData {
     weather?: string;
 }
 
-export function CityDetailsModal({ city, dynamicStatus, onClose, t }: { city: HostCity, dynamicStatus?: CityStatusData, onClose: () => void, t: any }) {
+export function CityDetailsModal({ city, dynamicStatus, onClose, t }: { city: HostCity, dynamicStatus?: CityStatusData, onClose: () => void, t: (key: string, options?: Record<string, unknown>) => unknown }) {
     const [activeTab, setActiveTab] = useState<"geral" | "turismo" | "gastronomia">("geral");
 
     const cityData = t(`cities.${city.id}`, { returnObjects: true }) as TranslatedCityData;

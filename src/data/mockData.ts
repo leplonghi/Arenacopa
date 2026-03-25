@@ -283,7 +283,7 @@ export const teams: Team[] = [
   },
 ];
 
-export const getTeam = (code: string) => teams.find(t => t.code === code)!;
+export const getTeam = (code: string) => teams.find(t => t.code === code) as typeof teams[0];
 export const getGroupTeams = (group: string) => teams.filter(t => t.group === group);
 export const groups = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"];
 

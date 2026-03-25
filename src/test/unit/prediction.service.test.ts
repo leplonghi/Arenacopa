@@ -3,7 +3,6 @@ import "../mocks/firebase";
 import {
   mockSetDoc,
   mockUpdateDoc,
-  mockDoc,
   mockDocData,
   resetFirebaseMocks,
 } from "../mocks/firebase";

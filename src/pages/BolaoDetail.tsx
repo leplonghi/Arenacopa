@@ -168,6 +168,7 @@ export default function BolaoDetail() {
     } finally {
       if (mountedRef.current) setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, navigate, toast, user]);
 
   useEffect(() => {
@@ -458,6 +459,7 @@ export default function BolaoDetail() {
       { id: "galera",   label: t('bolao_detail.tab_galera') },
       { id: "config",   label: t('bolao_detail.tab_config') },
     ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [highlightedMatch]
   );
 
@@ -606,7 +608,7 @@ export default function BolaoDetail() {
                       </span>
                     </AccordionTrigger>
                     <AccordionContent className="px-0 pb-0">
-                      <PhaseMarketsTab bolaoId={bolao.id} userId={user!.id} markets={phaseMarkets} predictions={myMarketPredictions} canManage={isCreator} />
+                      <PhaseMarketsTab bolaoId={bolao.id} userId={user?.id ?? ""} markets={phaseMarkets} predictions={myMarketPredictions} canManage={isCreator} />
                     </AccordionContent>
                   </AccordionItem>
                 )}
@@ -618,7 +620,7 @@ export default function BolaoDetail() {
                       </span>
                     </AccordionTrigger>
                     <AccordionContent className="px-0 pb-0">
-                      <ExtrasTab bolaoId={bolao.id} userId={user!.id} markets={bolaoMarkets} predictions={myMarketPredictions} canManage={isCreator} />
+                      <ExtrasTab bolaoId={bolao.id} userId={user?.id ?? ""} markets={bolaoMarkets} predictions={myMarketPredictions} canManage={isCreator} />
                     </AccordionContent>
                   </AccordionItem>
                 )}
@@ -630,7 +632,7 @@ export default function BolaoDetail() {
                       </span>
                     </AccordionTrigger>
                     <AccordionContent className="px-0 pb-0">
-                      <SpecialMarketsTab bolaoId={bolao.id} userId={user!.id} markets={specialMarkets} predictions={myMarketPredictions} phaseMarkets={phaseMarkets} canManage={isCreator} />
+                      <SpecialMarketsTab bolaoId={bolao.id} userId={user?.id ?? ""} markets={specialMarkets} predictions={myMarketPredictions} phaseMarkets={phaseMarkets} canManage={isCreator} />
                     </AccordionContent>
                   </AccordionItem>
                 )}
@@ -656,14 +658,14 @@ export default function BolaoDetail() {
               </button>
             </div>
             {galeraView === "rivais" && <PublicPalpitesTab bolaoId={bolao.id} />}
-            {galeraView === "membros" && <MembrosTab members={members} userId={user!.id} bolaoId={bolao.id} isCreator={isCreator} isPaid={isPaid} onRefresh={() => {}} />}
+            {galeraView === "membros" && <MembrosTab members={members} userId={user?.id ?? ""} bolaoId={bolao.id} isCreator={isCreator} isPaid={isPaid} onRefresh={() => {}} />}
           </div>
         )}
 
         {/* ── Config: Overview + Caixinha ── */}
         {activeTab === "config" && bolao && (
           <div className="space-y-6">
-            <OverviewTab bolao={bolao} members={members} palpites={myPalpites} userId={user!.id} isCreator={isCreator} markets={bolaoMarkets} marketPredictions={allMarketPredictions} activityFeed={activityFeed} onShare={handleShareInvite} />
+            <OverviewTab bolao={bolao} members={members} palpites={myPalpites} userId={user?.id ?? ""} isCreator={isCreator} markets={bolaoMarkets} marketPredictions={allMarketPredictions} activityFeed={activityFeed} onShare={handleShareInvite} />
             <div className="border-t border-white/10 pt-6">
                <p className="mb-4 text-xs font-black uppercase tracking-widest text-zinc-400">{t('bolao_detail.caixinha_header')}</p>
               <CaixinhaPanel bolao={bolao} isCreator={isCreator} />
@@ -724,7 +726,7 @@ export default function BolaoDetail() {
   );
 }
 
-function BolaoDetailSkeleton({ t }: { t: any }) {
+function BolaoDetailSkeleton({ t: _t }: { t: (key: string) => string }) {
   return (
     <div className="mx-auto max-w-5xl px-4 py-6">
       <Skeleton className="mb-4 h-16 rounded-3xl bg-white/10" />

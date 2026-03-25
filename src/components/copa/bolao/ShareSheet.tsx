@@ -43,7 +43,7 @@ export function ShareSheet({ open, onClose, bolao }: ShareSheetProps) {
                 toast({ title: t('share.image_downloaded') });
             }
             onClose();
-        } catch (err) {
+        } catch {
             toast({ title: t('share.error_image'), variant: "destructive" });
         } finally {
             setIsGenerating(false);

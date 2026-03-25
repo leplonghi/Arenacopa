@@ -77,6 +77,7 @@ export default function PublicInvite() {
         } finally {
             setLoading(false);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [inviteCode, navigate, toast, user]);
 
     useEffect(() => {

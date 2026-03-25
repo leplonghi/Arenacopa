@@ -42,23 +42,6 @@ type PublicBolaoRow = BolaoRow & {
   leader_score: number;
 };
 
-type MembershipRow = {
-  bolao_id: string;
-  role: string;
-};
-
-type BolaoSelectRow = {
-  id: string;
-  name: string;
-  description: string | null;
-  creator_id: string;
-  invite_code: string;
-  created_at: string;
-  avatar_url: string | null;
-  category: "public" | "private";
-  status: string;
-  bolao_members: { count: number }[];
-};
 
 const statusWhitelist = ["open", "active"];
 

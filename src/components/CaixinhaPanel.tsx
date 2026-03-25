@@ -44,11 +44,11 @@ export function CaixinhaPanel({ bolao, isCreator }: Props) {
   // ── PIX key validation ──────────────────────────────────────────────
   const validatePixKey = (key: string): string | null => {
     if (!key.trim()) return t('caixinha.pix_required');
-    const raw = key.replace(/[\s.\/\-]/g, "");
+    const raw = key.replace(/[\s./-]/g, "");
     if (/^\d{11}$/.test(raw) || /^\d{14}$/.test(raw)) return null;   // CPF / CNPJ
     if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(key.trim())) return null; // e-mail
-    if (/^(\+55)?[\s\-]?\(?\d{2}\)?[\s\-]?9?\d{4}[\s\-]?\d{4}$/.test(key.trim())) return null; // fone
-    if (/^[0-9a-fA-F\-]{32,36}$/.test(key.trim())) return null;       // UUID aleatório
+    if (/^(\+55)?[\s-]?\(?\d{2}\)?[\s-]?9?\d{4}[\s-]?\d{4}$/.test(key.trim())) return null; // fone
+    if (/^[0-9a-fA-F-]{32,36}$/.test(key.trim())) return null;       // UUID aleatório
     return t('caixinha.pix_invalid');
   };
 
@@ -69,7 +69,7 @@ export function CaixinhaPanel({ bolao, isCreator }: Props) {
         updated_at: new Date().toISOString(),
       });
       toast({ title: t('caixinha.saved_ok'), className: "bg-emerald-500 text-white font-black" });
-    } catch (e) {
+    } catch {
       toast({ title: t('caixinha.save_error'), variant: "destructive" });
     } finally {
       setSaving(false);

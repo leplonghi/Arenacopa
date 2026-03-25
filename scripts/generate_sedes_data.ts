@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -268,9 +269,9 @@ locales.forEach(locale => {
     const translationsPathEn = path.resolve('scripts/translations_en.json');
     const translationsPathEs = path.resolve('scripts/translations_es.json');
     if (locale === 'en') {
-        try { extraTranslations = JSON.parse(fs.readFileSync(translationsPathEn, 'utf-8')); } catch (e) { console.error("EN translation file not found"); }
+        try { extraTranslations = JSON.parse(fs.readFileSync(translationsPathEn, 'utf-8')); } catch { console.error("EN translation file not found"); }
     } else if (locale === 'es') {
-        try { extraTranslations = JSON.parse(fs.readFileSync(translationsPathEs, 'utf-8')); } catch (e) { console.error("ES translation file not found"); }
+        try { extraTranslations = JSON.parse(fs.readFileSync(translationsPathEs, 'utf-8')); } catch { console.error("ES translation file not found"); }
     }
 
     sedes.forEach((city: RawCity) => {

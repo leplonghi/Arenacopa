@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Clock, Trophy } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { db } from "@/integrations/firebase/client";
-import { collection, getDocs, onSnapshot, orderBy, query, where } from "firebase/firestore";
+import { collection, onSnapshot, orderBy, query, where } from "firebase/firestore";
 import { useTranslation } from "react-i18next";
 
 type MatchCardRow = {
@@ -131,6 +131,7 @@ export function LiveMatchCard() {
         }, 1000);
 
         return () => clearInterval(intervalId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [nextMatch]);
 
     if (!liveMatch && !nextMatch) return null;

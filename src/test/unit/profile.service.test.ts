@@ -6,7 +6,6 @@ import {
   mockUpdateDoc,
   mockUploadBytes,
   mockGetDownloadURL,
-  mockRef,
   mockDoc,
   mockDocData,
   resetFirebaseMocks,
@@ -113,7 +112,7 @@ describe("profile.service", () => {
     it("atualiza perfil existente via updateDoc", async () => {
       mockDocData["profiles/user-123"] = createMockProfile();
 
-      const result = await updateProfile("user-123", { name: "Novo Nome" });
+      await updateProfile("user-123", { name: "Novo Nome" });
 
       expect(mockUpdateDoc).toHaveBeenCalledOnce();
       expect(mockSetDoc).not.toHaveBeenCalled();

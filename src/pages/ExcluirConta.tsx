@@ -10,7 +10,7 @@ import {
   doc,
   writeBatch,
 } from "firebase/firestore";
-import { auth, db } from "@/integrations/firebase/client";
+import { db } from "@/integrations/firebase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
 // ─── helpers ──────────────────────────────────────────────────────────────────

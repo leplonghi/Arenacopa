@@ -6,7 +6,7 @@ import { cn } from "@/lib/utils";
 import {
     Trophy, Target, Users, Crown, Medal, Award, Star,
     ChevronDown, ChevronUp, Globe, Crosshair, Calendar, MapPin,
-    TrendingUp, Zap, Eye, Clock, Baby, Bolt, Hash, Swords
+    Zap, Eye, Clock, Baby, Bolt, Swords
 } from "lucide-react";
 import {
     worldCupEditions,
@@ -29,7 +29,8 @@ const sectionTabs: { id: HistoriaSection; i18nKey: string; icon: React.ReactNode
     { id: "recordes", i18nKey: "records", icon: <Zap className="w-3.5 h-3.5" /> },
 ];
 
-const rankIcons = [Crown, Medal, Award];
+// rankIcons reserved for future ranked display
+const _rankIcons = [Crown, Medal, Award];
 const rankColors = ["text-yellow-500", "text-gray-400", "text-amber-600"];
 const rankBgs = [
     "bg-yellow-500/10 border-yellow-500/30",

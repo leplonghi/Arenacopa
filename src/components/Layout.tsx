@@ -294,7 +294,7 @@ import { CookieBanner } from "@/components/CookieBanner";
 export function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const hideBottomNav = location.pathname === "/boloes/criar";
-  const { user } = useAuth();
+  const { user: _user } = useAuth();
 
   return (
     <SidebarProvider>

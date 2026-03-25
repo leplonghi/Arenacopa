@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Loader2, Share2, Trophy } from "lucide-react";
 import { collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
@@ -64,7 +64,7 @@ export default function GrupoDetail() {
 
   useEffect(() => { loadData(); }, [loadData]);
 
-  const isCreator = grupo?.creator_id === user?.id;
+  const _isCreator = grupo?.creator_id === user?.id;
 
   const handleShare = () => {
     if (!grupo) return;

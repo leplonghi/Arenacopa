@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   CheckCircle2, ChevronLeft, ChevronRight, Crown, Globe,
@@ -74,7 +74,7 @@ type PoolTypeId = typeof POOL_TYPES[number]["id"];
 export default function CriarBolao() {
   const { t } = useTranslation("bolao");
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user: _user } = useAuth();
   const { toast } = useToast();
   const { purchasePremium, isLoading: isPurchasing } = useMonetization();
   const { canCreateGrupo } = usePlanLimits();
@@ -103,12 +103,12 @@ export default function CriarBolao() {
     if (!canCreateGrupo) setShowPaywall(true);
   }, [canCreateGrupo]);
 
-  const selectedType = POOL_TYPES.find((t) => t.id === selectedTypeId)!;
+  const selectedType = POOL_TYPES.find((t) => t.id === selectedTypeId) as typeof POOL_TYPES[0];
 
   const canProceedStep0 = name.trim().length >= 3;
 
   const handleSelectType = (typeId: PoolTypeId) => {
-    const t = POOL_TYPES.find((x) => x.id === typeId)!;
+    const t = POOL_TYPES.find((x) => x.id === typeId) as typeof POOL_TYPES[0];
     setSelectedTypeId(typeId);
     setFormatId(t.formatId);
     const mkts = getDefaultMarketIdsForFormat(t.formatId)

@@ -79,6 +79,7 @@ function CopaCounting() {
 
 export function CalendarioTab() {
   const { t } = useTranslation('copa');
+  const { i18n } = useTranslation();
   const { data: matchesData = [], isLoading } = useMatches();
 
   // Group matches by date
@@ -134,7 +135,6 @@ export function CalendarioTab() {
     return <CopaCounting />;
   }
 
-  const { i18n } = useTranslation();
   const dateObj = new Date(currentDay.date + "T12:00:00");
   const dateLabel = dateObj.toLocaleDateString(i18n.language, { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 
@@ -174,7 +174,7 @@ export function CalendarioTab() {
       {/* Matches Carousel */}
       <div className="overflow-hidden" ref={emblaRef}>
         <div className="flex touch-pan-y">
-          {matchDays.map((day, dIdx) => (
+          {matchDays.map((day, _dIdx) => (
             <div key={day.date} className="min-w-0 flex-[0_0_100%] pr-1">
               <motion.div
                 initial={{ opacity: 0, scale: 0.98 }}

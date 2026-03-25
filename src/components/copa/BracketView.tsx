@@ -4,11 +4,11 @@ import { cn } from "@/lib/utils";
 import { Flag } from "@/components/Flag";
 import { useNavigate } from "react-router-dom";
 import { getTeam } from "@/data/mockData";
-import { Trophy, HelpCircle, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
+import { Trophy, HelpCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from "framer-motion";
 import {
   type KnockoutData, type KnockoutMatchFull, type KnockoutRound,
-  ROUND_LABELS, getMatchWinner,
+  getMatchWinner,
 } from "@/utils/knockoutBracket";
 
 // ─── Animations & 3D Config ───
@@ -128,7 +128,7 @@ function MatchCard({
   match,
   compact,
   onClick,
-  delay = 0,
+  delay: _delay = 0,
 }: {
   match: KnockoutMatchFull;
   compact?: boolean;
@@ -567,6 +567,7 @@ export function BracketView({
     { key: "quarter" as KnockoutRound, label: t('bracket.rounds.quarter'), matches: data.quarter },
     { key: "semi" as KnockoutRound, label: t('bracket.rounds.semi'), matches: data.semi },
     { key: "final" as KnockoutRound, label: t('bracket.rounds.final'), matches: data.final },
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   ], [data, t]);
 
   const mobileRoundsWithThird = useMemo(() => {
@@ -575,6 +576,7 @@ export function BracketView({
       base.push({ key: "third" as KnockoutRound, label: t('bracket.rounds.third'), matches: data.third });
     }
     return base;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rounds, data.third, t]);
 
   return (

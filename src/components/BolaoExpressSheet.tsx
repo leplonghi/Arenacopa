@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Loader2, Share2, X, Zap } from "lucide-react";
+import { Loader2, X, Zap } from "lucide-react";
 import { collection, query, orderBy, where, limit, getDocs } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -48,6 +48,7 @@ export function BolaoExpressSheet({ open, onClose }: Props) {
       finally { setLoadingMatches(false); }
     };
     load();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   const handleSelectMatch = (m: Match) => {

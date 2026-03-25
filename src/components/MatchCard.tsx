@@ -1,7 +1,6 @@
 import { getTeam, formatMatchTime, getStadium, type Match } from "@/data/mockData";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { StatusBadge } from "./StatusBadge";
 import { Flag } from "./Flag";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
@@ -33,7 +32,7 @@ const cardVariants = {
   }),
 };
 
-export function MatchCard({ match, prediction, compact = false, variant = "default", className, index = 0, onClick }: MatchCardProps) {
+export function MatchCard({ match, prediction, compact: _compact = false, variant = "default", className, index = 0, onClick }: MatchCardProps) {
   const home = getTeam(match.homeTeam);
   const away = getTeam(match.awayTeam);
   const stadium = getStadium(match.stadium);

@@ -7,7 +7,7 @@ import { getTeam } from "@/data/mockData";
 import { motion } from "framer-motion";
 import { staggerContainer, staggerItem } from "./animations";
 import { useSimulacao } from "@/contexts/SimulacaoContext";
-import { Trophy, LayoutGrid, GitBranch, Lock } from "lucide-react";
+import { LayoutGrid, GitBranch, Lock } from "lucide-react";
 import { BracketView } from "./BracketView";
 import { ShareBracket } from "./ShareBracket";
 import { BracketScoreModal } from "./BracketScoreModal";
@@ -16,7 +16,6 @@ import type { KnockoutData, KnockoutMatchFull, KnockoutRound, KnockoutScore } fr
 type ViewMode = "bracket" | "list";
 
 export function ChavesTab() {
-  const { t } = useTranslation('copa');
   const { knockoutData, isGroupsComplete, filledCount, updateKnockoutScore } = useSimulacao();
   const [viewMode, setViewMode] = useState<ViewMode>("bracket");
   const bracketRef = useRef<HTMLDivElement>(null);
@@ -186,6 +185,7 @@ function ListView({
   onMatchClick?: (round: KnockoutRound, matchIdx: number, match: KnockoutMatchFull) => void;
 }) {
   const navigate = useNavigate();
+  const { t } = useTranslation('copa');
   const rounds = [
     { key: "r32" as KnockoutRound, label: "32 avos de Final", matches: data.r32 },
     { key: "r16" as KnockoutRound, label: "Oitavas de Final", matches: data.r16 },
@@ -232,7 +232,7 @@ function ListView({
                         : "border-white/[0.1]",
                     isClickable && "cursor-pointer hover:border-[hsl(var(--copa-gold)/0.3)] hover:shadow-[0_4px_20px_-4px_hsl(44_80%_46%/0.1)]"
                   )}
-                  onClick={isClickable ? () => onMatchClick!(round.key, idx, m) : undefined}
+                  onClick={isClickable ? () => onMatchClick?.(round.key, idx, m) : undefined}
                 >
                   {/* Brasil indicator */}
                   {isBrasil && (

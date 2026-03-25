@@ -177,8 +177,7 @@ const Index = () => {
 
   const [myBoloes, setMyBoloes] = useState<DashboardBolaoSummary[]>([]);
   const [loading, setLoading] = useState(true);
-  const [dashboardError, setDashboardError] = useState<boolean>(false);
-  const [dashboardRefreshKey, setDashboardRefreshKey] = useState(0);
+  const [dashboardRefreshKey] = useState(0);
   const [profile, setProfile] = useState<{ name: string; avatar?: string } | null>(null);
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
   const [isEliteModalOpen, setIsEliteModalOpen] = useState(false);
@@ -234,12 +233,14 @@ const Index = () => {
     if (homeNewsPrefs.length === 0) return all.slice(0, 4);
     const filtered = all.filter(item => homeNewsPrefs.some(p => item.category?.toLowerCase().includes(p)));
     return (filtered.length > 0 ? filtered : all).slice(0, 4);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [copaNewsRaw, homeNewsPrefs]);
 
   // "Para você" tab: team-specific news first, then pref-filtered; limit to 4
   const teamNews = useMemo(() => {
     const all = mapNews(teamNewsRaw);
     return all.slice(0, 4);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [teamNewsRaw]);
 
   useEffect(() => {

@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
-import { TrendingUp, TrendingDown, Minus, ChevronRight, Trophy, Zap, Star, ShieldCheck } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, ChevronRight, Trophy, Zap, ShieldCheck } from "lucide-react";
 import { boloes } from "@/data/mockData";
 import { cn } from "@/lib/utils";
 

@@ -3,14 +3,12 @@ import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import {
-    Building2, Users, MapPin, Hash, DollarSign, Calendar,
-    Trophy, ArrowUpDown, ChevronRight, X, Plane, Star,
-    Thermometer, Mountain, Navigation, Info, SortAsc, SortDesc,
-    Construction
+    Building2, Users, MapPin, Calendar,
+    Trophy, ArrowUpDown, ChevronRight, X, Star,
+    Navigation, Construction
 } from "lucide-react";
 import { Share } from "@capacitor/share";
 import { Geolocation } from "@capacitor/geolocation";
-import { useTranslation } from "react-i18next";
 import { staggerContainer, staggerItem } from "@/components/copa/animations";
 import { hostCountries, type HostCity } from "@/data/guiaData";
 
@@ -307,7 +305,7 @@ export function EstadiosSection({ onViewOnMap }: { onViewOnMap?: (cityId: string
     );
 }
 
-function StatBox({ label, value, sub, accent }: { label: string; value: string; sub: string; accent: string }) {
+function StatBox({ label, value, sub, accent: _accent }: { label: string; value: string; sub: string; accent: string }) {
     return (
         <div className="bg-white/5 p-5 rounded-[1.5rem] text-center border border-white/5 backdrop-blur-md hover:border-emerald-500/30 transition-all group overflow-hidden relative">
             <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -328,8 +326,8 @@ const handleShare = async (title: string, text: string) => {
             text,
             url: "https://arenacup.app",
         });
-    } catch (err) {
-        console.log("Error sharing", err);
+    } catch {
+        // Share cancelled or not supported
     }
 };
 
@@ -353,7 +351,6 @@ export function StadiumDetailModal({
     onClose: () => void;
     onViewOnMap?: (cityId: string) => void;
 }) {
-    const { t } = useTranslation('sedes');
     const [distance, setDistance] = useState<number | null>(null);
 
     useEffect(() => {
@@ -374,8 +371,8 @@ export function StadiumDetailModal({
                     Math.sin(dLon / 2) * Math.sin(dLon / 2);
                 const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
                 setDistance(Math.round(R * c));
-            } catch (err) {
-                console.log("Could not get user location", err);
+            } catch {
+                // Location not available
             }
         };
         fetchLocation();

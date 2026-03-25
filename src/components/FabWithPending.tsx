@@ -2,89 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { Clock } from "lucide-react";
 
-/** Classic Telstar black-and-white soccer ball */
-function RealisticBall({ active = false }: { active?: boolean }) {
-  return (
-    <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full drop-shadow-[0_2px_8px_rgba(0,0,0,0.55)]">
-      <defs>
-        {/* Sphere: white with subtle top-left sheen */}
-        <radialGradient id="bMain" cx="36%" cy="28%" r="70%">
-          <stop offset="0%"   stopColor="#FFFFFF" />
-          <stop offset="55%"  stopColor="#F5F5F5" />
-          <stop offset="100%" stopColor="#C8C8C8" />
-        </radialGradient>
-        {/* Bottom-right shadow on sphere */}
-        <radialGradient id="bShadow" cx="70%" cy="75%" r="50%">
-          <stop offset="0%"   stopColor="rgba(0,0,0,0.30)" />
-          <stop offset="100%" stopColor="rgba(0,0,0,0)" />
-        </radialGradient>
-        {/* Pentagon patch gradient — rich black with slight shimmer */}
-        <radialGradient id="bPatch" cx="35%" cy="25%" r="75%">
-          <stop offset="0%"   stopColor="#2A2A2A" />
-          <stop offset="100%" stopColor="#000000" />
-        </radialGradient>
-        <clipPath id="bClip">
-          <circle cx="32" cy="32" r="28" />
-        </clipPath>
-      </defs>
-
-      {/* === SPHERE === */}
-      <g clipPath="url(#bClip)">
-        {/* Base white */}
-        <circle cx="32" cy="32" r="28" fill="url(#bMain)" />
-        {/* Bottom shadow */}
-        <circle cx="32" cy="32" r="28" fill="url(#bShadow)" />
-
-        {/* ── Telstar pentagons ── */}
-        {/* Centre */}
-        <path d="M32 18 L39.5 23.5 L36.8 32.5 L27.2 32.5 L24.5 23.5 Z" fill="url(#bPatch)" />
-        {/* Top-left */}
-        <path d="M14 17 L18.5 14.5 L23 21 L19.5 26.5 L13 24 Z" fill="url(#bPatch)" />
-        {/* Top-right */}
-        <path d="M41 14.5 L48 17 L49 24 L43 26.5 L39 21 Z" fill="url(#bPatch)" />
-        {/* Left */}
-        <path d="M5 28 L10 24.5 L15 31.5 L11.5 38.5 L5 37 Z" fill="url(#bPatch)" />
-        {/* Right */}
-        <path d="M49 24.5 L57 28 L57 37 L51.5 38.5 L48 31.5 Z" fill="url(#bPatch)" />
-        {/* Bottom */}
-        <path d="M22 39 L32 36.5 L42 39 L40 47.5 L24 47.5 Z" fill="url(#bPatch)" />
-
-        {/* Seam lines between patches */}
-        <g stroke="rgba(0,0,0,0.12)" strokeWidth="0.7" fill="none" strokeLinecap="round">
-          <path d="M24.5 23.5 L19.5 26.5" />
-          <path d="M39.5 23.5 L43 26.5" />
-          <path d="M32 18 L41 14.5" />
-          <path d="M32 18 L23 21" />
-          <path d="M36.8 32.5 L42 39" />
-          <path d="M27.2 32.5 L22 39" />
-          <path d="M15 31.5 L22 39" />
-          <path d="M49 24.5 L43 26.5" />
-          <path d="M13 24 L5 28" />
-          <path d="M10 24.5 L15 31.5" />
-          <path d="M24 47.5 L11.5 38.5" />
-          <path d="M40 47.5 L51.5 38.5" />
-        </g>
-      </g>
-
-      {/* Hard edge ring */}
-      <circle cx="32" cy="32" r="28"
-        stroke={active ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.20)"}
-        strokeWidth="0.8" fill="none"
-      />
-
-      {/* Specular highlight — upper left */}
-      <ellipse cx="23" cy="20" rx="7" ry="4"
-        fill="rgba(255,255,255,0.75)"
-        transform="rotate(-30 23 20)"
-      />
-      {/* Soft secondary fill */}
-      <ellipse cx="38" cy="38" rx="5" ry="3"
-        fill="rgba(255,255,255,0.12)"
-        transform="rotate(15 38 38)"
-      />
-    </svg>
-  );
-}
 import { useAuth } from "@/contexts/AuthContext";
 import { db } from "@/integrations/firebase/client";
 import { cn } from "@/lib/utils";
@@ -200,7 +117,7 @@ export function FabWithPending({
         if (!predictionsIndex.has(row.match_id)) {
           predictionsIndex.set(row.match_id, new Set());
         }
-        predictionsIndex.get(row.match_id)!.add(row.bolao_id);
+        (predictionsIndex.get(row.match_id) as Set<string>).add(row.bolao_id);
       });
 
       const pending = upcomingMatches

@@ -11,8 +11,8 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
-import { motion, AnimatePresence } from "framer-motion";
-import { Trophy, Target, Award, Crown, TrendingUp, Minus, Check } from "lucide-react";
+import { motion } from "framer-motion";
+import { Trophy, Target, Award, Crown, Check } from "lucide-react";
 import { staggerContainer, staggerItem } from "../animations";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/EmptyState";

@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
 import { staggerItem, staggerContainer } from "./animations";
-import { Eye, ArrowRight, TrendingUp, Newspaper, Clock } from "lucide-react";
+import { Eye, ArrowRight, TrendingUp, Clock } from "lucide-react";
 import { useRealtimeNews } from "@/hooks/useRealtimeNews";
 
 interface NewsItemDisplay {
@@ -75,7 +75,7 @@ export function NewsFeed() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <AnimatePresence mode="popLayout">
-                    {news.map((item, index) => (
+                    {news.map((item) => (
                         <motion.div
                             key={item.id}
                             variants={staggerItem}

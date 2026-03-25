@@ -1,4 +1,3 @@
-import { useTranslation } from 'react-i18next';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -94,6 +93,7 @@ function DeepLinkListener() {
   const navigate = useNavigate();
   useEffect(() => {
     const listener = CapacitorApp.addListener('appUrlOpen', data => {
+      // eslint-disable-next-line no-console
       console.log('App opened with URL:', data);
       const url = new URL(data.url);
       const path = url.pathname;

@@ -80,7 +80,7 @@ export function MembrosTab({ members, userId, isCreator, bolaoId, isPaid, onRefr
                 paymentStatus: nextStatus,
             });
             onRefresh();
-        } catch (error) {
+        } catch {
             toast({ title: t('common.error_title'), description: t('members.error_update'), variant: "destructive" });
         }
     };

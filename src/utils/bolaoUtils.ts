@@ -16,8 +16,8 @@ export function calculatePoints(palpite: Palpite, match: Match | undefined, rule
     const pa = palpite.away_score;
 
     if (ph === null || pa === null) return { points: 0, type: 'miss', isPowerPlay: false };
-    const mh = match.homeScore!;
-    const ma = match.awayScore!;
+    const mh = match.homeScore as number;
+    const ma = match.awayScore as number;
 
     let points = 0;
     let type: PointResultType = 'miss';

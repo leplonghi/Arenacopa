@@ -235,6 +235,7 @@ export function JogosTab({
         });
 
         return () => unsubscribe();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [bolaoId, toast, user]);
 
     const getCurrentPalpite = useMemo(() => {
