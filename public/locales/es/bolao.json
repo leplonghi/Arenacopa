@@ -76,7 +76,12 @@
     "leave_confirm": "¿Estás seguro de que quieres salir de la quiniela?",
     "left_success": "Saliste de la quiniela",
     "removed_success": "Miembro eliminado",
-    "error_update": "No se pudo actualizar el estado."
+    "error_update": "No se pudo actualizar el estado.",
+    "click_to_change_status": "Haz clic para cambiar estado",
+    "default_user": "Usuario",
+    "participants_count": "Participantes ({{count}})",
+    "payment_status": "Estado de pago",
+    "remove_member": "Eliminar miembro"
   },
   "extras": {
     "title": "Apuestas Extras",
@@ -549,5 +554,23 @@
     "title": "Quiniela Express",
     "subtitle": "Un solo juego – crea en 10 segundos",
     "no_matches": "Ningún partido programado"
+  },
+  "detail": {
+    "disclaimer_payment": "El pago se acuerda externamente entre los participantes.",
+    "entry_fee": "Cuota de Entrada",
+    "financial_title": "Financiero",
+    "info_title": "Información",
+    "not_found": "Quiniela no encontrada",
+    "paid_badge": "Pagado",
+    "payment_data": "Datos de Pago",
+    "prize_dist": "Distribución de Premios",
+    "rules_title": "Reglas de Puntuación",
+    "tabs": {
+      "extras": "Extras",
+      "members": "Miembros",
+      "overview": "Vista General",
+      "palpites": "Predicciones",
+      "ranking": "Ranking"
+    }
   }
 }

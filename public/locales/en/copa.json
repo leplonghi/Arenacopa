@@ -20,7 +20,19 @@
       "j": "P",
       "w": "W",
       "gd": "GD",
-      "p": "Pts"
+      "p": "Pts",
+      "prob": "Prob."
+    },
+    "mode": {
+      "real": "Real",
+      "simulation": "Simulation"
+    },
+    "simulation_hint": "Fill out scores in the <1>Simulator</1> tab to see results here.",
+    "status": {
+      "simulated": "Simulated",
+      "in_progress": "In progress",
+      "pending": "Pending",
+      "finished": "Finished"
     }
   },
   "simulator": {
@@ -59,7 +71,8 @@
       "empty_desc": "Create your first simulation to start predicting results.",
       "create_first": "Create First Simulation",
       "groups_count": "{{count}} Groups",
-      "games_count": "{{filled}}/{{total}} Games"
+      "games_count": "{{filled}}/{{total}} Games",
+      "groups_count_plural": "{{count}} grupos"
     },
     "editor": {
       "selected_groups": "{{count}} groups selected",
@@ -68,7 +81,16 @@
       "phase_groups": "Group Stage",
       "phase_knockout": "Knockout Stage",
       "group_complete": "Complete",
-      "standings": "STANDINGS"
+      "standings": "STANDINGS",
+      "selected_groups_plural": "{{count}} groups selected"
+    },
+    "knockout": {
+      "incomplete_title": "Group Stage Incomplete",
+      "incomplete_desc": "Fill in all games from the 12 groups to unlock the knockout stage",
+      "penalties": "Penalties",
+      "advances": "{{team}} advances",
+      "defined_games": "{{filled}}/{{total}} games defined",
+      "defined_games_singular": "{{filled}}/{{total}} game defined"
     }
   },
   "overview": {
@@ -205,7 +227,18 @@
     "day_label": "Day {{current}}/{{total}}"
   },
   "bracket": {
-    "third_place": "Third Place Match"
+    "third_place": "Third Place Match",
+    "champion_label": "World Champion",
+    "champion_sub": "2026 WORLD CHAMPION",
+    "rounds": {
+      "r32": "Round of 32",
+      "r16": "Round of 16",
+      "quarter": "Quarter",
+      "semi": "Semi",
+      "third": "3rd Place",
+      "final": "Final"
+    },
+    "tbd": "TBD"
   },
   "grupos": {
     "no_games": "No games found for this group."

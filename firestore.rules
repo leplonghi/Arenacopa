@@ -1,114 +1,179 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+
+    // ─── helpers ──────────────────────────────────────────────────────────────
     function isSignedIn() {
       return request.auth != null;
     }
 
-    function isOwner(userId) {
-      return isSignedIn() && request.auth.uid == userId;
+    function isOwner(uid) {
+      return isSignedIn() && request.auth.uid == uid;
     }
 
-    function isBolaoCreator(bolaoId) {
-      return isSignedIn() &&
-        get(/databases/$(database)/documents/boloes/$(bolaoId)).data.creator_id == request.auth.uid;
-    }
-
+    // ─── profiles ─────────────────────────────────────────────────────────────
     match /profiles/{userId} {
-      allow read: if true;
-      allow create, update, delete: if isOwner(userId);
+      allow read:  if isSignedIn();
+      allow write: if isOwner(userId);
     }
 
-    match /boloes/{bolaoId} {
-      allow read: if true;
-      allow create: if isSignedIn() && request.resource.data.creator_id == request.auth.uid;
-      allow update, delete: if isSignedIn() && resource.data.creator_id == request.auth.uid;
-    }
-
-    match /bolao_members/{memberId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn() && request.resource.data.user_id == request.auth.uid;
-      allow update, delete: if isSignedIn() && resource.data.user_id == request.auth.uid;
-    }
-
-    match /bolao_palpites/{palpiteId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn() && request.resource.data.user_id == request.auth.uid;
-      allow update, delete: if isSignedIn() && resource.data.user_id == request.auth.uid;
-    }
-
-    match /bolao_markets/{marketId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn() && isBolaoCreator(request.resource.data.bolao_id);
-      allow update, delete: if isSignedIn() && isBolaoCreator(resource.data.bolao_id);
-    }
-
-    match /bolao_predictions/{predictionId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn() && request.resource.data.user_id == request.auth.uid;
-      allow update, delete: if isSignedIn() && resource.data.user_id == request.auth.uid;
-    }
-
-    match /bolao_onboarding_state/{stateId} {
-      allow read: if isSignedIn() && resource.data.user_id == request.auth.uid;
-      allow create: if isSignedIn() && request.resource.data.user_id == request.auth.uid;
-      allow update, delete: if isSignedIn() && resource.data.user_id == request.auth.uid;
-    }
-
-    match /bolao_activity/{activityId} {
-      allow read: if isSignedIn();
-      allow write: if false;
-    }
-
-    match /bolao_champion_predictions/{predictionId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn() && request.resource.data.user_id == request.auth.uid;
-      allow update, delete: if isSignedIn() && resource.data.user_id == request.auth.uid;
-    }
-
-    match /bolao_extra_bets/{betId} {
-      allow read: if isSignedIn();
-      allow create: if isSignedIn() && request.resource.data.user_id == request.auth.uid;
-      allow update, delete: if isSignedIn() && resource.data.user_id == request.auth.uid;
-    }
-
-    match /notifications/{notificationId} {
-      allow read: if isSignedIn() && resource.data.user_id == request.auth.uid;
-      allow create: if isSignedIn() && request.resource.data.user_id == request.auth.uid;
-      allow update, delete: if isSignedIn() && resource.data.user_id == request.auth.uid;
-    }
-
-    match /native_push_tokens/{tokenId} {
-      allow read: if isSignedIn() && resource.data.user_id == request.auth.uid;
-      allow create: if isSignedIn() && request.resource.data.user_id == request.auth.uid;
-      allow update, delete: if isSignedIn() && resource.data.user_id == request.auth.uid;
-    }
-
-    match /push_subscriptions/{subscriptionId} {
-      allow read: if isSignedIn() && resource.data.user_id == request.auth.uid;
-      allow create: if isSignedIn() && request.resource.data.user_id == request.auth.uid;
-      allow update, delete: if isSignedIn() && resource.data.user_id == request.auth.uid;
-    }
-
-    match /premium_subscriptions/{subscriptionId} {
-      allow read: if isSignedIn() && resource.data.user_id == request.auth.uid;
-      allow create: if isSignedIn() && request.resource.data.user_id == request.auth.uid;
-      allow update, delete: if false;
-    }
-
+    // ─── matches (Copa 2026 schedule — read-only for clients) ─────────────────
     match /matches/{matchId} {
-      allow read: if true;
+      allow read:  if isSignedIn();
       allow write: if false;
     }
 
-    match /bolao_rankings/{rankingId} {
-      allow read: if true;
+    // ─── news / copa_news ─────────────────────────────────────────────────────
+    match /news/{newsId} {
+      allow read:  if isSignedIn();
       allow write: if false;
     }
 
     match /copa_news/{newsId} {
-      allow read: if true;
+      allow read:  if isSignedIn();
       allow write: if false;
+    }
+
+    // ─── bolões ───────────────────────────────────────────────────────────────
+    match /boloes/{bolaoId} {
+      allow read:  if isSignedIn();
+      allow create: if isSignedIn()
+                    && request.resource.data.creator_id == request.auth.uid;
+      allow update: if isSignedIn()
+                    && resource.data.creator_id == request.auth.uid;
+      allow delete: if isSignedIn()
+                    && resource.data.creator_id == request.auth.uid;
+    }
+
+    // ─── bolão onboarding state ───────────────────────────────────────────────
+    // read: allow if document doesn't exist yet (null check) OR user matches
+    match /bolao_onboarding_state/{stateId} {
+      allow read:   if isSignedIn() && (resource == null || resource.data.user_id == request.auth.uid);
+      allow create: if isOwner(request.resource.data.user_id);
+      allow update: if isOwner(resource.data.user_id);
+      allow delete: if isOwner(resource.data.user_id);
+    }
+
+    // ─── bolão markets ────────────────────────────────────────────────────────
+    match /bolao_markets/{marketId} {
+      allow read:   if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if false;
+      allow delete: if isSignedIn();
+    }
+
+    // ─── bolão members ────────────────────────────────────────────────────────
+    match /bolao_members/{memberId} {
+      allow read:   if isSignedIn();
+      allow create: if isOwner(request.resource.data.user_id);
+      allow delete: if isOwner(resource.data.user_id);
+      allow update: if false;
+    }
+
+    // ─── palpites (match predictions) ────────────────────────────────────────
+    match /bolao_palpites/{palpiteId} {
+      allow read:   if isSignedIn();
+      allow create: if isOwner(request.resource.data.user_id)
+                    && request.resource.data.points == null;
+      allow update: if isOwner(resource.data.user_id)
+                    && request.resource.data.user_id  == resource.data.user_id
+                    && request.resource.data.bolao_id == resource.data.bolao_id
+                    && request.resource.data.match_id == resource.data.match_id
+                    && request.resource.data.points   == resource.data.points;
+      allow delete: if isOwner(resource.data.user_id);
+    }
+
+    // ─── bolão predictions (market predictions) ────────────────────────────────
+    match /bolao_predictions/{predictionId} {
+      allow read:   if isSignedIn();
+      allow create: if isOwner(request.resource.data.user_id);
+      allow update: if isOwner(resource.data.user_id);
+      allow delete: if isOwner(resource.data.user_id);
+    }
+
+    // ─── bolão rankings (written by Cloud Functions after match scoring) ──────
+    match /bolao_rankings/{rankingId} {
+      allow read:  if isSignedIn();
+      allow write: if false;
+    }
+
+    // ─── champion predictions ─────────────────────────────────────────────────
+    match /bolao_champion_predictions/{predId} {
+      allow read:   if isSignedIn();
+      allow create: if isOwner(request.resource.data.user_id);
+      allow update: if isOwner(resource.data.user_id);
+      allow delete: if isOwner(resource.data.user_id);
+    }
+
+    // ─── bolão activity feed (written by Cloud Functions only) ────────────────
+    match /bolao_activity/{activityId} {
+      allow read:  if isSignedIn();
+      allow write: if false;
+    }
+
+    // ─── bolão extra bets ─────────────────────────────────────────────────────
+    match /bolao_extra_bets/{betId} {
+      allow read:   if isSignedIn();
+      allow create: if isOwner(request.resource.data.user_id);
+      allow update: if isOwner(resource.data.user_id);
+      allow delete: if isOwner(resource.data.user_id);
+    }
+
+    // ─── notifications ────────────────────────────────────────────────────────
+    match /notifications/{notificationId} {
+      allow read:   if isSignedIn() && resource.data.user_id == request.auth.uid;
+      allow create: if isOwner(request.resource.data.user_id);
+      allow update: if isOwner(resource.data.user_id);
+      allow delete: if isOwner(resource.data.user_id);
+    }
+
+    // ─── push tokens ──────────────────────────────────────────────────────────
+    match /push_tokens/{tokenId} {
+      allow read:   if isOwner(resource.data.user_id);
+      allow write:  if isOwner(request.resource.data.user_id);
+      allow delete: if isOwner(resource.data.user_id);
+    }
+
+    match /native_push_tokens/{tokenId} {
+      allow read:   if isSignedIn() && resource.data.user_id == request.auth.uid;
+      allow create: if isOwner(request.resource.data.user_id);
+      allow update: if isOwner(resource.data.user_id);
+      allow delete: if isOwner(resource.data.user_id);
+    }
+
+    match /push_subscriptions/{subscriptionId} {
+      allow read:   if isSignedIn() && resource.data.user_id == request.auth.uid;
+      allow create: if isOwner(request.resource.data.user_id);
+      allow update: if isOwner(resource.data.user_id);
+      allow delete: if isOwner(resource.data.user_id);
+    }
+
+    // ─── premium subscriptions ────────────────────────────────────────────────
+    match /premium_subscriptions/{subscriptionId} {
+      allow read:   if isSignedIn() && resource.data.user_id == request.auth.uid;
+      allow create: if isOwner(request.resource.data.user_id);
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    // ─── Grupos (social groups bundling multiple bolões) ──────────────────────
+    match /grupos/{grupoId} {
+      allow read:   if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.creator_id == request.auth.uid;
+      allow update: if isSignedIn() && resource.data.creator_id == request.auth.uid;
+      allow delete: if isSignedIn() && resource.data.creator_id == request.auth.uid;
+    }
+
+    match /grupo_members/{memberId} {
+      allow read:   if isSignedIn();
+      allow create: if isOwner(request.resource.data.user_id);
+      allow update: if isOwner(resource.data.user_id);
+      allow delete: if isOwner(resource.data.user_id);
+    }
+
+    // ─── catch-all: deny everything else ─────────────────────────────────────
+    match /{document=**} {
+      allow read, write: if false;
     }
   }
 }

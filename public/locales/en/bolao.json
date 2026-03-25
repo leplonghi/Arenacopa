@@ -76,7 +76,12 @@
     "leave_confirm": "Are you sure you want to leave the pool?",
     "left_success": "You left the pool",
     "removed_success": "Member removed",
-    "error_update": "Could not update status."
+    "error_update": "Could not update status.",
+    "click_to_change_status": "Click to change status",
+    "default_user": "User",
+    "participants_count": "Participants ({{count}})",
+    "payment_status": "Payment Status",
+    "remove_member": "Remove member"
   },
   "extras": {
     "title": "Extra Bets",
@@ -549,5 +554,23 @@
     "title": "Express Pool",
     "subtitle": "One game only – create in 10 seconds",
     "no_matches": "No scheduled matches"
+  },
+  "detail": {
+    "disclaimer_payment": "Payment is arranged externally between participants.",
+    "entry_fee": "Entry Fee",
+    "financial_title": "Financial",
+    "info_title": "Pool Info",
+    "not_found": "Pool not found",
+    "paid_badge": "Paid",
+    "payment_data": "Payment Info",
+    "prize_dist": "Prize Distribution",
+    "rules_title": "Scoring Rules",
+    "tabs": {
+      "extras": "Extras",
+      "members": "Members",
+      "overview": "Overview",
+      "palpites": "Picks",
+      "ranking": "Ranking"
+    }
   }
 }

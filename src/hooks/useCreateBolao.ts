@@ -53,12 +53,15 @@ export function useCreateBolao() {
   const createBolao = async (params: CreateBolaoParams): Promise<CreateBolaoResult | null> => {
     if (!user || !params.name.trim()) return null;
     const championEnabled = params.selectedMarketIds.includes("champion");
-    if (championEnabled && !params.champion) return null;
 
     await safeHaptic(ImpactStyle.Heavy);
     setCreating(true);
+    let phase = "prepare";
     try {
+      phase = "generate_invite";
       const inviteCodeVal = Math.random().toString(36).substring(2, 8).toUpperCase();
+      
+      phase = "data_setup";
       const insertData = {
         name: params.name.trim(),
         description: params.description.trim() || null,
@@ -78,10 +81,14 @@ export function useCreateBolao() {
         updated_at: new Date().toISOString(),
       };
 
+      phase = "create_bolao_doc";
       const boloesRef = collection(db, "boloes");
       const bolaoDoc = await addDoc(boloesRef, insertData);
+
+      phase = "batch_init";
       const batch = writeBatch(db);
 
+      phase = "fetch_matches";
       const matchesSnapshot = await getDocs(
         query(collection(db, "matches"), orderBy("match_date", "asc"))
       );
@@ -90,16 +97,20 @@ export function useCreateBolao() {
         ...(d.data() as { match_date: string; stage?: string | null; group_id?: string | null; home_team_code?: string | null; away_team_code?: string | null }),
       }));
 
+      phase = "batch_members";
       batch.set(doc(db, "bolao_members", `${user.id}_${bolaoDoc.id}`), {
         bolao_id: bolaoDoc.id, user_id: user.id, role: "admin",
         payment_status: "exempt", created_at: new Date().toISOString(),
       });
+
+      phase = "batch_onboarding";
       batch.set(doc(db, "bolao_onboarding_state", `${user.id}_${bolaoDoc.id}`), {
         id: `${user.id}_${bolaoDoc.id}`, bolao_id: bolaoDoc.id, user_id: user.id,
         seen_intro: false, seen_scoring: false, seen_markets: false,
         seen_ranking: false, completed_at: null, updated_at: new Date().toISOString(),
       });
 
+      phase = "batch_markets";
       const markets = buildBolaoMarkets({
         bolaoId: bolaoDoc.id, formatId: params.formatId,
         selectedMarketIds: params.selectedMarketIds, matches: matchRows,
@@ -107,12 +118,14 @@ export function useCreateBolao() {
       markets.forEach((m) => batch.set(doc(db, "bolao_markets", m.id), m));
 
       if (championEnabled && params.champion) {
+        phase = "batch_champion";
         batch.set(doc(db, "bolao_champion_predictions", `${user.id}_${bolaoDoc.id}`), {
           bolao_id: bolaoDoc.id, user_id: user.id,
           team_code: params.champion, updated_at: new Date().toISOString(),
         });
       }
 
+      phase = "batch_commit";
       await batch.commit();
 
       if (typeof window !== "undefined" && window.plausible) {
@@ -120,10 +133,10 @@ export function useCreateBolao() {
       }
       return { bolaoId: bolaoDoc.id, inviteCode: inviteCodeVal };
     } catch (error) {
-      console.error("Erro ao criar bolão:", error);
+      console.error(`Erro ao criar bolão [${phase}]:`, error);
       toast({
-        title: t('create_bolao.error_title'),
-        description: error instanceof Error ? error.message : t('create_bolao.error_desc'),
+        title: `Erro [${phase}]`,
+        description: error instanceof Error ? error.message : "Erro desconhecido",
         variant: "destructive",
       });
       return null;

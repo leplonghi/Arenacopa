@@ -1,4 +1,4 @@
-package app.lovable.a569c8b887414e408fa66bdf2e5c3992;
+package app.arenacopa.www;
 
 import com.getcapacitor.BridgeActivity;
 

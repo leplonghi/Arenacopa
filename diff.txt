@@ -1,0 +1,1347 @@
+diff --git a/.firebase/hosting.ZGlzdA.cache b/.firebase/hosting.ZGlzdA.cache
+index ec1b9cd..011cf8e 100644
+--- a/.firebase/hosting.ZGlzdA.cache
++++ b/.firebase/hosting.ZGlzdA.cache
+@@ -40,55 +40,55 @@ locales/en/bolao.json,1774371031419,cd97d8112b7317e2c6407f10ebdcc9e891ea66e19571
+ locales/en/auth.json,1773707961335,e3c11c187f2afc0ff31cc5e3cdc69badc1626423fa68f802af3ebc10f7865842
+ images/logo.png,1771069365083,5ee6aaef6ccfb9f94330ed6c9cc59082b9c8f7a29543ea6b719615b4f7285269
+ images/campo-bg.png,1770995903269,d4f50e23396e7ec0a3f62c62bb553818459af7f992b0bb203d8b6680182bd249
+-index.html,1774372758903,85d1d69e227ef1d55062ab48335e652dc5f46aaae9cedf812cc7c7a1fb09a65b
+-assets/useRealtimeNews-5Q2NuLlA.js,1774372758899,378f2d6ca19fede72b1ea34aee8cbbe9359cf385cfbc2abec435433d0f6dd146
+-assets/useMatches-kyfWRhQK.js,1774372758903,26e824c0fb56ac72e9680a3189ee52b70cd4540673890f7d84e0693181fe12dd
+-assets/visual-V2MaFQWf.js,1774372758898,d2f0b2f6abfc433a944b8a5dd7a8f520c5d38ffb2fbf984040d2727e17b25ef4
+-assets/useCreateBolao-DhNeBoT2.js,1774372758898,f27a5290f3e77410fabe11e77476f270f35a4174fb17f48b6ef4a8cad6b38587
+-assets/usePlanLimits-DjGyIJeK.js,1774372758899,3cd18a66d6b237b9f3ff1e8fc1e61db39fd138cd9e261c33b57732850480a67b
+-assets/Termos-Cqo9eDGE.js,1774372758899,95c0c87103f84bef7d23813c96f052bc1200b2c0b3d3305d73cde76297838ed8
+-assets/TeamDetails-X0c55gCE.js,1774372758899,6e68d03db433b88f65ba43ccd19c41e26bfcffd155e8afdfec206ab67e36f9eb
+-assets/Ranking-Cf4Mfb--.js,1774372758899,56930921c3d58fd47646cb72ee7258dc1d95618fca2c2d50728b28cd51dd0393
+-assets/SimulacaoTab-C75ZClq6.js,1774372758903,8d4e1bd7733628d22e4c10f44dc9864c2d9bdc268aae77e8e074fa9cd4cfd219
+-assets/routing-BSTsph2n.js,1774372758898,de0df34e04bb1f08b401066c0c41f4775aeb0bba94e44702f18ff8b74fe8a0ac
+-assets/Privacidade-D55mmJR4.js,1774372758899,c8528c9628f0feea8a5cf980d0ee7d34b753e1bf0d6d177c03e6ae2adf460010
+-assets/Rules-efexV3XU.js,1774372758899,3d4bda38cc777d9e5afafa375e9c356d098fb3ba3c9fbd261249d939ce4ae9ee
+-assets/PublicInvite-DssxYxkx.js,1774372758899,f3d9dfd10329f487439c0f52d8caefde55e0fa91cb5e5bf5e9eda3eacfebecd0
+-assets/platform-DPcgMoz2.js,1774372758898,3cc72d1d273ad4b617234d2690300580770b4babb338d0b3657ba825925e47a8
+-assets/NotFound-D2zhaaFa.js,1774372758899,616e335d817daf306c9e2cbf63bed902af91cc202f457b7fcd75249396a241eb
+-assets/Premium-BG69Jeel.js,1774372758899,44da3ed3f18996329f89c6d97f80e5704d966feb09678a9084b171dc4d7f7dc0
+-assets/Noticias-CmJgJ1de.js,1774372758899,02e5b067c1bcd063c7bfbf8e41e1faae7aee36496808671cb92da4986b4a376e
+-assets/Perfil-ae6dNJZN.js,1774372758899,bf40a1286ace827c2b20fa6153efd4869bbd3fdb20e59d79de2bda0a88786924
+-assets/MapaTab-Bem-aCzx.js,1774372758909,dfe596b6a3040faadaaec7425bf41a2951e64add7347e70dbc280ecfe292b42a
+-assets/LegalPage-D9MzFnbC.js,1774372758899,e1edf259d3450b99be8a2953e21ff0b87bf4790ec92d25bf0b2ea19d5c2b4961
+-assets/MatchDetailsModal-CDd4alx_.js,1774372758903,e83a4ad77d13aa256c1a06520d865140b28b270e54f85190eee93475a5788e49
+-assets/MatchCard-CQe0Svg8.js,1774372758903,d975100a370bb0a0e9b40265edbf3e2b57994bd2410099a82dd4f410ca782ea9
+-assets/motion-CV8oj-SH.js,1774372758898,3a82840a962fd2941a580f4d5db4e16aac4495401972681000736308957973df
+-assets/Index-Bgf8b7Mh.js,1774372758898,b0de2324d1e2e4f3c07a8ee41055ea4df61ae908eddb7683e6b6a1d672807420
+-assets/HistoriaTab-C8gZ3XuH.js,1774372758903,bd69389fdf63b45ef595af5b0d50e13428337dae5bd033292ffe3a8d8412683b
+-assets/icons-C2c-ZDXd.js,1774372758876,d947f5bda35dd82de9f183bc0837859127e2f7f10334dba4f5ed3a424288afc1
+-assets/GruposTab-CXTNvxsR.js,1774372758900,d6d1e76630bfff84bac5ff5d783ce34edf2d201b26684f3156b9a0f7862aa690
+-assets/GuiaTab-BF9bol5h.js,1774372758903,21e61c7b54d9bcd97523c65d3f2a83e9045842cf80400a6a4bd26321a17c5ac6
+-assets/Grupos-78936kr2.js,1774372758899,4f32c620841655ab740937cd95a873986d48f4469d7d5df7e40b620d10cae3bb
+-assets/GrupoDetail-DMVDKC6I.js,1774372758899,f020bb0285b5fd7d403efc9af558f7f0e6b1d97b73304328d11f314bd86ce7c6
+-assets/Guia-CyDxaG6f.js,1774372758899,4d77ed312fc4013c90e1039abdd15cf93717c5d55e4213528c4e28d781f06de3
+-assets/EmptyState-B4lwVWU5.js,1774372758903,715d85f95414a841fc541b085d5192d91b8b122972a2b4c5ccd460c228ecc5b3
+-assets/ExcluirConta-BtjKXA_t.js,1774372758900,3d270c1a300ac855919efcdefe48ff5822b38925abf73e2132d306bc35af7b61
+-assets/data-CcevlZ69.js,1774372758898,9c5de1bb6af0e7b40cb25fa8f8caa03c06deec49e6e1b187e915b7984eed539b
+-assets/Copa-CUuVDVsy.js,1774372758898,953db1d9adaec82e8808ae8706987ab40f4e6ee433f44824aa294a1f6f3be745
+-assets/CriarBolao-BC2pjDOC.js,1774372758898,e39aeb4deddee923dca2b750c5a43de65b5c3c369c9033d9759ea0d8d44985ac
+-assets/CopaOverview-DMi5jYX7.js,1774372758903,8b68d858f2b3a5e4ee8fc1b317ad2501bfb6acf806dd9c6767f1e5886c511e08
+-assets/bolao-market.service-BRhtcQ_e.js,1774372758898,64747808f4616ae840d4cd97312e115f528e4610d5846ca052dba7ef2ac00b0b
+-assets/CalendarioTab-BTerFcnG.js,1774372758900,4dd5bc6090963d13f56111c5f37c2220b48cf0c556d49fbc199a448f030b891f
+-assets/Boloes-CxlSGfal.js,1774372758898,d5584dc63ce7095c69451c8a7134edaf2e43056dbcf324f06a51e81cbc20286d
+-assets/ChavesTab-2kHrsUIg.js,1774372758903,96967a92621ed2921030c8afc7f0745b7b075a9e9974173915fec0308573339a
+-assets/guiaData-ayte76tp.js,1774372758903,4a2fdd28b211bde7fd3cd6e5f5c22f323783054f48b85f51f3ed0b4eafd5bfc9
+-assets/ui-Bs9SH4Wn.js,1774372758897,8a03c3e19f14a21b26933f4d115ed2dc6bc8856e725e903a0f7319881198c9b3
+-assets/index-BpN2-6ga.js,1774372758898,7193c767449d5083bc060d5cc2315f918b7e8f0eca89edd8439f3d9c8e83abe8
+-assets/i18n-CSEZyr9o.js,1774372758897,ccd21dc1ea453f92376a6ddaf59d1f1e5a55c65dcfc3c8a43e16076fa90e24c4
+-assets/animations-BuoQIw0Q.js,1774372758903,d150f3f81267115ecfa6313671be9e4db1d74420f1d0b5a84594475176e25046
+-assets/Auth-CEePpZt1.js,1774372758899,d13cd8c3e05c8676cf3e68c805887af75bd8e376171780c4edbad7111b0d4c31
+-assets/BolaoDetail-BuCFp2iK.js,1774372758899,05ee8e86c8160b1352be02b966f957b413bc7defa88bd9aa996b32b100c86897
+-assets/index-CjifjFX1.css,1774372758897,68c149bb2374154bfe8993a708c7df1db66902a53a7117d10e5e330f6a19bf5e
+-assets/vendor-DyIftVWu.js,1774372758898,3d8b85fad94bfd1ec8dd0c09236956d6ffc0cbabadf5a147ec245fc6515d9746
+-assets/firebase-Bx3014j_.js,1774372758898,fd5b8dacb96e2bfc14ed3f79b82145998da0372e236418ae244e99909791ef39
++index.html,1774378180693,b93c7e5d41068607358e42c814632b92984e18e8436cc9a79abd2bc6031e95fc
++assets/visual-V2MaFQWf.js,1774378180691,d2f0b2f6abfc433a944b8a5dd7a8f520c5d38ffb2fbf984040d2727e17b25ef4
++assets/useMatches-DVg-LH2w.js,1774378180692,3ec9eb56442ee76b0033c625b75a7aadaccec205cb0d5769ea8a3e4a57ef8f67
++assets/usePlanLimits-DiBncyf7.js,1774378180691,1031c30f265161ae795ceaffda934c9b7a3fe85248cf0d2ef7f62b3ecd3b9ce6
++assets/useRealtimeNews-7YGS7Wte.js,1774378180692,5fee0e975f2fae9ff28127cb435361b52f16169d16fee47c4fd110b9bce1bb55
++assets/useCreateBolao-DwLLOhGR.js,1774378180691,13c745e3b8a64843c1845e7bc2fd030b7a8ae2c37b62ca462125a48352c85bd3
++assets/Termos-CfyGXQV8.js,1774378180692,39966282c85d3df8ed509221bbed7c5903af3218310d3e1a0e094a15e9bca1fb
++assets/TeamDetails-C0r3AG-e.js,1774378180691,8b46e60d7381d02cc5924baa95321bf7ae5f4f6b98eb695306bb6ff5774e1eb2
++assets/Rules-iakJJzXL.js,1774378180691,71eabe71ba8713131c2615d20353e35417952603578a492ff415e9f526979623
++assets/SimulacaoTab-jDdoMECV.js,1774378180692,a9fa3e52002714dc908d66436745611dfb6755f48b51ee5ce90ccddf9af2e266
++assets/PublicInvite-DB7WUJ0q.js,1774378180692,9aa72900529e12d99738766ba993fafa2a5f8c4437a05fd833121fffe80b2aff
++assets/Ranking-4Skkj9zK.js,1774378180691,c62a99df98974672a7f206c172fecb2df4bedc3d127ed1880df3d03c627a22a7
++assets/Privacidade-BCUPjaty.js,1774378180692,4236b65b4d56d2dd2a51f8013790959146a6c5198695705cea05a55b60e717a2
++assets/platform-DPcgMoz2.js,1774378180690,3cc72d1d273ad4b617234d2690300580770b4babb338d0b3657ba825925e47a8
++assets/NotFound-D2zhaaFa.js,1774378180691,616e335d817daf306c9e2cbf63bed902af91cc202f457b7fcd75249396a241eb
++assets/Premium-dVmfVsmc.js,1774378180691,e0183496411eaf1ea3cf6892c80739f35e5877e58c2c6f41a7d15f4ca024f4b4
++assets/Noticias-Bx8Cs6uh.js,1774378180692,8fdaea9d512928b1ecb06104d8e1f9bf832b6d487e9fa40684c431cde40bc046
++assets/MatchDetailsModal-D-e_4YwA.js,1774378180692,7c1ca1bf8efaecbac48ed434485cc66143d457a7cd34a9693b7e5e61a58cd24a
++assets/MapaTab-Bem-aCzx.js,1774378180694,dfe596b6a3040faadaaec7425bf41a2951e64add7347e70dbc280ecfe292b42a
++assets/LegalPage-C2MCKoFw.js,1774378180692,30025e99203f3dccfe5909c63bce13d179550d12893afe63d8340133b33d6927
++assets/MatchCard-CML5L-z8.js,1774378180692,0296c6d2b2eaead510d966fed002732433c3f1b5d9d1f7c2a3b609f26ccc12fa
++assets/Perfil-DyKbA07J.js,1774378180691,45f773df8bfc378689132b5b2a8524f0efffb053ca07cc95ca0a8f90d34c14fd
++assets/Index-CmxEV_X-.js,1774378180691,bb45cb8ff5c68590dd2fc9aa3375bcab68e26df19d94e475abc83066900c431c
++assets/motion-CV8oj-SH.js,1774378180691,3a82840a962fd2941a580f4d5db4e16aac4495401972681000736308957973df
++assets/routing-BSTsph2n.js,1774378180690,de0df34e04bb1f08b401066c0c41f4775aeb0bba94e44702f18ff8b74fe8a0ac
++assets/HistoriaTab-DSYxJ57s.js,1774378180693,5f33564da8369f1cc0e60ea6e78841bf2b23d9477dff85d6e4604d1d57d0e122
++assets/GuiaTab-CY3BRqdP.js,1774378180694,a82bd86c7ce390b5e427fbc72e3d45b93c46fd4299b19d16797b3b782367a95d
++assets/icons-C2c-ZDXd.js,1774378180690,d947f5bda35dd82de9f183bc0837859127e2f7f10334dba4f5ed3a424288afc1
++assets/Guia-DFqnimNv.js,1774378180691,3ea30a30c778c09390c265ba380d57c609593c4b86955ccb0e78720b4cca1efa
++assets/GruposTab-C0be1CIQ.js,1774378180692,459405810e731908c7bc8a0fdf8a4aff79b3597cf9b7647917d6a3e48199ed97
++assets/Grupos-Bj6LSDcK.js,1774378180692,b051ddd370f507116ccd80539ee37763fa9b09d4348e0d83fa6ef7ccbe48922c
++assets/GrupoDetail-CUDG7WGM.js,1774378180692,1e8b871824d44ffdaed879537d2d96343ff13cb52a9b653c137dbc1b285f90d1
++assets/EmptyState-BYSPTO_k.js,1774378180692,84ae96c75d3a3d2ca22a984576c2f1ce04bc90fb74bb9fc3ac93869466642c44
++assets/ExcluirConta-kTiTVGYt.js,1774378180692,a21613eadc744f59b8d33b010bea21a99f7b6edf627ff03bb7df37b89154c4ad
++assets/CopaOverview-C6ypsbsD.js,1774378180692,80d54edaf74cf03fd0c69c0a7709ab0e9909f01f6aa06339ea41fe0d869c8d16
++assets/CriarBolao-CnfbfroN.js,1774378180691,00984905b9f3dc7f6ca3f3b712f865ef7f48ed2af410328c01507d2bfcebaa56
++assets/CalendarioTab-CF2GnJyy.js,1774378180692,2a9176252f866d2c8adefa450c597b53e81771e3beb204519ba4f2e86e95cd48
++assets/ChavesTab-0wdFAWLm.js,1774378180692,a3e9afe257f2fc1d86d07e4dc2b6751c151f038187ad84c99e33ff3be9f5dd78
++assets/Boloes-D9tIpX-K.js,1774378180691,67d374b452568961d49fd36b6514867c3cd0f4cbd2a016efdefcf75c5f24025a
++assets/data-CcevlZ69.js,1774378180691,9c5de1bb6af0e7b40cb25fa8f8caa03c06deec49e6e1b187e915b7984eed539b
++assets/bolao-market.service-CBvR9mHg.js,1774378180691,b91888c3d8f764191c663fb5735b75c26d48504d8e9ad9f5ebb49ebd4d6e8339
++assets/Copa-B8IAMZ-a.js,1774378180691,f71e519c0907a779b89a3fcaedfb7206d4c007dde17b03ed741dd13f3d4ab6fe
++assets/guiaData-ayte76tp.js,1774378180692,4a2fdd28b211bde7fd3cd6e5f5c22f323783054f48b85f51f3ed0b4eafd5bfc9
++assets/ui-Bs9SH4Wn.js,1774378180691,8a03c3e19f14a21b26933f4d115ed2dc6bc8856e725e903a0f7319881198c9b3
++assets/index-DB6Qo7FR.js,1774378180691,821a8bb24fc813ce7ecf78e955eafd7873eed4bb20e24e58546eb5abdff72c7c
++assets/i18n-CSEZyr9o.js,1774378180691,ccd21dc1ea453f92376a6ddaf59d1f1e5a55c65dcfc3c8a43e16076fa90e24c4
++assets/Auth-CWXmVBxp.js,1774378180691,c0e21ba00d418b3f29c90ef6994cd6c3d0ec5de2e2e8309286811eb46117ddf3
++assets/animations-BuoQIw0Q.js,1774378180692,d150f3f81267115ecfa6313671be9e4db1d74420f1d0b5a84594475176e25046
++assets/index-BgLznTai.css,1774378180674,419df1aa07e3ffcb3a0b34237c620aef3b853b295441fb4a11b8e796260a9649
++assets/BolaoDetail-Cl6NXsUU.js,1774378180691,996d7ad5dc16a23a0a87bfecc8841b09c7c857ab50a13b19d7f5c219e2605eda
++assets/vendor-DyIftVWu.js,1774378180690,3d8b85fad94bfd1ec8dd0c09236956d6ffc0cbabadf5a147ec245fc6515d9746
++assets/firebase-Bx3014j_.js,1774378180691,fd5b8dacb96e2bfc14ed3f79b82145998da0372e236418ae244e99909791ef39
+diff --git a/android/app/build.gradle b/android/app/build.gradle
+index 14fffba..e951a91 100644
+--- a/android/app/build.gradle
++++ b/android/app/build.gradle
+@@ -1,14 +1,14 @@
+ apply plugin: 'com.android.application'
+ 
+ android {
+-    namespace = "app.lovable.a569c8b887414e408fa66bdf2e5c3992"
++    namespace = "app.arenacopa.www"
+     compileSdk = rootProject.ext.compileSdkVersion
+     defaultConfig {
+-        applicationId "app.lovable.a569c8b887414e408fa66bdf2e5c3992"
++        applicationId "app.arenacopa.www"
+         minSdkVersion rootProject.ext.minSdkVersion
+         targetSdkVersion rootProject.ext.targetSdkVersion
+-        versionCode 1
+-        versionName "1.0"
++        versionCode 3
++        versionName "1.2"
+         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+         aaptOptions {
+              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
+@@ -18,10 +18,10 @@ android {
+     }
+     signingConfigs {
+         release {
+-            storeFile file("C:/Users/eduar/arena-cup-release.keystore")
+-            storePassword "ArenaCup2026!"
+-            keyAlias "arena-cup-key"
+-            keyPassword "ArenaCup2026!"
++            storeFile file("C:/Users/eduar/.antigravity/Arenacopa/release/arenacopa-release.jks")
++            storePassword "ArenaCopa2026!"
++            keyAlias "arenacopa"
++            keyPassword "ArenaCopa2026!"
+         }
+     }
+     buildTypes {
+@@ -64,4 +64,4 @@ try {
+ 
+ task wrapper(type: Wrapper) {
+     gradleVersion = '8.14.3'
+-}
+\ No newline at end of file
++}
+diff --git a/android/app/src/main/java/app/lovable/a569c8b887414e408fa66bdf2e5c3992/MainActivity.java b/android/app/src/main/java/app/lovable/a569c8b887414e408fa66bdf2e5c3992/MainActivity.java
+index d23fd46..7824b89 100644
+--- a/android/app/src/main/java/app/lovable/a569c8b887414e408fa66bdf2e5c3992/MainActivity.java
++++ b/android/app/src/main/java/app/lovable/a569c8b887414e408fa66bdf2e5c3992/MainActivity.java
+@@ -1,4 +1,4 @@
+-package app.lovable.a569c8b887414e408fa66bdf2e5c3992;
++package app.arenacopa.www;
+ 
+ import com.getcapacitor.BridgeActivity;
+ 
+diff --git a/android/app/src/main/res/values/strings.xml b/android/app/src/main/res/values/strings.xml
+index 1d82cf5..686b52a 100644
+--- a/android/app/src/main/res/values/strings.xml
++++ b/android/app/src/main/res/values/strings.xml
+@@ -2,6 +2,6 @@
+ <resources>
+     <string name="app_name">Arena Cup</string>
+     <string name="title_activity_main">Arena Cup</string>
+-    <string name="package_name">app.lovable.a569c8b887414e408fa66bdf2e5c3992</string>
+-    <string name="custom_url_scheme">app.lovable.a569c8b887414e408fa66bdf2e5c3992</string>
++    <string name="package_name">app.arenacopa.www</string>
++    <string name="custom_url_scheme">app.arenacopa.www</string>
+ </resources>
+diff --git a/capacitor.config.ts b/capacitor.config.ts
+index 338abac..ab74280 100644
+--- a/capacitor.config.ts
++++ b/capacitor.config.ts
+@@ -1,7 +1,7 @@
+ import type { CapacitorConfig } from "@capacitor/cli";
+ 
+ const config: CapacitorConfig = {
+-  appId: "app.lovable.a569c8b887414e408fa66bdf2e5c3992",
++  appId: "app.arenacopa.www",
+   appName: "Arena Cup",
+   webDir: "dist"
+ };
+diff --git a/firestore.rules b/firestore.rules
+index 7ab4884..b266086 100644
+--- a/firestore.rules
++++ b/firestore.rules
+@@ -1,114 +1,179 @@
+ rules_version = '2';
+ service cloud.firestore {
+   match /databases/{database}/documents {
++
++    // ─── helpers ──────────────────────────────────────────────────────────────
+     function isSignedIn() {
+       return request.auth != null;
+     }
+ 
+-    function isOwner(userId) {
+-      return isSignedIn() && request.auth.uid == userId;
++    function isOwner(uid) {
++      return isSignedIn() && request.auth.uid == uid;
+     }
+ 
+-    function isBolaoCreator(bolaoId) {
+-      return isSignedIn() &&
+-        get(/databases/$(database)/documents/boloes/$(bolaoId)).data.creator_id == request.auth.uid;
++    // ─── profiles ─────────────────────────────────────────────────────────────
++    match /profiles/{userId} {
++      allow read:  if isSignedIn();
++      allow write: if isOwner(userId);
+     }
+ 
+-    match /profiles/{userId} {
+-      allow read: if true;
+-      allow create, update, delete: if isOwner(userId);
++    // ─── matches (Copa 2026 schedule — read-only for clients) ─────────────────
++    match /matches/{matchId} {
++      allow read:  if isSignedIn();
++      allow write: if false;
+     }
+ 
+-    match /boloes/{bolaoId} {
+-      allow read: if true;
+-      allow create: if isSignedIn() && request.resource.data.creator_id == request.auth.uid;
+-      allow update, delete: if isSignedIn() && resource.data.creator_id == request.auth.uid;
++    // ─── news / copa_news ─────────────────────────────────────────────────────
++    match /news/{newsId} {
++      allow read:  if isSignedIn();
++      allow write: if false;
+     }
+ 
+-    match /bolao_members/{memberId} {
+-      allow read: if isSignedIn();
+-      allow create: if isSignedIn() && request.resource.data.user_id == request.auth.uid;
+-      allow update, delete: if isSignedIn() && resource.data.user_id == request.auth.uid;
++    match /copa_news/{newsId} {
++      allow read:  if isSignedIn();
++      allow write: if false;
+     }
+ 
+-    match /bolao_palpites/{palpiteId} {
+-      allow read: if isSignedIn();
+-      allow create: if isSignedIn() && request.resource.data.user_id == request.auth.uid;
+-      allow update, delete: if isSignedIn() && resource.data.user_id == request.auth.uid;
++    // ─── bolões ───────────────────────────────────────────────────────────────
++    match /boloes/{bolaoId} {
++      allow read:  if isSignedIn();
++      allow create: if isSignedIn()
++                    && request.resource.data.creator_id == request.auth.uid;
++      allow update: if isSignedIn()
++                    && resource.data.creator_id == request.auth.uid;
++      allow delete: if isSignedIn()
++                    && resource.data.creator_id == request.auth.uid;
+     }
+ 
++    // ─── bolão onboarding state ───────────────────────────────────────────────
++    // read: allow if document doesn't exist yet (null check) OR user matches
++    match /bolao_onboarding_state/{stateId} {
++      allow read:   if isSignedIn() && (resource == null || resource.data.user_id == request.auth.uid);
++      allow create: if isOwner(request.resource.data.user_id);
++      allow update: if isOwner(resource.data.user_id);
++      allow delete: if isOwner(resource.data.user_id);
++    }
++
++    // ─── bolão markets ────────────────────────────────────────────────────────
+     match /bolao_markets/{marketId} {
+-      allow read: if isSignedIn();
+-      allow create: if isSignedIn() && isBolaoCreator(request.resource.data.bolao_id);
+-      allow update, delete: if isSignedIn() && isBolaoCreator(resource.data.bolao_id);
++      allow read:   if isSignedIn();
++      allow create: if isSignedIn();
++      allow update: if false;
++      allow delete: if isSignedIn();
+     }
+ 
+-    match /bolao_predictions/{predictionId} {
+-      allow read: if isSignedIn();
+-      allow create: if isSignedIn() && request.resource.data.user_id == request.auth.uid;
+-      allow update, delete: if isSignedIn() && resource.data.user_id == request.auth.uid;
++    // ─── bolão members ────────────────────────────────────────────────────────
++    match /bolao_members/{memberId} {
++      allow read:   if isSignedIn();
++      allow create: if isOwner(request.resource.data.user_id);
++      allow delete: if isOwner(resource.data.user_id);
++      allow update: if false;
+     }
+ 
+-    match /bolao_onboarding_state/{stateId} {
+-      allow read: if isSignedIn() && resource.data.user_id == request.auth.uid;
+-      allow create: if isSignedIn() && request.resource.data.user_id == request.auth.uid;
+-      allow update, delete: if isSignedIn() && resource.data.user_id == request.auth.uid;
++    // ─── palpites (match predictions) ────────────────────────────────────────
++    match /bolao_palpites/{palpiteId} {
++      allow read:   if isSignedIn();
++      allow create: if isOwner(request.resource.data.user_id)
++                    && request.resource.data.points == null;
++      allow update: if isOwner(resource.data.user_id)
++                    && request.resource.data.user_id  == resource.data.user_id
++                    && request.resource.data.bolao_id == resource.data.bolao_id
++                    && request.resource.data.match_id == resource.data.match_id
++                    && request.resource.data.points   == resource.data.points;
++      allow delete: if isOwner(resource.data.user_id);
++    }
++
++    // ─── bolão predictions (market predictions) ────────────────────────────────
++    match /bolao_predictions/{predictionId} {
++      allow read:   if isSignedIn();
++      allow create: if isOwner(request.resource.data.user_id);
++      allow update: if isOwner(resource.data.user_id);
++      allow delete: if isOwner(resource.data.user_id);
+     }
+ 
+-    match /bolao_activity/{activityId} {
+-      allow read: if isSignedIn();
++    // ─── bolão rankings (written by Cloud Functions after match scoring) ──────
++    match /bolao_rankings/{rankingId} {
++      allow read:  if isSignedIn();
+       allow write: if false;
+     }
+ 
+-    match /bolao_champion_predictions/{predictionId} {
+-      allow read: if isSignedIn();
+-      allow create: if isSignedIn() && request.resource.data.user_id == request.auth.uid;
+-      allow update, delete: if isSignedIn() && resource.data.user_id == request.auth.uid;
++    // ─── champion predictions ─────────────────────────────────────────────────
++    match /bolao_champion_predictions/{predId} {
++      allow read:   if isSignedIn();
++      allow create: if isOwner(request.resource.data.user_id);
++      allow update: if isOwner(resource.data.user_id);
++      allow delete: if isOwner(resource.data.user_id);
++    }
++
++    // ─── bolão activity feed (written by Cloud Functions only) ────────────────
++    match /bolao_activity/{activityId} {
++      allow read:  if isSignedIn();
++      allow write: if false;
+     }
+ 
++    // ─── bolão extra bets ─────────────────────────────────────────────────────
+     match /bolao_extra_bets/{betId} {
+-      allow read: if isSignedIn();
+-      allow create: if isSignedIn() && request.resource.data.user_id == request.auth.uid;
+-      allow update, delete: if isSignedIn() && resource.data.user_id == request.auth.uid;
++      allow read:   if isSignedIn();
++      allow create: if isOwner(request.resource.data.user_id);
++      allow update: if isOwner(resource.data.user_id);
++      allow delete: if isOwner(resource.data.user_id);
+     }
+ 
++    // ─── notifications ────────────────────────────────────────────────────────
+     match /notifications/{notificationId} {
+-      allow read: if isSignedIn() && resource.data.user_id == request.auth.uid;
+-      allow create: if isSignedIn() && request.resource.data.user_id == request.auth.uid;
+-      allow update, delete: if isSignedIn() && resource.data.user_id == request.auth.uid;
++      allow read:   if isSignedIn() && resource.data.user_id == request.auth.uid;
++      allow create: if isOwner(request.resource.data.user_id);
++      allow update: if isOwner(resource.data.user_id);
++      allow delete: if isOwner(resource.data.user_id);
++    }
++
++    // ─── push tokens ──────────────────────────────────────────────────────────
++    match /push_tokens/{tokenId} {
++      allow read:   if isOwner(resource.data.user_id);
++      allow write:  if isOwner(request.resource.data.user_id);
++      allow delete: if isOwner(resource.data.user_id);
+     }
+ 
+     match /native_push_tokens/{tokenId} {
+-      allow read: if isSignedIn() && resource.data.user_id == request.auth.uid;
+-      allow create: if isSignedIn() && request.resource.data.user_id == request.auth.uid;
+-      allow update, delete: if isSignedIn() && resource.data.user_id == request.auth.uid;
++      allow read:   if isSignedIn() && resource.data.user_id == request.auth.uid;
++      allow create: if isOwner(request.resource.data.user_id);
++      allow update: if isOwner(resource.data.user_id);
++      allow delete: if isOwner(resource.data.user_id);
+     }
+ 
+     match /push_subscriptions/{subscriptionId} {
+-      allow read: if isSignedIn() && resource.data.user_id == request.auth.uid;
+-      allow create: if isSignedIn() && request.resource.data.user_id == request.auth.uid;
+-      allow update, delete: if isSignedIn() && resource.data.user_id == request.auth.uid;
++      allow read:   if isSignedIn() && resource.data.user_id == request.auth.uid;
++      allow create: if isOwner(request.resource.data.user_id);
++      allow update: if isOwner(resource.data.user_id);
++      allow delete: if isOwner(resource.data.user_id);
+     }
+ 
++    // ─── premium subscriptions ────────────────────────────────────────────────
+     match /premium_subscriptions/{subscriptionId} {
+-      allow read: if isSignedIn() && resource.data.user_id == request.auth.uid;
+-      allow create: if isSignedIn() && request.resource.data.user_id == request.auth.uid;
+-      allow update, delete: if false;
++      allow read:   if isSignedIn() && resource.data.user_id == request.auth.uid;
++      allow create: if isOwner(request.resource.data.user_id);
++      allow update: if false;
++      allow delete: if false;
+     }
+ 
+-    match /matches/{matchId} {
+-      allow read: if true;
+-      allow write: if false;
++    // ─── Grupos (social groups bundling multiple bolões) ──────────────────────
++    match /grupos/{grupoId} {
++      allow read:   if isSignedIn();
++      allow create: if isSignedIn() && request.resource.data.creator_id == request.auth.uid;
++      allow update: if isSignedIn() && resource.data.creator_id == request.auth.uid;
++      allow delete: if isSignedIn() && resource.data.creator_id == request.auth.uid;
+     }
+ 
+-    match /bolao_rankings/{rankingId} {
+-      allow read: if true;
+-      allow write: if false;
++    match /grupo_members/{memberId} {
++      allow read:   if isSignedIn();
++      allow create: if isOwner(request.resource.data.user_id);
++      allow update: if isOwner(resource.data.user_id);
++      allow delete: if isOwner(resource.data.user_id);
+     }
+ 
+-    match /copa_news/{newsId} {
+-      allow read: if true;
+-      allow write: if false;
++    // ─── catch-all: deny everything else ─────────────────────────────────────
++    match /{document=**} {
++      allow read, write: if false;
+     }
+   }
+ }
+diff --git a/src/components/copa/PremiumModal.tsx b/src/components/copa/PremiumModal.tsx
+index bdb8884..c6f74fb 100644
+--- a/src/components/copa/PremiumModal.tsx
++++ b/src/components/copa/PremiumModal.tsx
+@@ -40,7 +40,7 @@ export function PremiumModal({ isOpen, onClose, onSuccess }: PremiumModalProps)
+                     initial={{ scale: 0.9, opacity: 0, y: 20 }}
+                     animate={{ scale: 1, opacity: 1, y: 0 }}
+                     exit={{ scale: 0.9, opacity: 0, y: 20 }}
+-                    className="relative w-full max-w-sm bg-background border border-border rounded-3xl overflow-hidden shadow-2xl"
++                    className="relative w-full max-w-sm bg-black/80 backdrop-blur-xl border border-white/10 rounded-[32px] overflow-hidden shadow-2xl"
+                     onClick={(e) => e.stopPropagation()}
+                 >
+                     {/* Header Image / Gradient */}
+@@ -70,9 +70,9 @@ export function PremiumModal({ isOpen, onClose, onSuccess }: PremiumModalProps)
+                         <div className="space-y-3">
+                             {[
+                                 { icon: <Zap className="w-4 h-4 text-yellow-500" />, text: "Remover todos os anúncios" },
+-                                { icon: <Shield className="w-4 h-4 text-blue-500" />, text: "Estatísticas avançadas" },
+-                                { icon: <Sparkles className="w-4 h-4 text-emerald-500" />, text: "Insignia exclusiva de apoiador" },
+-                                { icon: <Crown className="w-4 h-4 text-orange-500" />, text: "Acesso antecipado a novidades" },
++                                { icon: <Shield className="w-4 h-4 text-copa-blue" />, text: "Estatísticas avançadas" },
++                                { icon: <Sparkles className="w-4 h-4 text-copa-green-light" />, text: "Insignia exclusiva de apoiador" },
++                                { icon: <Crown className="w-4 h-4 text-copa-orange" />, text: "Acesso antecipado a novidades" },
+                             ].map((item, i) => (
+                                 <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-secondary/50 border border-border/50">
+                                     <div className="p-2 rounded-full bg-background shadow-sm">
+diff --git a/src/hooks/useCreateBolao.ts b/src/hooks/useCreateBolao.ts
+index 8bd8b75..7ee5c4d 100644
+--- a/src/hooks/useCreateBolao.ts
++++ b/src/hooks/useCreateBolao.ts
+@@ -53,7 +53,6 @@ export function useCreateBolao() {
+   const createBolao = async (params: CreateBolaoParams): Promise<CreateBolaoResult | null> => {
+     if (!user || !params.name.trim()) return null;
+     const championEnabled = params.selectedMarketIds.includes("champion");
+-    if (championEnabled && !params.champion) return null;
+ 
+     await safeHaptic(ImpactStyle.Heavy);
+     setCreating(true);
+diff --git a/src/pages/Auth.tsx b/src/pages/Auth.tsx
+index b98ae0e..e3549af 100644
+--- a/src/pages/Auth.tsx
++++ b/src/pages/Auth.tsx
+@@ -264,16 +264,18 @@ const Auth = () => {
+           </button>
+         </form>
+ 
+-        <button
+-          type="button"
+-          onClick={handleDemoLogin}
+-          disabled={loading}
+-          className="mt-12 text-[10px] uppercase tracking-[0.4em] font-black text-white/40 hover:text-primary transition-colors flex items-center gap-4 group disabled:opacity-50"
+-        >
+-          <div className="w-10 h-px bg-white/10 group-hover:bg-primary/30 transition-colors" />
+-          {t('login.demo')}
+-          <div className="w-10 h-px bg-white/10 group-hover:bg-primary/30 transition-colors" />
+-        </button>
++        {import.meta.env.DEV && (
++          <button
++            type="button"
++            onClick={handleDemoLogin}
++            disabled={loading}
++            className="mt-12 text-[10px] uppercase tracking-[0.4em] font-black text-white/40 hover:text-primary transition-colors flex items-center gap-4 group disabled:opacity-50"
++          >
++            <div className="w-10 h-px bg-white/10 group-hover:bg-primary/30 transition-colors" />
++            {t('login.demo')}
++            <div className="w-10 h-px bg-white/10 group-hover:bg-primary/30 transition-colors" />
++          </button>
++        )}
+       </div>
+     </div>
+   );
+diff --git a/src/pages/Copa.tsx b/src/pages/Copa.tsx
+index 8b66261..22bbd75 100644
+--- a/src/pages/Copa.tsx
++++ b/src/pages/Copa.tsx
+@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
+ import { motion, AnimatePresence } from "framer-motion";
+ import { tabContentVariants } from "@/components/copa/animations";
+ import { SimulacaoProvider } from "@/contexts/SimulacaoContext";
+-import { LayoutGrid, CalendarDays, Trophy, GitBranch, Calculator, Sparkles } from "lucide-react";
++import { LayoutGrid, CalendarDays, Trophy, GitBranch, Sparkles } from "lucide-react";
+ import { useTranslation } from "react-i18next";
+ 
+ const CalendarioTab = lazy(() => import("@/components/copa/CalendarioTab").then((module) => ({ default: module.CalendarioTab })));
+@@ -12,10 +12,10 @@ const GruposTab = lazy(() => import("@/components/copa/GruposTab").then((module)
+ const ChavesTab = lazy(() => import("@/components/copa/ChavesTab").then((module) => ({ default: module.ChavesTab })));
+ const SimulacaoTab = lazy(() => import("@/components/copa/SimulacaoTab").then((module) => ({ default: module.SimulacaoTab })));
+ const CopaOverview = lazy(() => import("@/components/copa/CopaOverview").then((module) => ({ default: module.CopaOverview })));
++
+ type CopaTab = "overview" | "calendario" | "grupos" | "chaves" | "simulacao";
+ const VALID_TABS: CopaTab[] = ["overview", "calendario", "grupos", "chaves", "simulacao"];
+ 
+-
+ const TabLoadingState = ({ label }: { label?: string }) => (
+   <div className="surface-card rounded-[28px] p-6 text-sm font-bold uppercase tracking-[0.18em] text-zinc-400">
+     {label ?? "Carregando..."}
+@@ -26,27 +26,23 @@ const Copa = () => {
+   const { subtab } = useParams<{ subtab?: string }>();
+   const navigate = useNavigate();
+   const { t } = useTranslation('copa');
++
+   const initialTab = VALID_TABS.includes((subtab as CopaTab) || "overview")
+     ? ((subtab as CopaTab) || "overview")
+     : "overview";
++
+   const [tab, setTab] = useState<CopaTab>(initialTab);
+ 
+   useEffect(() => {
+     if (!subtab) {
+-      if (tab !== "overview") {
+-        setTab("overview");
+-      }
++      if (tab !== "overview") setTab("overview");
+       return;
+     }
+-
+     if (!VALID_TABS.includes(subtab as CopaTab)) {
+       navigate("/copa", { replace: true });
+       return;
+     }
+-
+-    if (subtab !== tab) {
+-      setTab(subtab as CopaTab);
+-    }
++    if (subtab !== tab) setTab(subtab as CopaTab);
+   }, [navigate, subtab, tab]);
+ 
+   const handleTabChange = (newTab: CopaTab) => {
+@@ -65,50 +61,73 @@ const Copa = () => {
+   return (
+     <SimulacaoProvider>
+       <div>
+-        <div className="sticky top-[calc(3.5rem+var(--safe-area-top,0px))] z-20 bg-[#03100a]/60 px-4 py-3 backdrop-blur-xl md:top-16 border-b border-white/[0.1] shadow-lg">
+-          <div className="grid grid-cols-5 gap-1">
+-          {tabs.map(tabItem => (
+-            <button
+-              key={tabItem.id}
+-              id={`tab-${tabItem.id}`}
+-              onClick={() => handleTabChange(tabItem.id)}
+-              aria-current={tab === tabItem.id ? "page" : undefined}
+-              className={cn(
+-                "relative flex flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-center text-[10px] font-bold transition-colors w-full",
+-                tab === tabItem.id
+-                  ? "text-primary-foreground min-h-[52px]"
+-                  : tabItem.highlight
+-                    ? "bg-amber-500/15 text-amber-400 border border-amber-500/25 min-h-[52px]"
+-                    : "bg-secondary text-secondary-foreground min-h-[52px]"
+-              )}
+-            >
+-              {tab === tabItem.id && (
+-                <motion.div
+-                  layoutId="activeTab"
++        {/* Scrollable pill-style tab bar — no overlap */}
++        <div className="sticky top-[calc(3.5rem+var(--safe-area-top,0px))] z-20 bg-[#03100a]/80 backdrop-blur-xl border-b border-white/[0.08] shadow-[0_4px_20px_rgba(0,0,0,0.5)] md:top-16">
++          <div
++            className="flex items-center gap-2 overflow-x-auto px-3 py-2.5"
++            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
++          >
++            {tabs.map((tabItem) => {
++              const isActive = tab === tabItem.id;
++              return (
++                <button
++                  key={tabItem.id}
++                  id={`tab-${tabItem.id}`}
++                  onClick={() => handleTabChange(tabItem.id)}
++                  aria-current={isActive ? "page" : undefined}
+                   className={cn(
+-                    "absolute inset-0 rounded-2xl",
+-                    tabItem.highlight ? "bg-gradient-to-br from-amber-500 to-orange-500" : "bg-primary"
++                    "relative flex shrink-0 flex-col items-center justify-center gap-1 rounded-2xl transition-all duration-200",
++                    "min-w-[56px] px-3 py-2",
++                    isActive
++                      ? "text-primary-foreground"
++                      : tabItem.highlight
++                        ? "bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20"
++                        : "bg-white/[0.05] text-zinc-400 border border-white/[0.06] hover:bg-white/[0.1] hover:text-zinc-200"
++                  )}
++                >
++                  {/* Active background with glow */}
++                  {isActive && (
++                    <motion.div
++                      layoutId="activeTabBg"
++                      className={cn(
++                        "absolute inset-0 rounded-2xl",
++                        tabItem.highlight
++                          ? "bg-gradient-to-br from-amber-500 to-orange-500 shadow-[0_0_16px_rgba(245,158,11,0.5)]"
++                          : "bg-gradient-to-br from-primary to-primary/70 shadow-[0_0_16px_rgba(34,197,94,0.35)]"
++                      )}
++                      transition={{ type: "spring", stiffness: 400, damping: 30 }}
++                    />
++                  )}
++
++                  {/* Pulse ring for highlight tab */}
++                  {tabItem.highlight && !isActive && (
++                    <>
++                      <span
++                        className="absolute inset-0 rounded-2xl animate-ping opacity-10 bg-amber-400 pointer-events-none"
++                        style={{ animationDuration: "2.8s" }}
++                      />
++                      <span className="absolute -top-1.5 -right-1.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-amber-500 text-[7px] font-black text-black shadow-sm shadow-amber-500/50">
++                        ✦
++                      </span>
++                    </>
+                   )}
+-                  transition={{ type: "spring", stiffness: 400, damping: 30 }}
+-                />
+-              )}
+-              <span className="relative z-10 flex flex-col items-center gap-0.5">
+-                {tabItem.highlight && tab !== tabItem.id && (
+-                  <>
+-                    <span className="absolute inset-0 rounded-2xl animate-ping opacity-20 bg-amber-400 pointer-events-none" style={{ animationDuration: '2.5s' }} />
+-                    <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-amber-500 text-[8px] font-black text-black shadow-sm shadow-amber-500/50">
+-                      ✦
+-                    </span>
+-                  </>
+-                )}
+-                {tabItem.icon}
+-                <span className="leading-none truncate w-full text-center">{tabItem.label}</span>
+-              </span>
+-            </button>
+-          ))}
++
++                  {/* Icon */}
++                  <span className={cn("relative z-10 transition-transform duration-200", isActive && "scale-110")}>
++                    {tabItem.icon}
++                  </span>
++
++                  {/* Label — always visible, never clipped */}
++                  <span className="relative z-10 text-[10px] font-bold leading-none whitespace-nowrap">
++                    {tabItem.label}
++                  </span>
++                </button>
++              );
++            })}
+           </div>
+         </div>
+ 
++        {/* Tab content */}
+         <div className="px-4 pt-2 pb-4">
+           <AnimatePresence mode="wait">
+             <motion.div
+@@ -120,12 +139,11 @@ const Copa = () => {
+               transition={{ duration: 0.25, ease: "easeInOut" }}
+             >
+               <Suspense fallback={<TabLoadingState label={t('tabs.loading')} />}>
+-                {tab === "overview" && <CopaOverview />}
++                {tab === "overview"   && <CopaOverview />}
+                 {tab === "calendario" && <CalendarioTab />}
+-                {tab === "grupos" && <GruposTab />}
+-                {tab === "chaves" && <ChavesTab />}
+-                {tab === "simulacao" && <SimulacaoTab />}
+-
++                {tab === "grupos"     && <GruposTab />}
++                {tab === "chaves"     && <ChavesTab />}
++                {tab === "simulacao"  && <SimulacaoTab />}
+               </Suspense>
+             </motion.div>
+           </AnimatePresence>
+diff --git a/src/pages/CriarBolao.tsx b/src/pages/CriarBolao.tsx
+index 75797d4..41c529e 100644
+--- a/src/pages/CriarBolao.tsx
++++ b/src/pages/CriarBolao.tsx
+@@ -1,15 +1,15 @@
+ import { useEffect, useMemo, useState } from "react";
+ import { useNavigate } from "react-router-dom";
+-import { CheckCircle2, ChevronLeft, Crown, Globe, Loader2, Lock, Share2 } from "lucide-react";
++import {
++  CheckCircle2, ChevronLeft, ChevronRight, Crown, Globe,
++  Loader2, Lock, Share2, Settings2,
++} from "lucide-react";
+ import { useTranslation } from "react-i18next";
+ import { Share } from "@capacitor/share";
+-import { collection, query, where, getCountFromServer } from "firebase/firestore";
+-import { db } from "@/integrations/firebase/client";
+ import { useAuth } from "@/contexts/AuthContext";
+ import { useToast } from "@/hooks/use-toast";
+ import { useMonetization } from "@/contexts/MonetizationContext";
+ import { usePlanLimits } from "@/hooks/usePlanLimits";
+-import { teams } from "@/data/mockData";
+ import { cn } from "@/lib/utils";
+ import { monetizationEnv } from "@/lib/env";
+ import { PREMIUM_CHECKOUT_UNAVAILABLE_MESSAGE } from "@/services/monetization/stripe.service";
+@@ -17,98 +17,129 @@ import { getDefaultMarketIdsForFormat } from "@/services/boloes/bolao-format.ser
+ import { useCreateBolao } from "@/hooks/useCreateBolao";
+ import type { BolaoFormatSlug, MarketTemplateSlug, ScoringRules } from "@/types/bolao";
+ 
++// ─── constants ────────────────────────────────────────────────────────────────
++
++const EMOJIS = ["⚽", "🏆", "🎯", "🎉", "🦁", "🔥", "💪", "🏅", "🌟", "🎪", "🐅", "🦅"];
++
+ const PRESETS: Record<"standard" | "risky" | "conservative", ScoringRules> = {
+   standard:     { exact: 10, winner: 3, draw: 3, participation: 1 },
+   risky:        { exact: 20, winner: 5, draw: 5, participation: 0 },
+   conservative: { exact: 5,  winner: 2, draw: 2, participation: 1 },
+ };
+ 
+-const EMOJIS = ["⚽", "🏆", "🎯", "🎉", "🦁", "🔥", "💪", "🏅"];
+-
+ type Category = "private" | "public";
+ type PresetKey = "standard" | "risky" | "conservative";
+ 
+-interface PoolTypeCard {
+-  id: string; emoji: string; title: string; desc: string;
+-  formatId: BolaoFormatSlug; allMarkets: boolean;
+-}
++// Simplified to 3 clear, intuitive types
++const POOL_TYPES = [
++  {
++    id: "placar",
++    emoji: "⚽",
++    title: "Placar dos jogos",
++    subtitle: "O clássico",
++    desc: "Você e seus amigos apostam no resultado exato de cada partida. Quem acertar mais, vence!",
++    example: "Ex: Brasil 2 × 1 Argentina",
++    formatId: "classic" as BolaoFormatSlug,
++    badge: "Mais popular",
++    badgeColor: "bg-primary text-black",
++  },
++  {
++    id: "fase",
++    emoji: "🏆",
++    title: "Quem avança de fase",
++    subtitle: "Mata-mata",
++    desc: "Adivinhe quais seleções passam para as oitavas, quartas, semis e a grande final.",
++    example: "Ex: Brasil, França, Alemanha...",
++    formatId: "knockout" as BolaoFormatSlug,
++    badge: "Estratégico",
++    badgeColor: "bg-blue-500/20 text-blue-400",
++  },
++  {
++    id: "completo",
++    emoji: "🎯",
++    title: "Completo",
++    subtitle: "Tudo junto",
++    desc: "Placar + quem avança + artilheiro + muito mais. Para quem quer máxima diversão!",
++    example: "Ex: Placar, fases, artilheiro...",
++    formatId: "detailed" as BolaoFormatSlug,
++    badge: "Máxima diversão",
++    badgeColor: "bg-purple-500/20 text-purple-400",
++  },
++] as const;
+ 
+-export default function CriarBolao() {
+-  const { t } = useTranslation("bolao");
++type PoolTypeId = typeof POOL_TYPES[number]["id"];
+ 
+-  const POOL_TYPES = useMemo<PoolTypeCard[]>(() => [
+-    { id: "placar",      emoji: "⚽", title: t('create_bolao.type_placar'),   desc: t('create_bolao.type_placar_desc'),    formatId: "classic",    allMarkets: false },
+-    { id: "vencedor",    emoji: "🏆", title: t('create_bolao.type_vencedor'),     desc: t('create_bolao.type_vencedor_desc'),               formatId: "detailed",   allMarkets: false },
+-    { id: "grupos",      emoji: "📊", title: t('create_bolao.type_grupos'),      desc: t('create_bolao.type_grupos_desc'),                  formatId: "knockout",   allMarkets: false },
+-    { id: "chaveamento", emoji: "🔀", title: t('create_bolao.type_chaveamento'),         desc: t('create_bolao.type_chaveamento_desc'),            formatId: "tournament", allMarkets: false },
+-    { id: "express",     emoji: "⚡", title: t('create_bolao.type_express'), desc: "Um jogo só — crie em 10 segundos",        formatId: "strategic",  allMarkets: false },
+-    { id: "completo",    emoji: "🎯", title: t('create_bolao.type_completo'),            desc: t('create_bolao.type_completo_desc'),          formatId: "classic",    allMarkets: true  },
+-  ], [t]);
++// ─── component ────────────────────────────────────────────────────────────────
+ 
++export default function CriarBolao() {
++  const { t } = useTranslation("bolao");
+   const navigate = useNavigate();
+   const { user } = useAuth();
+   const { toast } = useToast();
+-  const { isPremium, purchasePremium, isLoading: isPurchasing } = useMonetization();
++  const { purchasePremium, isLoading: isPurchasing } = useMonetization();
+   const { canCreateGrupo } = usePlanLimits();
+   const canStartCheckout = monetizationEnv.enablePremiumSimulation || monetizationEnv.premiumCheckoutEnabled;
+   const { createBolao, creating } = useCreateBolao();
+ 
+-  const [step, setStep] = useState(0);
+-  const [selectedType, setSelectedType] = useState<string | null>(null);
++  // ─ state ─
++  const [step, setStep] = useState(0); // 0=nome, 1=tipo, 2=privacidade, 3=pontuação(opcional)
+   const [name, setName] = useState("");
+   const [emoji, setEmoji] = useState("⚽");
+   const [description, setDescription] = useState("");
+   const [category, setCategory] = useState<Category>("private");
++  const [selectedTypeId, setSelectedTypeId] = useState<PoolTypeId>("placar");
+   const [formatId, setFormatId] = useState<BolaoFormatSlug>("classic");
+-  const [selectedMarketIds, setSelectedMarketIds] = useState<MarketTemplateSlug[]>(getDefaultMarketIdsForFormat("classic"));
++  const [selectedMarketIds, setSelectedMarketIds] = useState<MarketTemplateSlug[]>(
++    getDefaultMarketIdsForFormat("classic").filter((m) => m !== "champion") as MarketTemplateSlug[]
++  );
+   const [presetKey, setPresetKey] = useState<PresetKey>("standard");
+   const [scoringRules, setScoringRules] = useState(PRESETS.standard);
+-  const [champion, setChampion] = useState("");
++  const [showAdvanced, setShowAdvanced] = useState(false);
+   const [createdBolaoId, setCreatedBolaoId] = useState<string | null>(null);
+   const [createdInviteCode, setCreatedInviteCode] = useState<string | null>(null);
+   const [showPaywall, setShowPaywall] = useState(false);
+ 
+-  const championEnabled = selectedMarketIds.includes("champion");
+-
+-  // Paywall via usePlanLimits — triggers on mount when free limit reached
+   useEffect(() => {
+     if (!canCreateGrupo) setShowPaywall(true);
+   }, [canCreateGrupo]);
+ 
+-  const canProceed = useMemo(() => {
+-    if (step === 1) return name.trim().length >= 3 && (championEnabled ? Boolean(champion) : true);
+-    return true;
+-  }, [champion, championEnabled, name, step]);
+-
+-  const handleSelectType = (card: PoolTypeCard) => {
+-    setSelectedType(card.id);
+-    setFormatId(card.formatId);
+-    const mkts = card.allMarkets
+-      ? (["matches", "phase", "champion", "special", "tournament"] as MarketTemplateSlug[])
+-      : getDefaultMarketIdsForFormat(card.formatId);
++  const selectedType = POOL_TYPES.find((t) => t.id === selectedTypeId)!;
++
++  const canProceedStep0 = name.trim().length >= 3;
++
++  const handleSelectType = (typeId: PoolTypeId) => {
++    const t = POOL_TYPES.find((x) => x.id === typeId)!;
++    setSelectedTypeId(typeId);
++    setFormatId(t.formatId);
++    const mkts = getDefaultMarketIdsForFormat(t.formatId)
++      .filter((m) => m !== "champion") as MarketTemplateSlug[];
+     setSelectedMarketIds(mkts);
+-    if (!mkts.includes("champion")) setChampion("");
+-    setStep(1);
+   };
+ 
+   const handleCreate = async () => {
+-    const result = await createBolao({ name, description, emoji, category, formatId, selectedMarketIds, scoringRules, champion });
++    const result = await createBolao({
++      name, description, emoji, category,
++      formatId, selectedMarketIds, scoringRules, champion: "",
++    });
+     if (result) {
+-      toast({ title: t("create_bolao.review.success_title"), className: "bg-emerald-500 text-white border-none font-black" });
++      toast({ title: "Bolão criado! 🎉", className: "bg-emerald-500 text-white border-none font-black" });
+       setCreatedBolaoId(result.bolaoId);
+       setCreatedInviteCode(result.inviteCode);
+-      setStep(5);
+     }
+   };
+ 
+-  // ─── Paywall ──────────────────────────────────────────────────────────────
++  // ─── Paywall ────────────────────────────────────────────────────────────────
+   if (showPaywall) {
+     return (
+       <div className="mx-auto flex min-h-[70vh] max-w-lg items-center px-4 py-10 text-white">
+         <div className="surface-card-strong w-full rounded-[32px] p-6">
+-          <div className="mb-4 inline-flex rounded-full bg-primary/15 p-3 text-primary"><Crown className="h-6 w-6" /></div>
++          <div className="mb-4 inline-flex rounded-full bg-primary/15 p-3 text-primary">
++            <Crown className="h-6 w-6" />
++          </div>
+           <h1 className="text-2xl font-black">Limite atingido</h1>
+-          <p className="mt-2 text-sm text-zinc-400">O plano gratuito permite criar até 2 grupos. O Copa Pass libera grupos e bolões ilimitados.</p>
++          <p className="mt-2 text-sm text-zinc-400">
++            O plano gratuito permite criar até 2 grupos. O Copa Pass libera grupos e bolões ilimitados.
++          </p>
+           <div className="surface-card-soft mt-5 space-y-3 rounded-2xl p-4 text-sm">
+             <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-primary" /> Grupos e bolões ilimitados</div>
+             <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-primary" /> Sem anúncios</div>
+@@ -128,176 +159,334 @@ export default function CriarBolao() {
+     );
+   }
+ 
+-  // ─── Success ──────────────────────────────────────────────────────────────
+-  if (step === 5 && createdBolaoId && createdInviteCode) {
++  // ─── Success ────────────────────────────────────────────────────────────────
++  if (createdBolaoId && createdInviteCode) {
+     const inviteUrl = `${window.location.origin}/b/${createdInviteCode}`;
+-    const msg = `Vem pro meu bolão "${name}" no Arena CUP! Código: ${createdInviteCode}`;
++    const msg = `Vem pro meu bolão "${name}" no Arena Copa! Código: ${createdInviteCode}`;
+     const handleShareNative = async () => {
+-      try { await Share.share({ title: "Arena CUP Bolão", text: msg, url: inviteUrl }); }
++      try { await Share.share({ title: "Arena Copa Bolão", text: msg, url: inviteUrl }); }
+       catch { await navigator.clipboard.writeText(inviteUrl); toast({ title: t('bolao_detail.link_copied') }); }
+     };
+     return (
+       <div className="mx-auto max-w-xl px-4 py-10 text-white">
+         <div className="surface-card-strong rounded-[32px] p-8 text-center">
+-          <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-primary/15 text-4xl">{emoji}</div>
++          <div className="mx-auto mb-2 flex h-24 w-24 items-center justify-center rounded-full bg-primary/15 text-5xl">{emoji}</div>
+           <p className="text-[11px] font-black uppercase tracking-[0.22em] text-primary">Bolão criado! 🎉</p>
+-          <h1 className="mt-2 text-3xl font-black">{name}</h1>
+-          <div className="mt-6 grid gap-3 md:grid-cols-2">
+-            <button onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(`${msg} ${inviteUrl}`)}`, "_blank")}
+-              className="rounded-2xl bg-primary px-5 py-4 text-[11px] font-black uppercase tracking-[0.18em] text-black">WhatsApp</button>
++          <h1 className="mt-1 text-3xl font-black">{name}</h1>
++          <p className="mt-2 text-sm text-zinc-400">Agora chama os amigos pra entrar!</p>
++
++          <div className="surface-card-soft mt-5 rounded-2xl p-4">
++            <p className="text-xs text-zinc-500">Código de convite</p>
++            <p className="mt-1 text-3xl font-black tracking-widest text-primary">{createdInviteCode}</p>
++          </div>
++
++          <div className="mt-5 grid gap-3 sm:grid-cols-2">
++            <button
++              onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(`${msg} ${inviteUrl}`)}`, "_blank")}
++              className="rounded-2xl bg-[#25D366] px-5 py-4 text-[11px] font-black uppercase tracking-[0.18em] text-white">
++              WhatsApp
++            </button>
+             <button onClick={handleShareNative}
+               className="surface-card-soft inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-4 text-[11px] font-black uppercase tracking-[0.18em]">
+               <Share2 className="h-4 w-4" /> Mais opções
+             </button>
+           </div>
+-          <button onClick={() => { navigator.clipboard.writeText(inviteUrl); toast({ title: t('bolao_detail.link_copied') }); }}
+-            className="surface-card-soft mt-3 w-full truncate rounded-2xl px-4 py-4 text-xs font-bold text-zinc-300">{inviteUrl}</button>
++          <button
++            onClick={() => { navigator.clipboard.writeText(inviteUrl); toast({ title: t('bolao_detail.link_copied') }); }}
++            className="surface-card-soft mt-3 w-full truncate rounded-2xl px-4 py-3 text-xs font-bold text-zinc-400">
++            {inviteUrl}
++          </button>
+           <button onClick={() => navigate(`/boloes/${createdBolaoId}`)}
+-            className="mt-6 w-full rounded-[24px] bg-primary px-6 py-5 text-[11px] font-black uppercase tracking-[0.2em] text-black">Ver meu bolão →</button>
++            className="mt-4 w-full rounded-[24px] bg-primary px-6 py-5 text-[11px] font-black uppercase tracking-[0.2em] text-black">
++            Ver meu bolão →
++          </button>
+         </div>
+       </div>
+     );
+   }
+ 
+-  // ─── Main layout ──────────────────────────────────────────────────────────
+-  return (
+-    <div className="mx-auto max-w-3xl px-4 pb-28 pt-6 text-white">
+-      <div className="mb-6 flex items-center gap-3">
+-        <button aria-label="Voltar" onClick={() => step === 0 ? navigate(-1) : setStep(0)}
+-          className="surface-card-soft flex h-12 w-12 items-center justify-center rounded-[20px]">
+-          <ChevronLeft className="h-5 w-5" />
+-        </button>
+-        <div>
+-          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">
+-            {step === 0 ? "Passo 1 de 2" : "Passo 2 de 2"}
+-          </p>
+-          <h1 className="text-3xl font-black">{step === 0 ? "Que tipo de bolão?" : "Detalhes"}</h1>
++  // ─── Step 0: Nome ───────────────────────────────────────────────────────────
++  if (step === 0) {
++    return (
++      <div className="mx-auto max-w-lg px-4 pb-28 pt-6 text-white">
++        {/* header */}
++        <div className="mb-8 flex items-center gap-3">
++          <button aria-label="Voltar" onClick={() => navigate(-1)}
++            className="surface-card-soft flex h-11 w-11 items-center justify-center rounded-[18px]">
++            <ChevronLeft className="h-5 w-5" />
++          </button>
++          <div>
++            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Passo 1 de 3</p>
++            <h1 className="text-2xl font-black leading-tight">Nome do bolão</h1>
++          </div>
+         </div>
+-      </div>
+ 
+-      <div className="mb-8 rounded-full bg-white/5 p-1">
+-        <div className="h-2 rounded-full bg-primary transition-all" style={{ width: step === 0 ? "50%" : "100%" }} />
+-      </div>
+-
+-      {/* ── Step 0: Pool type cards ── */}
+-      {step === 0 && (
+-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+-          {POOL_TYPES.map((card) => (
+-            <button key={card.id} onClick={() => handleSelectType(card)}
+-              className="surface-card-strong rounded-[28px] border border-transparent p-6 text-left transition-all hover:border-primary/40 hover:scale-[1.02] active:scale-[0.98]">
+-              <div className="mb-3 text-4xl">{card.emoji}</div>
+-              <p className="text-lg font-black">{card.title}</p>
+-              <p className="mt-1 text-sm text-zinc-400">{card.desc}</p>
+-            </button>
+-          ))}
++        {/* progress */}
++        <div className="mb-8 flex gap-1.5">
++          <div className="h-1.5 flex-1 rounded-full bg-primary" />
++          <div className="h-1.5 flex-1 rounded-full bg-white/10" />
++          <div className="h-1.5 flex-1 rounded-full bg-white/10" />
+         </div>
+-      )}
+-
+-      {/* ── Step 1: Details ── */}
+-      {step === 1 && (
+-        <div className="surface-card-strong rounded-[32px] p-6 space-y-6">
+-          {/* selected type chip */}
+-          {selectedType && (() => { const c = POOL_TYPES.find(x => x.id === selectedType); return c ? (
+-            <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-2 text-sm font-bold text-primary">
+-              <span>{c.emoji}</span><span>{c.title}</span>
+-            </div>
+-          ) : null; })()}
+ 
+-          {/* Emoji */}
++        <div className="space-y-6">
++          {/* Emoji picker */}
+           <div>
+-            <p className="mb-3 text-sm font-bold">Emoji</p>
+-            <div className="flex flex-wrap gap-3">
++            <p className="mb-3 text-sm font-bold text-zinc-300">Escolha um emoji pra representar seu bolão</p>
++            <div className="flex flex-wrap gap-2">
+               {EMOJIS.map((e) => (
+                 <button key={e} onClick={() => setEmoji(e)}
+-                  className={cn("rounded-2xl border p-3 text-3xl transition-all",
+-                    emoji === e ? "scale-110 border-primary bg-primary/20" : "surface-card-soft")}>
++                  className={cn(
++                    "rounded-2xl border p-3 text-2xl transition-all",
++                    emoji === e ? "scale-110 border-primary bg-primary/20" : "surface-card-soft border-transparent"
++                  )}>
+                   {e}
+                 </button>
+               ))}
+             </div>
+           </div>
+ 
+-          {/* Name */}
++          {/* Name input */}
+           <div>
+-            <p className="mb-3 text-sm font-bold">Nome do bolão *</p>
+-            <input value={name} onChange={(e) => setName(e.target.value)}
++            <p className="mb-2 text-sm font-bold text-zinc-300">Como vai se chamar?</p>
++            <input
++              value={name}
++              onChange={(e) => setName(e.target.value)}
+               placeholder="Ex: Bolão da firma, Copa da família..."
+-              className="surface-input w-full rounded-[24px] px-5 py-4 text-xl font-black" />
++              autoFocus
++              maxLength={40}
++              className="surface-input w-full rounded-[20px] px-5 py-4 text-xl font-black placeholder:text-zinc-600"
++            />
++            <p className="mt-1.5 text-right text-xs text-zinc-600">{name.length}/40</p>
+           </div>
+ 
+           {/* Description */}
+           <div>
+-            <p className="mb-3 text-sm font-bold">Descrição <span className="font-normal text-zinc-500">(opcional)</span></p>
+-            <textarea value={description} onChange={(e) => setDescription(e.target.value)}
+-              placeholder="Regras, prêmio, contexto..."
+-              className="surface-input min-h-[80px] w-full rounded-[24px] px-5 py-4 text-sm" />
++            <p className="mb-2 text-sm font-bold text-zinc-300">
++              Descrição <span className="font-normal text-zinc-500">(opcional)</span>
++            </p>
++            <textarea
++              value={description}
++              onChange={(e) => setDescription(e.target.value)}
++              placeholder="Regras, premiação, contexto do bolão..."
++              maxLength={140}
++              className="surface-input min-h-[80px] w-full rounded-[20px] px-5 py-4 text-sm placeholder:text-zinc-600"
++            />
+           </div>
+ 
+-          {/* Privacy */}
+-          <div>
+-            <p className="mb-3 text-sm font-bold">Visibilidade</p>
+-            <div className="grid gap-3 sm:grid-cols-2">
+-              <button onClick={() => setCategory("private")}
+-                className={cn("rounded-[24px] border p-4 text-left transition-all",
+-                  category === "private" ? "border-primary bg-primary/10" : "surface-card-soft")}>
+-                <Lock className="mb-2 h-4 w-4 text-primary" />
+-                <p className="text-sm font-black">Privado</p>
+-                <p className="mt-0.5 text-xs text-zinc-400">Apenas com link ou código</p>
+-              </button>
+-              <button onClick={() => setCategory("public")}
+-                className={cn("rounded-[24px] border p-4 text-left transition-all",
+-                  category === "public" ? "border-primary bg-primary/10" : "surface-card-soft")}>
+-                <Globe className="mb-2 h-4 w-4 text-primary" />
+-                <p className="text-sm font-black">Público</p>
+-                <p className="mt-0.5 text-xs text-zinc-400">Aparece para qualquer um</p>
+-              </button>
++          {/* Preview + CTA */}
++          <div className="surface-card-soft rounded-[20px] p-4">
++            <p className="mb-2 text-xs font-bold uppercase tracking-widest text-zinc-500">Prévia</p>
++            <div className="flex items-center gap-3">
++              <span className="text-3xl">{emoji}</span>
++              <div>
++                <p className="font-black">{name || "Nome do bolão"}</p>
++                {description && <p className="mt-0.5 text-xs text-zinc-400 line-clamp-1">{description}</p>}
++              </div>
+             </div>
+           </div>
+ 
+-          {/* Scoring preset */}
++          <button
++            onClick={() => setStep(1)}
++            disabled={!canProceedStep0}
++            className="w-full rounded-[20px] bg-primary px-6 py-5 text-[11px] font-black uppercase tracking-[0.2em] text-black disabled:opacity-40 flex items-center justify-center gap-2">
++            Próximo <ChevronRight className="h-4 w-4" />
++          </button>
++        </div>
++      </div>
++    );
++  }
++
++  // ─── Step 1: Tipo de bolão ──────────────────────────────────────────────────
++  if (step === 1) {
++    return (
++      <div className="mx-auto max-w-lg px-4 pb-28 pt-6 text-white">
++        <div className="mb-8 flex items-center gap-3">
++          <button aria-label="Voltar" onClick={() => setStep(0)}
++            className="surface-card-soft flex h-11 w-11 items-center justify-center rounded-[18px]">
++            <ChevronLeft className="h-5 w-5" />
++          </button>
+           <div>
+-            <p className="mb-3 text-sm font-bold">Pontuação</p>
+-            <div className="grid gap-2 sm:grid-cols-3">
+-              {(["standard", "risky", "conservative"] as const).map((k) => (
+-                <button key={k} onClick={() => { setPresetKey(k); setScoringRules(PRESETS[k]); }}
+-                  className={cn("rounded-2xl border p-3 text-center text-sm transition-all",
+-                    presetKey === k ? "border-primary bg-primary/10 font-black" : "surface-card-soft text-zinc-400")}>
+-                  {k === "standard" ? "⚖️ Padrão" : k === "risky" ? "🎲 Arriscado" : "🛡️ Conservador"}
+-                </button>
+-              ))}
++            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Passo 2 de 3</p>
++            <h1 className="text-2xl font-black leading-tight">Que tipo de bolão?</h1>
++          </div>
++        </div>
++
++        <div className="mb-8 flex gap-1.5">
++          <div className="h-1.5 flex-1 rounded-full bg-primary" />
++          <div className="h-1.5 flex-1 rounded-full bg-primary" />
++          <div className="h-1.5 flex-1 rounded-full bg-white/10" />
++        </div>
++
++        <div className="space-y-3">
++          {POOL_TYPES.map((type) => {
++            const isSelected = selectedTypeId === type.id;
++            return (
++              <button
++                key={type.id}
++                onClick={() => handleSelectType(type.id)}
++                className={cn(
++                  "w-full rounded-[24px] border p-5 text-left transition-all",
++                  isSelected
++                    ? "border-primary bg-primary/10 scale-[1.01]"
++                    : "surface-card-strong border-transparent"
++                )}>
++                <div className="flex items-start justify-between gap-3">
++                  <div className="flex items-start gap-3">
++                    <span className="mt-0.5 text-3xl">{type.emoji}</span>
++                    <div>
++                      <div className="flex items-center gap-2">
++                        <p className="font-black">{type.title}</p>
++                        <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-black", type.badgeColor)}>
++                          {type.badge}
++                        </span>
++                      </div>
++                      <p className="mt-1 text-sm text-zinc-400 leading-snug">{type.desc}</p>
++                      <p className="mt-2 rounded-lg bg-white/5 px-3 py-1.5 text-xs text-zinc-500 inline-block">{type.example}</p>
++                    </div>
++                  </div>
++                  <div className={cn(
++                    "mt-1 h-5 w-5 shrink-0 rounded-full border-2 transition-all",
++                    isSelected ? "border-primary bg-primary" : "border-zinc-600"
++                  )}>
++                    {isSelected && <div className="flex h-full w-full items-center justify-center"><div className="h-2 w-2 rounded-full bg-black" /></div>}
++                  </div>
++                </div>
++              </button>
++            );
++          })}
++        </div>
++
++        <button
++          onClick={() => setStep(2)}
++          className="mt-6 w-full rounded-[20px] bg-primary px-6 py-5 text-[11px] font-black uppercase tracking-[0.2em] text-black flex items-center justify-center gap-2">
++          Próximo <ChevronRight className="h-4 w-4" />
++        </button>
++      </div>
++    );
++  }
++
++  // ─── Step 2: Privacidade + Pontuação + Criar ────────────────────────────────
++  return (
++    <div className="mx-auto max-w-lg px-4 pb-28 pt-6 text-white">
++      <div className="mb-8 flex items-center gap-3">
++        <button aria-label="Voltar" onClick={() => setStep(1)}
++          className="surface-card-soft flex h-11 w-11 items-center justify-center rounded-[18px]">
++          <ChevronLeft className="h-5 w-5" />
++        </button>
++        <div>
++          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Passo 3 de 3</p>
++          <h1 className="text-2xl font-black leading-tight">Últimos detalhes</h1>
++        </div>
++      </div>
++
++      <div className="mb-8 flex gap-1.5">
++        <div className="h-1.5 flex-1 rounded-full bg-primary" />
++        <div className="h-1.5 flex-1 rounded-full bg-primary" />
++        <div className="h-1.5 flex-1 rounded-full bg-primary" />
++      </div>
++
++      <div className="space-y-4">
++        {/* Resumo do que foi escolhido */}
++        <div className="surface-card-soft rounded-[20px] p-4">
++          <p className="mb-3 text-xs font-bold uppercase tracking-widest text-zinc-500">Resumo</p>
++          <div className="flex items-center gap-3">
++            <span className="text-3xl">{emoji}</span>
++            <div className="flex-1 min-w-0">
++              <p className="font-black truncate">{name}</p>
++              <p className="mt-0.5 text-xs text-zinc-400">{selectedType.title} · {selectedType.subtitle}</p>
+             </div>
+-            <p className="mt-2 text-xs text-zinc-500">
+-              {presetKey === "standard"     && "Exato: 10pts · Vencedor: 3pts · Participação: 1pt"}
+-              {presetKey === "risky"        && "Exato: 20pts · Vencedor: 5pts · Sem participação"}
+-              {presetKey === "conservative" && "Exato: 5pts · Vencedor: 2pts · Participação: 1pt"}
+-            </p>
++            <button onClick={() => setStep(0)} className="text-xs text-primary font-bold shrink-0">Editar</button>
++          </div>
++        </div>
++
++        {/* Quem pode entrar */}
++        <div>
++          <p className="mb-3 text-sm font-bold">Quem pode entrar?</p>
++          <div className="grid grid-cols-2 gap-3">
++            <button
++              onClick={() => setCategory("private")}
++              className={cn(
++                "rounded-[20px] border p-4 text-left transition-all",
++                category === "private" ? "border-primary bg-primary/10" : "surface-card-strong border-transparent"
++              )}>
++              <Lock className={cn("mb-2 h-5 w-5", category === "private" ? "text-primary" : "text-zinc-500")} />
++              <p className="text-sm font-black">Privado</p>
++              <p className="mt-0.5 text-xs text-zinc-500">Só quem tiver o link ou código</p>
++            </button>
++            <button
++              onClick={() => setCategory("public")}
++              className={cn(
++                "rounded-[20px] border p-4 text-left transition-all",
++                category === "public" ? "border-primary bg-primary/10" : "surface-card-strong border-transparent"
++              )}>
++              <Globe className={cn("mb-2 h-5 w-5", category === "public" ? "text-primary" : "text-zinc-500")} />
++              <p className="text-sm font-black">Público</p>
++              <p className="mt-0.5 text-xs text-zinc-500">Qualquer pessoa pode entrar</p>
++            </button>
+           </div>
++        </div>
+ 
+-          {/* Champion pick — only if champion market is enabled */}
+-          {championEnabled && (
+-            <div>
+-              <p className="mb-3 text-sm font-bold">Quem será o campeão? *</p>
+-              <div className="grid grid-cols-4 gap-2 sm:grid-cols-6">
+-                {teams.slice(0, 24).map((team) => (
+-                  <button key={team.code} onClick={() => setChampion(team.code)}
+-                    className={cn("rounded-xl p-2 text-center text-xs font-bold transition-all",
+-                      champion === team.code ? "border border-primary bg-primary/20 scale-105" : "surface-card-soft text-zinc-400")}>
+-                    {team.code}
+-                  </button>
+-                ))}
++        {/* Pontuação (colapsável) */}
++        <div>
++          <button
++            onClick={() => setShowAdvanced(!showAdvanced)}
++            className="surface-card-soft flex w-full items-center justify-between rounded-[20px] px-4 py-3">
++            <div className="flex items-center gap-2">
++              <Settings2 className="h-4 w-4 text-zinc-400" />
++              <div className="text-left">
++                <p className="text-sm font-bold">Sistema de pontuação</p>
++                <p className="text-xs text-zinc-500">
++                  {presetKey === "standard" ? "Padrão (recomendado)" : presetKey === "risky" ? "Arriscado" : "Conservador"}
++                </p>
+               </div>
+             </div>
+-          )}
+-
+-          {/* Create button */}
+-          <button onClick={handleCreate} disabled={!canProceed || creating}
+-            className="mt-2 w-full rounded-[24px] bg-primary px-6 py-5 text-[11px] font-black uppercase tracking-[0.2em] text-black disabled:opacity-60">
+-            {creating
+-              ? <span className="inline-flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Criando...</span>
+-              : "Criar bolão →"}
++            <ChevronRight className={cn("h-4 w-4 text-zinc-500 transition-transform", showAdvanced && "rotate-90")} />
+           </button>
++
++          {showAdvanced && (
++            <div className="mt-2 surface-card-soft rounded-[20px] p-4 space-y-3">
++              <p className="text-xs text-zinc-500">
++                Quanto vale cada tipo de acerto? Escolha o sistema que combina com o seu grupo.
++              </p>
++              {(["standard", "risky", "conservative"] as const).map((k) => (
++                <button
++                  key={k}
++                  onClick={() => { setPresetKey(k); setScoringRules(PRESETS[k]); }}
++                  className={cn(
++                    "w-full rounded-[16px] border p-3 text-left transition-all",
++                    presetKey === k ? "border-primary bg-primary/10" : "surface-card-strong border-transparent"
++                  )}>
++                  <div className="flex items-center justify-between">
++                    <p className="text-sm font-black">
++                      {k === "standard" ? "⚖️ Padrão" : k === "risky" ? "🎲 Arriscado" : "🛡️ Conservador"}
++                    </p>
++                    {presetKey === k && <CheckCircle2 className="h-4 w-4 text-primary" />}
++                  </div>
++                  <p className="mt-1 text-xs text-zinc-500">
++                    {k === "standard" && "Placar exato: 10pts · Vencedor: 3pts · Participação: 1pt"}
++                    {k === "risky"    && "Placar exato: 20pts · Vencedor: 5pts · Sem bônus de participação"}
++                    {k === "conservative" && "Placar exato: 5pts · Vencedor: 2pts · Participação: 1pt"}
++                  </p>
++                </button>
++              ))}
++            </div>
++          )}
+         </div>
+-      )}
++
++        {/* Criar bolão */}
++        <button
++          onClick={handleCreate}
++          disabled={creating}
++          className="w-full rounded-[20px] bg-primary px-6 py-5 text-[11px] font-black uppercase tracking-[0.2em] text-black disabled:opacity-60">
++          {creating
++            ? <span className="inline-flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Criando...</span>
++            : "Criar bolão 🎉"}
++        </button>
++
++        <p className="text-center text-xs text-zinc-600">
++          Você poderá convidar amigos logo depois de criar.
++        </p>
++      </div>
+     </div>
+   );
+ }

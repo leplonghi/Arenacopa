@@ -80,6 +80,38 @@
       "hdi": "IDH",
       "population": "Población",
       "gdp": "PIB (Billones)"
+    },
+    "editor": {
+      "selected_groups": "{{count}} grupo selecionado",
+      "selected_groups_plural": "{{count}} grupos selecionados",
+      "progress": "Progresso",
+      "games_count": "{{filled}}/{{total}} jogos",
+      "phase_groups": "Fase de Grupos",
+      "phase_knockout": "Eliminatórias",
+      "group_complete": "Completo",
+      "standings": "Classificação"
+    },
+    "list": {
+      "title": "Minhas Simulações",
+      "subtitle": "Crie e gerencie suas simulações",
+      "new": "Nova",
+      "empty_title": "Nenhuma simulação ainda",
+      "empty_desc": "Simule os resultados da Copa e compartilhe!",
+      "create_first": "Criar Simulação",
+      "login_title": "Faça login para simular",
+      "login_desc": "Suas simulações ficam salvas na sua conta",
+      "groups_count": "{{count}} grupos",
+      "games_count": "{{filled}}/{{total}} preenchidos",
+      "created": "Simulação criada!",
+      "deleted": "Simulação excluída"
+    },
+    "knockout": {
+      "incomplete_title": "Fase de Grupos Incompleta",
+      "incomplete_desc": "Preencha todos os jogos dos 12 grupos para desbloquear as eliminatórias",
+      "penalties": "Pênaltis",
+      "advances": "{{team}} avança",
+      "defined_games": "{{filled}}/{{total}} jogos definidos",
+      "defined_games_singular": "{{filled}}/{{total}} jogo definido"
     }
   },
   "simulator": {
@@ -118,7 +150,8 @@
       "groups_count": "{{count}} grupos",
       "games_count": "{{filled}}/{{total}} llenos",
       "created": "Simulación creada",
-      "deleted": "Simulación eliminada"
+      "deleted": "Simulación eliminada",
+      "groups_count_plural": "{{count}} grupos"
     },
     "editor": {
       "selected_groups": "{{count}} grupo seleccionado",
@@ -173,7 +206,18 @@
     "day_label": "Día {{current}}/{{total}}"
   },
   "bracket": {
-    "third_place": "Disputa por el 3er Lugar"
+    "third_place": "Disputa por el 3er Lugar",
+    "champion_label": "Campeón del Mundo",
+    "champion_sub": "CAMPEÓN MUNDIAL 2026",
+    "rounds": {
+      "r32": "32 avos",
+      "r16": "Octavos",
+      "quarter": "Cuartos",
+      "semi": "Semis",
+      "third": "3º Lugar",
+      "final": "Final"
+    },
+    "tbd": "Por definir"
   },
   "grupos": {
     "no_games": "No se encontraron partidos para este grupo."
@@ -192,6 +236,27 @@
       "teams": "Selecciones",
       "travel": "Turismo",
       "tickets": "Entradas"
+    }
+  },
+  "groups": {
+    "mode": {
+      "real": "Real",
+      "simulation": "Simulación"
+    },
+    "simulation_hint": "Rellena los resultados en <1>Simulador</1> para verlos aquí.",
+    "status": {
+      "simulated": "Simulado",
+      "in_progress": "En curso",
+      "pending": "Pendiente",
+      "finished": "Finalizado"
+    },
+    "table": {
+      "country": "País",
+      "j": "P",
+      "w": "V",
+      "gd": "DG",
+      "p": "Pts",
+      "prob": "Prob."
     }
   }
 }

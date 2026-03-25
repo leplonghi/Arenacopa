@@ -264,16 +264,18 @@ const Auth = () => {
           </button>
         </form>
 
-        <button
-          type="button"
-          onClick={handleDemoLogin}
-          disabled={loading}
-          className="mt-12 text-[10px] uppercase tracking-[0.4em] font-black text-white/40 hover:text-primary transition-colors flex items-center gap-4 group disabled:opacity-50"
-        >
-          <div className="w-10 h-px bg-white/10 group-hover:bg-primary/30 transition-colors" />
-          {t('login.demo')}
-          <div className="w-10 h-px bg-white/10 group-hover:bg-primary/30 transition-colors" />
-        </button>
+        {import.meta.env.DEV && (
+          <button
+            type="button"
+            onClick={handleDemoLogin}
+            disabled={loading}
+            className="mt-12 text-[10px] uppercase tracking-[0.4em] font-black text-white/40 hover:text-primary transition-colors flex items-center gap-4 group disabled:opacity-50"
+          >
+            <div className="w-10 h-px bg-white/10 group-hover:bg-primary/30 transition-colors" />
+            {t('login.demo')}
+            <div className="w-10 h-px bg-white/10 group-hover:bg-primary/30 transition-colors" />
+          </button>
+        )}
       </div>
     </div>
   );

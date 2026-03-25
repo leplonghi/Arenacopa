@@ -40,7 +40,7 @@ export function PremiumModal({ isOpen, onClose, onSuccess }: PremiumModalProps) 
                     initial={{ scale: 0.9, opacity: 0, y: 20 }}
                     animate={{ scale: 1, opacity: 1, y: 0 }}
                     exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                    className="relative w-full max-w-sm bg-background border border-border rounded-3xl overflow-hidden shadow-2xl"
+                    className="relative w-full max-w-sm bg-black/80 backdrop-blur-xl border border-white/10 rounded-[32px] overflow-hidden shadow-2xl"
                     onClick={(e) => e.stopPropagation()}
                 >
                     {/* Header Image / Gradient */}
@@ -70,9 +70,9 @@ export function PremiumModal({ isOpen, onClose, onSuccess }: PremiumModalProps) 
                         <div className="space-y-3">
                             {[
                                 { icon: <Zap className="w-4 h-4 text-yellow-500" />, text: "Remover todos os anúncios" },
-                                { icon: <Shield className="w-4 h-4 text-blue-500" />, text: "Estatísticas avançadas" },
-                                { icon: <Sparkles className="w-4 h-4 text-emerald-500" />, text: "Insignia exclusiva de apoiador" },
-                                { icon: <Crown className="w-4 h-4 text-orange-500" />, text: "Acesso antecipado a novidades" },
+                                { icon: <Shield className="w-4 h-4 text-copa-blue" />, text: "Estatísticas avançadas" },
+                                { icon: <Sparkles className="w-4 h-4 text-copa-green-light" />, text: "Insignia exclusiva de apoiador" },
+                                { icon: <Crown className="w-4 h-4 text-copa-orange" />, text: "Acesso antecipado a novidades" },
                             ].map((item, i) => (
                                 <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-secondary/50 border border-border/50">
                                     <div className="p-2 rounded-full bg-background shadow-sm">

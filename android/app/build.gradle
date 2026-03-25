@@ -1,14 +1,14 @@
 apply plugin: 'com.android.application'
 
 android {
-    namespace = "app.lovable.a569c8b887414e408fa66bdf2e5c3992"
+    namespace = "app.arenacopa.www"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "app.lovable.a569c8b887414e408fa66bdf2e5c3992"
+        applicationId "app.arenacopa.www"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 1
-        versionName "1.0"
+        versionCode 3
+        versionName "1.2"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -18,10 +18,10 @@ android {
     }
     signingConfigs {
         release {
-            storeFile file("C:/Users/eduar/arena-cup-release.keystore")
-            storePassword "ArenaCup2026!"
-            keyAlias "arena-cup-key"
-            keyPassword "ArenaCup2026!"
+            storeFile file("C:/Users/eduar/.antigravity/Arenacopa/release/arenacopa-release.jks")
+            storePassword "ArenaCopa2026!"
+            keyAlias "arenacopa"
+            keyPassword "ArenaCopa2026!"
         }
     }
     buildTypes {
