@@ -194,7 +194,8 @@ export interface BolaoData {
     avatar_url: string | null;
     status: 'draft' | 'open' | 'active' | 'finished';
     format_id?: BolaoFormatSlug;
-    scoring_mode?: "default" | "custom";
+    scoring_mode?: "default" | "custom" | "exclusive";
+    grupo_id?: string | null;
     visibility_mode?: "hidden_until_deadline" | "visible_after_save" | "always_hidden";
     cutoff_mode?: "per_match" | "per_phase" | "manual";
 }

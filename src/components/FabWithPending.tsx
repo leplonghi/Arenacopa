@@ -93,7 +93,7 @@ import { Flag } from "@/components/Flag";
 import { collection, getDocs, onSnapshot, orderBy, query, where } from "firebase/firestore";
 import { useTranslation } from "react-i18next";
 
-type PendingMatch = {
+export type PendingMatch = {
   id: string;
   stage: string | null;
   home_team_code: string | null;
@@ -101,7 +101,7 @@ type PendingMatch = {
   match_date: string;
 };
 
-type PendingPredictionItem = {
+export type PendingPredictionItem = {
   match: PendingMatch;
   bolaoIds: string[];
 };
@@ -128,19 +128,9 @@ const normalizeMatchDate = (value: string | { toDate?: () => Date } | undefined)
   return new Date(0).toISOString();
 };
 
-export function FabWithPending({
-  className,
-  isActive,
-}: {
-  className?: string;
-  isActive?: boolean;
-}) {
+export function usePendingPredictions() {
   const { user } = useAuth();
-  const navigate = useNavigate();
-  const { t } = useTranslation("bolao");
   const [pendingItems, setPendingItems] = useState<PendingPredictionItem[]>([]);
-  const [isOpen, setIsOpen] = useState(false);
-
 
   const fetchPending = useCallback(async () => {
     if (!user?.id) {
@@ -256,16 +246,23 @@ export function FabWithPending({
     };
   }, [fetchPending, user?.id]);
 
+  return pendingItems;
+}
+
+export function FabWithPending({
+  className,
+  isActive,
+}: {
+  className?: string;
+  isActive?: boolean;
+}) {
+  const { t } = useTranslation("bolao");
+  const pendingItems = usePendingPredictions();
+
   const totalMissingPredictions = useMemo(
     () => pendingItems.reduce((acc, item) => acc + item.bolaoIds.length, 0),
     [pendingItems]
   );
-
-  const handleOpenPrediction = (item: PendingPredictionItem) => {
-    setIsOpen(false);
-    const targetBolaoId = item.bolaoIds[0];
-    navigate(`/boloes/${targetBolaoId}?match=${item.match.id}&tab=jogos`);
-  };
 
   const fabButton = (
     <div className="relative flex h-full flex-col items-center justify-center gap-1 py-2">
@@ -314,83 +311,17 @@ export function FabWithPending({
     </div>
   );
 
-  if (!pendingItems.length) {
-    return (
-      <NavLink
-        to="/boloes"
-        aria-label={t('page.kicker')}
-        className={cn(
-          "inline-flex h-full items-center justify-center",
-          isActive ? "opacity-100" : "opacity-95",
-          className
-        )}
-      >
-        {fabButton}
-      </NavLink>
-    );
-  }
-
   return (
-    <Sheet open={isOpen} onOpenChange={setIsOpen}>
-      <SheetTrigger asChild>
-        <button aria-label={t('page.kicker')} className={cn("inline-flex h-full items-center justify-center", className)}>{fabButton}</button>
-      </SheetTrigger>
-      <SheetContent side="bottom" className="border-white/10 bg-zinc-950 text-white">
-        <SheetHeader>
-          <SheetTitle className="text-left text-white">{t('fab.pending_title')}</SheetTitle>
-        </SheetHeader>
-
-        <div className="mt-4 space-y-3">
-          {pendingItems.map((item) => {
-            const date = new Date(item.match.match_date);
-            const dateString = `${date.toLocaleDateString("pt-BR")} • ${date.toLocaleTimeString("pt-BR", {
-              hour: "2-digit",
-              minute: "2-digit",
-            })}`;
-
-            return (
-              <div
-                key={item.match.id}
-                className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur"
-              >
-                <div className="mb-2 flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">
-                      {item.match.stage || t('fab.group_stage')}
-                    </p>
-                    <p className="mt-1 flex items-center gap-2 text-sm text-zinc-300">
-                      <Clock className="h-4 w-4" />
-                      {dateString}
-                    </p>
-                  </div>
-                  <div className="rounded-full bg-primary/15 px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-primary">
-                    {t('fab.pending_count', { count: item.bolaoIds.length })}
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-center gap-3 rounded-2xl border border-white/10 bg-black/20 p-3">
-                  <div className="flex items-center gap-2 text-sm font-bold">
-                    <Flag code={item.match.home_team_code || ""} />
-                    <span>{item.match.home_team_code || "---"}</span>
-                  </div>
-                  <span className="text-xs font-black uppercase tracking-[0.18em] text-zinc-500">x</span>
-                  <div className="flex items-center gap-2 text-sm font-bold">
-                    <Flag code={item.match.away_team_code || ""} />
-                    <span>{item.match.away_team_code || "---"}</span>
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => handleOpenPrediction(item)}
-                  className="mt-3 w-full rounded-xl border border-primary/30 bg-primary/20 px-4 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-primary transition-colors hover:bg-primary/30"
-                >
-                  {t('fab.go_to_predictions')}
-                </button>
-              </div>
-            );
-          })}
-        </div>
-      </SheetContent>
-    </Sheet>
+    <NavLink
+      to="/boloes"
+      aria-label={t('page.kicker')}
+      className={cn(
+        "inline-flex h-full items-center justify-center",
+        isActive ? "opacity-100" : "opacity-95",
+        className
+      )}
+    >
+      {fabButton}
+    </NavLink>
   );
 }

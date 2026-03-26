@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { BarChart2, Compass, Loader2, Plus, Search, Trophy, UserPlus, Users, Users2, X, Zap } from "lucide-react";
+import { BarChart2, Clock, Compass, Hash, Loader2, Plus, Search, Trophy, User, UserPlus, Users, Users2, X, Zap } from "lucide-react";
 import RankingPage from "./Ranking";
 import { BolaoExpressSheet } from "@/components/BolaoExpressSheet";
+import { usePendingPredictions, type PendingPredictionItem } from "@/components/FabWithPending";
+import { Flag } from "@/components/Flag";
 import { db } from "@/integrations/firebase/client";
 import { 
   collection, 
@@ -94,6 +96,12 @@ export default function Boloes() {
     localStorage.setItem(BOLOES_INTRO_SEEN_KEY, "true");
     setShowIntroBanner(false);
   };
+  const pendingItems = usePendingPredictions();
+  const handleOpenPrediction = (item: PendingPredictionItem) => {
+    const targetBolaoId = item.bolaoIds[0];
+    navigate(`/boloes/${targetBolaoId}?match=${item.match.id}&tab=jogos`);
+  };
+
   // Demo mode is DEV-only (gate matches AuthContext)
   const isDemoMode = import.meta.env.DEV && localStorage.getItem(DEMO_MODE_STORAGE_KEY) === "true";
   // Mounted ref — prevents setState calls after navigation away mid-fetch
@@ -405,19 +413,11 @@ export default function Boloes() {
             Ranking
           </button>
         </div>
-
         {activeView === "boloes" && (
           <div className="flex gap-2">
-            <button
-              onClick={() => setExpressOpen(true)}
-              className="inline-flex items-center gap-2 rounded-2xl bg-white/10 border border-white/10 px-4 py-3 text-[11px] font-black uppercase tracking-[0.18em] hover:bg-white/20 transition-colors"
-            >
-              <Zap className="h-4 w-4 text-primary" />
-              Express
-            </button>
             <Link
               to="/boloes/criar"
-              className="inline-flex items-center gap-2 rounded-2xl bg-primary px-5 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-black"
+              className="inline-flex items-center gap-2 rounded-2xl bg-primary px-5 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-black shadow-lg shadow-primary/25 transition-transform hover:scale-105 active:scale-95"
             >
               <Plus className="h-4 w-4" />
               {t('page.create')}
@@ -495,6 +495,75 @@ export default function Boloes() {
         <Users2 className="h-5 w-5 text-primary/60 shrink-0" />
       </Link>
 
+      {/* ── Pending Predictions (moved from FAB popup) ── */}
+      {pendingItems.length > 0 && (
+        <div className="mb-6 space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4 text-orange-500" />
+              <h2 className="text-sm font-black uppercase tracking-[0.18em] text-orange-500">Palpites Pendentes</h2>
+            </div>
+            <button
+              onClick={() => setExpressOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-orange-500/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.14em] text-orange-500 transition-colors hover:bg-orange-500/20"
+            >
+              <Zap className="h-3.5 w-3.5" />
+              Resolver Rápido
+            </button>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {pendingItems.map((item) => {
+              const date = new Date(item.match.match_date);
+              const dateString = `${date.toLocaleDateString("pt-BR")} • ${date.toLocaleTimeString("pt-BR", {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}`;
+
+              return (
+                <div
+                  key={item.match.id}
+                  className="rounded-2xl border border-orange-500/20 bg-orange-500/10 p-4 transition-all hover:bg-orange-500/15"
+                >
+                  <div className="mb-2 flex items-center justify-between gap-3">
+                    <div>
+                      <p className="text-[11px] font-black uppercase tracking-[0.18em] text-orange-500">
+                        {item.match.stage || t('fab.group_stage', { defaultValue: 'Fase de Grupos' })}
+                      </p>
+                      <p className="mt-1 flex items-center gap-2 text-sm text-zinc-300">
+                        <Clock className="h-3.5 w-3.5" />
+                        {dateString}
+                      </p>
+                    </div>
+                    <div className="rounded-full bg-orange-500/20 px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-orange-500">
+                      {item.bolaoIds.length} {item.bolaoIds.length === 1 ? 'bolão' : 'bolões'}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-center gap-3 rounded-2xl border border-white/5 bg-black/20 p-3">
+                    <div className="flex items-center gap-2 text-sm font-bold">
+                      <Flag code={item.match.home_team_code || ""} />
+                      <span>{item.match.home_team_code || "---"}</span>
+                    </div>
+                    <span className="text-xs font-black uppercase tracking-[0.18em] text-zinc-500">x</span>
+                    <div className="flex items-center gap-2 text-sm font-bold">
+                      <Flag code={item.match.away_team_code || ""} />
+                      <span>{item.match.away_team_code || "---"}</span>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => handleOpenPrediction(item)}
+                    className="mt-3 w-full rounded-xl border border-orange-500/30 bg-orange-500/20 px-4 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-orange-500 transition-colors hover:bg-orange-500/30"
+                  >
+                    Palpitar Agora
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       <div className="surface-card mb-6 p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
@@ -549,6 +618,7 @@ export default function Boloes() {
         </div>
       ) : boloes.length === 0 && publicBoloes.length === 0 ? (
         <EmptyState
+          icon="🏆"
           title={t('page.empty_title')}
           description={t('page.empty_desc')}
         />
@@ -609,11 +679,11 @@ export default function Boloes() {
                       <div className="rounded-full bg-primary/15 px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-primary">{t('page.public_label')}</div>
                     </div>
 
-                    <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-                      <div className="flex flex-wrap gap-3 text-sm text-zinc-300">
-                        <span>{t('page.members_count', { count: b.memberCount })}</span>
-                        <span>•</span>
-                        <span>{t('page.leader_score', { points: b.leader_score })}</span>
+                    <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-white/5 pt-4">
+                      <div className="flex items-center gap-2">
+                        <MembersFacepile count={b.memberCount} />
+                        <span className="text-sm text-zinc-500">•</span>
+                        <span className="text-sm font-black text-primary">{b.leader_score} <span className="text-zinc-500 font-medium">pts</span></span>
                       </div>
 
                       <button
@@ -675,11 +745,39 @@ function BolaoCard({ bolao, href }: { bolao: BolaoRow; href: string }) {
         </div>
       </div>
 
-      <div className="mt-4 flex flex-wrap gap-3 text-sm text-zinc-300">
-        <span>{t('page.members_count', { count: bolao.memberCount })}</span>
-        <span>•</span>
-        <span>{t('page.code_label', { code: bolao.invite_code })}</span>
+      <div className="mt-4 flex items-center justify-between gap-3 border-t border-white/5 pt-4">
+        <MembersFacepile count={bolao.memberCount} />
+        <div className="surface-chip flex items-center gap-1.5 rounded-lg border border-white/5 bg-white/5 px-2.5 py-1.5 text-[10px] font-black uppercase tracking-[0.14em] text-zinc-400">
+          <Hash className="h-3 w-3" />
+          {bolao.invite_code}
+        </div>
       </div>
     </Link>
+  );
+}
+
+function MembersFacepile({ count }: { count: number }) {
+  const { t } = useTranslation('bolao');
+  if (count <= 0) return null;
+  // Limit to showing up to 3 generic avatars
+  const displayCount = Math.min(count, 3);
+  const remaining = count - displayCount;
+  
+  // Array of muted pastel colors for the overlapping circles to make them vibrant
+  const bgColors = ["bg-emerald-500/20 text-emerald-500", "bg-blue-500/20 text-blue-500", "bg-purple-500/20 text-purple-500"];
+  
+  return (
+    <div className="flex items-center gap-3">
+      <div className="flex -space-x-2">
+        {Array.from({ length: displayCount }).map((_, i) => (
+          <div key={i} className={`relative z-${30 - i * 10} flex h-7 w-7 items-center justify-center rounded-full border-[2px] border-[#0A0A0B] ${bgColors[i % bgColors.length]}`}>
+            <User className="h-3.5 w-3.5" />
+          </div>
+        ))}
+      </div>
+      <div className="text-xs font-black text-zinc-300">
+        {t('page.members_count', { count })}
+      </div>
+    </div>
   );
 }

@@ -5,7 +5,7 @@ import { teams, type Team } from "@/data/mockData";
 import { Flag } from "@/components/Flag";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { updateFavoriteTeam } from "@/services/profile/profile.service";
+import { updateFavoriteTeam, getProfile } from "@/services/profile/profile.service";
 import { setStoredFavoriteTeam } from "@/lib/favorite-team";
 import { useTranslation } from "react-i18next";
 import { Bell, BellOff } from "lucide-react";
@@ -29,14 +29,32 @@ export function OnboardingModal() {
             return;
         }
 
-        const hasSeen = localStorage.getItem("arenacopa_onboarding_done");
-        const hasFavoriteTeam = Boolean(localStorage.getItem("favorite_team"));
-        if (!hasSeen && !hasFavoriteTeam) {
-            setIsOpen(true);
-            return;
-        }
+        const checkOnboardingState = async () => {
+            const hasSeen = localStorage.getItem("arenacopa_onboarding_done");
+            const hasFavoriteTeam = Boolean(localStorage.getItem("favorite_team"));
+            
+            if (hasSeen || hasFavoriteTeam) {
+                setIsOpen(false);
+                return;
+            }
 
-        setIsOpen(false);
+            try {
+                const profile = await getProfile(user.id);
+                if (profile?.favorite_team) {
+                    localStorage.setItem("favorite_team", profile.favorite_team);
+                    localStorage.setItem("arenacopa_onboarding_done", "true");
+                    localStorage.setItem("arenacopa_onboarding_migrated", "true");
+                    setIsOpen(false);
+                } else {
+                    setIsOpen(true);
+                }
+            } catch (e) {
+                console.error("Error checking profile for onboarding:", e);
+                setIsOpen(true);
+            }
+        };
+
+        checkOnboardingState();
     }, [user]);
 
     useEffect(() => {

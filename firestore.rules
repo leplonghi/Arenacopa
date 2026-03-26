@@ -70,8 +70,15 @@ service cloud.firestore {
     match /bolao_members/{memberId} {
       allow read:   if isSignedIn();
       allow create: if isOwner(request.resource.data.user_id);
-      allow delete: if isOwner(resource.data.user_id);
-      allow update: if false;
+      
+      // The user can leave, or the bolão creator can kick them
+      allow delete: if isOwner(resource.data.user_id)
+                    || (isSignedIn() && get(/databases/$(database)/documents/boloes/$(resource.data.bolao_id)).data.creator_id == request.auth.uid);
+      
+      // The user can update their own preferences (but not payment_status)
+      // The bolão creator can update the member (including payment_status)
+      allow update: if (isOwner(resource.data.user_id) && request.resource.data.get('payment_status', 'pending') == resource.data.get('payment_status', 'pending'))
+                    || (isSignedIn() && get(/databases/$(database)/documents/boloes/$(resource.data.bolao_id)).data.creator_id == request.auth.uid);
     }
 
     // ─── palpites (match predictions) ────────────────────────────────────────
@@ -171,8 +178,10 @@ service cloud.firestore {
     match /grupo_members/{memberId} {
       allow read:   if isSignedIn();
       allow create: if isOwner(request.resource.data.user_id);
-      allow update: if isOwner(resource.data.user_id);
-      allow delete: if isOwner(resource.data.user_id);
+      allow update: if isOwner(resource.data.user_id)
+                    || (isSignedIn() && get(/databases/$(database)/documents/grupos/$(resource.data.grupo_id)).data.creator_id == request.auth.uid);
+      allow delete: if isOwner(resource.data.user_id)
+                    || (isSignedIn() && get(/databases/$(database)/documents/grupos/$(resource.data.grupo_id)).data.creator_id == request.auth.uid);
     }
 
     // ─── catch-all: deny everything else ─────────────────────────────────────

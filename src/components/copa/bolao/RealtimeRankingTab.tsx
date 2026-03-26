@@ -12,8 +12,9 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
-import { Trophy, Target, Award, Crown, TrendingUp, Minus, Check } from "lucide-react";
+import { Trophy, Target, Award, Crown, TrendingUp, Minus, Check, Share2 } from "lucide-react";
 import { staggerContainer, staggerItem } from "../animations";
+import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/EmptyState";
 import type { ScoringRules } from "@/types/bolao";
@@ -66,6 +67,7 @@ function normalizeBreakdown(row: RankingRow): RankingBreakdown {
 
 export function RealtimeRankingTab({ bolaoId, rules }: { bolaoId: string; rules?: ScoringRules }) {
     const { t } = useTranslation('bolao');
+    const { toast } = useToast();
     const [rankings, setRankings] = useState<RankingRow[]>([]);
     const [loading, setLoading] = useState(true);
     const [hasError, setHasError] = useState(false);
@@ -425,6 +427,44 @@ export function RealtimeRankingTab({ bolaoId, rules }: { bolaoId: string; rules?
                         </motion.div>
                     );
                 })}
+            </div>
+
+            <div className="flex justify-center mt-2 mb-8 perspective-1000">
+                <motion.button
+                    variants={staggerItem}
+                    whileHover={{ scale: 1.05, translateZ: "20px" }}
+                    onClick={async () => {
+                        const topText = rankings.slice(0, 3).map((r, i) => `${i+1}º ${r.profile?.name?.split(' ')[0] || 'Anônimo'} ${r.total_points}pts`).join('\n');
+                        const myPos = rankings.findIndex(r => r.user_id === user?.id) + 1;
+                        let text = `🏆 RANKING DO BOLÃO 🏆\n\n${topText}\n\n`;
+                        if (myPos > 0 && myPos > 3) {
+                            text += `Atualmente tô em ${myPos}º lugar 👀\n`;
+                        } else if (myPos > 0 && myPos <= 3) {
+                            text += `Tô no pódio em ${myPos}º lugar! Chora inveja! 😎\n`;
+                        }
+                        text += `\nVem conferir como tá a tabela completa:\n`;
+                        const url = window.location.href;
+                        
+                        try {
+                            if (navigator.share) {
+                                await navigator.share({
+                                    title: 'Ranking do Bolão',
+                                    text: text,
+                                    url: url
+                                });
+                            } else {
+                                await navigator.clipboard.writeText(text + url);
+                                toast({ title: 'Copiado para área de transferência!', className: "bg-emerald-500 text-white font-black border-none" });
+                            }
+                        } catch (e) {
+                            console.error(e);
+                        }
+                    }}
+                    className="flex w-full sm:w-auto items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-copa-gold via-yellow-400 to-amber-500 text-black px-8 py-5 font-black uppercase tracking-[0.2em] transition-all shadow-[0_10px_40px_rgba(234,179,8,0.3)] hover:shadow-[0_15px_60px_rgba(234,179,8,0.5)] transform-3d"
+                >
+                    <Share2 className="w-5 h-5 flex-shrink-0" />
+                    <span className="truncate">Zoar a Galera</span>
+                </motion.button>
             </div>
 
             <motion.div variants={staggerItem}>

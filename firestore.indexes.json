@@ -47,21 +47,8 @@
         { "fieldPath": "bolao_id", "order": "ASCENDING" },
         { "fieldPath": "user_id", "order": "ASCENDING" }
       ]
-    },
-    {
-      "collectionGroup": "matches",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "match_date", "order": "ASCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "news",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "published_at", "order": "DESCENDING" }
-      ]
     }
+
   ],
   "fieldOverrides": []
 }

@@ -28,6 +28,7 @@ import { cn } from "@/lib/utils";
 import { JogosTab } from "@/components/copa/bolao/JogosTab";
 import { RealtimeRankingTab } from "@/components/copa/bolao/RealtimeRankingTab";
 import { CaixinhaPanel } from "@/components/CaixinhaPanel";
+import { GrupoLinkPanel } from "@/components/copa/bolao/GrupoLinkPanel";
 import { PublicPalpitesTab } from "@/components/copa/bolao/PublicPalpitesTab";
 import { OverviewTab } from "@/components/copa/bolao/OverviewTab";
 import { MembrosTab } from "@/components/copa/bolao/MembrosTab";
@@ -71,6 +72,29 @@ export default function BolaoDetail() {
   const [championSelection, setChampionSelection] = useState("");
   const [myChampion, setMyChampion] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState(validTabs.has(initialTab) ? initialTab : "ranking");
+
+  // Inline Editing
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editDesc, setEditDesc] = useState("");
+
+  const handleSaveEdit = async () => {
+    if (!id || !user || !bolao) return;
+    if (bolao.creator_id !== user.id) return;
+    
+    try {
+      await setDoc(doc(db, "boloes", id), {
+        name: editName,
+        description: editDesc
+      }, { merge: true });
+      
+      setBolao(prev => prev ? { ...prev, name: editName, description: editDesc } : null);
+      setIsEditingTitle(false);
+      toast({ title: "Salvo com sucesso!", className: "bg-emerald-500 text-white border-none font-black" });
+    } catch (e) {
+      toast({ title: "Erro ao salvar", variant: "destructive" });
+    }
+  };
 
   // Guard setState calls that happen after async operations finish.
   // If the user navigates away while loadBolao() is still in-flight, we must
@@ -506,16 +530,62 @@ export default function BolaoDetail() {
           </button>
 
           <div>
-            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">
+                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">
               {bolao.category === "public" ? t('bolao_detail.category_public') : t('bolao_detail.category_private')}
             </p>
-            <div className="mt-2 flex items-center gap-3">
-              <div className="surface-card-soft flex h-14 w-14 items-center justify-center rounded-[22px] text-2xl">
+            <div className="mt-2 flex items-start gap-4">
+              <div className="surface-card-soft flex h-16 w-16 shrink-0 items-center justify-center rounded-[24px] text-3xl">
                 {bolao.avatar_url || "🏆"}
               </div>
-              <div>
-                <h1 className="text-3xl font-black">{bolao.name}</h1>
-                {bolao.description && <p className="mt-1 max-w-2xl text-sm text-zinc-400">{bolao.description}</p>}
+              <div className="flex-1">
+                {isEditingTitle ? (
+                  <div className="space-y-3">
+                    <input
+                      type="text"
+                      className="surface-input w-full rounded-xl px-4 py-3 text-lg font-black placeholder:text-zinc-600"
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      placeholder="Nome do bolão"
+                      maxLength={40}
+                      autoFocus
+                    />
+                    <textarea
+                      className="surface-input w-full rounded-xl px-4 py-3 text-sm placeholder:text-zinc-600 resize-none"
+                      value={editDesc}
+                      onChange={(e) => setEditDesc(e.target.value)}
+                      placeholder="Descrição do bolão (opcional)"
+                      maxLength={140}
+                      rows={2}
+                    />
+                    <div className="flex gap-2">
+                      <button onClick={handleSaveEdit} className="rounded-xl bg-primary px-5 py-2.5 text-xs font-black uppercase tracking-wider text-black">
+                        Salvar
+                      </button>
+                      <button onClick={() => setIsEditingTitle(false)} className="rounded-xl border border-white/10 px-5 py-2.5 text-xs font-black uppercase tracking-wider text-white hover:bg-white/5">
+                        Cancelar
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="group relative pr-8">
+                    <h1 className="text-3xl font-black leading-tight sm:text-4xl">{bolao.name}</h1>
+                    {bolao.description && <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-zinc-400">{bolao.description}</p>}
+                    
+                    {isCreator && (
+                      <button
+                        onClick={() => {
+                          setEditName(bolao.name);
+                          setEditDesc(bolao.description || "");
+                          setIsEditingTitle(true);
+                        }}
+                        className="absolute right-0 top-1 rounded-lg p-2 text-zinc-500 opacity-100 transition-opacity hover:bg-white/5 hover:text-white sm:opacity-0 sm:group-hover:opacity-100"
+                        title="Editar bolão"
+                      >
+                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></svg>
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -549,15 +619,26 @@ export default function BolaoDetail() {
         </div>
       </div>
 
-      <div className="mb-6 flex flex-wrap gap-3 text-sm text-zinc-300">
-        <div className="surface-chip rounded-full px-4 py-2">
+      <div className="mb-6 flex flex-wrap gap-2 text-sm text-zinc-300">
+        <div className="surface-chip rounded-xl px-4 py-2 flex items-center gap-2 border border-white/5 bg-white/5">
           <Users className="h-4 w-4 text-primary" />
-          {t('bolao_detail.members_count', { count: memberCount })}
+          <span className="font-bold text-white">{memberCount}</span>
+          <span className="text-xs">membros</span>
         </div>
-        <div className="surface-chip rounded-full px-4 py-2">
+        <div className="surface-chip rounded-xl px-4 py-2 flex items-center gap-2 border border-white/5 bg-white/5">
           <Share2 className="h-4 w-4 text-primary" />
-          {t('bolao_detail.invite_code_label', { code: bolao.invite_code })}
+          <span className="font-black tracking-widest text-white">{bolao.invite_code}</span>
         </div>
+        
+        {isCreator && (
+          <button 
+            onClick={() => setActiveTab('galera')}
+            className="surface-chip rounded-xl px-4 py-2 flex items-center gap-2 border border-orange-500/30 bg-orange-500/10 hover:bg-orange-500/20 transition-colors"
+          >
+            <Crown className="h-4 w-4 text-orange-500" />
+            <span className="font-black text-orange-500 uppercase tracking-wider text-[10px]">Admin</span>
+          </button>
+        )}
         {formatLabel && (
           <div className="surface-chip rounded-full px-4 py-2">
             <Trophy className="h-4 w-4 text-primary" />
@@ -595,7 +676,7 @@ export default function BolaoDetail() {
         {/* ── Palpitar: jogos + fases collapsíveis ── */}
         {activeTab === "palpitar" && (
           <div className="space-y-4">
-            <JogosTab bolaoId={bolao.id} highlightedMatchId={highlightedMatch || undefined} markets={bolaoMarkets} predictions={myMarketPredictions} />
+            <JogosTab bolaoId={bolao.id} bolao={bolao} highlightedMatchId={highlightedMatch || undefined} markets={bolaoMarkets} predictions={myMarketPredictions} />
             {(phaseMarkets.length > 0 || tournamentMarkets.length > 0 || bolaoMarkets.length === 0 || specialMarkets.length > 0) && (
               <Accordion type="multiple" className="space-y-2">
                 {phaseMarkets.length > 0 && (
@@ -668,6 +749,11 @@ export default function BolaoDetail() {
                <p className="mb-4 text-xs font-black uppercase tracking-widest text-zinc-400">{t('bolao_detail.caixinha_header')}</p>
               <CaixinhaPanel bolao={bolao} isCreator={isCreator} />
             </div>
+            {isCreator && (
+              <div className="border-t border-white/10 pt-6">
+                <GrupoLinkPanel bolaoId={bolao.id} currentGrupoId={bolao.grupo_id || null} />
+              </div>
+            )}
           </div>
         )}
       </div>

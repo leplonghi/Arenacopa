@@ -21,6 +21,11 @@ export interface CreateBolaoParams {
   description: string;
   emoji: string;
   category: "private" | "public";
+  isPaid?: boolean;
+  entryFee?: number;
+  prizeDistribution?: string;
+  paymentDetails?: string;
+  scoringMode?: "default" | "exclusive";
   formatId: BolaoFormatSlug;
   selectedMarketIds: MarketTemplateSlug[];
   scoringRules: ScoringRules;
@@ -38,8 +43,6 @@ export function useCreateBolao() {
   const { t } = useTranslation('bolao');
   const { toast } = useToast();
   const [creating, setCreating] = useState(false);
-  // Guard against calling setState on an unmounted component (e.g. user navigates
-  // away mid-creation while batch.commit() is still in flight).
   const mountedRef = useRef(true);
   useEffect(() => {
     mountedRef.current = true;
@@ -68,9 +71,12 @@ export function useCreateBolao() {
         creator_id: user.id,
         category: params.category,
         format_id: params.formatId,
-        is_paid: false,
+        is_paid: params.isPaid ?? false,
+        entry_fee: params.entryFee ?? null,
+        prize_distribution: params.prizeDistribution ?? null,
+        payment_details: params.paymentDetails ?? null,
         scoring_rules: params.scoringRules,
-        scoring_mode: "default",
+        scoring_mode: params.scoringMode ?? "default",
         visibility_mode: "hidden_until_deadline",
         cutoff_mode: "per_match",
         status: "open",

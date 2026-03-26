@@ -116,12 +116,14 @@ export function JogosTab({
     highlightedMatchId,
     markets = [],
     predictions = [],
+    bolao,
 }: {
     bolaoId: string;
     highlightedMatchId?: string;
     rules?: unknown;
     markets?: BolaoMarket[];
     predictions?: BolaoPrediction[];
+    bolao?: any;
 }) {
     const { t } = useTranslation('bolao');
     const { user } = useAuth();
@@ -132,6 +134,11 @@ export function JogosTab({
     const [draftFirstScorers, setDraftFirstScorers] = useState<Record<string, string>>({});
     const [savingMatchId, setSavingMatchId] = useState<string | null>(null);
     const [savedFlashMatchIds, setSavedFlashMatchIds] = useState<Set<string>>(new Set());
+    const [allPalpites, setAllPalpites] = useState<Record<string, { home: number; away: number; userId: string }[]>>({});
+    
+    // Filters
+    const [filterTeam, setFilterTeam] = useState<string>("all");
+    const [filterStage, setFilterStage] = useState<string>("all");
 
     // Share States
     const [shareModalOpen, setShareModalOpen] = useState(false);
@@ -234,8 +241,26 @@ export function JogosTab({
             setSavedPalpites(m);
         });
 
-        return () => unsubscribe();
-    }, [bolaoId, toast, user]);
+        // If exclusive mode, fetch ALL palpites to know occupied seats
+        let unsubscribeAll = () => {};
+        if (bolao?.scoring_mode === "exclusive") {
+            const qAll = query(palpitesRef, where("bolao_id", "==", bolaoId));
+            unsubscribeAll = onSnapshot(qAll, (snapshot) => {
+                const map: Record<string, { home: number; away: number; userId: string }[]> = {};
+                snapshot.forEach(doc => {
+                    const p = doc.data() as PalpiteRealtimeRow & { user_id: string };
+                    if (!map[p.match_id]) map[p.match_id] = [];
+                    map[p.match_id].push({ home: p.home_score, away: p.away_score, userId: p.user_id });
+                });
+                setAllPalpites(map);
+            });
+        }
+
+        return () => {
+             unsubscribe();
+             unsubscribeAll();
+        };
+    }, [bolaoId, toast, user, bolao?.scoring_mode]);
 
     const getCurrentPalpite = useMemo(() => {
         return (matchId: string): EditablePalpite => {
@@ -374,6 +399,16 @@ export function JogosTab({
         }));
     };
 
+    const setDraftScoreBoth = (matchId: string, hs: string, as: string) => {
+        setDraftPalpites((currentDrafts) => ({
+            ...currentDrafts,
+            [matchId]: {
+                home: hs,
+                away: as,
+            },
+        }));
+    };
+
     const getSavedFirstScorer = (matchId: string) => {
         const market = firstScorerMarketByMatchId[matchId];
         if (!market) return "";
@@ -402,8 +437,8 @@ export function JogosTab({
         setShareData({
             homeTeam,
             awayTeam,
-            homeScore: palpite.home,
-            awayScore: palpite.away,
+            homeScore: parseInt(palpite.home, 10),
+            awayScore: parseInt(palpite.away, 10),
         });
         setShareModalOpen(true);
     };
@@ -486,9 +521,37 @@ export function JogosTab({
         );
     }
 
+    const uniqueTeams = Array.from(new Set(matches.flatMap(m => [m.home_team_code, m.away_team_code]))).filter(Boolean).sort();
+    const uniqueStages = Array.from(new Set(matches.map(m => m.stage))).filter(Boolean);
+
+    const filteredMatches = matches.filter(m => {
+        if (filterTeam !== "all" && m.home_team_code !== filterTeam && m.away_team_code !== filterTeam) return false;
+        if (filterStage !== "all" && m.stage !== filterStage && new Date(m.match_date).toLocaleDateString("pt-BR") !== filterStage) return false;
+        return true;
+    });
+
     return (
         <div className="space-y-4">
-            {matches.map(m => {
+            <div className="flex gap-2">
+                <select 
+                    value={filterTeam} 
+                    onChange={e => setFilterTeam(e.target.value)}
+                    className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-3 text-xs font-bold text-white outline-none focus:border-primary/50"
+                >
+                    <option value="all" className="bg-zinc-900">Todas as seleções</option>
+                    {uniqueTeams.map(t => <option key={t} value={t} className="bg-zinc-900">{t}</option>)}
+                </select>
+                <select 
+                    value={filterStage} 
+                    onChange={e => setFilterStage(e.target.value)}
+                    className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-3 text-xs font-bold text-white outline-none focus:border-primary/50"
+                >
+                    <option value="all" className="bg-zinc-900">Cronograma (Todos)</option>
+                    {uniqueStages.map(s => <option key={s} value={s} className="bg-zinc-900">{s}</option>)}
+                </select>
+            </div>
+
+            {filteredMatches.map(m => {
                 const isStarted = m.status === 'live' || m.status === 'finished';
                 const marketsForMatch = matchMarkets.filter((market) => market.match_id === m.id);
                 const firstScorerMarket = firstScorerMarketByMatchId[m.id];
@@ -586,41 +649,73 @@ export function JogosTab({
                             </div>
                         )}
 
-                        <div className="flex items-center justify-center gap-4">
-                            <div className="flex flex-col items-center gap-2">
-                                <Flag code={m.home_team_code} size="md" />
-                                <span className="text-xs font-bold text-gray-400">{m.home_team_code}</span>
-                            </div>
+                            {bolao?.scoring_mode === 'exclusive' ? (
+                                <div className="mt-4 mb-2">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-1">🎟️ Assentos de Cinema</p>
+                                        <p className="text-[9px] text-zinc-500 uppercase tracking-wider">Escolha um placar livre</p>
+                                    </div>
+                                    <div className="grid grid-cols-5 gap-1.5 p-3 rounded-2xl bg-black/20 border border-white/5">
+                                        {[0,1,2,3,4].flatMap(homeG => [0,1,2,3,4].map(awayG => {
+                                            const oc = (allPalpites[m.id] || []).find(ap => ap.home === homeG && ap.away === awayG);
+                                            const isMine = oc?.userId === user?.id;
+                                            const isTaken = oc && !isMine;
+                                            const isSelected = p.home === homeG.toString() && p.away === awayG.toString();
+                                            return (
+                                                <button
+                                                    key={`${homeG}x${awayG}`}
+                                                    onClick={() => !isTaken && !isStarted && setDraftScoreBoth(m.id, homeG.toString(), awayG.toString())}
+                                                    disabled={isTaken || isStarted}
+                                                    className={cn(
+                                                        "h-8 flex justify-center items-center text-[10px] font-black rounded-lg transition-all",
+                                                        isSelected ? "bg-primary text-black scale-105 shadow-[0_0_10px_rgba(255,255,255,0.4)]" :
+                                                        isTaken ? "bg-white/5 text-zinc-600 cursor-not-allowed grayscale" :
+                                                        "bg-white/10 text-white hover:bg-white/20 active:scale-95"
+                                                    )}
+                                                >
+                                                    {homeG}x{awayG}
+                                                </button>
+                                            );
+                                        }))}
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="flex items-center justify-center gap-4">
+                                    <div className="flex flex-col items-center gap-2">
+                                        <Flag code={m.home_team_code} size="md" />
+                                        <span className="text-xs font-bold text-gray-400">{m.home_team_code}</span>
+                                    </div>
 
-                            <div className="flex items-center gap-2">
-                                <input
-                                    type="text"
-                                    maxLength={2}
-                                    inputMode="numeric"
-                                    aria-label={`Palpite de gols para ${m.home_team_code}`}
-                                    value={p.home}
-                                    onChange={e => updateScore(m.id, 'home', e.target.value)}
-                                    className="w-14 h-16 bg-white/5 border border-white/10 rounded-2xl text-center text-3xl font-black text-white outline-none focus:border-primary/50"
-                                    disabled={isStarted}
-                                />
-                                <span className="text-gray-600 font-bold">x</span>
-                                <input
-                                    type="text"
-                                    maxLength={2}
-                                    inputMode="numeric"
-                                    aria-label={`Palpite de gols para ${m.away_team_code}`}
-                                    value={p.away}
-                                    onChange={e => updateScore(m.id, 'away', e.target.value)}
-                                    className="w-14 h-16 bg-white/5 border border-white/10 rounded-2xl text-center text-3xl font-black text-white outline-none focus:border-primary/50"
-                                    disabled={isStarted}
-                                />
-                            </div>
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="text"
+                                            maxLength={2}
+                                            inputMode="numeric"
+                                            aria-label={`Palpite de gols para ${m.home_team_code}`}
+                                            value={p.home}
+                                            onChange={e => updateScore(m.id, 'home', e.target.value)}
+                                            className="w-14 h-16 bg-white/5 border border-white/10 rounded-2xl text-center text-3xl font-black text-white outline-none focus:border-primary/50"
+                                            disabled={isStarted}
+                                        />
+                                        <span className="text-gray-600 font-bold">x</span>
+                                        <input
+                                            type="text"
+                                            maxLength={2}
+                                            inputMode="numeric"
+                                            aria-label={`Palpite de gols para ${m.away_team_code}`}
+                                            value={p.away}
+                                            onChange={e => updateScore(m.id, 'away', e.target.value)}
+                                            className="w-14 h-16 bg-white/5 border border-white/10 rounded-2xl text-center text-3xl font-black text-white outline-none focus:border-primary/50"
+                                            disabled={isStarted}
+                                        />
+                                    </div>
 
-                            <div className="flex flex-col items-center gap-2">
-                                <Flag code={m.away_team_code} size="md" />
-                                <span className="text-xs font-bold text-gray-400">{m.away_team_code}</span>
-                            </div>
-                        </div>
+                                    <div className="flex flex-col items-center gap-2">
+                                        <Flag code={m.away_team_code} size="md" />
+                                        <span className="text-xs font-bold text-gray-400">{m.away_team_code}</span>
+                                    </div>
+                                </div>
+                            )}
 
                         {firstScorerMarket && !isStarted && (
                             <div className="mt-5 rounded-[24px] border border-white/5 bg-black/10 p-4">

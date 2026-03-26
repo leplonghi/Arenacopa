@@ -11,3 +11,6 @@ export const ONBOARDING_DONE_KEY = "arenacopa_onboarding_done" as const;
 
 /** localStorage key written when the user dismisses the Bolões intro banner. */
 export const BOLOES_INTRO_SEEN_KEY = "arenacopa_boloes_intro_seen" as const;
+
+/** localStorage key to enable demo/dev mode (DEV only). */
+export const DEMO_MODE_STORAGE_KEY = "arenacopa_demo_mode" as const;

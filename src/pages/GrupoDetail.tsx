@@ -92,11 +92,18 @@ export default function GrupoDetail() {
             {grupo.description && <p className="text-sm text-zinc-400">{grupo.description}</p>}
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 mt-2 md:mt-0">
           <button onClick={handleShare}
             className="inline-flex items-center gap-2 rounded-2xl bg-white/10 px-4 py-3 text-sm font-bold hover:bg-white/20 transition-colors">
             <Share2 className="h-4 w-4 text-primary" /> Convidar
           </button>
+          
+          {isCreator && (
+            <Link to={`/criar-bolao?grupoId=${grupo.id}`}
+              className="inline-flex items-center gap-2 rounded-2xl bg-primary px-4 py-3 text-sm font-black uppercase tracking-widest text-black hover:bg-primary/90 transition-colors">
+              + CRIAR BOLÃO
+            </Link>
+          )}
         </div>
       </div>
 
