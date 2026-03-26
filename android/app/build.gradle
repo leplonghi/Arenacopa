@@ -18,7 +18,7 @@ android {
     }
     signingConfigs {
         release {
-            storeFile file("C:/Users/eduar/.antigravity/Arenacopa/release/arenacopa-release.jks")
+            storeFile file("arenacopa-release.jks")
             storePassword "ArenaCopa2026!"
             keyAlias "arenacopa"
             keyPassword "ArenaCopa2026!"
