@@ -24,7 +24,7 @@ export function OnboardingModal() {
     const { t } = useTranslation("common");
 
     useEffect(() => {
-        if (!user || localStorage.getItem("demo_mode") === "true") {
+        if (!user) {
             setIsOpen(false);
             return;
         }

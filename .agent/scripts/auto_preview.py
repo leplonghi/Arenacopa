@@ -116,7 +116,7 @@ def status_server():
             if is_running(pid):
                 running = True
                 # Heuristic for URL, strictly we should save it
-                url = "http://localhost:3000" 
+                url = "http://localhost:8080" 
         except:
             pass
             
@@ -133,7 +133,7 @@ def status_server():
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("action", choices=["start", "stop", "status"])
-    parser.add_argument("port", nargs="?", default="3000")
+    parser.add_argument("port", nargs="?", default="8080")
     
     args = parser.parse_args()
     

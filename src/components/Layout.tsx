@@ -38,13 +38,6 @@ function Header({ className }: { className?: string }) {
     if (!user) return;
 
     const fetchProfile = async () => {
-      // Demo Mode Check
-      const isDemo = localStorage.getItem("demo_mode") === "true";
-      if (isDemo) {
-        setProfile({ name: "Usuário Demo", avatar: "https://github.com/shadcn.png" });
-        return;
-      }
-
       try {
         const profileData = await getProfile(user.id);
         if (profileData) {
@@ -60,8 +53,6 @@ function Header({ className }: { className?: string }) {
 
   const { t } = useTranslation('common');
 
-  // Unread notifications count (shares React Query cache with NotificationsSheet)
-  const isDemo = localStorage.getItem("demo_mode") === "true";
   const { data: rawNotifications = [] } = useQuery({
     queryKey: ["notifications", user?.id],
     queryFn: async () => {
@@ -72,7 +63,7 @@ function Header({ className }: { className?: string }) {
         return [];
       }
     },
-    enabled: !!user && !isDemo,
+    enabled: !!user,
     staleTime: 60_000,
   });
   const unreadCount = (rawNotifications as Array<{ read: boolean }>).filter(n => !n.read).length;

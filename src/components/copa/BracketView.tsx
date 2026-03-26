@@ -4,11 +4,11 @@ import { cn } from "@/lib/utils";
 import { Flag } from "@/components/Flag";
 import { useNavigate } from "react-router-dom";
 import { getTeam } from "@/data/mockData";
-import { Trophy, HelpCircle, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
+import { Trophy, HelpCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from "framer-motion";
 import {
   type KnockoutData, type KnockoutMatchFull, type KnockoutRound,
-  ROUND_LABELS, getMatchWinner,
+  getMatchWinner,
 } from "@/utils/knockoutBracket";
 
 // ─── Animations & 3D Config ───
@@ -350,6 +350,7 @@ function RoundColumn({
 // ─── Champion 3D Spotlight ───
 function ChampionBanner({ data }: { data: KnockoutData }) {
   const navigate = useNavigate();
+  const { t } = useTranslation('copa');
   const champion = getMatchWinner(data.final[0]);
 
   // Floating animation
@@ -425,6 +426,7 @@ function useParallaxTilt() {
 // Placed before main export to avoid undefined issues if hoisting acts up (though function declarations hoist)
 
 function MobileTeamSide({ code, isWinner, side }: { code: string | null; isWinner: boolean; side: "left" | "right" }) {
+  const { t } = useTranslation('copa');
   if (!code) {
     return (
       <div className={cn("flex flex-1 items-center gap-2", side === "right" && "flex-row-reverse")}>
@@ -559,6 +561,7 @@ export function BracketView({
 }) {
   const ROUND_KEYS: KnockoutRound[] = ["r32", "r16", "quarter", "semi", "final"];
   const [mobileRound, setMobileRound] = useState(0);
+  const { t } = useTranslation('copa');
   const { handleMouseMove, rotateX, rotateY } = useParallaxTilt();
 
   const rounds = useMemo(() => [

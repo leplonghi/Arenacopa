@@ -20,7 +20,7 @@ const Auth = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { loginAsDemo } = useAuth();
+  const { user } = useAuth();
   const { t } = useTranslation('auth');
   const redirectPath = searchParams.get("redirect") || "/";
 
@@ -29,7 +29,7 @@ const Auth = () => {
     setLoading(true);
 
     try {
-      localStorage.removeItem("demo_mode");
+
 
       if (mode === "signup") {
         if (!acceptedTerms) return;
@@ -80,7 +80,7 @@ const Auth = () => {
   const handleGoogleSignIn = async () => {
     setLoading(true);
     try {
-      localStorage.removeItem("demo_mode");
+
       const googleUser = await signInWithGoogle();
       await ensureProfile({
         id: googleUser.uid,
@@ -109,26 +109,7 @@ const Auth = () => {
     }
   };
 
-  const handleDemoLogin = async () => {
-    setLoading(true);
-    try {
-      await loginAsDemo();
-      toast({
-        title: t('login.demo_mode_title'),
-        description: t('login.demo_mode_desc'),
-      });
-      navigate(redirectPath);
-    } catch (error) {
-      console.error("Erro no login demo:", error);
-      toast({
-        title: t('login.error_demo_title'),
-        description: t('login.error_demo'),
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center px-6 py-12 relative overflow-hidden">
@@ -264,18 +245,7 @@ const Auth = () => {
           </button>
         </form>
 
-        {import.meta.env.DEV && (
-          <button
-            type="button"
-            onClick={handleDemoLogin}
-            disabled={loading}
-            className="mt-12 text-[10px] uppercase tracking-[0.4em] font-black text-white/40 hover:text-primary transition-colors flex items-center gap-4 group disabled:opacity-50"
-          >
-            <div className="w-10 h-px bg-white/10 group-hover:bg-primary/30 transition-colors" />
-            {t('login.demo')}
-            <div className="w-10 h-px bg-white/10 group-hover:bg-primary/30 transition-colors" />
-          </button>
-        )}
+
       </div>
     </div>
   );

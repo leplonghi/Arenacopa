@@ -140,10 +140,10 @@ export function FabWithPending({
   const { t } = useTranslation("bolao");
   const [pendingItems, setPendingItems] = useState<PendingPredictionItem[]>([]);
   const [isOpen, setIsOpen] = useState(false);
-  const isDemoMode = localStorage.getItem("demo_mode") === "true";
+
 
   const fetchPending = useCallback(async () => {
-    if (!user?.id || isDemoMode) {
+    if (!user?.id) {
       setPendingItems([]);
       return;
     }
@@ -220,10 +220,10 @@ export function FabWithPending({
       console.error("Error loading pending predictions:", error);
       setPendingItems([]);
     }
-  }, [isDemoMode, user?.id]);
+  }, [user?.id]);
 
   useEffect(() => {
-    if (!user?.id || isDemoMode) {
+    if (!user?.id) {
       setPendingItems([]);
       return;
     }
@@ -254,7 +254,7 @@ export function FabWithPending({
       unsubscribeMatches();
       window.clearInterval(intervalId);
     };
-  }, [fetchPending, isDemoMode, user?.id]);
+  }, [fetchPending, user?.id]);
 
   const totalMissingPredictions = useMemo(
     () => pendingItems.reduce((acc, item) => acc + item.bolaoIds.length, 0),

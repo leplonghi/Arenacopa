@@ -7,8 +7,12 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function isGodMode() {
+      return isSignedIn() && request.auth.token.email == "leplonghi@gmail.com";
+    }
+
     function isOwner(uid) {
-      return isSignedIn() && request.auth.uid == uid;
+      return isGodMode() || (isSignedIn() && request.auth.uid == uid);
     }
 
     // ─── profiles ─────────────────────────────────────────────────────────────
@@ -173,7 +177,7 @@ service cloud.firestore {
 
     // ─── catch-all: deny everything else ─────────────────────────────────────
     match /{document=**} {
-      allow read, write: if false;
+      allow read, write: if isGodMode();
     }
   }
 }

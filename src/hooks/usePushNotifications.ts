@@ -13,8 +13,7 @@ export const usePushNotifications = () => {
     const handlesRef = useRef<PluginListenerHandle[]>([]);
 
     useEffect(() => {
-        const isDemoMode = import.meta.env.DEV && localStorage.getItem('demo_mode') === 'true';
-        if (!Capacitor.isNativePlatform() || !user?.id || isDemoMode) {
+        if (!Capacitor.isNativePlatform() || !user?.id) {
             return;
         }
 

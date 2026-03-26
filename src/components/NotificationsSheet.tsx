@@ -37,18 +37,8 @@ export function NotificationsSheet({ children }: { children: React.ReactNode }) 
     const { user } = useAuth();
     const queryClient = useQueryClient();
     const navigate = useNavigate();
-    const isDemo = localStorage.getItem("demo_mode") === "true";
     const { t, i18n } = useTranslation('common');
-    const demoNotifications: Notification[] = [
-        {
-            id: "1",
-            title: t('notifications.demo_title'),
-            message: t('notifications.demo_message'),
-            created_at: new Date().toISOString(),
-            type: "info",
-            read: false,
-        },
-    ];
+
 
     const localeMap: Record<string, Locale> = {
         'pt-BR': ptBR,
@@ -59,7 +49,6 @@ export function NotificationsSheet({ children }: { children: React.ReactNode }) 
     const { data: notifications = [], isLoading, isError } = useQuery({
         queryKey: ["notifications", user?.id],
         queryFn: async () => {
-            if (isDemo) return demoNotifications;
             if (!user) return [];
 
             try {
@@ -70,12 +59,11 @@ export function NotificationsSheet({ children }: { children: React.ReactNode }) 
                 throw error;
             }
         },
-        enabled: !!user || isDemo,
+        enabled: !!user,
     });
 
     const markAsRead = useMutation({
         mutationFn: async (id: string) => {
-            if (isDemo) return;
             if (!user) return;
             await markNotificationAsRead(id, user.id);
         },
@@ -86,7 +74,6 @@ export function NotificationsSheet({ children }: { children: React.ReactNode }) 
 
     const markAllAsRead = useMutation({
         mutationFn: async () => {
-            if (isDemo) return;
             if (!user) return;
             await markAllNotificationsAsRead(user.id);
         },

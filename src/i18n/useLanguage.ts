@@ -19,10 +19,10 @@ export function useLanguage() {
     const { i18n } = useTranslation();
     const { user } = useAuth();
     const [isLoading, setIsLoading] = useState(false);
-    const isDemoMode = localStorage.getItem("demo_mode") === "true";
+
 
     useEffect(() => {
-        if (!user || isDemoMode) return;
+        if (!user) return;
 
         const syncLanguage = async () => {
             try {
@@ -37,7 +37,7 @@ export function useLanguage() {
         };
 
         syncLanguage();
-    }, [i18n, isDemoMode, user]);
+    }, [i18n, user]);
 
     const changeLanguage = async (lang: Language) => {
         setIsLoading(true);
@@ -58,7 +58,7 @@ export function useLanguage() {
 
             // 3. Persist to Firestore silently in the background (fire-and-forget)
             // A Firestore failure must NOT affect the user experience
-            if (user && !isDemoMode) {
+            if (user) {
                 updatePreferredLanguage(user.id, normalizedLanguage).catch(err =>
                     console.error('Failed to persist language preference to Firestore:', err)
                 );
