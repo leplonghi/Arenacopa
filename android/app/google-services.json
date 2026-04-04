@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "388695676084",
+    "project_id": "arenacopa-web-2026",
+    "storage_bucket": "arenacopa-web-2026.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:388695676084:android:9f0982115f5c7d1568b3e1",
+        "android_client_info": {
+          "package_name": "app.arenacopa.www"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "388695676084-euo61vj8rahspeq24c6rpm5m76dm074g.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "app.arenacopa.www",
+            "certificate_hash": "b0d0d017e34ee8a451ab654221038ee54746f122"
+          }
+        },
+        {
+          "client_id": "388695676084-ivih1vltgajjnie97162475kngvgadf1.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDcY-eyG5w2xyI2G4q0s3ULR14TN50HYOI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "388695676084-ivih1vltgajjnie97162475kngvgadf1.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
