@@ -209,7 +209,10 @@ const Index = () => {
   };
 
   // Copa 2026 general news — real-time listener
-  const { news: copaNewsRaw, isLoading: copaNewsLoading } = useRealtimeNews({ limitCount: 8 });
+  const { news: copaNewsRaw, isLoading: copaNewsLoading } = useRealtimeNews({
+    limitCount: 8,
+    championshipId: "wc2026",
+  });
   // Favourite-team news — real-time listener (separate Firestore query)
   const { news: teamNewsRaw, isLoading: teamNewsLoading } = useRealtimeNews({
     limitCount: 8,
@@ -223,9 +226,10 @@ const Index = () => {
       items.map((item) => ({
         id: item.id,
         title: item.title,
-        category: item.source_name || item.category || "Geral",
+        category: item.category || "general",
+        label: item.source_name || item.source_country || item.category || "Geral",
         publishedAt: item.published_at,
-        imageUrl: item.url_to_image || null,
+        imageUrl: item.image_url || item.url_to_image || null,
         url: item.url,
       })),
     []
@@ -604,7 +608,7 @@ const Index = () => {
                               ? "bg-primary/15 border border-primary/25 text-primary"
                               : "bg-copa-green/10 border border-copa-green/20 text-copa-green-light"
                           )}>
-                            {item.category}
+                            {item.label}
                           </span>
                           <span className="text-[10px] text-zinc-500 font-bold">
                             {new Date(item.publishedAt).toLocaleDateString(i18n.language, { day: '2-digit', month: 'short' })}

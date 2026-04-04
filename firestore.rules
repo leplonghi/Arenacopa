@@ -46,6 +46,33 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // news_sources — public catalog, only Admin SDK writes
+    match /news_sources/{sourceId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // news_articles — normalized news feed for app
+    match /news_articles/{articleId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // news_links_by_championship — aggregated links by championship
+    match /news_links_by_championship/{championshipId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // news_fetch_runs / news_raw — server-only operational collections
+    match /news_fetch_runs/{runId} {
+      allow read, write: if false;
+    }
+
+    match /news_raw/{rawId} {
+      allow read, write: if false;
+    }
+
     // standings — public read, only Admin SDK writes
     match /standings/{standingId} {
       allow read: if true;

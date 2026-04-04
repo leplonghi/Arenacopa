@@ -1,6 +1,7 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const https = require("https");
+const NEWS_SOURCES = require("./newsSources");
 
 admin.initializeApp();
 
@@ -435,6 +436,246 @@ async function seedLeagueNewsCollection() {
     await batch.commit();
 
     return newsItems.length;
+}
+
+async function syncNewsSourcesCatalog() {
+    const batch = db.batch();
+    const now = admin.firestore.FieldValue.serverTimestamp();
+
+    NEWS_SOURCES.forEach((source) => {
+        const { id, ...payload } = source;
+        batch.set(db.collection("news_sources").doc(id), {
+            ...payload,
+            updated_at: now,
+        }, { merge: true });
+    });
+
+    await batch.commit();
+    return NEWS_SOURCES.length;
+}
+
+function normalizeUrl(url) {
+    if (!url) return "";
+    return String(url).trim().replace(/#.*$/, "").replace(/\?.*$/, "");
+}
+
+function slugifyText(value) {
+    return String(value || "")
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .toLowerCase();
+}
+
+const CHAMPIONSHIP_KEYWORDS = {
+    wc2026: ["copa do mundo", "world cup", "mundial", "fifa world cup", "selecao", "seleção"],
+    brasileirao2026: ["brasileirao", "brasileirão", "serie a", "série a", "cbf", "palmeiras", "flamengo", "corinthians"],
+    ucl2526: ["champions", "champions league", "liga dos campeoes", "liga dos campeões", "uefa champions"],
+    laliga2526: ["la liga", "laliga", "real madrid", "barcelona", "atletico", "atlético", "el clasico", "el clásico"],
+    premier2526: ["premier league", "premier", "manchester city", "arsenal", "liverpool", "chelsea", "tottenham", "manchester united"],
+};
+
+function detectChampionshipIds(title, summary, source) {
+    const text = slugifyText(`${title} ${summary}`);
+    const sourceChampionships = Array.isArray(source?.championship_ids) ? source.championship_ids : [];
+    const matched = sourceChampionships.filter((championshipId) => {
+        const keywords = CHAMPIONSHIP_KEYWORDS[championshipId] || [];
+        return keywords.some((keyword) => text.includes(slugifyText(keyword)));
+    });
+
+    if (matched.length > 0) {
+        return matched;
+    }
+
+    return sourceChampionships;
+}
+
+function createNewsParser() {
+    return new RSSParser({
+        customFields: {
+            item: [
+                ["media:content", "media:content"],
+                ["media:thumbnail", "media:thumbnail"],
+                ["enclosure", "enclosure"],
+                ["content:encoded", "content:encoded"],
+            ],
+        },
+        timeout: 15000,
+        headers: {
+            "User-Agent": "ArenaCopaNews/1.0",
+        },
+    });
+}
+
+async function recordNewsFetchRun(sourceId, status, details = {}) {
+    await db.collection("news_fetch_runs").add({
+        source_id: sourceId,
+        status,
+        started_at: details.startedAt || admin.firestore.FieldValue.serverTimestamp(),
+        finished_at: admin.firestore.FieldValue.serverTimestamp(),
+        articles_seen: details.articlesSeen || 0,
+        articles_inserted: details.articlesInserted || 0,
+        articles_updated: details.articlesUpdated || 0,
+        error_message: details.errorMessage || null,
+        duration_ms: details.durationMs || null,
+    });
+}
+
+async function rebuildNewsLinksByChampionship(championshipIds) {
+    for (const championshipId of championshipIds) {
+        const snapshot = await db.collection("news_articles")
+            .where("championship_ids", "array-contains", championshipId)
+            .get();
+
+        const sortedDocs = snapshot.docs
+            .filter((item) => (item.data()?.status || "published") === "published")
+            .sort((left, right) => {
+                const leftMs = left.data()?.published_at?.toMillis?.() || 0;
+                const rightMs = right.data()?.published_at?.toMillis?.() || 0;
+                return rightMs - leftMs;
+            })
+            .slice(0, 50);
+
+        await db.collection("news_links_by_championship").doc(championshipId).set({
+            championship_id: championshipId,
+            article_ids: sortedDocs.map((item) => item.id),
+            updated_at: admin.firestore.FieldValue.serverTimestamp(),
+        }, { merge: true });
+    }
+}
+
+async function ingestRssSources({ sourceIds = null } = {}) {
+    const parser = createNewsParser();
+    const enabledSources = NEWS_SOURCES.filter((source) =>
+        source.enabled &&
+        source.ingestion_type === "rss" &&
+        source.feed_url &&
+        (!sourceIds || sourceIds.includes(source.id))
+    );
+
+    const touchedChampionships = new Set();
+    let inserted = 0;
+    let updated = 0;
+
+    for (const source of enabledSources) {
+        const startedAt = Date.now();
+        let articlesSeen = 0;
+        let articlesInserted = 0;
+        let articlesUpdated = 0;
+
+        try {
+            const feed = await parser.parseURL(source.feed_url);
+            const items = Array.isArray(feed.items) ? feed.items.slice(0, 25) : [];
+            articlesSeen = items.length;
+
+            for (const item of items) {
+                const title = (item.title || "").trim();
+                const summary = (item.contentSnippet || item.summary || item.content || "").replace(/<[^>]+>/g, "").trim().slice(0, 800);
+                const rawUrl = item.link || item.guid || "";
+                const canonicalUrl = normalizeUrl(rawUrl);
+
+                if (!title || !canonicalUrl) {
+                    continue;
+                }
+
+                const championshipIds = detectChampionshipIds(title, summary, source);
+                if (!championshipIds.length) {
+                    continue;
+                }
+
+                championshipIds.forEach((championshipId) => touchedChampionships.add(championshipId));
+
+                const dedupeKey = hashUrl(`${source.id}:${canonicalUrl}`);
+                const docRef = db.collection("news_articles").doc(dedupeKey);
+                const existing = await docRef.get();
+
+                let publishedAt = admin.firestore.Timestamp.now();
+                const rawDate = item.pubDate || item.isoDate;
+                if (rawDate) {
+                    const parsed = new Date(rawDate);
+                    if (!Number.isNaN(parsed.getTime())) {
+                        publishedAt = admin.firestore.Timestamp.fromDate(parsed);
+                    }
+                }
+
+                const payload = {
+                    title,
+                    summary,
+                    content: item["content:encoded"] || item.content || summary,
+                    url: rawUrl,
+                    canonical_url: canonicalUrl,
+                    image_url: extractImageUrl(item),
+                    source_id: source.id,
+                    source_name: source.name,
+                    source_country: source.country,
+                    language: source.language,
+                    published_at: publishedAt,
+                    captured_at: admin.firestore.FieldValue.serverTimestamp(),
+                    championship_ids: championshipIds,
+                    team_ids: [],
+                    tags: [],
+                    priority_score: source.priority,
+                    is_live: false,
+                    status: "published",
+                    dedupe_key: dedupeKey,
+                    ingestion_type: source.ingestion_type,
+                };
+
+                await db.collection("news_raw").doc(dedupeKey).set({
+                    source_id: source.id,
+                    fetched_at: admin.firestore.FieldValue.serverTimestamp(),
+                    canonical_url: canonicalUrl,
+                    checksum: dedupeKey,
+                    payload: {
+                        title: item.title || "",
+                        link: rawUrl,
+                        pubDate: item.pubDate || item.isoDate || null,
+                    },
+                }, { merge: true });
+
+                if (existing.exists) {
+                    await docRef.set(payload, { merge: true });
+                    updated += 1;
+                    articlesUpdated += 1;
+                } else {
+                    await docRef.set(payload, { merge: true });
+                    inserted += 1;
+                    articlesInserted += 1;
+                }
+            }
+
+            await recordNewsFetchRun(source.id, "success", {
+                startedAt: admin.firestore.Timestamp.fromMillis(startedAt),
+                articlesSeen,
+                articlesInserted,
+                articlesUpdated,
+                durationMs: Date.now() - startedAt,
+            });
+        } catch (error) {
+            await recordNewsFetchRun(source.id, "failed", {
+                startedAt: admin.firestore.Timestamp.fromMillis(startedAt),
+                articlesSeen,
+                articlesInserted,
+                articlesUpdated,
+                errorMessage: error?.message || "Unknown ingestion error",
+                durationMs: Date.now() - startedAt,
+            });
+            functions.logger.error("RSS news ingestion failed", {
+                sourceId: source.id,
+                error: error?.message || error,
+            });
+        }
+    }
+
+    if (touchedChampionships.size > 0) {
+        await rebuildNewsLinksByChampionship(Array.from(touchedChampionships));
+    }
+
+    return {
+        sources: enabledSources.length,
+        inserted,
+        updated,
+        championships: Array.from(touchedChampionships),
+    };
 }
 
 async function createBolaoActivity({ bolaoId, userId = null, type, title, description = null, marketId = null, matchId = null }) {
@@ -1587,6 +1828,75 @@ exports.seedLeagueData = functions.region("us-central1").https.onRequest(async (
     }
 });
 
+exports.syncNewsSourcesCatalog = functions.region("us-central1").https.onRequest(async (req, res) => {
+    applyCors(res);
+
+    if (req.method === "OPTIONS") {
+        return res.status(204).send("");
+    }
+
+    if (req.method !== "POST") {
+        return res.status(405).json({ error: "Método não suportado." });
+    }
+
+    try {
+        const { seedToken } = getRuntimeConfig();
+        const requestSeedToken = req.headers["x-seed-token"] || req.body?.seedToken;
+
+        if (!seedToken || requestSeedToken !== seedToken) {
+            return res.status(403).json({ error: "Token inválido para sincronizar fontes." });
+        }
+
+        const total = await syncNewsSourcesCatalog();
+        return res.status(200).json({
+            ok: true,
+            sources: total,
+        });
+    } catch (error) {
+        functions.logger.error("syncNewsSourcesCatalog failed", {
+            error: error?.message || error,
+        });
+        return res.status(400).json({
+            error: error?.message || "Não foi possível sincronizar as fontes.",
+        });
+    }
+});
+
+exports.syncRssNewsNow = functions.region("us-central1").https.onRequest(async (req, res) => {
+    applyCors(res);
+
+    if (req.method === "OPTIONS") {
+        return res.status(204).send("");
+    }
+
+    if (req.method !== "POST") {
+        return res.status(405).json({ error: "Método não suportado." });
+    }
+
+    try {
+        const { seedToken } = getRuntimeConfig();
+        const requestSeedToken = req.headers["x-seed-token"] || req.body?.seedToken;
+
+        if (!seedToken || requestSeedToken !== seedToken) {
+            return res.status(403).json({ error: "Token inválido para sincronizar notícias." });
+        }
+
+        const sourceIds = Array.isArray(req.body?.sourceIds) ? req.body.sourceIds : null;
+        const result = await ingestRssSources({ sourceIds });
+        return res.status(200).json({
+            ok: true,
+            ...result,
+        });
+    } catch (error) {
+        functions.logger.error("syncRssNewsNow failed", {
+            error: error?.message || error,
+        });
+        return res.status(400).json({
+            error: error?.message || "Não foi possível sincronizar as notícias RSS.",
+        });
+    }
+});
+
 function categorizeNews(title, description) {
     const text = `${title} ${description}`.toLowerCase();
     if (
@@ -1748,6 +2058,9 @@ exports.fetchNewsScheduled = functions.pubsub
         } catch (cleanErr) {
             functions.logger.warn("[fetchNews] Cleanup error", { error: cleanErr?.message });
         }
+
+        const rssSync = await ingestRssSources();
+        functions.logger.info("[fetchNews] RSS sync completed", rssSync);
 
         functions.logger.info(`[fetchNews] Completed. Total added: ${totalAdded}`);
         return null;

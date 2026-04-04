@@ -19,20 +19,23 @@ interface NewsItemDisplay {
 
 export function NewsFeed() {
     const { t } = useTranslation('bolao');
-    const { news: realtimeNews, isLoading: loading } = useRealtimeNews({ limitCount: 6 });
+    const { news: realtimeNews, isLoading: loading } = useRealtimeNews({
+        limitCount: 6,
+        championshipId: "wc2026",
+    });
     const news = useMemo(
         () =>
             realtimeNews.map((item) => ({
                 id: item.id,
                 title: item.title,
-                category: item.category || item.country_filter || "Geral",
+                category: item.source_name || item.source_country || item.category || item.country_filter || "Geral",
                 time: item.published_at ? new Date(item.published_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }) : "Recent",
-                image: item.url_to_image || "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=800",
+                image: item.image_url || item.url_to_image || "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=800",
                 url: item.url || "#",
                 views: item.views
                     ? (item.views >= 1000 ? `${(item.views / 1000).toFixed(1).replace('.0', '')}k` : `${item.views}`)
                     : `${Math.floor(Math.random() * 5) + 1}.${Math.floor(Math.random() * 9)}k`,
-                content: item.content || item.description || undefined,
+                content: item.summary || item.content || item.description || undefined,
                 source: item.source_name || undefined,
             })) satisfies NewsItemDisplay[],
         [realtimeNews]

@@ -34,6 +34,7 @@ import {
 import { cn } from "@/lib/utils";
 import { tabContentVariants } from "@/components/copa/animations";
 import type { BolaoData } from "@/types/bolao";
+import { useRealtimeNews } from "@/hooks/useRealtimeNews";
 
 // ─── Types ────────────────────────────────────────────────────
 type HubTab = "jogos" | "classificacao" | "noticias" | "boloes";
@@ -80,18 +81,6 @@ interface StandingsDoc {
   updated_at: string;
   table: StandingRow[];
   source?: "official" | "derived";
-}
-
-interface NewsItem {
-  id: string;
-  title: string;
-  content: string;
-  category: string;
-  source_name: string;
-  published_at: string;
-  url_to_image?: string;
-  url?: string;
-  championship_id?: string;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────
@@ -693,15 +682,9 @@ function BolõesTab({
 
 // ─── News Tab ────────────────────────────────────────────────
 function NotíciasTab({ championshipId, color }: { championshipId: string; color: string }) {
-  const { data: news, isLoading } = useQuery({
-    queryKey: ["championship-news", championshipId],
-    queryFn: async () => {
-      const ref = collection(db, "news");
-      const q = query(ref, where("championship_id", "==", championshipId), orderBy("published_at", "desc"), limit(10));
-      const snap = await getDocs(q);
-      return snap.docs.map((d) => ({ id: d.id, ...d.data() })) as NewsItem[];
-    },
-    staleTime: 10 * 60 * 1000,
+  const { news, isLoading } = useRealtimeNews({
+    championshipId,
+    limitCount: 10,
   });
 
   if (isLoading) return (
@@ -725,20 +708,25 @@ function NotíciasTab({ championshipId, color }: { championshipId: string; color
       {news.map((item) => (
         <a key={item.id} href={item.url || "#"} target="_blank" rel="noopener noreferrer"
           className="block rounded-2xl overflow-hidden bg-white/[0.04] border border-white/[0.06] hover:bg-white/[0.07] transition-colors">
-          {item.url_to_image && (
+          {(item.image_url || item.url_to_image) && (
             <div className="h-32 overflow-hidden">
-              <img src={item.url_to_image} alt={item.title} className="w-full h-full object-cover" loading="lazy" />
+              <img src={item.image_url || item.url_to_image} alt={item.title} className="w-full h-full object-cover" loading="lazy" />
             </div>
           )}
           <div className="p-3">
             <div className="flex items-center gap-2 mb-1">
               <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full border"
                 style={{ color, borderColor: `${color}40`, background: `${color}15` }}>
-                {item.category}
+                {item.source_name || item.source_country || item.category || "Destaque"}
               </span>
-              <span className="text-[9px] text-white/30">{item.source_name}</span>
+              <span className="text-[9px] text-white/30">{item.published_at ? new Date(item.published_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }) : ""}</span>
             </div>
             <p className="text-xs font-bold text-white leading-relaxed line-clamp-2">{item.title}</p>
+            {(item.summary || item.description) && (
+              <p className="mt-1 text-[11px] leading-relaxed text-white/45 line-clamp-2">
+                {item.summary || item.description}
+              </p>
+            )}
           </div>
         </a>
       ))}

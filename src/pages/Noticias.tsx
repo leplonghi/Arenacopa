@@ -43,13 +43,19 @@ type NewsItem = {
 };
 
 function toNewsItem(raw: RealtimeNewsItem): NewsItem {
+  const category =
+    raw.category ||
+    (raw.championship_ids?.includes("wc2026") ? "copa" : undefined) ||
+    (raw.country_filter ? "teams" : undefined) ||
+    "general";
+
   return {
     id: raw.id,
     title: raw.title,
-    summary: raw.description || raw.content || undefined,
-    category: raw.category || (raw.country_filter ? "teams" : "general"),
+    summary: raw.summary || raw.description || raw.content || undefined,
+    category,
     externalUrl: raw.url !== "#" ? raw.url : undefined,
-    imageUrl: raw.url_to_image || undefined,
+    imageUrl: raw.image_url || raw.url_to_image || undefined,
     teams: raw.country_filter ? [raw.country_filter] : [],
     publishedAt: raw.published_at,
     sourceName: raw.source_name,
