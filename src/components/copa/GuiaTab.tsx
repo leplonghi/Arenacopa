@@ -6,6 +6,7 @@ import {
     Camera, Bus, AlertTriangle, Cloud, Zap, Search
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import { hostCountries, generalCuriosities, type HostCity } from "@/data/guiaData";
 import { Flag } from "@/components/Flag";
 import { cn } from "@/lib/utils";
@@ -213,7 +214,7 @@ export function GuiaTab() {
     );
 }
 
-function CityCard({ city, idx, onClick, status, t }: { city: HostCity, idx: number, onClick: () => void, status?: CityStatusData, t: any }) {
+function CityCard({ city, idx, onClick, status, t }: { city: HostCity, idx: number, onClick: () => void, status?: CityStatusData, t: TFunction<"sedes"> }) {
     const bgImage = city.image || "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?auto=format&fit=crop&w=800&q=80";
 
     return (
@@ -291,7 +292,7 @@ interface TranslatedCityData {
     weather?: string;
 }
 
-export function CityDetailsModal({ city, dynamicStatus, onClose, t }: { city: HostCity, dynamicStatus?: CityStatusData, onClose: () => void, t: any }) {
+export function CityDetailsModal({ city, dynamicStatus, onClose, t }: { city: HostCity, dynamicStatus?: CityStatusData, onClose: () => void, t: TFunction<"sedes"> }) {
     const [activeTab, setActiveTab] = useState<"geral" | "turismo" | "gastronomia">("geral");
 
     const cityData = t(`cities.${city.id}`, { returnObjects: true }) as TranslatedCityData;

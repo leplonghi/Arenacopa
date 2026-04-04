@@ -50,23 +50,23 @@ const queryClient = new QueryClient({
 });
 
 const legacyCopaMap: Record<string, string> = {
-  overview: "",
-  today: "",
-  calendar: "calendario",
-  groups: "grupos",
-  bracket: "chaves",
-  simulator: "simulacao",
-  hosts: "sedes",
-  news: "noticias",
-  history: "historia",
+  overview: "/copa",
+  today: "/copa",
+  calendar: "/copa/calendario",
+  groups: "/copa/grupos",
+  bracket: "/copa/chaves",
+  simulator: "/copa/simulacao",
+  hosts: "/guia",
+  news: "/noticias",
+  history: "/guia/historia",
 };
 
 const legacyGuiaMap: Record<string, string> = {
-  map: "mapa",
-  cities: "",
-  city: "",
-  stadiums: "estadios",
-  hosts: "estadios",
+  map: "/guia/mapa",
+  cities: "/guia",
+  city: "/guia",
+  stadiums: "/guia",
+  hosts: "/guia",
 };
 
 function LegacyRedirect({ to }: { to: string }) {
@@ -76,15 +76,13 @@ function LegacyRedirect({ to }: { to: string }) {
 function LegacyCopaRedirect() {
   const location = useLocation();
   const slug = location.pathname.split("/").filter(Boolean)[1] ?? "";
-  const mapped = legacyCopaMap[slug] ?? "";
-  return <Navigate to={mapped ? `/copa/${mapped}` : "/copa"} replace />;
+  return <Navigate to={legacyCopaMap[slug] ?? "/copa"} replace />;
 }
 
 function LegacyGuiaRedirect() {
   const location = useLocation();
   const slug = location.pathname.split("/").filter(Boolean)[1] ?? "";
-  const mapped = legacyGuiaMap[slug] ?? "";
-  return <Navigate to={mapped ? `/guia/${mapped}` : "/guia"} replace />;
+  return <Navigate to={legacyGuiaMap[slug] ?? "/guia"} replace />;
 }
 
 function LegacyPoolDetailRedirect() {
@@ -174,6 +172,7 @@ const AppRoutes = () => (
     <Route path="/terms" element={<LegacyRedirect to="/termos" />} />
     <Route path="/" element={<ProtectedRoute><Layout><Index /></Layout></ProtectedRoute>} />
     <Route path="/copa" element={<ProtectedRoute><Layout><Copa /></Layout></ProtectedRoute>} />
+    <Route path="/copa/overview" element={<ProtectedRoute><LegacyRedirect to="/copa" /></ProtectedRoute>} />
     <Route path="/copa/sedes" element={<ProtectedRoute><Navigate to="/guia" replace /></ProtectedRoute>} />
     <Route path="/copa/historia" element={<ProtectedRoute><Navigate to="/guia/historia" replace /></ProtectedRoute>} />
     <Route path="/copa/noticias" element={<ProtectedRoute><Navigate to="/noticias" replace /></ProtectedRoute>} />

@@ -5,13 +5,15 @@ import { cn } from '@/lib/utils';
 import { useMonetization } from '@/contexts/MonetizationContext';
 import { useToast } from '@/hooks/use-toast';
 import { monetizationEnv } from '@/lib/env';
-import { PREMIUM_CHECKOUT_UNAVAILABLE_MESSAGE } from '@/services/monetization/stripe.service';
+import {
+    getPremiumSupportMailto,
+} from '@/services/monetization/stripe.service';
 
 export function ElitePassModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
     const { purchasePremium, isLoading, isPremium } = useMonetization();
     const { toast } = useToast();
-    const [isHovering, setIsHovering] = useState(false);
     const canStartPremiumCheckout = monetizationEnv.enablePremiumSimulation || monetizationEnv.premiumCheckoutEnabled;
+    const supportMailto = getPremiumSupportMailto();
 
     // If they already bought it, no need to show the sales pitch again
     if (isPremium) {
@@ -21,6 +23,11 @@ export function ElitePassModal({ isOpen, onClose }: { isOpen: boolean; onClose: 
 
     const handlePurchase = async () => {
         try {
+            if (!canStartPremiumCheckout) {
+                window.location.href = supportMailto;
+                return;
+            }
+
             const startedCheckout = await purchasePremium();
             if (!startedCheckout) {
                 return;
@@ -130,12 +137,10 @@ export function ElitePassModal({ isOpen, onClose }: { isOpen: boolean; onClose: 
                                     </div>
 
                                     <motion.button
-                                        onHoverStart={() => setIsHovering(true)}
-                                        onHoverEnd={() => setIsHovering(false)}
                                         whileHover={{ scale: 1.02 }}
                                         whileTap={{ scale: 0.98 }}
                                         onClick={handlePurchase}
-                                        disabled={isLoading || !canStartPremiumCheckout}
+                                        disabled={isLoading}
                                         className="w-full relative group h-16 rounded-full flex items-center justify-center overflow-hidden"
                                     >
                                         <div className="absolute inset-0 bg-gradient-to-r from-yellow-600 via-yellow-400 to-yellow-600 bg-[length:200%_auto] animate-gradient" />
@@ -144,6 +149,10 @@ export function ElitePassModal({ isOpen, onClose }: { isOpen: boolean; onClose: 
                                                 <>
                                                     <Loader2 className="w-5 h-5 animate-spin" /> PROCESSANDO...
                                                 </>
+                                            ) : !canStartPremiumCheckout ? (
+                                                <>
+                                                    <CheckCircle2 className="w-5 h-5" /> QUERO SER AVISADO
+                                                </>
                                             ) : (
                                                 <>
                                                     <CheckCircle2 className="w-5 h-5" /> GARANTIR MEU PASSAPORTE
@@ -151,10 +160,18 @@ export function ElitePassModal({ isOpen, onClose }: { isOpen: boolean; onClose: 
                                             )}
                                         </div>
                                     </motion.button>
+                                    {!canStartPremiumCheckout && (
+                                        <a
+                                            href={supportMailto}
+                                            className="mt-3 inline-flex w-full items-center justify-center rounded-full border border-white/15 bg-white/[0.03] px-4 py-3 text-xs font-bold uppercase tracking-wider text-white transition-colors hover:bg-white/[0.08]"
+                                        >
+                                            Falar com o suporte premium
+                                        </a>
+                                    )}
                                     <p className="text-[10px] text-gray-600 font-medium mt-4">
                                         {canStartPremiumCheckout
                                             ? "Pagamento 100% seguro via Stripe. Cancele a qualquer momento."
-                                            : PREMIUM_CHECKOUT_UNAVAILABLE_MESSAGE}
+                                            : "O checkout ainda está em preparação. Entre na lista de aviso pelo suporte."}
                                     </p>
                                 </div>
 

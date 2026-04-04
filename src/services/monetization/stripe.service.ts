@@ -1,4 +1,4 @@
-import { db } from "@/integrations/firebase/client";
+import { auth, db } from "@/integrations/firebase/client";
 import { 
   collection, 
   query, 
@@ -26,6 +26,11 @@ export type PremiumStatusResult = {
   currency: string | null;
 };
 
+type CheckoutSessionResponse = {
+  url: string;
+  sessionId: string;
+};
+
 const inactiveStatus: PremiumStatusResult = {
   isPremium: false,
   status: "inactive",
@@ -36,6 +41,8 @@ const inactiveStatus: PremiumStatusResult = {
 
 export const PREMIUM_CHECKOUT_UNAVAILABLE_MESSAGE =
   "Premium temporariamente indisponivel enquanto o backend desta versao e estabilizado.";
+
+export const PREMIUM_SUPPORT_EMAIL = "suporte@arenacup.com";
 
 const mapSubscriptionRow = (row: PremiumSubscriptionRow | null): PremiumStatusResult => {
   if (!row) {
@@ -50,6 +57,49 @@ const mapSubscriptionRow = (row: PremiumSubscriptionRow | null): PremiumStatusRe
     currency: row.currency,
   };
 };
+
+const getFunctionsBaseUrl = () => {
+  const projectId = import.meta.env.VITE_FIREBASE_PROJECT_ID;
+  if (!projectId) {
+    throw new Error("Projeto Firebase não configurado para iniciar o checkout.");
+  }
+
+  return `https://us-central1-${projectId}.cloudfunctions.net`;
+};
+
+const getCheckoutSiteUrl = () => {
+  const origin = window.location.origin;
+  if (origin.startsWith("http://") || origin.startsWith("https://")) {
+    return origin;
+  }
+
+  return "https://arenacopa.app";
+};
+
+async function callPremiumFunction<T>(functionName: string, payload: Record<string, unknown>): Promise<T> {
+  const user = auth.currentUser;
+  if (!user) {
+    throw new Error("Faça login para continuar com o checkout premium.");
+  }
+
+  const idToken = await user.getIdToken();
+  const response = await fetch(`${getFunctionsBaseUrl()}/${functionName}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${idToken}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  const data = (await response.json().catch(() => ({}))) as { error?: string } & Record<string, unknown>;
+
+  if (!response.ok) {
+    throw new Error(typeof data.error === "string" ? data.error : "Não foi possível concluir o checkout premium.");
+  }
+
+  return data as T;
+}
 
 export async function getPremiumStatus(userId: string): Promise<PremiumStatusResult> {
   try {
@@ -71,17 +121,33 @@ export async function getPremiumStatus(userId: string): Promise<PremiumStatusRes
   }
 }
 
-export async function createStripeCheckoutSession() {
+export async function createStripeCheckoutSession(): Promise<CheckoutSessionResponse> {
   if (!monetizationEnv.premiumCheckoutEnabled) {
     throw new Error(PREMIUM_CHECKOUT_UNAVAILABLE_MESSAGE);
   }
 
-  throw new Error(PREMIUM_CHECKOUT_UNAVAILABLE_MESSAGE);
+  return callPremiumFunction<CheckoutSessionResponse>("createPremiumCheckoutSession", {
+    siteUrl: getCheckoutSiteUrl(),
+  });
 }
 
 export async function syncStripeCheckoutSession(checkoutSessionId: string): Promise<PremiumStatusResult> {
-  void checkoutSessionId;
-  return inactiveStatus;
+  if (!monetizationEnv.premiumCheckoutEnabled) {
+    return inactiveStatus;
+  }
+
+  return callPremiumFunction<PremiumStatusResult>("syncPremiumCheckoutSession", {
+    checkoutSessionId,
+  });
+}
+
+export function getPremiumSupportMailto() {
+  const subject = encodeURIComponent("Interesse no Arena CUP Premium");
+  const body = encodeURIComponent(
+    "Olá! Quero ser avisado assim que o checkout do Arena CUP Premium estiver disponível."
+  );
+
+  return `mailto:${PREMIUM_SUPPORT_EMAIL}?subject=${subject}&body=${body}`;
 }
 
 export function redirectToCheckout(url: string) {

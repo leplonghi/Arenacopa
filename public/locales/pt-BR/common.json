@@ -5,6 +5,9 @@
     "bolao": "Bolões",
     "simulator": "Simulador",
     "guia": "Guia",
+    "championships": "Campeonatos",
+    "news": "Notícias",
+    "groups": "Grupos",
     "ranking": "Ranking",
     "profile": "Conta",
     "menu": "Conta"
@@ -14,6 +17,8 @@
       "boloes": "Bolões",
       "create_bolao": "Criar Bolão",
       "bolao_detail": "Bolão",
+      "groups": "Meus Grupos",
+      "group_detail": "Grupo",
       "profile": "Conta",
       "menu": "Conta"
     }
@@ -54,13 +59,30 @@
     "title": "Bem-vindo à ArenaCUP",
     "description": "Escolha seu time favorito para a Copa 2026.",
     "loading": "Confirmando...",
-    "confirm": "Confirmar e Entrar na Arena"
+    "confirm": "Confirmar e Entrar na Arena",
+    "notifications_title": "Fique por dentro",
+    "notifications_description": "Ative as notificações para receber alertas de jogos, resultados e atualizações do seu bolão em tempo real.",
+    "enable_notifications": "Ativar notificações",
+    "skip_notifications": "Agora não",
+    "notifications_enabled": "✓ Notificações ativadas!",
+    "notifications_denied": "Tudo bem! Você pode ativar depois nas configurações do seu dispositivo."
   },
   "status": {
     "active": "Ativo",
     "finished": "Finalizado",
     "live": "Ao Vivo",
     "scheduled": "Agendado"
+  },
+  "footer": {
+    "rights": "© 2026 ArenaCup. Todos os direitos reservados.",
+    "terms": "Termos",
+    "privacy": "Privacidade",
+    "contact": "Contato"
+  },
+  "actions": {
+    "back": "Voltar",
+    "open_notifications": "Abrir notificações",
+    "open_account": "Abrir conta"
   },
   "app_loading": "Carregando ArenaCUP..."
 }

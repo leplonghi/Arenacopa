@@ -25,7 +25,7 @@ import { toPng } from "html-to-image";
 import { EmptyState } from "@/components/EmptyState";
 import { cn } from "@/lib/utils";
 import { saveBolaoPrediction } from "@/services/boloes/bolao-prediction.service";
-import type { BolaoMarket, BolaoPrediction } from "@/types/bolao";
+import type { BolaoData, BolaoMarket, BolaoPrediction } from "@/types/bolao";
 
 type JogosTabMatch = {
     id: string;
@@ -123,7 +123,7 @@ export function JogosTab({
     rules?: unknown;
     markets?: BolaoMarket[];
     predictions?: BolaoPrediction[];
-    bolao?: any;
+    bolao?: Pick<BolaoData, "scoring_mode"> | null;
 }) {
     const { t } = useTranslation('bolao');
     const { user } = useAuth();
@@ -260,7 +260,7 @@ export function JogosTab({
              unsubscribe();
              unsubscribeAll();
         };
-    }, [bolaoId, toast, user, bolao?.scoring_mode]);
+    }, [bolaoId, bolao?.scoring_mode, t, toast, user]);
 
     const getCurrentPalpite = useMemo(() => {
         return (matchId: string): EditablePalpite => {

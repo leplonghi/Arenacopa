@@ -66,7 +66,7 @@ export const ShareCardGenerator = forwardRef<HTMLDivElement, ShareCardProps>(({ 
         }, 800);
 
         return () => clearTimeout(timer);
-    }, [data, type, format, onReady, ref, dims.width, dims.height]);
+    }, [data, dims.height, dims.width, format, onReady, ref, t, toast, type]);
 
     // We render off-screen with transform scale so it doesn't take space
     return (

@@ -5,7 +5,7 @@ import { Users, Trophy, ChevronRight, AlertTriangle, Dices, Zap, Crown, Settings
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
-import { useEffect, useState, useMemo } from "react";
+import { useCallback, useEffect, useState, useMemo } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MatchDetailsModal } from "@/components/copa/MatchDetailsModal";
 import { useTranslation } from "react-i18next";
@@ -218,15 +218,18 @@ const Index = () => {
 
   const newsLoading = newsTab === "copa" ? copaNewsLoading : teamNewsLoading;
 
-  const mapNews = (items: typeof copaNewsRaw) =>
-    items.map((item) => ({
-      id: item.id,
-      title: item.title,
-      category: item.source_name || item.category || "Geral",
-      publishedAt: item.published_at,
-      imageUrl: item.url_to_image || null,
-      url: item.url,
-    }));
+  const mapNews = useCallback(
+    (items: typeof copaNewsRaw) =>
+      items.map((item) => ({
+        id: item.id,
+        title: item.title,
+        category: item.source_name || item.category || "Geral",
+        publishedAt: item.published_at,
+        imageUrl: item.url_to_image || null,
+        url: item.url,
+      })),
+    []
+  );
 
   // Copa tab: filter by user prefs (if any), else show all; limit to 4
   const miniNews = useMemo(() => {
@@ -234,13 +237,13 @@ const Index = () => {
     if (homeNewsPrefs.length === 0) return all.slice(0, 4);
     const filtered = all.filter(item => homeNewsPrefs.some(p => item.category?.toLowerCase().includes(p)));
     return (filtered.length > 0 ? filtered : all).slice(0, 4);
-  }, [copaNewsRaw, homeNewsPrefs]);
+  }, [copaNewsRaw, homeNewsPrefs, mapNews]);
 
   // "Para você" tab: team-specific news first, then pref-filtered; limit to 4
   const teamNews = useMemo(() => {
     const all = mapNews(teamNewsRaw);
     return all.slice(0, 4);
-  }, [teamNewsRaw]);
+  }, [mapNews, teamNewsRaw]);
 
   useEffect(() => {
     if (!user) {

@@ -10,6 +10,16 @@ import {
 } from "firebase/auth";
 import { Capacitor } from "@capacitor/core";
 
+type NativeGoogleSignInResult = {
+  credential?: {
+    idToken?: string | null;
+  } | null;
+};
+
+type NativeGoogleSignInFn = (options: {
+  useCredentialManager: boolean;
+}) => Promise<NativeGoogleSignInResult>;
+
 export async function signInWithPassword(email: string, password: string) {
   const userCredential = await signInWithEmailAndPassword(auth, email, password);
   return userCredential.user;
@@ -28,7 +38,8 @@ export async function signInWithGoogle() {
     // useCredentialManager: false forces the traditional full-screen Google Sign-In intent.
     // The default (true) uses Android Credential Manager which fails with
     // "No credentials available" in some devices/configurations.
-    const result = await (FirebaseAuthentication.signInWithGoogle as any)({
+    const signInWithGoogleNative = FirebaseAuthentication.signInWithGoogle as NativeGoogleSignInFn;
+    const result = await signInWithGoogleNative({
       useCredentialManager: false,
     });
     if (!result.credential?.idToken) throw new Error("Google Sign-In: idToken ausente");

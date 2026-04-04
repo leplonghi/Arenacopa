@@ -1,15 +1,140 @@
 const functions = require("firebase-functions");
 const admin = require("firebase-admin");
+const https = require("https");
 
 admin.initializeApp();
 
 const db = admin.firestore();
+const DEFAULT_SITE_URL = "https://arenacopa.app";
+const STRIPE_API_BASE_URL = "https://api.stripe.com/v1";
+const STRIPE_API_VERSION = "2026-02-25.clover";
 
 const SCORING = {
     EXACT: 5,
     WINNER: 3,
     DRAW: 2,
 };
+const LEAGUE_CHAMPIONSHIPS = [
+    { id: "brasileirao2026", fdoId: 2013, name: "Brasileirão", season: "2026" },
+    { id: "ucl2526", fdoId: 2001, name: "Champions League", season: "2025" },
+    { id: "laliga2526", fdoId: 2014, name: "La Liga", season: "2025" },
+    { id: "premier2526", fdoId: 2021, name: "Premier League", season: "2025" },
+];
+
+function applyCors(res) {
+    res.set("Access-Control-Allow-Origin", "*");
+    res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    res.set("Access-Control-Allow-Methods", "POST, OPTIONS");
+}
+
+function getRuntimeConfig() {
+    const runtimeConfig = functions.config();
+
+    return {
+        stripeSecretKey: runtimeConfig?.stripe?.secret_key || process.env.STRIPE_SECRET_KEY || "",
+        stripePremiumPriceId: runtimeConfig?.stripe?.premium_price_id || process.env.STRIPE_PREMIUM_PRICE_ID || "",
+        siteUrl: runtimeConfig?.app?.site_url || process.env.SITE_URL || DEFAULT_SITE_URL,
+        footballDataApiKey: runtimeConfig?.football_data?.api_key || process.env.FOOTBALL_DATA_API_KEY || "",
+        seedToken: runtimeConfig?.seed?.token || process.env.SEED_ADMIN_TOKEN || "",
+    };
+}
+
+async function verifyHttpUser(req) {
+    const authHeader = req.headers.authorization || "";
+    if (!authHeader.startsWith("Bearer ")) {
+        throw new Error("Usuário não autenticado para iniciar o checkout.");
+    }
+
+    const idToken = authHeader.slice("Bearer ".length).trim();
+    return admin.auth().verifyIdToken(idToken);
+}
+
+async function stripeApiRequest({ method, path, params = null }) {
+    const { stripeSecretKey } = getRuntimeConfig();
+    if (!stripeSecretKey) {
+        throw new Error("STRIPE_SECRET_KEY não configurada nas Cloud Functions.");
+    }
+
+    const headers = {
+        Authorization: `Bearer ${stripeSecretKey}`,
+        "Stripe-Version": STRIPE_API_VERSION,
+    };
+
+    let url = `${STRIPE_API_BASE_URL}${path}`;
+    const requestInit = {
+        method,
+        headers,
+    };
+
+    if (method === "GET" && params) {
+        url += `?${new URLSearchParams(params).toString()}`;
+    } else if (params) {
+        headers["Content-Type"] = "application/x-www-form-urlencoded";
+        requestInit.body = new URLSearchParams(params).toString();
+    }
+
+    const response = await fetch(url, requestInit);
+    const data = await response.json();
+
+    if (!response.ok) {
+        throw new Error(data?.error?.message || "Falha ao comunicar com o Stripe.");
+    }
+
+    return data;
+}
+
+function mapStripeSessionStatus(session) {
+    if (session.status === "complete" && session.payment_status === "paid") {
+        return "active";
+    }
+
+    if (session.status === "expired") {
+        return "expired";
+    }
+
+    if (session.status === "open") {
+        return "pending";
+    }
+
+    return "failed";
+}
+
+async function upsertPremiumSubscriptionFromSession({ session, userId }) {
+    const subscriptionData = {
+        user_id: userId,
+        status: mapStripeSessionStatus(session),
+        stripe_checkout_session_id: session.id,
+        stripe_payment_intent_id: session.payment_intent || null,
+        stripe_customer_id: session.customer || null,
+        amount_total: session.amount_total ?? null,
+        currency: session.currency ?? null,
+        payment_status: session.payment_status || null,
+        customer_email: session.customer_details?.email || session.customer_email || null,
+        updated_at: admin.firestore.FieldValue.serverTimestamp(),
+        activated_at:
+            session.status === "complete" && session.payment_status === "paid"
+                ? admin.firestore.FieldValue.serverTimestamp()
+                : null,
+    };
+
+    const existingSnapshot = await db
+        .collection("premium_subscriptions")
+        .where("stripe_checkout_session_id", "==", session.id)
+        .limit(1)
+        .get();
+
+    if (!existingSnapshot.empty) {
+        await existingSnapshot.docs[0].ref.set(subscriptionData, { merge: true });
+        return existingSnapshot.docs[0].ref.id;
+    }
+
+    const created = await db.collection("premium_subscriptions").add({
+        ...subscriptionData,
+        created_at: admin.firestore.FieldValue.serverTimestamp(),
+    });
+
+    return created.id;
+}
 
 function chunkArray(items, size) {
     const chunks = [];
@@ -35,6 +160,281 @@ function normalizeBreakdown(current = {}) {
         tournament: normalizeNumber(current.tournament),
         special: normalizeNumber(current.special),
     };
+}
+
+function mapFootballDataStatus(status) {
+    if (status === "FINISHED" || status === "AWARDED") return "finished";
+    if (status === "IN_PLAY" || status === "PAUSED") return "live";
+    return "upcoming";
+}
+
+async function footballDataRequest(path) {
+    const { footballDataApiKey } = getRuntimeConfig();
+    if (!footballDataApiKey) {
+        throw new Error("FOOTBALL_DATA_API_KEY não configurada.");
+    }
+
+    const url = `https://api.football-data.org/v4${path}`;
+
+    return new Promise((resolve, reject) => {
+        const request = https.request(url, {
+            method: "GET",
+            headers: {
+                "X-Auth-Token": footballDataApiKey,
+                "User-Agent": "ArenaCopaSeed/1.0",
+                "Accept": "application/json",
+            },
+            timeout: 30000,
+        }, (response) => {
+            const chunks = [];
+
+            response.on("data", (chunk) => {
+                chunks.push(chunk);
+            });
+
+            response.on("end", () => {
+                const body = Buffer.concat(chunks).toString("utf8");
+
+                if (!response.statusCode || response.statusCode < 200 || response.statusCode >= 300) {
+                    return reject(new Error(`football-data ${path} ${response.statusCode || 0}: ${body}`));
+                }
+
+                try {
+                    resolve(JSON.parse(body));
+                } catch (error) {
+                    reject(new Error(`football-data JSON inválido: ${error.message}`));
+                }
+            });
+        });
+
+        request.on("timeout", () => {
+            request.destroy(new Error("football-data timeout"));
+        });
+
+        request.on("error", (error) => {
+            reject(error);
+        });
+
+        request.end();
+    });
+}
+
+async function seedTeamsForChampionship(championship) {
+    const data = await footballDataRequest(`/competitions/${championship.fdoId}/teams?season=${championship.season}`);
+    const teams = (data.teams || []).map((team) => ({
+        id: String(team.id),
+        name: team.name,
+        short_name: team.shortName || team.name,
+        tla: team.tla || team.name.slice(0, 3).toUpperCase(),
+        crest: team.crest || "",
+        country: team.area?.name || "",
+        championships: admin.firestore.FieldValue.arrayUnion(championship.id),
+    }));
+
+    const batch = db.batch();
+    teams.forEach((team) => {
+        const { id, ...payload } = team;
+        batch.set(db.collection("teams").doc(id), payload, { merge: true });
+    });
+    await batch.commit();
+
+    return teams.length;
+}
+
+async function seedMatchesForChampionship(championship) {
+    const data = await footballDataRequest(`/competitions/${championship.fdoId}/matches?season=${championship.season}`);
+    const matches = (data.matches || []).map((match) => ({
+        id: `fdo-${match.id}`,
+        championship_id: championship.id,
+        home_team_code: match.homeTeam?.tla || match.homeTeam?.shortName?.slice(0, 3).toUpperCase() || "???",
+        away_team_code: match.awayTeam?.tla || match.awayTeam?.shortName?.slice(0, 3).toUpperCase() || "???",
+        home_team_name: match.homeTeam?.name || "",
+        away_team_name: match.awayTeam?.name || "",
+        home_team_id: String(match.homeTeam?.id || ""),
+        away_team_id: String(match.awayTeam?.id || ""),
+        home_crest: match.homeTeam?.crest || "",
+        away_crest: match.awayTeam?.crest || "",
+        home_score: match.score?.fullTime?.home ?? null,
+        away_score: match.score?.fullTime?.away ?? null,
+        match_date: match.utcDate,
+        status: mapFootballDataStatus(match.status),
+        stage: match.stage || "REGULAR_SEASON",
+        round: match.matchday || null,
+        group_id: match.group || null,
+        venue_id: "",
+    }));
+
+    const chunks = chunkArray(matches, 450);
+    for (const chunk of chunks) {
+        const batch = db.batch();
+        chunk.forEach((match) => {
+            const { id, ...payload } = match;
+            batch.set(db.collection("matches").doc(id), payload, { merge: true });
+        });
+        await batch.commit();
+    }
+
+    return matches.length;
+}
+
+async function seedStandingsForChampionship(championship) {
+    let data;
+    try {
+        data = await footballDataRequest(`/competitions/${championship.fdoId}/standings?season=${championship.season}`);
+    } catch (error) {
+        if (String(error?.message || "").includes(" 404: ")) {
+            functions.logger.warn("Standings indisponíveis para campeonato, seguindo sem tabela oficial", {
+                championshipId: championship.id,
+                season: championship.season,
+            });
+            return 0;
+        }
+        throw error;
+    }
+    const standing = (data.standings || []).find((item) => item.type === "TOTAL" || item.stage === "REGULAR_SEASON") || data.standings?.[0];
+
+    if (!standing?.table?.length) {
+        return 0;
+    }
+
+    const table = standing.table.map((row) => ({
+        position: row.position,
+        team_id: String(row.team?.id || ""),
+        team_name: row.team?.name || "",
+        team_short: row.team?.shortName || row.team?.name || "",
+        team_tla: row.team?.tla || row.team?.name?.slice(0, 3).toUpperCase() || "???",
+        crest: row.team?.crest || "",
+        played: row.playedGames || 0,
+        won: row.won || 0,
+        drawn: row.draw || 0,
+        lost: row.lost || 0,
+        goals_for: row.goalsFor || 0,
+        goals_against: row.goalsAgainst || 0,
+        goal_difference: row.goalDifference || 0,
+        points: row.points || 0,
+        form: row.form || "",
+    }));
+
+    await db.collection("standings").doc(championship.id).set({
+        id: championship.id,
+        championship_id: championship.id,
+        season: String(championship.season),
+        updated_at: new Date().toISOString(),
+        table,
+    }, { merge: true });
+
+    return table.length;
+}
+
+async function seedLeagueNewsCollection() {
+    const now = new Date().toISOString();
+    const newsItems = [
+        {
+            id: "news-brasileirao-1",
+            championship_id: "brasileirao2026",
+            title: "Brasileirão 2026: temporada começa com surpresas na rodada inaugural",
+            content: "O Campeonato Brasileiro 2026 deu início com partidas emocionantes. Clubes tradicionais buscam o título nesta que promete ser uma das edições mais disputadas da história.",
+            category: "Brasileirão",
+            source_name: "GloboEsporte",
+            published_at: now,
+            url_to_image: "https://images.unsplash.com/photo-1560272564-c83b66b1ad12?auto=format&fit=crop&q=80&w=1200",
+            url: "https://ge.globo.com",
+            views: 8500,
+        },
+        {
+            id: "news-brasileirao-2",
+            championship_id: "brasileirao2026",
+            title: "Flamengo e Palmeiras já miram o topo do Brasileirão",
+            content: "Os dois gigantes do futebol brasileiro chegam reforçados para a temporada 2026 e são apontados como favoritos ao título.",
+            category: "Brasileirão",
+            source_name: "UOL Esporte",
+            published_at: now,
+            url_to_image: "https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&q=80&w=1200",
+            url: "https://esporte.uol.com.br",
+            views: 6200,
+        },
+        {
+            id: "news-ucl-1",
+            championship_id: "ucl2526",
+            title: "Champions League: quartas de final prometem duelos históricos",
+            content: "Real Madrid, Barcelona, Manchester City e Bayern de Munique lutam pelas vagas na semifinal da Liga dos Campeões 2025-26.",
+            category: "Champions",
+            source_name: "ESPN",
+            published_at: now,
+            url_to_image: "https://images.unsplash.com/photo-1522778119026-d647f0565c6a?auto=format&fit=crop&q=80&w=1200",
+            url: "https://espn.com.br",
+            views: 14300,
+        },
+        {
+            id: "news-ucl-2",
+            championship_id: "ucl2526",
+            title: "Novo formato da Champions League agrada torcedores e clubes",
+            content: "O modelo Swiss com 36 equipes trouxe mais jogos e emoção à fase de grupos.",
+            category: "Champions",
+            source_name: "UEFA",
+            published_at: now,
+            url_to_image: "https://images.unsplash.com/photo-1555500578-24b1d65fa9a9?auto=format&fit=crop&q=80&w=1200",
+            url: "https://uefa.com",
+            views: 9800,
+        },
+        {
+            id: "news-laliga-1",
+            championship_id: "laliga2526",
+            title: "La Liga 2025-26: temporada caminha para desfecho emocionante",
+            content: "Com poucos pontos de diferença entre os líderes, o título espanhol pode ser decidido nas últimas rodadas.",
+            category: "La Liga",
+            source_name: "Marca",
+            published_at: now,
+            url_to_image: "https://images.unsplash.com/photo-1522778119026-d647f0565c6a?auto=format&fit=crop&q=80&w=1200",
+            url: "https://marca.com",
+            views: 7600,
+        },
+        {
+            id: "news-laliga-2",
+            championship_id: "laliga2526",
+            title: "Barcelona e Real Madrid: El Clásico define rumo do título",
+            content: "O clássico espanhol desta temporada pode ser decisivo para a corrida pelo título da La Liga.",
+            category: "La Liga",
+            source_name: "AS",
+            published_at: now,
+            url_to_image: "https://images.unsplash.com/photo-1489944440615-453fc2b6a9a9?auto=format&fit=crop&q=80&w=1200",
+            url: "https://as.com",
+            views: 11200,
+        },
+        {
+            id: "news-premier-1",
+            championship_id: "premier2526",
+            title: "Premier League: título em aberto nas últimas rodadas",
+            content: "Manchester City, Arsenal e Liverpool ainda disputam o topo da tabela.",
+            category: "Premier League",
+            source_name: "BBC Sport",
+            published_at: now,
+            url_to_image: "https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?auto=format&fit=crop&q=80&w=1200",
+            url: "https://bbc.co.uk/sport",
+            views: 13100,
+        },
+        {
+            id: "news-premier-2",
+            championship_id: "premier2526",
+            title: "Haaland e Salah disputam artilharia da Premier League",
+            content: "A corrida pela artilharia segue intensa nesta reta decisiva da temporada inglesa.",
+            category: "Premier League",
+            source_name: "Sky Sports",
+            published_at: now,
+            url_to_image: "https://images.unsplash.com/photo-1560272564-c83b66b1ad12?auto=format&fit=crop&q=80&w=1200",
+            url: "https://skysports.com",
+            views: 9400,
+        },
+    ];
+
+    const batch = db.batch();
+    newsItems.forEach((item) => {
+        const { id, ...payload } = item;
+        batch.set(db.collection("news").doc(id), payload, { merge: true });
+    });
+    await batch.commit();
+
+    return newsItems.length;
 }
 
 async function createBolaoActivity({ bolaoId, userId = null, type, title, description = null, marketId = null, matchId = null }) {
@@ -994,6 +1394,198 @@ function isCopaRelevant(title, description) {
     const text = `${title} ${description}`.toLowerCase();
     return COPA_KEYWORDS.some((kw) => text.includes(kw));
 }
+
+exports.createPremiumCheckoutSession = functions.region("us-central1").https.onRequest(async (req, res) => {
+    applyCors(res);
+
+    if (req.method === "OPTIONS") {
+        return res.status(204).send("");
+    }
+
+    if (req.method !== "POST") {
+        return res.status(405).json({ error: "Método não suportado." });
+    }
+
+    try {
+        const decodedToken = await verifyHttpUser(req);
+        const { stripePremiumPriceId, siteUrl: configuredSiteUrl } = getRuntimeConfig();
+        if (!stripePremiumPriceId) {
+            throw new Error("STRIPE_PREMIUM_PRICE_ID não configurado nas Cloud Functions.");
+        }
+
+        const requestSiteUrl =
+            typeof req.body?.siteUrl === "string" && /^https?:\/\//.test(req.body.siteUrl)
+                ? req.body.siteUrl
+                : configuredSiteUrl;
+        const normalizedSiteUrl = requestSiteUrl.replace(/\/$/, "");
+
+        const params = {
+            mode: "payment",
+            success_url: `${normalizedSiteUrl}/premium?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${normalizedSiteUrl}/premium?checkout=cancelled`,
+            client_reference_id: decodedToken.uid,
+            "line_items[0][price]": stripePremiumPriceId,
+            "line_items[0][quantity]": "1",
+            "metadata[user_id]": decodedToken.uid,
+            "metadata[source]": "arenacopa",
+            allow_promotion_codes: "true",
+            billing_address_collection: "auto",
+        };
+
+        if (decodedToken.email) {
+            params.customer_email = decodedToken.email;
+        }
+
+        const session = await stripeApiRequest({
+            method: "POST",
+            path: "/checkout/sessions",
+            params,
+        });
+
+        await db.collection("premium_subscriptions").add({
+            user_id: decodedToken.uid,
+            status: "pending",
+            stripe_checkout_session_id: session.id,
+            stripe_customer_id: session.customer || null,
+            amount_total: session.amount_total ?? null,
+            currency: session.currency ?? null,
+            payment_status: session.payment_status || null,
+            customer_email: session.customer_details?.email || decodedToken.email || null,
+            created_at: admin.firestore.FieldValue.serverTimestamp(),
+            updated_at: admin.firestore.FieldValue.serverTimestamp(),
+        });
+
+        return res.status(200).json({
+            url: session.url,
+            sessionId: session.id,
+        });
+    } catch (error) {
+        functions.logger.error("createPremiumCheckoutSession failed", {
+            error: error?.message || error,
+        });
+        return res.status(400).json({
+            error: error?.message || "Não foi possível iniciar o checkout premium.",
+        });
+    }
+});
+
+exports.syncPremiumCheckoutSession = functions.region("us-central1").https.onRequest(async (req, res) => {
+    applyCors(res);
+
+    if (req.method === "OPTIONS") {
+        return res.status(204).send("");
+    }
+
+    if (req.method !== "POST") {
+        return res.status(405).json({ error: "Método não suportado." });
+    }
+
+    try {
+        const decodedToken = await verifyHttpUser(req);
+        const checkoutSessionId = typeof req.body?.checkoutSessionId === "string" ? req.body.checkoutSessionId.trim() : "";
+        if (!checkoutSessionId) {
+            throw new Error("Sessão de checkout inválida.");
+        }
+
+        const session = await stripeApiRequest({
+            method: "GET",
+            path: `/checkout/sessions/${checkoutSessionId}`,
+        });
+
+        const sessionUserId =
+            session.client_reference_id ||
+            session.metadata?.user_id ||
+            null;
+
+        if (sessionUserId && sessionUserId !== decodedToken.uid) {
+            return res.status(403).json({ error: "Sessão de checkout não pertence ao usuário autenticado." });
+        }
+
+        await upsertPremiumSubscriptionFromSession({
+            session,
+            userId: decodedToken.uid,
+        });
+
+        const status = mapStripeSessionStatus(session);
+
+        return res.status(200).json({
+            isPremium: status === "active",
+            status,
+            checkoutSessionId: session.id,
+            amountTotal: session.amount_total ?? null,
+            currency: session.currency ?? null,
+        });
+    } catch (error) {
+        functions.logger.error("syncPremiumCheckoutSession failed", {
+            error: error?.message || error,
+        });
+        return res.status(400).json({
+            error: error?.message || "Não foi possível sincronizar o checkout premium.",
+        });
+    }
+});
+
+exports.seedLeagueData = functions.region("us-central1").https.onRequest(async (req, res) => {
+    applyCors(res);
+
+    if (req.method === "OPTIONS") {
+        return res.status(204).send("");
+    }
+
+    if (req.method !== "POST") {
+        return res.status(405).json({ error: "Método não suportado." });
+    }
+
+    try {
+        const { seedToken } = getRuntimeConfig();
+        const requestSeedToken = req.headers["x-seed-token"] || req.body?.seedToken;
+        const requestedChampionshipId = typeof req.body?.championshipId === "string"
+            ? req.body.championshipId
+            : null;
+
+        if (!seedToken || requestSeedToken !== seedToken) {
+            return res.status(403).json({ error: "Token inválido para seed." });
+        }
+
+        const championshipsToSeed = requestedChampionshipId
+            ? LEAGUE_CHAMPIONSHIPS.filter((championship) => championship.id === requestedChampionshipId)
+            : LEAGUE_CHAMPIONSHIPS;
+
+        if (!championshipsToSeed.length) {
+            return res.status(400).json({ error: "Campeonato inválido para seed." });
+        }
+
+        const summary = [];
+        for (const championship of championshipsToSeed) {
+            const teamsCount = await seedTeamsForChampionship(championship);
+            const matchesCount = await seedMatchesForChampionship(championship);
+            const standingsCount = await seedStandingsForChampionship(championship);
+
+            summary.push({
+                id: championship.id,
+                teams: teamsCount,
+                matches: matchesCount,
+                standings: standingsCount,
+            });
+        }
+
+        const newsCount = await seedLeagueNewsCollection();
+
+        return res.status(200).json({
+            ok: true,
+            championships: summary,
+            news: newsCount,
+        });
+    } catch (error) {
+        functions.logger.error("seedLeagueData failed", {
+            error: error?.message || error,
+            cause: error?.cause?.message || null,
+        });
+        return res.status(400).json({
+            error: error?.message || "Não foi possível popular os campeonatos.",
+        });
+    }
+});
 
 function categorizeNews(title, description) {
     const text = `${title} ${description}`.toLowerCase();

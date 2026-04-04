@@ -5,6 +5,9 @@
     "bolao": "Quinielas",
     "simulator": "Simulador",
     "guia": "Guía",
+    "championships": "Campeonatos",
+    "news": "Noticias",
+    "groups": "Grupos",
     "ranking": "Ranking",
     "profile": "Cuenta",
     "menu": "Cuenta"
@@ -14,6 +17,8 @@
       "boloes": "Quinielas",
       "create_bolao": "Crear Quiniela",
       "bolao_detail": "Quiniela",
+      "groups": "Mis grupos",
+      "group_detail": "Grupo",
       "profile": "Cuenta",
       "menu": "Cuenta"
     }
@@ -54,13 +59,30 @@
     "title": "Bienvenido a ArenaCUP",
     "description": "Elige tu selección favorita para la Copa del Mundo 2026.",
     "loading": "Confirmando...",
-    "confirm": "Confirmar y Entrar en la Arena"
+    "confirm": "Confirmar y Entrar en la Arena",
+    "notifications_title": "Mantente al día",
+    "notifications_description": "Activa las notificaciones para recibir alertas de partidos, resultados y novedades de tu quiniela en tiempo real.",
+    "enable_notifications": "Activar notificaciones",
+    "skip_notifications": "Ahora no",
+    "notifications_enabled": "✓ ¡Notificaciones activadas!",
+    "notifications_denied": "No pasa nada. Puedes activarlas más tarde en la configuración de tu dispositivo."
   },
   "status": {
     "active": "Activo",
     "finished": "Finalizado",
     "live": "En Vivo",
     "scheduled": "Programado"
+  },
+  "footer": {
+    "rights": "© 2026 ArenaCup. Todos los derechos reservados.",
+    "terms": "Términos",
+    "privacy": "Privacidad",
+    "contact": "Contacto"
+  },
+  "actions": {
+    "back": "Volver",
+    "open_notifications": "Abrir notificaciones",
+    "open_account": "Abrir cuenta"
   },
   "app_loading": "Cargando ArenaCUP..."
 }

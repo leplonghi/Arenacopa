@@ -15,6 +15,10 @@ function normalizeLanguage(lang?: string | null): Language {
     return 'en';
 }
 
+function isDemoModeEnabled() {
+    return localStorage.getItem("demo_mode") === "true" || localStorage.getItem("arenacopa_demo_mode") === "true";
+}
+
 export function useLanguage() {
     const { i18n } = useTranslation();
     const { user } = useAuth();
@@ -22,7 +26,7 @@ export function useLanguage() {
 
 
     useEffect(() => {
-        if (!user) return;
+        if (!user || isDemoModeEnabled()) return;
 
         const syncLanguage = async () => {
             try {
@@ -58,7 +62,7 @@ export function useLanguage() {
 
             // 3. Persist to Firestore silently in the background (fire-and-forget)
             // A Firestore failure must NOT affect the user experience
-            if (user) {
+            if (user && !isDemoModeEnabled()) {
                 updatePreferredLanguage(user.id, normalizedLanguage).catch(err =>
                     console.error('Failed to persist language preference to Firestore:', err)
                 );

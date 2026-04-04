@@ -5,6 +5,9 @@
     "bolao": "Pools",
     "simulator": "Simulator",
     "guia": "Guide",
+    "championships": "Championships",
+    "news": "News",
+    "groups": "Groups",
     "ranking": "Ranking",
     "profile": "Account",
     "menu": "Account"
@@ -14,6 +17,8 @@
       "boloes": "Pools",
       "create_bolao": "Create Pool",
       "bolao_detail": "Pool",
+      "groups": "My Groups",
+      "group_detail": "Group",
       "profile": "Account",
       "menu": "Account"
     }
@@ -54,13 +59,30 @@
     "title": "Welcome to ArenaCUP",
     "description": "Choose your favorite team for the 2026 World Cup.",
     "loading": "Confirming...",
-    "confirm": "Confirm and Enter the Arena"
+    "confirm": "Confirm and Enter the Arena",
+    "notifications_title": "Stay in the loop",
+    "notifications_description": "Turn on notifications to get match alerts, results and real-time updates from your pool.",
+    "enable_notifications": "Enable notifications",
+    "skip_notifications": "Maybe later",
+    "notifications_enabled": "✓ Notifications enabled!",
+    "notifications_denied": "No problem. You can enable them later in your device settings."
   },
   "status": {
     "active": "Active",
     "finished": "Finished",
     "live": "Live",
     "scheduled": "Scheduled"
+  },
+  "footer": {
+    "rights": "© 2026 ArenaCup. All rights reserved.",
+    "terms": "Terms",
+    "privacy": "Privacy",
+    "contact": "Contact"
+  },
+  "actions": {
+    "back": "Back",
+    "open_notifications": "Open notifications",
+    "open_account": "Open account"
   },
   "app_loading": "Loading ArenaCUP..."
 }

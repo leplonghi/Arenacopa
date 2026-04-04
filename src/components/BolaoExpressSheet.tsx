@@ -49,7 +49,7 @@ export function BolaoExpressSheet({ open, onClose }: Props) {
       finally { setLoadingMatches(false); }
     };
     load();
-  }, [open]);
+  }, [open, selectedMatch]);
 
   const handleSelectMatch = (m: Match) => {
     setSelectedMatch(m);

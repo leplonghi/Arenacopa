@@ -5,13 +5,39 @@ import { teams, type Team } from "@/data/mockData";
 import { Flag } from "@/components/Flag";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { updateFavoriteTeam, getProfile } from "@/services/profile/profile.service";
+import * as profileService from "@/services/profile/profile.service";
 import { setStoredFavoriteTeam } from "@/lib/favorite-team";
 import { useTranslation } from "react-i18next";
 import { Bell, BellOff } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 type Step = 1 | 2;
+const LEGACY_ONBOARDING_DONE_KEY = "arenacup_onboarding_done";
+const LEGACY_ONBOARDING_MIGRATED_KEY = "arenacup_onboarding_migrated";
+const ONBOARDING_DONE_KEY = "arenacopa_onboarding_done";
+const ONBOARDING_MIGRATED_KEY = "arenacopa_onboarding_migrated";
+
+function isDemoModeEnabled() {
+    return localStorage.getItem("demo_mode") === "true" || localStorage.getItem("arenacopa_demo_mode") === "true";
+}
+
+function getOnboardingDone() {
+    return localStorage.getItem(ONBOARDING_DONE_KEY) || localStorage.getItem(LEGACY_ONBOARDING_DONE_KEY);
+}
+
+function getOnboardingMigrated() {
+    return localStorage.getItem(ONBOARDING_MIGRATED_KEY) || localStorage.getItem(LEGACY_ONBOARDING_MIGRATED_KEY);
+}
+
+function setOnboardingDone() {
+    localStorage.setItem(ONBOARDING_DONE_KEY, "true");
+    localStorage.setItem(LEGACY_ONBOARDING_DONE_KEY, "true");
+}
+
+function setOnboardingMigrated() {
+    localStorage.setItem(ONBOARDING_MIGRATED_KEY, "true");
+    localStorage.setItem(LEGACY_ONBOARDING_MIGRATED_KEY, "true");
+}
 
 export function OnboardingModal() {
     const logoUrl = "/logo.png?v=20260316";
@@ -24,13 +50,13 @@ export function OnboardingModal() {
     const { t } = useTranslation("common");
 
     useEffect(() => {
-        if (!user) {
+        if (!user || isDemoModeEnabled()) {
             setIsOpen(false);
             return;
         }
 
         const checkOnboardingState = async () => {
-            const hasSeen = localStorage.getItem("arenacopa_onboarding_done");
+            const hasSeen = getOnboardingDone();
             const hasFavoriteTeam = Boolean(localStorage.getItem("favorite_team"));
             
             if (hasSeen || hasFavoriteTeam) {
@@ -39,11 +65,16 @@ export function OnboardingModal() {
             }
 
             try {
-                const profile = await getProfile(user.id);
+                const getProfile = "getProfile" in profileService
+                    ? profileService.getProfile
+                    : undefined;
+                const profile = typeof getProfile === "function"
+                    ? await getProfile(user.id)
+                    : null;
                 if (profile?.favorite_team) {
                     localStorage.setItem("favorite_team", profile.favorite_team);
-                    localStorage.setItem("arenacopa_onboarding_done", "true");
-                    localStorage.setItem("arenacopa_onboarding_migrated", "true");
+                    setOnboardingDone();
+                    setOnboardingMigrated();
                     setIsOpen(false);
                 } else {
                     setIsOpen(true);
@@ -59,15 +90,15 @@ export function OnboardingModal() {
 
     useEffect(() => {
         // Migration logic for when they create an account later
-        const hasSeen = localStorage.getItem("arenacopa_onboarding_done");
-        const migrated = localStorage.getItem("arenacopa_onboarding_migrated");
+        const hasSeen = getOnboardingDone();
+        const migrated = getOnboardingMigrated();
         const fav = localStorage.getItem("favorite_team");
 
-        if (user && hasSeen && fav && !migrated) {
+        if (user && !isDemoModeEnabled() && hasSeen && fav && !migrated) {
             const migrate = async () => {
                 try {
-                    await updateFavoriteTeam(user.id, fav);
-                    localStorage.setItem("arenacopa_onboarding_migrated", "true");
+                    await profileService.updateFavoriteTeam(user.id, fav);
+                    setOnboardingMigrated();
                 } catch (e) {
                     console.error("Migration error:", e);
                 }
@@ -82,14 +113,19 @@ export function OnboardingModal() {
 
         if (user) {
             try {
-                await updateFavoriteTeam(user.id, selectedTeam);
-                localStorage.setItem("arenacopa_onboarding_migrated", "true");
+                await profileService.updateFavoriteTeam(user.id, selectedTeam);
+                setOnboardingMigrated();
             } catch (e) {
                 console.error(e);
             }
         }
 
         setLoading(false);
+        if (typeof Notification === "undefined") {
+            handleFinish();
+            return;
+        }
+
         setStep(2);
     };
 
@@ -109,7 +145,7 @@ export function OnboardingModal() {
     };
 
     const handleFinish = () => {
-        localStorage.setItem("arenacopa_onboarding_done", "true");
+        setOnboardingDone();
         setIsOpen(false);
     };
 
@@ -166,7 +202,7 @@ export function OnboardingModal() {
 
                             <div className="mt-2 pb-2 px-2">
                                 <Button onClick={handleNextStep} disabled={loading} className="w-full bg-primary hover:bg-primary/90 text-black font-black uppercase tracking-[0.2em] rounded-[20px] h-14 transition-all shadow-[0_0_20px_rgba(34,197,94,0.3)] hover:shadow-[0_0_30px_rgba(34,197,94,0.5)] hover:scale-[1.02] active:scale-[0.98]">
-                                    {loading ? t("onboarding.loading") : "Próximo →"}
+                                    {loading ? t("onboarding.loading") : t("onboarding.confirm")}
                                 </Button>
                             </div>
                         </motion.div>
@@ -195,10 +231,10 @@ export function OnboardingModal() {
 
                             <div>
                                 <h2 className="text-xl font-black uppercase tracking-tight text-white">
-                                    Fique por dentro
+                                    {t("onboarding.notifications_title")}
                                 </h2>
                                 <p className="mt-2 text-sm text-gray-400 leading-relaxed max-w-xs mx-auto">
-                                    Ative as notificações para receber alertas de jogos, resultados e atualizações do seu bolão em tempo real.
+                                    {t("onboarding.notifications_description")}
                                 </p>
                             </div>
 
@@ -216,24 +252,24 @@ export function OnboardingModal() {
                                             className="w-full bg-primary hover:bg-primary/90 text-black font-black uppercase tracking-[0.2em] rounded-[20px] h-14 transition-all shadow-[0_0_20px_rgba(34,197,94,0.3)] hover:shadow-[0_0_30px_rgba(34,197,94,0.5)] hover:scale-[1.02] active:scale-[0.98]"
                                         >
                                             <Bell className="w-4 h-4 mr-2" />
-                                            Ativar notificações
+                                            {t("onboarding.enable_notifications")}
                                         </Button>
                                         <button
                                             onClick={handleFinish}
                                             className="text-xs font-bold text-gray-500 hover:text-gray-300 transition-colors py-1"
                                         >
-                                            Agora não
+                                            {t("onboarding.skip_notifications")}
                                         </button>
                                     </>
                                 )}
                                 {notifStatus === "granted" && (
                                     <div className="flex items-center justify-center gap-2 text-primary font-black">
-                                        ✓ Notificações ativadas!
+                                        {t("onboarding.notifications_enabled")}
                                     </div>
                                 )}
                                 {notifStatus === "denied" && (
                                     <div className="text-sm text-gray-400">
-                                        Tudo bem! Você pode ativar depois nas configurações do seu dispositivo.
+                                        {t("onboarding.notifications_denied")}
                                     </div>
                                 )}
                             </div>

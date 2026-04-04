@@ -131,7 +131,7 @@ export function LiveMatchCard() {
         }, 1000);
 
         return () => clearInterval(intervalId);
-    }, [nextMatch]);
+    }, [nextMatch, t]);
 
     if (!liveMatch && !nextMatch) return null;
 

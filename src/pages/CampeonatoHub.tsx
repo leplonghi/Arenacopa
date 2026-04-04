@@ -36,7 +36,7 @@ import { tabContentVariants } from "@/components/copa/animations";
 import type { BolaoData } from "@/types/bolao";
 
 // ─── Types ────────────────────────────────────────────────────
-type HubTab = "jogos" | "classificacao" | "boloes";
+type HubTab = "jogos" | "classificacao" | "noticias" | "boloes";
 
 interface MatchRow {
   id: string;
@@ -79,6 +79,7 @@ interface StandingsDoc {
   season: string;
   updated_at: string;
   table: StandingRow[];
+  source?: "official" | "derived";
 }
 
 interface NewsItem {
@@ -141,6 +142,103 @@ function stageLabel(stage: string, round?: number | null): string {
     "3RD_PLACE": "3° Lugar",
   };
   return map[stage] ?? (round ? `Rod. ${round}` : stage.replace(/_/g, " "));
+}
+
+function buildDerivedStandings(matches: MatchRow[]): StandingRow[] {
+  type TeamStats = Omit<StandingRow, "position" | "form"> & { formValues: string[] };
+  const teams = new Map<string, TeamStats>();
+
+  const ensureTeam = (
+    teamKey: string,
+    teamName: string | undefined,
+    teamCode: string,
+    crest?: string
+  ) => {
+    if (!teams.has(teamKey)) {
+      teams.set(teamKey, {
+        team_id: teamKey,
+        team_name: teamName || teamCode,
+        team_short: teamName?.split(" ").pop() || teamCode,
+        team_tla: teamCode,
+        crest: crest || "",
+        played: 0,
+        won: 0,
+        drawn: 0,
+        lost: 0,
+        goals_for: 0,
+        goals_against: 0,
+        goal_difference: 0,
+        points: 0,
+        formValues: [],
+      });
+    }
+
+    return teams.get(teamKey)!;
+  };
+
+  for (const match of matches) {
+    if (match.home_score == null || match.away_score == null) continue;
+
+    const homeKey = match.home_team_code || match.home_team_name || `${match.id}-home`;
+    const awayKey = match.away_team_code || match.away_team_name || `${match.id}-away`;
+    const home = ensureTeam(homeKey, match.home_team_name, match.home_team_code, match.home_crest);
+    const away = ensureTeam(awayKey, match.away_team_name, match.away_team_code, match.away_crest);
+
+    home.played += 1;
+    away.played += 1;
+    home.goals_for += match.home_score;
+    home.goals_against += match.away_score;
+    away.goals_for += match.away_score;
+    away.goals_against += match.home_score;
+
+    if (match.home_score > match.away_score) {
+      home.won += 1;
+      away.lost += 1;
+      home.points += 3;
+      home.formValues.push("W");
+      away.formValues.push("L");
+    } else if (match.home_score < match.away_score) {
+      away.won += 1;
+      home.lost += 1;
+      away.points += 3;
+      home.formValues.push("L");
+      away.formValues.push("W");
+    } else {
+      home.drawn += 1;
+      away.drawn += 1;
+      home.points += 1;
+      away.points += 1;
+      home.formValues.push("D");
+      away.formValues.push("D");
+    }
+  }
+
+  const table = Array.from(teams.values()).map((team) => ({
+    position: 0,
+    team_id: team.team_id,
+    team_name: team.team_name,
+    team_short: team.team_short,
+    team_tla: team.team_tla,
+    crest: team.crest,
+    played: team.played,
+    won: team.won,
+    drawn: team.drawn,
+    lost: team.lost,
+    goals_for: team.goals_for,
+    goals_against: team.goals_against,
+    goal_difference: team.goals_for - team.goals_against,
+    points: team.points,
+    form: team.formValues.slice(-5).join(","),
+  }));
+
+  table.sort((a, b) => {
+    if (b.points !== a.points) return b.points - a.points;
+    if (b.goal_difference !== a.goal_difference) return b.goal_difference - a.goal_difference;
+    if (b.goals_for !== a.goals_for) return b.goals_for - a.goals_for;
+    return a.team_name.localeCompare(b.team_name, "pt-BR");
+  });
+
+  return table.map((team, index) => ({ ...team, position: index + 1 }));
 }
 
 // ─── Team Crest ───────────────────────────────────────────────
@@ -284,9 +382,9 @@ function JogosTab({ championshipId, color }: { championshipId: string; color: st
         <div className="w-14 h-14 rounded-2xl flex items-center justify-center border border-white/[0.08]" style={{ background: `${color}18` }}>
           <CalendarDays className="w-7 h-7" style={{ color }} />
         </div>
-        <p className="text-sm font-extrabold text-white/80">Calendário em breve</p>
+        <p className="text-sm font-extrabold text-white/80">Calendário ainda não sincronizado</p>
         <p className="text-xs text-zinc-500 max-w-[220px] leading-relaxed">
-          Execute o script <code className="text-xs bg-white/10 px-1 rounded">seed-leagues.mjs</code> para carregar os jogos reais.
+          Os jogos oficiais deste campeonato vão aparecer aqui assim que forem publicados.
         </p>
       </div>
     );
@@ -330,8 +428,28 @@ function ClassificacaoTab({ championshipId, color }: { championshipId: string; c
     queryFn: async () => {
       const ref = doc(db, "standings", championshipId);
       const snap = await getDoc(ref);
-      if (!snap.exists()) return null;
-      return snap.data() as StandingsDoc;
+      if (snap.exists()) {
+        return { ...(snap.data() as StandingsDoc), source: "official" as const };
+      }
+
+      const matchesSnap = await getDocs(
+        query(collection(db, "matches"), where("championship_id", "==", championshipId), limit(380))
+      );
+      const matches = matchesSnap.docs.map((item) => ({ id: item.id, ...item.data() })) as MatchRow[];
+      const finishedMatches = matches.filter(
+        (match) => match.status === "finished" && match.home_score != null && match.away_score != null
+      );
+
+      if (!finishedMatches.length) return null;
+
+      return {
+        id: championshipId,
+        championship_id: championshipId,
+        season: "",
+        updated_at: finishedMatches.map((match) => match.match_date).sort().at(-1) || "",
+        table: buildDerivedStandings(finishedMatches),
+        source: "derived" as const,
+      } satisfies StandingsDoc;
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -363,9 +481,9 @@ function ClassificacaoTab({ championshipId, color }: { championshipId: string; c
           <div className="w-14 h-14 rounded-2xl flex items-center justify-center border border-white/[0.08]" style={{ background: `${color}18` }}>
             <BarChart3 className="w-7 h-7" style={{ color }} />
           </div>
-          <p className="text-sm font-extrabold text-white/80">Tabela em breve</p>
+          <p className="text-sm font-extrabold text-white/80">Classificação ainda indisponível</p>
           <p className="text-xs text-zinc-500 max-w-[220px] leading-relaxed">
-            Execute <code className="text-xs bg-white/10 px-1 rounded">seed-leagues.mjs</code> para carregar a classificação real.
+            Assim que os resultados oficiais entrarem, a tabela aparece automaticamente aqui.
           </p>
         </div>
       </div>
@@ -384,12 +502,18 @@ function ClassificacaoTab({ championshipId, color }: { championshipId: string; c
 
   return (
     <div className="mt-1">
-      {/* Updated at */}
-      {standings.updated_at && (
-        <p className="text-[10px] text-white/25 text-right mb-1 pr-1">
-          Atualizado: {new Date(standings.updated_at).toLocaleDateString("pt-BR")}
-        </p>
-      )}
+      <div className="mb-1 flex items-center justify-between px-1">
+        {standings.updated_at ? (
+          <p className="text-[10px] text-white/25">
+            Atualizado: {new Date(standings.updated_at).toLocaleDateString("pt-BR")}
+          </p>
+        ) : (
+          <span />
+        )}
+        {standings.source === "derived" && (
+          <p className="text-[10px] text-amber-300/70">Tabela provisória pelos resultados confirmados</p>
+        )}
+      </div>
 
       {/* Table header */}
       <div className="flex items-center px-2 py-2 rounded-t-2xl bg-white/[0.07] border border-white/[0.08]">
@@ -589,7 +713,10 @@ function NotíciasTab({ championshipId, color }: { championshipId: string; color
       <div className="w-14 h-14 rounded-2xl flex items-center justify-center border border-white/[0.08]" style={{ background: `${color}18` }}>
         <Newspaper className="w-7 h-7" style={{ color }} />
       </div>
-      <p className="text-sm font-extrabold text-white/80">Sem notícias ainda</p>
+      <p className="text-sm font-extrabold text-white/80">Ainda sem notícias desse campeonato</p>
+      <p className="text-xs text-zinc-500 max-w-[220px] leading-relaxed">
+        Quando o feed for atualizado, os destaques e notícias mais recentes aparecem aqui.
+      </p>
     </div>
   );
 
@@ -651,6 +778,7 @@ export default function CampeonatoHub() {
   const tabs: { id: HubTab; label: string; icon: React.ReactNode }[] = [
     { id: "jogos",         label: "Jogos",    icon: <CalendarDays className="w-4 h-4" /> },
     { id: "classificacao", label: "Tabela",   icon: <BarChart3 className="w-4 h-4" /> },
+    { id: "noticias",      label: "Notícias", icon: <Newspaper className="w-4 h-4" /> },
     { id: "boloes",        label: "Bolões",   icon: <Trophy className="w-4 h-4" /> },
   ];
 
@@ -709,12 +837,12 @@ export default function CampeonatoHub() {
       {/* ── Tab bar ────────────────────────────────────────── */}
       <div className="sticky z-10 border-b border-white/[0.08] bg-[#061a10]/80 backdrop-blur-xl"
         style={{ top: "calc(3.5rem + var(--safe-area-top, 0px))" }}>
-        <div className="flex items-center gap-2 overflow-x-auto px-3 py-2.5" style={{ scrollbarWidth: "none" }}>
+        <div className="grid grid-cols-2 gap-2 px-3 py-2.5 sm:grid-cols-4">
           {tabs.map((t) => {
             const isActive = tab === t.id;
             return (
               <button key={t.id} onClick={() => setTab(t.id)} aria-current={isActive ? "page" : undefined}
-                className={cn("relative flex shrink-0 flex-col items-center justify-center gap-1 rounded-2xl transition-all duration-200 min-w-[56px] px-3 py-2",
+                className={cn("relative flex min-h-[60px] flex-col items-center justify-center gap-1 rounded-2xl px-3 py-2 transition-all duration-200",
                   isActive ? "text-black" : "bg-white/[0.05] text-zinc-400 border border-white/[0.06] hover:bg-white/[0.1] hover:text-zinc-200")}>
                 {isActive && (
                   <motion.div layoutId="hubActiveTabBg" className="absolute inset-0 rounded-2xl"
@@ -735,6 +863,7 @@ export default function CampeonatoHub() {
           <motion.div key={tab} variants={tabContentVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.22, ease: "easeInOut" }}>
             {tab === "jogos"         && <JogosTab         championshipId={championship.id} color={color} />}
             {tab === "classificacao" && <ClassificacaoTab championshipId={championship.id} color={color} />}
+            {tab === "noticias"      && <NotíciasTab      championshipId={championship.id} color={color} />}
             {tab === "boloes"        && <BolõesTab        championshipId={championship.id} championship={championship} color={color} />}
           </motion.div>
         </AnimatePresence>

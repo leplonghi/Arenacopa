@@ -96,7 +96,7 @@ export default function Ranking() {
     };
 
     load();
-  }, []);
+  }, [t]);
 
   // ── Bolão filter ──────────────────────────────────────────────────────────
   const [selectedBolaoId, setSelectedBolaoId] = useState<string | null>(null);

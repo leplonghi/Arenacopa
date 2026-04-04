@@ -4,7 +4,9 @@ import { X, Check, Crown, Zap, Shield, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useMonetization } from "@/contexts/MonetizationContext";
 import { monetizationEnv } from "@/lib/env";
-import { PREMIUM_CHECKOUT_UNAVAILABLE_MESSAGE } from "@/services/monetization/stripe.service";
+import {
+    getPremiumSupportMailto,
+} from "@/services/monetization/stripe.service";
 
 interface PremiumModalProps {
     isOpen: boolean;
@@ -15,8 +17,14 @@ interface PremiumModalProps {
 export function PremiumModal({ isOpen, onClose, onSuccess }: PremiumModalProps) {
     const { purchasePremium, isLoading } = useMonetization();
     const canStartPremiumCheckout = monetizationEnv.enablePremiumSimulation || monetizationEnv.premiumCheckoutEnabled;
+    const supportMailto = getPremiumSupportMailto();
 
     const handlePurchase = async () => {
+        if (!canStartPremiumCheckout) {
+            window.location.href = supportMailto;
+            return;
+        }
+
         const startedCheckout = await purchasePremium();
         if (!startedCheckout) {
             return;
@@ -95,7 +103,7 @@ export function PremiumModal({ isOpen, onClose, onSuccess }: PremiumModalProps) 
 
                             <Button
                                 onClick={handlePurchase}
-                                disabled={isLoading || !canStartPremiumCheckout}
+                                disabled={isLoading}
                                 className="w-full h-12 text-base font-bold bg-gradient-to-r from-yellow-500 to-copa-orange hover:from-yellow-400 hover:to-copa-orange/90 text-white shadow-lg shadow-copa-orange/20 rounded-xl"
                             >
                                 {isLoading ? (
@@ -103,16 +111,29 @@ export function PremiumModal({ isOpen, onClose, onSuccess }: PremiumModalProps) 
                                         <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                                         Processando...
                                     </span>
+                                ) : !canStartPremiumCheckout ? (
+                                    <span className="flex items-center gap-2">
+                                        QUERO SER AVISADO <Crown className="w-4 h-4 fill-current" />
+                                    </span>
                                 ) : (
                                     <span className="flex items-center gap-2">
                                         QUERO SER PREMIUM <Crown className="w-4 h-4 fill-current" />
                                     </span>
                                 )}
                             </Button>
+                            {!canStartPremiumCheckout && (
+                                <Button
+                                    asChild
+                                    variant="outline"
+                                    className="mt-3 w-full h-11 rounded-xl border-white/15 bg-white/[0.03] text-white hover:bg-white/[0.08]"
+                                >
+                                    <a href={supportMailto}>Falar com o suporte</a>
+                                </Button>
+                            )}
                             <p className="text-[10px] text-center text-muted-foreground mt-3">
                                 {canStartPremiumCheckout
                                     ? "Compra segura e criptografada. Satisfacao garantida."
-                                    : PREMIUM_CHECKOUT_UNAVAILABLE_MESSAGE}
+                                    : "O checkout ainda está em preparação. Entre na lista de aviso pelo suporte."}
                             </p>
                         </div>
                     </div>

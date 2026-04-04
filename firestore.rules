@@ -40,6 +40,24 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // news — championship feeds, public read
+    match /news/{newsId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // standings — public read, only Admin SDK writes
+    match /standings/{standingId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // teams — public read, only Admin SDK writes
+    match /teams/{teamId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
     // boloes
     match /boloes/{bolaoId} {
       allow read: if isSignedIn() && (

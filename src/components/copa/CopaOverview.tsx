@@ -114,7 +114,7 @@ export function CopaOverview() {
         action();
     };
 
-    const openTab = (tab: "grupos" | "simulacao" | "calendario" | "sedes") => {
+    const openTab = (tab: "grupos" | "simulacao" | "calendario") => {
         navigate(`/copa/${tab}`);
     };
 

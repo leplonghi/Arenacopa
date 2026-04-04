@@ -3,7 +3,7 @@ import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 import Backend from 'i18next-http-backend';
 
-const I18N_VERSION = '20260403-1';
+const I18N_VERSION = '20260404-2';
 
 const normalizeLanguage = (language?: string | null) => {
     const normalized = language?.toLowerCase().trim() || '';
@@ -12,7 +12,7 @@ const normalizeLanguage = (language?: string | null) => {
     if (normalized.startsWith('es')) return 'es';
     if (normalized.startsWith('en')) return 'en';
 
-    return 'pt-BR'; // padrão para usuários sem idioma definido
+    return 'en';
 };
 
 i18n
@@ -20,7 +20,7 @@ i18n
     .use(LanguageDetector)
     .use(initReactI18next)
     .init({
-        fallbackLng: 'pt-BR', // sempre cai para português se a chave faltar
+        fallbackLng: 'en',
         supportedLngs: ['pt-BR', 'en', 'es'],
         load: 'currentOnly',
         debug: import.meta.env.DEV, // Enable debug only in development

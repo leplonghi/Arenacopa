@@ -78,13 +78,13 @@ export default function PublicInvite() {
         } finally {
             setLoading(false);
         }
-    }, [inviteCode, navigate, toast, user]);
+    }, [inviteCode, navigate, t, toast, user]);
 
     useEffect(() => {
         loadBolao();
     }, [loadBolao]);
 
-    const handleJoin = async () => {
+    const handleJoin = useCallback(async () => {
         if (!bolao) return;
 
         if (!user) {
@@ -107,7 +107,7 @@ export default function PublicInvite() {
             console.error("Error joining bolao:", error);
             toast({ title: t('invite.join_error'), variant: "destructive" });
         }
-    };
+    }, [bolao, inviteCode, navigate, toast, t, user]);
 
     useEffect(() => {
         // Auto-join if user was redirected from auth with action=join
@@ -117,7 +117,7 @@ export default function PublicInvite() {
             }
         };
         autoJoin();
-    }, [user, bolao, location.search]);
+    }, [bolao, handleJoin, location.search, user]);
 
     if (loading) {
         return <div className="min-h-screen bg-[#050505] flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;

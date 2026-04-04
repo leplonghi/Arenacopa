@@ -78,7 +78,7 @@ function CopaCounting() {
 }
 
 export function CalendarioTab() {
-  const { t } = useTranslation('copa');
+  const { t, i18n } = useTranslation('copa');
   const { data: matchesData = [], isLoading } = useMatches();
 
   // Group matches by date
@@ -134,7 +134,6 @@ export function CalendarioTab() {
     return <CopaCounting />;
   }
 
-  const { i18n } = useTranslation();
   const dateObj = new Date(currentDay.date + "T12:00:00");
   const dateLabel = dateObj.toLocaleDateString(i18n.language, { weekday: "long", day: "numeric", month: "long", year: "numeric" });
 

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ArrowLeft, ChevronDown, Crown, Info, Share2, Trophy, Users } from "lucide-react";
 import confetti from "canvas-confetti";
+import type { TFunction } from "i18next";
 import { db } from "@/integrations/firebase/client";
 import {
   doc,
@@ -193,7 +194,7 @@ export default function BolaoDetail() {
     } finally {
       if (mountedRef.current) setLoading(false);
     }
-  }, [id, navigate, toast, user]);
+  }, [id, navigate, t, toast, user]);
 
   useEffect(() => {
     if (!id || !user) return;
@@ -483,7 +484,7 @@ export default function BolaoDetail() {
       { id: "galera",   label: t('bolao_detail.tab_galera') },
       { id: "config",   label: t('bolao_detail.tab_config') },
     ],
-    [highlightedMatch]
+    [highlightedMatch, t]
   );
 
   const [galeraView, setGaleraView] = useState("rivais");
@@ -811,7 +812,7 @@ export default function BolaoDetail() {
   );
 }
 
-function BolaoDetailSkeleton({ t }: { t: any }) {
+function BolaoDetailSkeleton({ t }: { t: TFunction<"bolao"> }) {
   return (
     <div className="mx-auto max-w-5xl px-4 py-6">
       <Skeleton className="mb-4 h-16 rounded-3xl bg-white/10" />

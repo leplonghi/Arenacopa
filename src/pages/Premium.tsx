@@ -5,7 +5,9 @@ import { Button } from "@/components/ui/button";
 import { useMonetization } from "@/contexts/MonetizationContext";
 import { motion } from "framer-motion";
 import { monetizationEnv } from "@/lib/env";
-import { PREMIUM_CHECKOUT_UNAVAILABLE_MESSAGE } from "@/services/monetization/stripe.service";
+import {
+  getPremiumSupportMailto,
+} from "@/services/monetization/stripe.service";
 
 const PILLARS = [
   {
@@ -60,6 +62,7 @@ export default function Premium() {
   const [feedback, setFeedback] = useState<string | null>(null);
   const canStartPremiumCheckout =
     monetizationEnv.enablePremiumSimulation || monetizationEnv.premiumCheckoutEnabled;
+  const supportMailto = getPremiumSupportMailto();
 
   useEffect(() => {
     const checkoutState = searchParams.get("checkout");
@@ -198,12 +201,17 @@ export default function Premium() {
               <Button
                 onClick={async () => {
                   if (window.plausible) window.plausible("Copa Pass Click");
+                  if (!canStartPremiumCheckout) {
+                    window.location.href = supportMailto;
+                    return;
+                  }
+
                   const startedCheckout = await purchasePremium();
-                  if (!startedCheckout && !canStartPremiumCheckout) {
-                    setFeedback(PREMIUM_CHECKOUT_UNAVAILABLE_MESSAGE);
+                  if (!startedCheckout) {
+                    setFeedback("Não foi possível iniciar o checkout agora. Tente novamente em instantes.");
                   }
                 }}
-                disabled={isLoading || !canStartPremiumCheckout}
+                disabled={isLoading}
                 className="w-full h-14 bg-gradient-to-r from-primary to-[hsl(var(--copa-gold))] text-black font-black uppercase text-sm rounded-xl shadow-[0_0_30px_rgba(34,197,94,0.35)] hover:scale-[1.02] transition-transform"
               >
                 {isLoading ? (
@@ -211,9 +219,19 @@ export default function Premium() {
                 ) : canStartPremiumCheckout ? (
                   `Garantir Copa Pass — ${monetizationEnv.premiumPriceLabel || "R$ 19,90"}`
                 ) : (
-                  "Copa Pass em preparação"
+                  "Quero ser avisado"
                 )}
               </Button>
+
+              {!canStartPremiumCheckout && (
+                <Button
+                  asChild
+                  variant="outline"
+                  className="mt-3 w-full h-12 border-white/15 bg-white/[0.03] text-white hover:bg-white/[0.08]"
+                >
+                  <a href={supportMailto}>Falar com o suporte premium</a>
+                </Button>
+              )}
             </div>
 
             <p className="text-center text-[10px] text-muted-foreground">
@@ -221,7 +239,7 @@ export default function Premium() {
                 ? `Checkout seguro via Stripe. Status: ${
                     subscriptionStatus === "pending" ? "aguardando pagamento" : "pronto para compra"
                   }.`
-                : PREMIUM_CHECKOUT_UNAVAILABLE_MESSAGE}
+                : "O checkout ainda está em preparação. Você já pode entrar na lista de aviso pelo suporte."}
             </p>
           </>
         )}

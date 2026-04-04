@@ -83,9 +83,8 @@ function Header({ className }: { className?: string }) {
     if (path === "/boloes") return t('header.titles.boloes');
     if (path === "/boloes/criar") return t('header.titles.create_bolao');
     if (path.startsWith("/boloes/")) return t('header.titles.bolao_detail');
-    if (path === "/grupos") return "Meus Grupos";
-    if (path === "/grupos") return "Meus Grupos";
-    if (path.startsWith("/grupos/")) return "Grupo";
+    if (path === "/grupos") return t('header.titles.groups');
+    if (path.startsWith("/grupos/")) return t('header.titles.group_detail');
     if (path === "/perfil") return t('header.titles.profile');
     return null;
   };
@@ -96,7 +95,7 @@ function Header({ className }: { className?: string }) {
     <header className={cn("fixed top-0 inset-x-0 z-30 backdrop-blur-xl border-b border-white/[0.1] safe-top shadow-[0_4px_30px_rgba(0,0,0,0.6)] md:absolute md:w-full bg-[#03100a]/65", className)}>
       <div className="flex items-center justify-between px-4 h-14 md:h-16 max-w-7xl mx-auto w-full">
         {isSubpage ? (
-          <button aria-label="Voltar" onClick={() => navigate(-1)} className="p-1.5 -ml-1.5 rounded-lg hover:bg-secondary md:hidden">
+          <button aria-label={t('actions.back')} onClick={() => navigate(-1)} className="p-1.5 -ml-1.5 rounded-lg hover:bg-secondary md:hidden">
             <ChevronLeft className="w-5 h-5" />
           </button>
         ) : (
@@ -113,7 +112,7 @@ function Header({ className }: { className?: string }) {
         {/* Desktop Title & Mobile Subpage Title */}
         <div className="flex items-center gap-3">
           {isSubpage && (
-            <button aria-label="Voltar" onClick={() => navigate(-1)} className="p-1.5 -ml-1.5 rounded-lg hover:bg-secondary hidden md:flex">
+            <button aria-label={t('actions.back')} onClick={() => navigate(-1)} className="p-1.5 -ml-1.5 rounded-lg hover:bg-secondary hidden md:flex">
               <ChevronLeft className="w-5 h-5" />
             </button>
           )}
@@ -131,7 +130,7 @@ function Header({ className }: { className?: string }) {
 
         <div className="flex items-center gap-3">
           <NotificationsSheet>
-            <button aria-label="Abrir notificações" className="w-10 h-10 rounded-full bg-secondary/60 border border-border/50 flex items-center justify-center relative transition-transform active:scale-95 hover:bg-secondary/80">
+            <button aria-label={t('actions.open_notifications')} className="w-10 h-10 rounded-full bg-secondary/60 border border-border/50 flex items-center justify-center relative transition-transform active:scale-95 hover:bg-secondary/80">
               <Bell className="w-5 h-5" />
               {unreadCount > 0 && (
                 <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-copa-live rounded-full ring-2 ring-background" />
@@ -139,7 +138,7 @@ function Header({ className }: { className?: string }) {
             </button>
           </NotificationsSheet>
 
-          <NavLink to="/perfil" aria-label="Abrir conta" className="md:hidden">
+          <NavLink to="/perfil" aria-label={t('actions.open_account')} className="md:hidden">
             <Avatar className="h-9 w-9 border border-primary/20 transition-transform active:scale-95">
               <AvatarImage src={profile?.avatar} />
               <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
@@ -149,7 +148,7 @@ function Header({ className }: { className?: string }) {
           </NavLink>
 
           {/* Desktop Profile Menu */}
-          <NavLink to="/perfil" aria-label="Abrir conta" className="hidden md:block">
+          <NavLink to="/perfil" aria-label={t('actions.open_account')} className="hidden md:block">
             <div className="flex items-center gap-2 hover:bg-white/5 p-1 rounded-full pr-3 transition-colors">
               <Avatar className="h-9 w-9 border border-primary/20">
                 <AvatarImage src={profile?.avatar} />
@@ -186,10 +185,10 @@ function BottomTabs({ className }: { className?: string }) {
   // 5-tab layout: Home | Campeonatos | ⚽ Bolões (center FAB) | Notícias | Guia
   const tabs = [
     { path: "/",             icon: Home,      label: t('nav.home'),        isFab: false },
-    { path: "/campeonatos",  icon: Trophy,    label: "Campeonatos",         isFab: false },
+    { path: "/campeonatos",  icon: Trophy,    label: t('nav.championships'), isFab: false },
     { path: "/boloes",       icon: null,      label: t('nav.bolao'),       isFab: true  },
-    { path: "/noticias",     icon: Newspaper, label: "Notícias",           isFab: false },
-    { path: "/guia",         icon: BookOpen,  label: "Guia",               isFab: false },
+    { path: "/noticias",     icon: Newspaper, label: t('nav.news'),        isFab: false },
+    { path: "/guia",         icon: BookOpen,  label: t('nav.guia'),        isFab: false },
   ];
 
   return (
@@ -231,11 +230,11 @@ function AppSidebar({ className }: { className?: string }) {
 
   const tabs = [
     { path: "/",             icon: Home,      label: t('nav.home') },
-    { path: "/campeonatos",  icon: Trophy,    label: "Campeonatos" },
-    { path: "/noticias",     icon: Newspaper, label: "Notícias" },
-    { path: "/guia",         icon: BookOpen,  label: "Guia" },
+    { path: "/campeonatos",  icon: Trophy,    label: t('nav.championships') },
+    { path: "/noticias",     icon: Newspaper, label: t('nav.news') },
+    { path: "/guia",         icon: BookOpen,  label: t('nav.guia') },
     { path: "/boloes",       icon: Trophy,    label: t('nav.bolao') },
-    { path: "/grupos",       icon: Users2,    label: "Grupos" },
+    { path: "/grupos",       icon: Users2,    label: t('nav.groups') },
     { path: "/perfil",       icon: User,      label: t('nav.profile') },
   ];
 
@@ -315,12 +314,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
               <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between md:gap-4 text-xs text-muted-foreground gap-4">
                 <div className="flex items-center gap-2">
                   <img src={logoUrl} alt="ArenaCup" className="h-4 w-4 opacity-50" />
-                  <span>© 2026 ArenaCup 2026. Todos os direitos reservados.</span>
+                  <span>{t('footer.rights')}</span>
                 </div>
                 <div className="flex gap-6">
-                  <NavLink to="/termos" className="hover:text-primary transition-colors">Termos</NavLink>
-                  <NavLink to="/privacidade" className="hover:text-primary transition-colors">Privacidade</NavLink>
-                  <a href="mailto:contato@arenacup.com" className="hover:text-primary transition-colors">Contato</a>
+                  <NavLink to="/termos" className="hover:text-primary transition-colors">{t('footer.terms')}</NavLink>
+                  <NavLink to="/privacidade" className="hover:text-primary transition-colors">{t('footer.privacy')}</NavLink>
+                  <a href="mailto:contato@arenacup.com" className="hover:text-primary transition-colors">{t('footer.contact')}</a>
                 </div>
               </div>
             </footer>

@@ -9,7 +9,7 @@ const PRODUCTION_URL = 'https://arenacopa.app';
  *   are always valid for real users, even when testing locally.
  */
 export function getSiteUrl(): string {
-  const isCapacitor = (window as any).Capacitor?.isNative;
+  const isCapacitor = (window as Window & { Capacitor?: { isNative?: boolean } }).Capacitor?.isNative;
   if (isCapacitor) return PRODUCTION_URL;
 
   const origin = window.location.origin;
@@ -31,4 +31,3 @@ export function getInviteUrl(path: string): string {
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
   return `${PRODUCTION_URL}${normalizedPath}`;
 }
-
