@@ -58,7 +58,7 @@ export function BolaoIntroModal({
     const { t } = useTranslation("bolao");
     return (
         <Dialog open={open} onOpenChange={(nextOpen) => !nextOpen && onClose()}>
-            <DialogContent className="surface-dialog overflow-hidden sm:max-w-2xl">
+            <DialogContent className="surface-dialog max-h-[90dvh] overflow-y-auto sm:max-w-2xl">
                 <DialogHeader>
                     <div className="mb-4 inline-flex h-14 w-14 items-center justify-center rounded-[24px] bg-primary/12 text-primary">
                         <Compass className="h-6 w-6" />

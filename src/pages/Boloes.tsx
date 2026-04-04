@@ -1,26 +1,25 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { BarChart2, Clock, Compass, Hash, Loader2, Plus, Search, Trophy, User, UserPlus, Users, Users2, X, Zap } from "lucide-react";
+import { BarChart2, Compass, Hash, Loader2, Plus, Search, Trophy, User, UserPlus, Users, Users2, X, Zap } from "lucide-react";
 import RankingPage from "./Ranking";
-import { BolaoExpressSheet } from "@/components/BolaoExpressSheet";
-import { usePendingPredictions, type PendingPredictionItem } from "@/components/FabWithPending";
-import { Flag } from "@/components/Flag";
+
 import { db } from "@/integrations/firebase/client";
-import { 
-  collection, 
-  query, 
-  where, 
-  getDocs, 
-  orderBy, 
-  limit, 
-  doc, 
-  getDoc, 
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  orderBy,
+  limit,
+  doc,
+  getDoc,
   setDoc,
   getCountFromServer,
   documentId
 } from "firebase/firestore";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { useChampionship } from "@/contexts/ChampionshipContext";
 import { EmptyState } from "@/components/EmptyState";
 import { DEMO_MODE_STORAGE_KEY, BOLOES_INTRO_SEEN_KEY } from "@/lib/constants";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -38,6 +37,7 @@ type BolaoRow = {
   status?: string;
   memberCount: number;
   isCreator: boolean;
+  championship_id?: string | null;
 };
 
 type PublicBolaoRow = BolaoRow & {
@@ -77,6 +77,7 @@ export default function Boloes() {
   const { toast } = useToast();
   const navigate = useNavigate();
   const { t } = useTranslation('bolao');
+  const { current: championship, isWorldCup } = useChampionship();
   const [activeView, setActiveView] = useState<"boloes" | "ranking">("boloes");
 
   const [boloes, setBoloes] = useState<BolaoRow[]>([]);
@@ -95,11 +96,6 @@ export default function Boloes() {
   const dismissBanner = () => {
     localStorage.setItem(BOLOES_INTRO_SEEN_KEY, "true");
     setShowIntroBanner(false);
-  };
-  const pendingItems = usePendingPredictions();
-  const handleOpenPrediction = (item: PendingPredictionItem) => {
-    const targetBolaoId = item.bolaoIds[0];
-    navigate(`/boloes/${targetBolaoId}?match=${item.match.id}&tab=jogos`);
   };
 
   // Demo mode is DEV-only (gate matches AuthContext)
@@ -194,12 +190,21 @@ export default function Boloes() {
               status: data.status,
               memberCount: countSnap.data().count,
               isCreator: data.creator_id === user.id,
+              championship_id: data.championship_id ?? null,
             } as BolaoRow;
           })
         );
         
-        // Sort by created_at (since we manually enriched, orderBy in query isn't enough for the final list if we want to preserve order)
-        setBoloes(myBoloesEnriched.sort((a, b) => 
+        // Filter by active championship.
+        // Legacy bolões (no championship_id) are treated as WC2026 for backwards compatibility.
+        const filteredByChampionship = myBoloesEnriched.filter((b) =>
+          isWorldCup
+            ? !b.championship_id || b.championship_id === "wc2026"
+            : b.championship_id === championship.id
+        );
+
+        // Sort by created_at desc
+        setBoloes(filteredByChampionship.sort((a, b) =>
           new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
         ));
       } else {
@@ -269,11 +274,17 @@ export default function Boloes() {
             memberCount: countSnap.data().count,
             isCreator: false,
             leader_score: leaderScore,
+            championship_id: b.championship_id ?? null,
           } as PublicBolaoRow;
         })
       );
 
-      if (mountedRef.current) setPublicBoloes(enrichedPublic);
+      const filteredPublicByChampionship = enrichedPublic.filter((b) =>
+        isWorldCup
+          ? !b.championship_id || b.championship_id === "wc2026"
+          : b.championship_id === championship.id
+      );
+      if (mountedRef.current) setPublicBoloes(filteredPublicByChampionship);
     } catch (error) {
       console.error("Erro ao carregar bolões públicos:", error);
       if (mountedRef.current) {
@@ -281,7 +292,7 @@ export default function Boloes() {
         setPublicBoloesUnavailable(true);
       }
     }
-  }, [isDemoMode, session, t, toast, user]);
+  }, [isDemoMode, session, t, toast, user, championship, isWorldCup]);
 
   useEffect(() => {
     loadData();
@@ -387,39 +398,60 @@ export default function Boloes() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 pb-28 pt-6 text-white">
+      {/* ── Bolão Rápido CTA ─────────────────────────────────── */}
+      {activeView === "boloes" && (
+        <Link
+          to="/boloes/rapido"
+          className="mb-5 flex items-center justify-between gap-3 rounded-[24px] border border-primary/30 bg-gradient-to-r from-primary/10 to-transparent px-5 py-4 transition-all hover:bg-primary/15 active:scale-[0.98]"
+        >
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/20 text-primary">
+              <Zap className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-sm font-black text-white">⚡ Bolão Rápido</p>
+              <p className="text-xs text-zinc-400">Escolha um jogo, manda o link, pronto.</p>
+            </div>
+          </div>
+          <div className="shrink-0 rounded-2xl bg-primary px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.14em] text-black">
+            Novo
+          </div>
+        </Link>
+      )}
+
       {/* ── Tab switcher ─────────────────────────────────────── */}
-      <div className="mb-6 flex items-center justify-between gap-4">
-        <div className="flex gap-1 rounded-2xl bg-white/5 border border-white/10 p-1">
+      <div className="mb-6 flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-4 w-full">
+        <div className="flex w-full sm:w-auto max-w-md gap-1 rounded-2xl bg-white/5 border border-white/10 p-1">
           <button
             onClick={() => setActiveView("boloes")}
-            className={`flex items-center gap-2 rounded-xl px-5 py-2.5 text-[11px] font-black uppercase tracking-[0.16em] transition-all ${
+            className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-[11px] font-black uppercase tracking-[0.16em] transition-all ${
               activeView === "boloes"
                 ? "bg-primary text-black shadow-md shadow-primary/25"
                 : "text-zinc-400 hover:text-zinc-200"
             }`}
           >
-            <Trophy className="h-3.5 w-3.5" />
-            Bolões
+            <Trophy className="h-3.5 w-3.5 shrink-0" />
+            <span className="truncate">Bolões</span>
           </button>
           <button
             onClick={() => setActiveView("ranking")}
-            className={`flex items-center gap-2 rounded-xl px-5 py-2.5 text-[11px] font-black uppercase tracking-[0.16em] transition-all ${
+            className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-[11px] font-black uppercase tracking-[0.16em] transition-all ${
               activeView === "ranking"
                 ? "bg-primary text-black shadow-md shadow-primary/25"
                 : "text-zinc-400 hover:text-zinc-200"
             }`}
           >
-            <BarChart2 className="h-3.5 w-3.5" />
-            Ranking
+            <BarChart2 className="h-3.5 w-3.5 shrink-0" />
+            <span className="truncate">Ranking</span>
           </button>
         </div>
         {activeView === "boloes" && (
-          <div className="flex gap-2">
+          <div className="flex w-full sm:w-auto justify-center">
             <Link
               to="/boloes/criar"
-              className="inline-flex items-center gap-2 rounded-2xl bg-primary px-5 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-black shadow-lg shadow-primary/25 transition-transform hover:scale-105 active:scale-95"
+              className="inline-flex w-full sm:w-auto justify-center items-center gap-2 rounded-2xl bg-primary px-6 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-black shadow-lg shadow-primary/25 transition-transform hover:scale-105 active:scale-95"
             >
-              <Plus className="h-4 w-4" />
+              <Plus className="h-4 w-4 shrink-0" />
               {t('page.create')}
             </Link>
           </div>
@@ -428,7 +460,7 @@ export default function Boloes() {
 
       {/* ── First-visit intro banner ─────────────────────────── */}
       {showIntroBanner && activeView === "boloes" && (
-        <div className="mb-6 relative rounded-[24px] border border-emerald-500/20 bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 p-5 pr-12">
+        <div className="mb-6 relative rounded-[24px] border border-emerald-500/10 bg-gradient-to-br from-emerald-500/5 to-[transparent] p-5 pr-12 backdrop-blur-md">
           <button
             onClick={dismissBanner}
             aria-label="Fechar"
@@ -437,11 +469,11 @@ export default function Boloes() {
             <X className="h-4 w-4" />
           </button>
           <div className="flex gap-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/15 text-2xl">⚽</div>
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/15 text-2xl">{championship.emoji ?? "⚽"}</div>
             <div>
               <p className="text-sm font-black text-white">O que é um bolão?</p>
               <p className="mt-1 text-xs text-zinc-400 leading-relaxed">
-                Um bolão é uma competição entre amigos onde cada um faz seus palpites nos jogos da Copa. Crie o seu, convide a galera e veja quem manda mais de futebol!
+                Um bolão é uma competição entre amigos onde cada um faz seus palpites nos jogos {isWorldCup ? "da Copa" : `do ${championship.name}`}. Crie o seu, convide a galera e veja quem manda mais de futebol!
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <Link
@@ -473,8 +505,8 @@ export default function Boloes() {
 
       {/* ── Bolões View ──────────────────────────────────────── */}
       {activeView === "boloes" && <>
-      <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
-        <div>
+      <div className="mb-6 flex flex-col items-center text-center gap-3">
+        <div className="flex flex-col items-center">
           <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">{t('page.kicker')}</p>
           <h1 className="mt-1 text-3xl font-black">{t('page.kicker')}</h1>
           <p className="mt-2 max-w-2xl text-sm text-zinc-400">
@@ -495,74 +527,6 @@ export default function Boloes() {
         <Users2 className="h-5 w-5 text-primary/60 shrink-0" />
       </Link>
 
-      {/* ── Pending Predictions (moved from FAB popup) ── */}
-      {pendingItems.length > 0 && (
-        <div className="mb-6 space-y-3">
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-orange-500" />
-              <h2 className="text-sm font-black uppercase tracking-[0.18em] text-orange-500">Palpites Pendentes</h2>
-            </div>
-            <button
-              onClick={() => setExpressOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-orange-500/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.14em] text-orange-500 transition-colors hover:bg-orange-500/20"
-            >
-              <Zap className="h-3.5 w-3.5" />
-              Resolver Rápido
-            </button>
-          </div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {pendingItems.map((item) => {
-              const date = new Date(item.match.match_date);
-              const dateString = `${date.toLocaleDateString("pt-BR")} • ${date.toLocaleTimeString("pt-BR", {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}`;
-
-              return (
-                <div
-                  key={item.match.id}
-                  className="rounded-2xl border border-orange-500/20 bg-orange-500/10 p-4 transition-all hover:bg-orange-500/15"
-                >
-                  <div className="mb-2 flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-[11px] font-black uppercase tracking-[0.18em] text-orange-500">
-                        {item.match.stage || t('fab.group_stage', { defaultValue: 'Fase de Grupos' })}
-                      </p>
-                      <p className="mt-1 flex items-center gap-2 text-sm text-zinc-300">
-                        <Clock className="h-3.5 w-3.5" />
-                        {dateString}
-                      </p>
-                    </div>
-                    <div className="rounded-full bg-orange-500/20 px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-orange-500">
-                      {item.bolaoIds.length} {item.bolaoIds.length === 1 ? 'bolão' : 'bolões'}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-center gap-3 rounded-2xl border border-white/5 bg-black/20 p-3">
-                    <div className="flex items-center gap-2 text-sm font-bold">
-                      <Flag code={item.match.home_team_code || ""} />
-                      <span>{item.match.home_team_code || "---"}</span>
-                    </div>
-                    <span className="text-xs font-black uppercase tracking-[0.18em] text-zinc-500">x</span>
-                    <div className="flex items-center gap-2 text-sm font-bold">
-                      <Flag code={item.match.away_team_code || ""} />
-                      <span>{item.match.away_team_code || "---"}</span>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => handleOpenPrediction(item)}
-                    className="mt-3 w-full rounded-xl border border-orange-500/30 bg-orange-500/20 px-4 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-orange-500 transition-colors hover:bg-orange-500/30"
-                  >
-                    Palpitar Agora
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
 
       <div className="surface-card mb-6 p-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -716,7 +680,6 @@ export default function Boloes() {
         </div>
       )}
 
-      <BolaoExpressSheet open={expressOpen} onClose={() => setExpressOpen(false)} />
       </> /* end boloes view */}
     </div>
   );

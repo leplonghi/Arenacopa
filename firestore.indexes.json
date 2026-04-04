@@ -47,8 +47,40 @@
         { "fieldPath": "bolao_id", "order": "ASCENDING" },
         { "fieldPath": "user_id", "order": "ASCENDING" }
       ]
+    },
+    {
+      "collectionGroup": "matches",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "championship_id", "order": "ASCENDING" },
+        { "fieldPath": "match_date", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "matches",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "group_id", "order": "ASCENDING" },
+        { "fieldPath": "match_date", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "matches",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "stage", "order": "ASCENDING" },
+        { "fieldPath": "match_date", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "matches",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "championship_id", "order": "ASCENDING" },
+        { "fieldPath": "stage", "order": "ASCENDING" },
+        { "fieldPath": "match_date", "order": "ASCENDING" }
+      ]
     }
-
   ],
   "fieldOverrides": []
 }

@@ -1,6 +1,6 @@
 
 import { useCallback, useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { db } from "@/integrations/firebase/client";
 import { collection, query, where, getDocs, limit, getCountFromServer, setDoc, doc } from "firebase/firestore";
 import { useAuth } from "@/contexts/AuthContext";
@@ -21,9 +21,10 @@ type PublicInviteBolao = {
 export default function PublicInvite() {
     const { inviteCode } = useParams();
     const navigate = useNavigate();
+    const location = useLocation();
     const { user } = useAuth();
     const { t } = useTranslation('bolao');
-  const { toast } = useToast();
+    const { toast } = useToast();
 
     const [bolao, setBolao] = useState<PublicInviteBolao | null>(null);
     const [loading, setLoading] = useState(true);
@@ -87,7 +88,7 @@ export default function PublicInvite() {
         if (!bolao) return;
 
         if (!user) {
-            navigate(`/auth?redirect=/b/${inviteCode}`);
+            navigate(`/auth?redirect=${encodeURIComponent(`/b/${inviteCode}?action=join`)}`);
             return;
         }
 
@@ -107,6 +108,16 @@ export default function PublicInvite() {
             toast({ title: t('invite.join_error'), variant: "destructive" });
         }
     };
+
+    useEffect(() => {
+        // Auto-join if user was redirected from auth with action=join
+        const autoJoin = async () => {
+            if (user && bolao && new URLSearchParams(location.search).get("action") === "join") {
+                await handleJoin();
+            }
+        };
+        autoJoin();
+    }, [user, bolao, location.search]);
 
     if (loading) {
         return <div className="min-h-screen bg-[#050505] flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;

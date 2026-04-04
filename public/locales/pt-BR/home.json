@@ -79,7 +79,7 @@
   },
   "action_of_day": {
     "pending_title": "Palpites pendentes",
-    "pending_desc": "{count} jogo{s} esperando seu palpite",
+    "pending_desc": "{{count}} jogo(s) esperando seu palpite",
     "pending_cta": "Palpitar agora",
     "no_bolao_title": "Crie seu primeiro bolão",
     "no_bolao_desc": "Dispute com amigos na Copa 2026",

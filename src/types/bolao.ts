@@ -198,6 +198,8 @@ export interface BolaoData {
     grupo_id?: string | null;
     visibility_mode?: "hidden_until_deadline" | "visible_after_save" | "always_hidden";
     cutoff_mode?: "per_match" | "per_phase" | "manual";
+    /** Championship this bolão belongs to. Defaults to "wc2026" for legacy records. */
+    championship_id?: string;
 }
 
 export interface MemberData {

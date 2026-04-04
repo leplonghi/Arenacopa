@@ -3,7 +3,7 @@ import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 import Backend from 'i18next-http-backend';
 
-const I18N_VERSION = '20260316-2';
+const I18N_VERSION = '20260403-1';
 
 const normalizeLanguage = (language?: string | null) => {
     const normalized = language?.toLowerCase().trim() || '';

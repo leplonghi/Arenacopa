@@ -1,0 +1,28 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="30%" r="70%">
+      <stop offset="0%" stop-color="#1a3a6b"/>
+      <stop offset="100%" stop-color="#000d24"/>
+    </radialGradient>
+    <filter id="sh"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000" flood-opacity="0.4"/></filter>
+  </defs>
+  <circle cx="60" cy="60" r="58" fill="url(#bg)" filter="url(#sh)"/>
+  <circle cx="60" cy="60" r="58" fill="none" stroke="#c8a84b" stroke-width="2.5"/>
+  <g fill="#c8a84b">
+    <polygon points="60,8 62.5,15 70,15 64,19.5 66.5,27 60,23 53.5,27 56,19.5 50,15 57.5,15"/>
+    <polygon points="90,18 92.5,25 100,25 94,29.5 96.5,37 90,33 83.5,37 86,29.5 80,25 87.5,25" transform="scale(0.78) translate(25,10)"/>
+    <polygon points="110,48 112.5,55 120,55 114,59.5 116.5,67 110,63 103.5,67 106,59.5 100,55 107.5,55" transform="scale(0.78) translate(18,16)"/>
+    <polygon points="90,88 92.5,95 100,95 94,99.5 96.5,107 90,103 83.5,107 86,99.5 80,95 87.5,95" transform="scale(0.78) translate(25,20)"/>
+    <polygon points="60,98 62.5,105 70,105 64,109.5 66.5,117 60,113 53.5,117 56,109.5 50,105 57.5,105" transform="scale(0.78) translate(14,18)"/>
+    <polygon points="30,88 32.5,95 40,95 34,99.5 36.5,107 30,103 23.5,107 26,99.5 20,95 27.5,95" transform="scale(0.78) translate(5,20)"/>
+    <polygon points="10,48 12.5,55 20,55 14,59.5 16.5,67 10,63 3.5,67 6,59.5 0,55 7.5,55" transform="scale(0.78) translate(2,16)"/>
+    <polygon points="30,18 32.5,25 40,25 34,29.5 36.5,37 30,33 23.5,37 26,29.5 20,25 27.5,25" transform="scale(0.78) translate(5,10)"/>
+  </g>
+  <circle cx="60" cy="60" r="22" fill="white" stroke="#c8a84b" stroke-width="2"/>
+  <path d="M60 40 L67 51 L63 63 L57 63 L53 51 Z" fill="#000d24" opacity="0.9"/>
+  <path d="M76 52 L68 51 L68 63 L74 68 L81 62 Z" fill="#000d24" opacity="0.9"/>
+  <path d="M44 52 L52 51 L52 63 L46 68 L39 62 Z" fill="#000d24" opacity="0.9"/>
+  <path d="M60 80 L67 69 L77 73 L78 78 L69 85 Z" fill="#000d24" opacity="0.9"/>
+  <path d="M60 80 L53 69 L43 73 L42 78 L51 85 Z" fill="#000d24" opacity="0.9"/>
+  <text x="60" y="112" text-anchor="middle" font-family="Arial Black,sans-serif" font-size="6.5" font-weight="900" fill="#c8a84b" letter-spacing="0.3">CHAMPIONS LEAGUE</text>
+</svg>

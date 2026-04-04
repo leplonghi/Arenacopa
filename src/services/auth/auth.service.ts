@@ -25,7 +25,12 @@ export async function signInWithGoogle() {
   // On Android/iOS use the native Capacitor plugin — avoids WebView OAuth issues
   if (Capacitor.isNativePlatform()) {
     const { FirebaseAuthentication } = await import("@capacitor-firebase/authentication");
-    const result = await FirebaseAuthentication.signInWithGoogle();
+    // useCredentialManager: false forces the traditional full-screen Google Sign-In intent.
+    // The default (true) uses Android Credential Manager which fails with
+    // "No credentials available" in some devices/configurations.
+    const result = await (FirebaseAuthentication.signInWithGoogle as any)({
+      useCredentialManager: false,
+    });
     if (!result.credential?.idToken) throw new Error("Google Sign-In: idToken ausente");
     const credential = GoogleAuthProvider.credential(result.credential.idToken);
     const userCredential = await signInWithCredential(auth, credential);

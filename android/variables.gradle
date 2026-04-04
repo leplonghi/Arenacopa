@@ -13,4 +13,8 @@ ext {
     androidxJunitVersion = '1.3.0'
     androidxEspressoCoreVersion = '3.7.0'
     cordovaAndroidVersion = '14.0.1'
+    // Required by @capacitor-firebase/authentication for Google Sign-In.
+    // Without this, play-services-auth, credentials and googleid stay as
+    // compileOnly, causing NoClassDefFoundError on signOut() at runtime.
+    rgcfaIncludeGoogle = true
 }

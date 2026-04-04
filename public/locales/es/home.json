@@ -79,7 +79,7 @@
   },
   "action_of_day": {
     "pending_title": "Pronósticos pendientes",
-    "pending_desc": "{count} partido{s} esperando tu pronóstico",
+    "pending_desc": "{{count}} partido(s) esperando tu pronóstico",
     "pending_cta": "Pronosticar ahora",
     "no_bolao_title": "Crea tu primera quiniela",
     "no_bolao_desc": "Compite con amigos en Copa 2026",

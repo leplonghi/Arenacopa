@@ -18,6 +18,7 @@ import {
 } from "firebase/firestore";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { getSiteUrl } from "@/utils/site-url";
 import { useTranslation } from "react-i18next";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -385,7 +386,7 @@ export default function BolaoDetail() {
   const handleShareInvite = async () => {
     if (!bolao) return;
 
-    const inviteUrl = `${window.location.origin}/b/${bolao.invite_code}`;
+    const inviteUrl = `${getSiteUrl()}/b/${bolao.invite_code}`;
     const shareText = `Vem pro bolao "${bolao.name}" no Arena CUP. Usa o codigo ${bolao.invite_code} ou entra por aqui: ${inviteUrl}`;
 
     try {

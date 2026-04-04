@@ -1,0 +1,21 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="35%" r="65%">
+      <stop offset="0%" stop-color="#ff8c00"/>
+      <stop offset="100%" stop-color="#7a1500"/>
+    </radialGradient>
+    <filter id="sh"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000" flood-opacity="0.35"/></filter>
+  </defs>
+  <circle cx="60" cy="60" r="58" fill="url(#bg)" filter="url(#sh)"/>
+  <circle cx="60" cy="60" r="58" fill="none" stroke="#ff6b00" stroke-width="2.5"/>
+  <circle cx="60" cy="60" r="51" fill="none" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+  <path d="M60 16 L90 28 L90 65 Q90 87 60 100 Q30 87 30 65 L30 28 Z" fill="rgba(255,255,255,0.1)" stroke="rgba(255,255,255,0.5)" stroke-width="1.5"/>
+  <circle cx="60" cy="57" r="22" fill="white"/>
+  <path d="M60 36 L67 48 L63 60 L57 60 L53 48 Z" fill="#cc3700" opacity="0.9"/>
+  <path d="M76 48 L68 48 L68 60 L74 65 L81 59 Z" fill="#cc3700" opacity="0.9"/>
+  <path d="M44 48 L52 48 L52 60 L46 65 L39 59 Z" fill="#cc3700" opacity="0.9"/>
+  <path d="M60 78 L67 66 L77 70 L78 75 L69 82 Z" fill="#cc3700" opacity="0.9"/>
+  <path d="M60 78 L53 66 L43 70 L42 75 L51 82 Z" fill="#cc3700" opacity="0.9"/>
+  <text x="60" y="36" text-anchor="middle" font-family="Arial Black,sans-serif" font-size="11" font-weight="900" fill="rgba(255,255,255,0.9)">La</text>
+  <text x="60" y="110" text-anchor="middle" font-family="Arial Black,sans-serif" font-size="9" font-weight="900" fill="white" letter-spacing="1.5">LA LIGA</text>
+</svg>

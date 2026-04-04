@@ -8,6 +8,7 @@ import { useTranslation } from "react-i18next";
 import { Share } from "@capacitor/share";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { useChampionship } from "@/contexts/ChampionshipContext";
 import { useMonetization } from "@/contexts/MonetizationContext";
 import { usePlanLimits } from "@/hooks/usePlanLimits";
 import { cn } from "@/lib/utils";
@@ -15,6 +16,7 @@ import { monetizationEnv } from "@/lib/env";
 import { PREMIUM_CHECKOUT_UNAVAILABLE_MESSAGE } from "@/services/monetization/stripe.service";
 import { getDefaultMarketIdsForFormat } from "@/services/boloes/bolao-format.service";
 import { useCreateBolao } from "@/hooks/useCreateBolao";
+import { getSiteUrl } from "@/utils/site-url";
 import type { BolaoFormatSlug, MarketTemplateSlug, ScoringRules } from "@/types/bolao";
 
 // ─── constants ────────────────────────────────────────────────────────────────
@@ -32,11 +34,11 @@ type PresetKey = "standard" | "risky" | "conservative";
 
 const POOL_TYPES = [
   {
-    id: "familia",
-    emoji: "👨‍👩‍👧‍👦",
-    title: "Família & Amigos",
-    subtitle: "Diversão casual",
-    desc: "Apenas placar dos jogos. Pontuação padrão. Ideal pra quem quer brincar sem complicação.",
+    id: "rachao",
+    emoji: "⚽",
+    title: "Rachão",
+    subtitle: "Galera assistindo junto",
+    desc: "Cada um chuta um placar, o app calcula tudo e entrega o resultado pronto. Zero complicação.",
     example: "Formato Clássico · Pontuação Padrão",
     formatId: "classic" as BolaoFormatSlug,
     scoringRule: "standard" as PresetKey,
@@ -44,11 +46,11 @@ const POOL_TYPES = [
     badgeColor: "bg-primary text-black",
   },
   {
-    id: "firma",
-    emoji: "💼",
-    title: "Bolão da Firma",
-    subtitle: "Pra zoar os colegas",
-    desc: "Placar e fases. Acertar quem avança de fase também conta muitos pontos.",
+    id: "campeonato",
+    emoji: "🏆",
+    title: "Campeonato",
+    subtitle: "Temporada completa",
+    desc: "Placar e fases. Quem avança de fase também pontua. Ideal para acompanhar o torneio inteiro.",
     example: "Formato Completo · Pontuação Padrão",
     formatId: "detailed" as BolaoFormatSlug,
     scoringRule: "standard" as PresetKey,
@@ -56,20 +58,20 @@ const POOL_TYPES = [
     badgeColor: "bg-copa-blue/20 text-copa-blue",
   },
   {
-    id: "hardcore",
+    id: "classico",
     emoji: "🔥",
-    title: "Aposta Alta",
-    subtitle: "Risco máximo",
-    desc: "Só leva ponto alto se cravar o placar. Ideal para competições sérias ou bolões pagos.",
+    title: "Clássico",
+    subtitle: "Só cravar ganha",
+    desc: "Pontuação máxima só pra quem acertar o placar exato. Para disputas sérias ou bolões pagos.",
     example: "Formato Clássico · Pontuação Arriscada",
     formatId: "classic" as BolaoFormatSlug,
     scoringRule: "risky" as PresetKey,
-    badge: "Hardcore",
+    badge: "Alta Pressão",
     badgeColor: "bg-orange-500/20 text-orange-500",
   },
 ] as const;
 
-type PoolTypeId = typeof POOL_TYPES[number]["id"];
+type PoolTypeId = "rachao" | "campeonato" | "classico";
 
 // ─── component ────────────────────────────────────────────────────────────────
 
@@ -80,6 +82,7 @@ export default function CriarBolao() {
   const grupoIdParam = searchParams.get("grupoId");
   const { user } = useAuth();
   const { toast } = useToast();
+  const { current: championship } = useChampionship();
   const { purchasePremium, isLoading: isPurchasing } = useMonetization();
   const { canCreateGrupo } = usePlanLimits();
   const canStartCheckout = monetizationEnv.enablePremiumSimulation || monetizationEnv.premiumCheckoutEnabled;
@@ -90,7 +93,7 @@ export default function CriarBolao() {
   const [emoji, setEmoji] = useState("⚽");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState<Category>("private");
-  const [selectedTypeId, setSelectedTypeId] = useState<PoolTypeId>("familia");
+  const [selectedTypeId, setSelectedTypeId] = useState<PoolTypeId>("rachao");
   const [formatId, setFormatId] = useState<BolaoFormatSlug>("classic");
   const [selectedMarketIds, setSelectedMarketIds] = useState<MarketTemplateSlug[]>(
     getDefaultMarketIdsForFormat("classic").filter((m) => m !== "champion") as MarketTemplateSlug[]
@@ -134,6 +137,7 @@ export default function CriarBolao() {
       isPaid,
       scoringMode,
       grupoId: grupoIdParam,
+      championshipId: championship.id,
       entryFee: typeof entryFee === "number" ? entryFee : undefined,
       prizeDistribution: isPaid ? finalDistribution : undefined,
       paymentDetails: isPaid ? paymentDetails : undefined,
@@ -178,7 +182,7 @@ export default function CriarBolao() {
 
   // ─── Success ────────────────────────────────────────────────────────────────
   if (createdBolaoId && createdInviteCode) {
-    const inviteUrl = `${window.location.origin}/b/${createdInviteCode}`;
+    const inviteUrl = `${getSiteUrl()}/b/${createdInviteCode}`;
     const msg = `🔥 Fui convocado! Vem pro meu bolão "${name}" no Arena Copa! Código de acesso: ${createdInviteCode}`;
     const handleShareNative = async () => {
       try { await Share.share({ title: "Arena Copa Bolão", text: msg, url: inviteUrl }); }
@@ -426,10 +430,10 @@ export default function CriarBolao() {
                className={cn("rounded-[20px] border p-4 text-left transition-all",
                  scoringMode === "exclusive" ? "border-primary bg-primary/10" : "surface-card-strong border-transparent hover:border-white/10")}>
                <div className="flex items-center justify-between">
-                 <p className="text-sm font-black text-zinc-100">Assentos de Cinema 🎟️</p>
+                 <p className="text-sm font-black text-zinc-100">Placar Exclusivo 🎯</p>
                  {scoringMode === "exclusive" && <CheckCircle2 className="h-4 w-4 text-primary" />}
                </div>
-               <p className="mt-1 text-xs text-zinc-400">Grid gamificado. Um placar só pode ser escolhido por 1 pessoa.</p>
+               <p className="mt-1 text-xs text-zinc-400">Cada placar só pode ser escolhido por uma pessoa. Se alguém já cravou 1-0, esse placar está fechado.</p>
              </button>
            </div>
         </div>

@@ -4,6 +4,7 @@ import {
   query,
   orderBy,
   getDocs,
+  getDoc,
   addDoc,
   doc,
   writeBatch,
@@ -31,6 +32,9 @@ export interface CreateBolaoParams {
   scoringRules: ScoringRules;
   champion: string;
   grupoId?: string | null;
+  championshipId?: string;
+  /** Quando fornecido, cria um bolão de jogo único (Rachão rápido) */
+  matchId?: string;
 }
 
 export interface CreateBolaoResult {
@@ -83,6 +87,7 @@ export function useCreateBolao() {
         invite_code: inviteCodeVal,
         avatar_url: params.emoji,
         grupo_id: params.grupoId ?? null,
+        championship_id: params.championshipId ?? null,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
@@ -95,13 +100,22 @@ export function useCreateBolao() {
       const batch = writeBatch(db);
 
       phase = "fetch_matches";
-      const matchesSnapshot = await getDocs(
-        query(collection(db, "matches"), orderBy("match_date", "asc"))
-      );
-      const matchRows = matchesSnapshot.docs.map((d) => ({
-        id: d.id,
-        ...(d.data() as { match_date: string; stage?: string | null; group_id?: string | null; home_team_code?: string | null; away_team_code?: string | null }),
-      }));
+      let matchRows: Array<{ id: string; match_date: string; stage?: string | null; group_id?: string | null; home_team_code?: string | null; away_team_code?: string | null }>;
+
+      if (params.matchId) {
+        // Bolão Rápido: busca apenas o jogo selecionado
+        const matchDoc = await getDoc(doc(db, "matches", params.matchId));
+        if (!matchDoc.exists()) throw new Error("Jogo não encontrado.");
+        matchRows = [{ id: matchDoc.id, ...(matchDoc.data() as { match_date: string; stage?: string | null; group_id?: string | null; home_team_code?: string | null; away_team_code?: string | null }) }];
+      } else {
+        const matchesSnapshot = await getDocs(
+          query(collection(db, "matches"), orderBy("match_date", "asc"))
+        );
+        matchRows = matchesSnapshot.docs.map((d) => ({
+          id: d.id,
+          ...(d.data() as { match_date: string; stage?: string | null; group_id?: string | null; home_team_code?: string | null; away_team_code?: string | null }),
+        }));
+      }
 
       phase = "batch_members";
       batch.set(doc(db, "bolao_members", `${user.id}_${bolaoDoc.id}`), {

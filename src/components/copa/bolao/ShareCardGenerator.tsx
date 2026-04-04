@@ -97,7 +97,7 @@ export const ShareCardGenerator = forwardRef<HTMLDivElement, ShareCardProps>(({ 
                             <span className="text-[24px] uppercase tracking-widest text-gray-400 font-black block mb-2">CÓDIGO SECRETO</span>
                             <span className="text-[64px] font-mono text-white tracking-[0.2em]">{data.invite_code}</span>
                         </div>
-                        <div className="mt-16 text-[24px] text-gray-500 font-bold uppercase tracking-widest">Acesse: arenacup.tech/b/{data.invite_code}</div>
+                        <div className="mt-16 text-[24px] text-gray-500 font-bold uppercase tracking-widest">Acesse: arenacopa.app/b/{data.invite_code}</div>
                     </div>
                 )}
 

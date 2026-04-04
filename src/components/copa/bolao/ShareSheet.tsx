@@ -8,6 +8,7 @@ import { toPng } from "html-to-image";
 import { type BolaoData } from "@/types/bolao";
 import { QRCodeSVG } from "qrcode.react";
 import { ShareCardGenerator } from "./ShareCardGenerator";
+import { getInviteUrl } from "@/utils/site-url";
 
 interface ShareSheetProps {
     open: boolean;
@@ -21,7 +22,7 @@ export function ShareSheet({ open, onClose, bolao }: ShareSheetProps) {
     const shareRef = useRef<HTMLDivElement>(null);
     const [isGenerating, setIsGenerating] = useState(false);
 
-    const shareUrl = `https://arenacup.tech/b/${bolao.invite_code}?utm_source=app&utm_medium=share_sheet&utm_campaign=bolao_invite`;
+    const shareUrl = getInviteUrl(`/b/${bolao.invite_code}?utm_source=app&utm_medium=share_sheet&utm_campaign=bolao_invite`);
     const shareText = t('share.invite_msg', { name: bolao.name, code: bolao.invite_code, url: shareUrl });
     const shareTextEncoded = encodeURIComponent(shareText);
 

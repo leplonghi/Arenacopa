@@ -12,6 +12,7 @@ import { Layout } from "@/components/Layout";
 import { TermsGuard } from "@/components/TermsGuard";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { MonetizationProvider } from "@/contexts/MonetizationContext";
+import { ChampionshipProvider } from "@/contexts/ChampionshipContext";
 import FieldBackground from "@/components/FieldBackground";
 const Index = lazy(() => import("./pages/Index"));
 const Copa = lazy(() => import("./pages/Copa"));
@@ -33,6 +34,9 @@ const Privacidade = lazy(() => import("./pages/Privacidade"));
 const Termos = lazy(() => import("./pages/Termos"));
 const Noticias = lazy(() => import("./pages/Noticias"));
 const ExcluirConta = lazy(() => import("./pages/ExcluirConta"));
+const Campeonatos = lazy(() => import("./pages/Campeonatos"));
+const CampeonatoHub = lazy(() => import("./pages/CampeonatoHub"));
+const BolaoRapido = lazy(() => import("./pages/BolaoRapido"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -135,8 +139,15 @@ const LoadingScreen = () => (
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
+  const location = useLocation();
+  
   if (loading) return <LoadingScreen />;
-  if (!user) return <Navigate to="/auth" replace />;
+  
+  if (!user) {
+    const redirectTo = encodeURIComponent(location.pathname + location.search);
+    return <Navigate to={`/auth?redirect=${redirectTo}`} replace />;
+  }
+  
   return <TermsGuard>{children}</TermsGuard>;
 }
 
@@ -152,9 +163,8 @@ function AuthRoute({ children }: { children: React.ReactNode }) {
 const AppRoutes = () => (
   <Routes>
     <Route path="/auth" element={<AuthRoute><Auth /></AuthRoute>} />
-    {/* /b/:inviteCode — shareable invite link. ProtectedRoute handles the redirect
-        to /auth?redirect=/b/:inviteCode so the user lands back here after login. */}
-    <Route path="/b/:inviteCode" element={<ProtectedRoute><PublicInvite /></ProtectedRoute>} />
+    {/* /b/:inviteCode — shareable invite link. Public so unauthenticated users can see the "Join" screen. */}
+    <Route path="/b/:inviteCode" element={<PublicInvite />} />
     {/* Legal / compliance pages — intentionally PUBLIC (Play Store / App Store requirement).
         /excluir-conta must be public so unauthenticated users can still request deletion. */}
     <Route path="/privacidade" element={<Privacidade />} />
@@ -172,7 +182,12 @@ const AppRoutes = () => (
     <Route path="/cup/:subtab" element={<ProtectedRoute><LegacyCopaRedirect /></ProtectedRoute>} />
     <Route path="/simulator" element={<ProtectedRoute><LegacyRedirect to="/copa/simulacao" /></ProtectedRoute>} />
     <Route path="/copas/central" element={<ProtectedRoute><LegacyRedirect to="/copa" /></ProtectedRoute>} />
+    {/* Championship hub — replaces the old /copa tab */}
+    <Route path="/campeonatos" element={<ProtectedRoute><Layout><Campeonatos /></Layout></ProtectedRoute>} />
+    {/* Placeholder for individual championship pages (Phase 1 builds these) */}
+    <Route path="/campeonato/:championshipId" element={<ProtectedRoute><Layout><CampeonatoHub /></Layout></ProtectedRoute>} />
     <Route path="/boloes" element={<ProtectedRoute><Layout><Boloes /></Layout></ProtectedRoute>} />
+    <Route path="/boloes/rapido" element={<ProtectedRoute><Layout><BolaoRapido /></Layout></ProtectedRoute>} />
     <Route path="/boloes/criar" element={<ProtectedRoute><Layout><CriarBolao /></Layout></ProtectedRoute>} />
     <Route path="/boloes/:id" element={<ProtectedRoute><Layout><BolaoDetail /></Layout></ProtectedRoute>} />
     <Route path="/criar-bolao" element={<ProtectedRoute><LegacyRedirect to="/boloes/criar" /></ProtectedRoute>} />
@@ -206,14 +221,16 @@ const App = () => (
       <Sonner />
       <AuthProvider>
         <MonetizationProvider>
-          <Suspense fallback={<LoadingScreen />}>
-            <FieldBackground />
-            <BrowserRouter>
-              <DeepLinkListener />
-              <PushNotificationListener />
-              <AppRoutes />
-            </BrowserRouter>
-          </Suspense>
+          <ChampionshipProvider>
+            <Suspense fallback={<LoadingScreen />}>
+              <FieldBackground />
+              <BrowserRouter>
+                <DeepLinkListener />
+                <PushNotificationListener />
+                <AppRoutes />
+              </BrowserRouter>
+            </Suspense>
+          </ChampionshipProvider>
         </MonetizationProvider>
       </AuthProvider>
     </TooltipProvider>

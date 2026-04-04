@@ -6,17 +6,17 @@ const FieldBackground = () => (
     {/* Base dark background */}
     <div className="absolute inset-0 bg-[#03100a]" />
 
-    {/* Campo image — more visible */}
+    {/* Campo image — darker to let contrast pop */}
     <div
-      className="absolute inset-0 bg-center bg-cover bg-no-repeat opacity-[0.92] md:opacity-[0.95]"
+      className="absolute inset-0 bg-center bg-cover bg-no-repeat opacity-[0.55] md:opacity-[0.65]"
       style={{ backgroundImage: "url('/images/campo-bg.png?v=20260316')" }}
     />
 
     {/* Radial vignette — darker edges */}
     <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(116,255,153,0.05)_0%,rgba(8,38,23,0.32)_38%,rgba(2,10,6,0.75)_100%)]" />
 
-    {/* Vertical gradient — darker global contrast */}
-    <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.72)_0%,rgba(0,0,0,0.28)_20%,rgba(0,0,0,0.12)_42%,rgba(0,0,0,0.38)_68%,rgba(0,0,0,0.72)_100%)]" />
+    {/* Vertical gradient — much darker global contrast */}
+    <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.85)_0%,rgba(0,0,0,0.55)_20%,rgba(0,0,0,0.45)_42%,rgba(0,0,0,0.65)_68%,rgba(0,0,0,0.88)_100%)]" />
 
     {/* Side vignettes — slightly stronger */}
     <div className="absolute inset-y-0 left-0 w-[18%] bg-[linear-gradient(90deg,rgba(0,0,0,0.45)_0%,transparent_100%)]" />

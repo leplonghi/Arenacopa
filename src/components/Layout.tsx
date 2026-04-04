@@ -75,6 +75,8 @@ function Header({ className }: { className?: string }) {
 
     if (path === "/") return null;
     if (path.startsWith("/copa")) return null;
+    if (path === "/campeonatos") return null;
+    if (path.startsWith("/campeonato/")) return null;
     if (path.startsWith("/guia")) return null;
     if (path === "/ranking") return null;
     if (path === "/noticias") return null;
@@ -170,19 +172,24 @@ function BottomTabs({ className }: { className?: string }) {
 
   const isTabActive = (path: string) => {
     if (path === "/") return location.pathname === "/";
-    if (path === "/copa") {
-      return location.pathname === "/copa" || location.pathname.startsWith("/copa/");
+    if (path === "/campeonatos") {
+      return (
+        location.pathname === "/campeonatos" ||
+        location.pathname === "/copa" ||
+        location.pathname.startsWith("/copa/") ||
+        location.pathname.startsWith("/campeonato/")
+      );
     }
     return location.pathname === path || location.pathname.startsWith(`${path}/`);
   };
 
-  // 5-tab layout: Home | Copa | ⚽ Bolões (center FAB) | Notícias | Guia
+  // 5-tab layout: Home | Campeonatos | ⚽ Bolões (center FAB) | Notícias | Guia
   const tabs = [
-    { path: "/",         icon: Home,      label: t('nav.home'),  isFab: false },
-    { path: "/copa",     icon: Trophy,    label: t('nav.copa'),  isFab: false },
-    { path: "/boloes",   icon: null,      label: t('nav.bolao'), isFab: true  },
-    { path: "/noticias", icon: Newspaper, label: "Notícias",     isFab: false },
-    { path: "/guia",     icon: BookOpen,  label: "Guia",         isFab: false },
+    { path: "/",             icon: Home,      label: t('nav.home'),        isFab: false },
+    { path: "/campeonatos",  icon: Trophy,    label: "Campeonatos",         isFab: false },
+    { path: "/boloes",       icon: null,      label: t('nav.bolao'),       isFab: true  },
+    { path: "/noticias",     icon: Newspaper, label: "Notícias",           isFab: false },
+    { path: "/guia",         icon: BookOpen,  label: "Guia",               isFab: false },
   ];
 
   return (
@@ -223,13 +230,13 @@ function AppSidebar({ className }: { className?: string }) {
   const location = useLocation();
 
   const tabs = [
-    { path: "/",         icon: Home,      label: t('nav.home') },
-    { path: "/copa",     icon: Trophy,    label: t('nav.copa') },
-    { path: "/noticias", icon: Newspaper, label: "Notícias" },
-    { path: "/guia",     icon: BookOpen,  label: "Guia" },
-    { path: "/boloes",   icon: Trophy,    label: t('nav.bolao') },
-    { path: "/grupos",   icon: Users2,    label: "Grupos" },
-    { path: "/perfil",   icon: User,      label: t('nav.profile') },
+    { path: "/",             icon: Home,      label: t('nav.home') },
+    { path: "/campeonatos",  icon: Trophy,    label: "Campeonatos" },
+    { path: "/noticias",     icon: Newspaper, label: "Notícias" },
+    { path: "/guia",         icon: BookOpen,  label: "Guia" },
+    { path: "/boloes",       icon: Trophy,    label: t('nav.bolao') },
+    { path: "/grupos",       icon: Users2,    label: "Grupos" },
+    { path: "/perfil",       icon: User,      label: t('nav.profile') },
   ];
 
   return (
@@ -258,8 +265,11 @@ function AppSidebar({ className }: { className?: string }) {
                     isActive={
                       tab.path === "/"
                         ? location.pathname === "/"
-                        : tab.path === "/copa"
-                          ? location.pathname === "/copa" || location.pathname.startsWith("/copa/")
+                        : tab.path === "/campeonatos"
+                          ? location.pathname === "/campeonatos" ||
+                            location.pathname === "/copa" ||
+                            location.pathname.startsWith("/copa/") ||
+                            location.pathname.startsWith("/campeonato/")
                           : location.pathname === tab.path || location.pathname.startsWith(`${tab.path}/`)
                     } 
                     tooltip={tab.label} 

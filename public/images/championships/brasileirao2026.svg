@@ -1,0 +1,21 @@
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="35%" r="60%">
+      <stop offset="0%" stop-color="#00a651"/>
+      <stop offset="100%" stop-color="#004d2a"/>
+    </radialGradient>
+    <filter id="sh"><feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000" flood-opacity="0.35"/></filter>
+  </defs>
+  <circle cx="60" cy="60" r="58" fill="url(#bg)" filter="url(#sh)"/>
+  <circle cx="60" cy="60" r="58" fill="none" stroke="#FFD700" stroke-width="3"/>
+  <circle cx="60" cy="60" r="50" fill="none" stroke="#FFD700" stroke-width="1" opacity="0.4"/>
+  <polygon points="60,16 100,60 60,104 20,60" fill="#FFD700" opacity="0.95"/>
+  <polygon points="60,26 90,60 60,94 30,60" fill="#003d7a"/>
+  <circle cx="60" cy="60" r="19" fill="white" stroke="#003d7a" stroke-width="1.5"/>
+  <path d="M60 43 L67 55 L61 65 L59 65 L53 55 Z" fill="#1a1a2e" opacity="0.85"/>
+  <path d="M74 52 L67 55 L67 65 L72 70 L79 65 Z" fill="#1a1a2e" opacity="0.85"/>
+  <path d="M46 52 L53 55 L53 65 L48 70 L41 65 Z" fill="#1a1a2e" opacity="0.85"/>
+  <path d="M60 77 L67 65 L76 68 L78 72 L70 79 Z" fill="#1a1a2e" opacity="0.85"/>
+  <path d="M60 77 L53 65 L44 68 L42 72 L50 79 Z" fill="#1a1a2e" opacity="0.85"/>
+  <text x="60" y="110" text-anchor="middle" font-family="Arial Black,sans-serif" font-size="8" font-weight="900" fill="#FFD700" letter-spacing="0.5">BRASILEIRAO</text>
+</svg>

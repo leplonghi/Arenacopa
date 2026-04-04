@@ -14,11 +14,27 @@
       },
       "oauth_client": [
         {
+          "client_id": "388695676084-27ma8fclanfgksjkp9k85djdr9q4dt4s.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "app.arenacopa.www",
+            "certificate_hash": "0bd80817e34ee8a451ab654221838e554746f122"
+          }
+        },
+        {
           "client_id": "388695676084-euo61vj8rahspeq24c6rpm5m76dm074g.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "app.arenacopa.www",
             "certificate_hash": "b0d0d017e34ee8a451ab654221038ee54746f122"
+          }
+        },
+        {
+          "client_id": "388695676084-u0i9blsdevp0t7subm6f6f3sd4esec7f.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "app.arenacopa.www",
+            "certificate_hash": "7cb268838495838df084a269cc3a7f4186af580a"
           }
         },
         {

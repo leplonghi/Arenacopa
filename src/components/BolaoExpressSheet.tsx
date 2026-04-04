@@ -5,6 +5,7 @@ import { collection, query, orderBy, where, limit, getDocs } from "firebase/fire
 import { db } from "@/integrations/firebase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useCreateBolao } from "@/hooks/useCreateBolao";
+import { getSiteUrl } from "@/utils/site-url";
 import { getDefaultMarketIdsForFormat } from "@/services/boloes/bolao-format.service";
 import { cn } from "@/lib/utils";
 
@@ -76,7 +77,7 @@ export function BolaoExpressSheet({ open, onClose }: Props) {
 
   // Success view
   if (createdId && createdCode) {
-    const url = `${window.location.origin}/b/${createdCode}`;
+    const url = `${getSiteUrl()}/b/${createdCode}`;
     return (
       <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm" onClick={handleClose}>
         <div className="w-full max-w-lg rounded-t-[32px] bg-[#0f1f14] p-6 pb-10 text-white" onClick={(e) => e.stopPropagation()}>

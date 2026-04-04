@@ -5,6 +5,7 @@ import { collection, doc, getDoc, getDocs, query, where } from "firebase/firesto
 import { db } from "@/integrations/firebase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { getSiteUrl } from "@/utils/site-url";
 import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/EmptyState";
 
@@ -68,7 +69,7 @@ export default function GrupoDetail() {
 
   const handleShare = () => {
     if (!grupo) return;
-    const url = `${window.location.origin}/grupos/entrar/${grupo.invite_code}`;
+    const url = `${getSiteUrl()}/grupos/entrar/${grupo.invite_code}`;
     if (navigator.share) { navigator.share({ title: grupo.name, url }); }
     else { navigator.clipboard.writeText(url); toast({ title: "Link copiado!" }); }
   };

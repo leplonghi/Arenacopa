@@ -79,7 +79,7 @@
   },
   "action_of_day": {
     "pending_title": "Pending picks",
-    "pending_desc": "{count} match{es} waiting for your pick",
+    "pending_desc": "{{count}} match(es) waiting for your pick",
     "pending_cta": "Pick now",
     "no_bolao_title": "Create your first pool",
     "no_bolao_desc": "Compete with friends in Copa 2026",
