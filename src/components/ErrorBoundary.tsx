@@ -61,11 +61,17 @@ export class ErrorBoundary extends Component<Props, State> {
               </button>
             </div>
 
-            {import.meta.env.DEV && this.state.error && (
+            {this.state.error && (
               <pre className="mt-8 w-full overflow-x-auto rounded-3xl border border-white/10 bg-black/30 p-5 text-left text-xs leading-6 text-white/75">
                 {this.state.error.toString()}
+                {this.state.error.stack && (
+                  <>
+                    {"\n\n"}
+                    {this.state.error.stack}
+                  </>
+                )}
                 {"\n\n"}
-                {this.state.error.stack}
+                {window.location.href}
               </pre>
             )}
           </div>

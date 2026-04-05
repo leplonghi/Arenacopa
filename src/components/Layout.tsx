@@ -295,6 +295,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const hideBottomNav = location.pathname === "/boloes/criar";
   const { user } = useAuth();
+  const { t } = useTranslation('common');
 
   return (
     <SidebarProvider>

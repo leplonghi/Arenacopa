@@ -29,7 +29,9 @@ export function NewsFeed() {
                 id: item.id,
                 title: item.title,
                 category: item.source_name || item.source_country || item.category || item.country_filter || "Geral",
-                time: item.published_at ? new Date(item.published_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }) : "Recent",
+                time: item.published_at && !Number.isNaN(new Date(item.published_at).getTime())
+                    ? new Date(item.published_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })
+                    : "Recent",
                 image: item.image_url || item.url_to_image || "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=800",
                 url: item.url || "#",
                 views: item.views

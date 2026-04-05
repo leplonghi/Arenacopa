@@ -687,6 +687,13 @@ function NotíciasTab({ championshipId, color }: { championshipId: string; color
     limitCount: 10,
   });
 
+  const formatPublishedAt = (value?: string) => {
+    if (!value) return "";
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return "";
+    return parsed.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
+  };
+
   if (isLoading) return (
     <div className="space-y-3 mt-1">{[...Array(3)].map((_, i) => <div key={i} className="h-24 rounded-2xl bg-white/[0.04] animate-pulse" />)}</div>
   );
@@ -719,7 +726,7 @@ function NotíciasTab({ championshipId, color }: { championshipId: string; color
                 style={{ color, borderColor: `${color}40`, background: `${color}15` }}>
                 {item.source_name || item.source_country || item.category || "Destaque"}
               </span>
-              <span className="text-[9px] text-white/30">{item.published_at ? new Date(item.published_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }) : ""}</span>
+              <span className="text-[9px] text-white/30">{formatPublishedAt(item.published_at)}</span>
             </div>
             <p className="text-xs font-bold text-white leading-relaxed line-clamp-2">{item.title}</p>
             {(item.summary || item.description) && (

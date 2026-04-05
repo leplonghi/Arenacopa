@@ -20,7 +20,7 @@ function getSpecialStatusLabel(market: BolaoMarket, prediction: BolaoPrediction 
     return t('special_markets.status_open');
 }
 
-function getPredictionLabel(prediction?: BolaoPrediction) {
+function getPredictionLabel(prediction: BolaoPrediction | undefined, t: (k: string) => string) {
     if (!prediction) return "";
     const value = prediction.prediction_value;
     if (typeof value === "string" || typeof value === "number") return String(value);
@@ -180,12 +180,12 @@ export function SpecialMarketsTab({
                 {markets.map((market) => {
                     const prediction = predictionByMarketId[market.id];
                     const semifinalistsPrediction = semifinalistsMarket ? predictionByMarketId[semifinalistsMarket.id] : undefined;
-                    const savedValue = getPredictionLabel(prediction);
+                    const savedValue = getPredictionLabel(prediction, t);
                     const draftValue = drafts[market.id] ?? savedValue;
                     const resolvedValue =
                         typeof market.resolution_value === "boolean"
                             ? (market.resolution_value ? "enabled" : "disabled")
-                            : getPredictionLabel({ prediction_value: market.resolution_value } as BolaoPrediction);
+                            : getPredictionLabel({ prediction_value: market.resolution_value } as BolaoPrediction, t);
                     const resolutionDraftValue = resolutionDrafts[market.id] ?? resolvedValue;
                     const isBracket = market.slug === "bracket_pick";
 

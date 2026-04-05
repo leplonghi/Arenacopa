@@ -235,6 +235,16 @@ const Index = () => {
     []
   );
 
+  const formatNewsDate = useCallback(
+    (value?: string) => {
+      if (!value) return t('news.recent', 'Recente');
+      const parsed = new Date(value);
+      if (Number.isNaN(parsed.getTime())) return t('news.recent', 'Recente');
+      return parsed.toLocaleDateString(i18n.language, { day: '2-digit', month: 'short' });
+    },
+    [i18n.language, t]
+  );
+
   // Copa tab: filter by user prefs (if any), else show all; limit to 4
   const miniNews = useMemo(() => {
     const all = mapNews(copaNewsRaw);
@@ -611,7 +621,7 @@ const Index = () => {
                             {item.label}
                           </span>
                           <span className="text-[10px] text-zinc-500 font-bold">
-                            {new Date(item.publishedAt).toLocaleDateString(i18n.language, { day: '2-digit', month: 'short' })}
+                            {formatNewsDate(item.publishedAt)}
                           </span>
                         </div>
                         <h3 className="text-sm font-bold text-gray-200 leading-snug line-clamp-2 group-hover:text-white transition-colors">
