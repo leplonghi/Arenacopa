@@ -4,12 +4,12 @@ import {
     collection, 
     query, 
     where, 
-    getDocs, 
-    documentId 
+    getDocs
 } from "firebase/firestore";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Flag } from "@/components/Flag";
 import { motion } from "framer-motion";
+import { getPublicProfilesByIds } from "@/services/profile/profile.service";
 
 type PublicPalpite = {
     id: string;
@@ -85,22 +85,7 @@ export function PublicPalpitesTab({ bolaoId }: { bolaoId: string }) {
 
                 const userIds = [...new Set(preds.map((p) => p.user_id as string))];
                 
-                // 3. Get profiles
-                const profilesRef = collection(db, "profiles");
-                const profileChunks: { user_id: string; name: string | null; avatar_url: string | null }[] = [];
-                for (let i = 0; i < userIds.length; i += 30) {
-                    const chunkIds = userIds.slice(i, i + 30);
-                    const qProfiles = query(profilesRef, where(documentId(), "in", chunkIds));
-                    const pSnap = await getDocs(qProfiles);
-                    pSnap.forEach(doc => {
-                        const data = doc.data();
-                        profileChunks.push({ 
-                            user_id: doc.id, 
-                            name: data.displayName || data.name || null,
-                            avatar_url: data.photoURL || data.avatar_url || null
-                        });
-                    });
-                }
+                const publicProfiles = await getPublicProfilesByIds(userIds);
 
                 interface RawMatch {
                     id: string;
@@ -110,7 +95,7 @@ export function PublicPalpitesTab({ bolaoId }: { bolaoId: string }) {
 
                 const enriched = preds.map((p) => {
                     const match = matches.find(m => m.id === p.match_id) as RawMatch;
-                    const profile = profileChunks.find(prof => prof.user_id === p.user_id);
+                    const profile = publicProfiles.get(p.user_id);
                     return {
                         ...p,
                         match: {

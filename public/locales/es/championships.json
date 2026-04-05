@@ -1,0 +1,82 @@
+{
+  "status": {
+    "live": "En Vivo",
+    "upcoming": "Próximamente",
+    "finished": "Finalizado"
+  },
+  "header": {
+    "kicker": "ArenaCopa",
+    "title": "Campeonatos"
+  },
+  "sections": {
+    "world_cup": "Copa del Mundo",
+    "leagues": "Ligas y Torneos"
+  },
+  "hero": {
+    "special_event": "Evento Especial",
+    "date_range": "11 jun – 19 jul 2026 · EE. UU., Canadá y México",
+    "enter": "Entrar",
+    "pools_zero": "Sin quinielas",
+    "pools_one": "1 quiniela activa",
+    "pools_other": "{{count}} quinielas activas"
+  },
+  "card": {
+    "pools_zero": "Sin quinielas",
+    "pools_one": "1 quiniela",
+    "pools_other": "{{count}} quinielas"
+  },
+  "footer_tip": "Toca para ver calendario, tabla y crear quinielas.",
+  "hub": {
+    "not_found_title": "Campeonato no encontrado",
+    "not_found_desc": "Este enlace ya no está disponible o el campeonato aún no fue publicado en esta sección.",
+    "not_found_cta": "Ver campeonatos",
+    "status": {
+      "live": "En vivo",
+      "upcoming": "Próximamente",
+      "finished": "Finalizado"
+    },
+    "tabs": {
+      "games": "Partidos",
+      "table": "Tabla",
+      "news": "Noticias",
+      "pools": "Quinielas"
+    },
+    "stats": {
+      "teams": "Equipos",
+      "start": "Inicio",
+      "format": "Formato",
+      "format_league": "Liga",
+      "format_cup": "Copa",
+      "format_tournament": "Torneo"
+    },
+    "games": {
+      "recent_label": "Mostrando los últimos 6 partidos y los próximos",
+      "unavailable_title": "Calendario aún no sincronizado",
+      "unavailable_desc": "Los partidos oficiales de este campeonato aparecerán aquí en cuanto se publiquen."
+    },
+    "table": {
+      "updated_at": "Actualizado: {{date}}",
+      "derived_badge": "Tabla provisional basada en resultados confirmados",
+      "unavailable_title": "Tabla aún no disponible",
+      "unavailable_desc": "En cuanto entren los resultados oficiales, la clasificación aparecerá aquí automáticamente.",
+      "legend_champion": "Campeón",
+      "legend_ucl": "UCL",
+      "legend_uel": "UEL",
+      "legend_relegation": "Descenso"
+    },
+    "pools": {
+      "create_title": "Crear quiniela",
+      "active_count": "Quinielas activas ({{count}})",
+      "empty_title": "Aún no hay quinielas",
+      "empty_desc": "Sé el primero en crear una quiniela para este campeonato.",
+      "status_open": "Abierta para unirse",
+      "status_active": "En curso"
+    },
+    "news": {
+      "empty_title": "Aún no hay noticias de este campeonato",
+      "empty_desc": "Cuando el feed se actualice, aquí aparecerán las noticias y destaques más recientes.",
+      "highlight": "Destacado",
+      "no_link": "La fuente externa aún no tiene enlace directo."
+    }
+  }
+}

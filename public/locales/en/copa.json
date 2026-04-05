@@ -105,8 +105,8 @@
       "calendar_desc": "All tournament matches",
       "map_title": "Map",
       "map_desc": "Stadiums and host cities",
-      "guide_title": "Guide",
-      "guide_desc": "Hosts, map and history"
+      "guide_title": "Hosts",
+      "guide_desc": "Host cities, map and travel tips"
     },
     "upcoming_matches": "Upcoming Matches",
     "view_calendar": "View calendar",

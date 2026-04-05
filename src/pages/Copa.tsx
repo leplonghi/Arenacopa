@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { tabContentVariants } from "@/components/copa/animations";
 import { SimulacaoProvider } from "@/contexts/SimulacaoContext";
-import { LayoutGrid, CalendarDays, Trophy, GitBranch, Sparkles } from "lucide-react";
+import { LayoutGrid, CalendarDays, Trophy, GitBranch, Sparkles, ScrollText } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 const CalendarioTab = lazy(() => import("@/components/copa/CalendarioTab").then((module) => ({ default: module.CalendarioTab })));
@@ -12,9 +12,10 @@ const GruposTab = lazy(() => import("@/components/copa/GruposTab").then((module)
 const ChavesTab = lazy(() => import("@/components/copa/ChavesTab").then((module) => ({ default: module.ChavesTab })));
 const SimulacaoTab = lazy(() => import("@/components/copa/SimulacaoTab").then((module) => ({ default: module.SimulacaoTab })));
 const CopaOverview = lazy(() => import("@/components/copa/CopaOverview").then((module) => ({ default: module.CopaOverview })));
+const HistoriaTab = lazy(() => import("@/components/copa/HistoriaTab").then((module) => ({ default: module.HistoriaTab })));
 
-type CopaTab = "overview" | "calendario" | "grupos" | "chaves" | "simulacao";
-const VALID_TABS: CopaTab[] = ["overview", "calendario", "grupos", "chaves", "simulacao"];
+type CopaTab = "overview" | "calendario" | "grupos" | "chaves" | "historia" | "simulacao";
+const VALID_TABS: CopaTab[] = ["overview", "calendario", "grupos", "chaves", "historia", "simulacao"];
 
 const TabLoadingState = ({ label }: { label?: string }) => (
   <div className="surface-card rounded-[28px] p-6 text-sm font-bold uppercase tracking-[0.18em] text-zinc-400">
@@ -52,21 +53,19 @@ const Copa = () => {
 
   const tabs: { id: CopaTab; label: string; icon: React.ReactNode; highlight?: boolean }[] = [
     { id: "overview",   label: t('tabs.overview'),   icon: <LayoutGrid className="w-4 h-4" /> },
-    { id: "simulacao",  label: t('tabs.simulacao'),  icon: <Sparkles className="w-4 h-4" />, highlight: true },
     { id: "calendario", label: t('tabs.calendario'), icon: <CalendarDays className="w-4 h-4" /> },
     { id: "grupos",     label: t('tabs.grupos'),     icon: <Trophy className="w-4 h-4" /> },
     { id: "chaves",     label: t('tabs.chaves'),     icon: <GitBranch className="w-4 h-4" /> },
+    { id: "historia",   label: t('tabs.history'),    icon: <ScrollText className="w-4 h-4" /> },
+    { id: "simulacao",  label: t('tabs.simulacao'),  icon: <Sparkles className="w-4 h-4" />, highlight: true },
   ];
 
   return (
     <SimulacaoProvider>
       <div>
-        {/* Scrollable pill-style tab bar — no overlap */}
+        {/* Responsive grid tab bar — no horizontal scroll */}
         <div className="sticky top-[calc(3.5rem+var(--safe-area-top,0px))] z-20 bg-[#03100a]/80 backdrop-blur-xl border-b border-white/[0.08] shadow-[0_4px_20px_rgba(0,0,0,0.5)] md:top-16">
-          <div
-            className="flex items-center gap-2 overflow-x-auto px-3 py-2.5"
-            style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-          >
+          <div className="grid grid-cols-3 gap-2 px-3 py-3">
             {tabs.map((tabItem) => {
               const isActive = tab === tabItem.id;
               return (
@@ -76,8 +75,8 @@ const Copa = () => {
                   onClick={() => handleTabChange(tabItem.id)}
                   aria-current={isActive ? "page" : undefined}
                   className={cn(
-                    "relative flex shrink-0 flex-col items-center justify-center gap-1 rounded-2xl transition-all duration-200",
-                    "min-w-[56px] px-3 py-2",
+                    "relative flex min-h-[64px] flex-col items-center justify-center gap-1 rounded-2xl transition-all duration-200",
+                    "px-2 py-2",
                     isActive
                       ? "text-primary-foreground"
                       : tabItem.highlight
@@ -143,6 +142,7 @@ const Copa = () => {
                 {tab === "calendario" && <CalendarioTab />}
                 {tab === "grupos"     && <GruposTab />}
                 {tab === "chaves"     && <ChavesTab />}
+                {tab === "historia"   && <HistoriaTab />}
                 {tab === "simulacao"  && <SimulacaoTab />}
               </Suspense>
             </motion.div>

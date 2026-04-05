@@ -1,0 +1,101 @@
+{
+  "badge": "Copa Pass",
+  "hero_title_prefix": "Acceso",
+  "hero_title_highlight": "Completo",
+  "hero_subtitle": "Una sola compra vitalicia desbloquea todo lo que el torneo puede ofrecer.",
+  "feedback": {
+    "cancelled": "Checkout cancelado. Puedes intentarlo de nuevo cuando quieras.",
+    "validating": "Pago recibido. Validando tu suscripción...",
+    "confirmed": "Pago confirmado. ¡Tu Copa Pass ya está activo!",
+    "syncing": "El pago se completó, pero la confirmación todavía se está sincronizando.",
+    "checkout_error": "No fue posible iniciar el checkout ahora. Inténtalo de nuevo en unos instantes."
+  },
+  "active": {
+    "title": "¡Ya tienes Copa Pass!",
+    "description": "Gracias por apoyar Arena CUP. Todos los beneficios premium ya están activos para ti.",
+    "back_home": "Volver al inicio"
+  },
+  "social_proof": {
+    "community": "Comunidad activa",
+    "secure_payment": "Pago seguro",
+    "lifetime": "Vitalicio"
+  },
+  "price": {
+    "suffix": "único",
+    "note": "Sin mensualidad. Paga una vez y conserva el acceso para siempre."
+  },
+  "cta": {
+    "buy": "Conseguir Copa Pass",
+    "notify": "Quiero aviso",
+    "support": "Hablar con soporte premium"
+  },
+  "status_copy": {
+    "pending": "esperando pago",
+    "ready": "listo para comprar",
+    "checkout_ready": "Checkout seguro con Stripe. Estado: {{status}}.",
+    "checkout_preparing": "El checkout todavía se está preparando. Ya puedes entrar en la lista de aviso por soporte."
+  },
+  "pillars": {
+    "info": {
+      "title": "InfoCopa",
+      "subtitle": "Todo sobre el torneo",
+      "perks": ["Estadísticas en vivo", "Simulador completo", "Cuadro interactivo", "Historia de los mundiales"]
+    },
+    "guide": {
+      "title": "GuiaCopa",
+      "subtitle": "Explora las sedes",
+      "perks": ["Mapa de estadios", "Guía de ciudades sede", "Info de transporte", "Consejos de viaje"]
+    },
+    "pool": {
+      "title": "QuinielaCopa",
+      "subtitle": "Juega sin límites",
+      "perks": ["Quinielas ilimitadas", "Grupos ilimitados", "Bote y PIX", "Insignia oficial de aficionado"]
+    }
+  },
+  "modal": {
+    "title": "Arena Premium",
+    "subtitle": "¡Desbloquea todo el potencial!",
+    "description": "Hazte Premium y lleva tu experiencia del torneo a otro nivel.",
+    "benefits": [
+      "Eliminar todos los anuncios",
+      "Estadísticas avanzadas",
+      "Insignia exclusiva de apoyo",
+      "Acceso anticipado a novedades"
+    ],
+    "old_price": "$19,90",
+    "single_payment": "Pago único",
+    "processing": "Procesando...",
+    "notify": "Quiero aviso",
+    "buy": "Quiero premium",
+    "support": "Hablar con soporte",
+    "secure_message": "Compra segura y cifrada. Satisfacción garantizada.",
+    "preparing_message": "El checkout todavía se está preparando. Únete a la lista de aviso por soporte."
+  },
+  "elite": {
+    "title": "Arena Elite",
+    "subtitle": "Pasaporte Oficial de la Copa",
+    "benefits": [
+      {
+        "title": "Poder del Capitán",
+        "desc": "Un pronóstico vale el doble en cada jornada"
+      },
+      {
+        "title": "Quinielas Privadas Ilimitadas",
+        "desc": "Crea todas las quinielas que quieras"
+      },
+      {
+        "title": "Acceso sin anuncios",
+        "desc": "Experiencia 100% limpia y enfocada"
+      }
+    ],
+    "lifetime": "Acceso vitalicio hasta 2026",
+    "processing": "Procesando...",
+    "notify": "Quiero aviso",
+    "buy": "Conseguir mi pasaporte",
+    "support": "Hablar con soporte premium",
+    "secure_message": "Pago 100% seguro con Stripe. Cancela cuando quieras.",
+    "preparing_message": "El checkout todavía se está preparando. Únete a la lista de aviso por soporte.",
+    "transaction_error_title": "Error en la transacción",
+    "transaction_error_desc": "No se pudo completar la activación del pase."
+  }
+}

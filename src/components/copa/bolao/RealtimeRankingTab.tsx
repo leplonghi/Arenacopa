@@ -20,6 +20,7 @@ import { EmptyState } from "@/components/EmptyState";
 import type { ScoringRules } from "@/types/bolao";
 import { RankingBreakdownCard, type RankingBreakdown } from "./ranking/RankingBreakdownCard";
 import { RankingLegend } from "./ranking/RankingLegend";
+import { getPublicProfilesByIds } from "@/services/profile/profile.service";
 
 type RankingProfile = {
     user_id: string;
@@ -97,26 +98,10 @@ export function RealtimeRankingTab({ bolaoId, rules }: { bolaoId: string; rules?
             if (rankingData.length > 0) {
                 const userIds = rankingData.map(d => d.user_id);
                 
-                const profilesRef = collection(db, "profiles");
-                const profileChunks: RankingProfile[] = [];
-                
-                // Firestore "in" query limited to 30 items
-                for (let i = 0; i < userIds.length; i += 30) {
-                    const chunkIds = userIds.slice(i, i + 30);
-                    const pq = query(profilesRef, where("user_id", "in", chunkIds));
-                    const pSnap = await getDocs(pq);
-                    pSnap.forEach(doc => {
-                        const data = doc.data();
-                        profileChunks.push({ 
-                            user_id: typeof data.user_id === "string" ? data.user_id : doc.id, 
-                            name: data.displayName || data.name || null,
-                            avatar_url: data.photoURL || data.avatar_url || null
-                        });
-                    });
-                }
+                const publicProfiles = await getPublicProfilesByIds(userIds);
 
                 const joined = rankingData.map(d => {
-                    const p = profileChunks.find(p => p.user_id === d.user_id);
+                    const p = publicProfiles.get(d.user_id) ?? null;
                     return { ...d, profile: p, points_breakdown: normalizeBreakdown(d) };
                 });
                 

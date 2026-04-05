@@ -8,6 +8,7 @@ import {
   where,
 } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
+import { sanitizeExternalUrl } from "@/lib/security";
 
 export type RealtimeNewsItem = {
   id: string;
@@ -54,7 +55,7 @@ function mapLegacyNewsDoc(id: string, data: Record<string, unknown>): RealtimeNe
     title: typeof data.title === "string" ? data.title : "Sem titulo",
     description: typeof data.description === "string" ? data.description : undefined,
     content: typeof data.content === "string" ? data.content : undefined,
-    url: typeof data.url === "string" ? data.url : "#",
+    url: sanitizeExternalUrl(typeof data.url === "string" ? data.url : null) ?? "#",
     url_to_image: typeof data.url_to_image === "string" ? data.url_to_image : undefined,
     country_filter: typeof data.country_filter === "string" ? data.country_filter : undefined,
     published_at: normalizePublishedAt(data.published_at),
@@ -83,7 +84,7 @@ function mapNormalizedNewsDoc(id: string, data: Record<string, unknown>): Realti
     summary,
     description: summary,
     content,
-    url: typeof data.url === "string" ? data.url : "#",
+    url: sanitizeExternalUrl(typeof data.url === "string" ? data.url : null) ?? "#",
     image_url: typeof data.image_url === "string" ? data.image_url : undefined,
     url_to_image: typeof data.image_url === "string" ? data.image_url : undefined,
     source_country: typeof data.source_country === "string" ? data.source_country : undefined,

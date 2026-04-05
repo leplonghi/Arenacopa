@@ -15,6 +15,8 @@
     "stadiums": "Stadiums",
     "cityGuide": "City Guide",
     "weather": "Weather",
+    "searchPlaceholder": "Search city or stadium...",
+    "noCityResults": "No cities found",
     "tabs": {
       "general": "General",
       "tourism": "Tourism",

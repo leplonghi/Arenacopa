@@ -1,10 +1,15 @@
 {
     "title": "Guía del Mundial",
     "description": "Todo sobre el torneo",
+    "loading": "Cargando guía...",
     "calendar": "Calendario",
     "teams": "Selecciones",
     "stadiums": "Estadios",
     "history": "Historia",
+    "tabs": {
+        "hosts": "Ciudades",
+        "map": "Mapa"
+    },
     "historia": {
         "saga": "La Saga",
         "mundial": "Mundial",

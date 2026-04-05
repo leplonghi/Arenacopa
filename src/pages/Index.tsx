@@ -9,6 +9,7 @@ import { useCallback, useEffect, useState, useMemo } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MatchDetailsModal } from "@/components/copa/MatchDetailsModal";
 import { useTranslation } from "react-i18next";
+import { sanitizeExternalUrl } from "@/lib/security";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ElitePassModal } from "@/components/ElitePassModal";
 import { LiveMatchCard } from "@/components/LiveMatchCard";
@@ -593,43 +594,52 @@ const Index = () => {
                   transition={{ duration: 0.18 }}
                   className="grid gap-3"
                 >
-                  {(newsTab === "copa" ? miniNews : teamNews).map((item) => (
-                    <a
-                      key={item.id}
-                      href={item.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="group flex gap-4 p-4 rounded-[22px] bg-white/[0.02] border border-white/5 hover:bg-white/[0.05] transition-all backdrop-blur-md"
-                    >
-                      <div className="w-20 h-14 rounded-[14px] overflow-hidden shrink-0 relative">
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent z-10" />
-                        <img
-                          src={item.imageUrl || "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=300"}
-                          alt={item.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                          loading="lazy"
-                        />
-                      </div>
-                      <div className="flex flex-col justify-center flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className={cn(
-                            "rounded px-1.5 py-0.5 text-[10px] font-black uppercase tracking-[0.14em]",
-                            newsTab === "team"
-                              ? "bg-primary/15 border border-primary/25 text-primary"
-                              : "bg-copa-green/10 border border-copa-green/20 text-copa-green-light"
-                          )}>
-                            {item.label}
-                          </span>
-                          <span className="text-[10px] text-zinc-500 font-bold">
-                            {formatNewsDate(item.publishedAt)}
-                          </span>
+                  {(newsTab === "copa" ? miniNews : teamNews).map((item) => {
+                    const safeUrl = sanitizeExternalUrl(item.url);
+                    const Wrapper = safeUrl ? "a" : "article";
+
+                    return (
+                      <Wrapper
+                        key={item.id}
+                        {...(safeUrl
+                          ? {
+                              href: safeUrl,
+                              target: "_blank",
+                              rel: "noopener noreferrer",
+                            }
+                          : {})}
+                        className="group flex gap-4 p-4 rounded-[22px] bg-white/[0.02] border border-white/5 hover:bg-white/[0.05] transition-all backdrop-blur-md"
+                      >
+                        <div className="w-20 h-14 rounded-[14px] overflow-hidden shrink-0 relative">
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent z-10" />
+                          <img
+                            src={item.imageUrl || "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=300"}
+                            alt={item.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            loading="lazy"
+                          />
                         </div>
-                        <h3 className="text-sm font-bold text-gray-200 leading-snug line-clamp-2 group-hover:text-white transition-colors">
-                          {item.title}
-                        </h3>
-                      </div>
-                    </a>
-                  ))}
+                        <div className="flex flex-col justify-center flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className={cn(
+                              "rounded px-1.5 py-0.5 text-[10px] font-black uppercase tracking-[0.14em]",
+                              newsTab === "team"
+                                ? "bg-primary/15 border border-primary/25 text-primary"
+                                : "bg-copa-green/10 border border-copa-green/20 text-copa-green-light"
+                            )}>
+                              {item.label}
+                            </span>
+                            <span className="text-[10px] text-zinc-500 font-bold">
+                              {formatNewsDate(item.publishedAt)}
+                            </span>
+                          </div>
+                          <h3 className="text-sm font-bold text-gray-200 leading-snug line-clamp-2 group-hover:text-white transition-colors">
+                            {item.title}
+                          </h3>
+                        </div>
+                      </Wrapper>
+                    );
+                  })}
                 </motion.div>
               </AnimatePresence>
             </div>

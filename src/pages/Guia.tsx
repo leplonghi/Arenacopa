@@ -3,30 +3,29 @@ import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     List,
-    ScrollText,
     Map,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 const GuiaTab = lazy(() => import("@/components/copa/GuiaTab").then((module) => ({ default: module.GuiaTab })));
-const HistoriaTab = lazy(() => import("@/components/copa/HistoriaTab").then((module) => ({ default: module.HistoriaTab })));
 const MapaTab = lazy(() => import("@/components/copa/MapaTab").then((module) => ({ default: module.MapaTab })));
 
-type GuiaViewMode = "list" | "historia" | "mapa";
-const VALID_SUBTABS = new Set(["historia", "mapa"]);
-
-const GuiaLoadingState = () => (
-    <div className="surface-card rounded-[28px] p-6 text-sm font-bold uppercase tracking-[0.18em] text-zinc-400">
-        Carregando guia...
-    </div>
-);
+type GuiaViewMode = "list" | "mapa";
+const VALID_SUBTABS = new Set(["mapa"]);
 
 export default function Guia() {
     const { subtab } = useParams<{ subtab?: string }>();
     const navigate = useNavigate();
+    const { t } = useTranslation(["guia", "sedes"]);
+
+    const GuiaLoadingState = () => (
+        <div className="surface-card rounded-[28px] p-6 text-sm font-bold uppercase tracking-[0.18em] text-zinc-400">
+            {t("guia:loading", { defaultValue: "Carregando guia..." })}
+        </div>
+    );
 
     const [viewMode, setViewMode] = useState<GuiaViewMode>(() => {
-        if (subtab === "historia") return "historia";
         if (subtab === "mapa") return "mapa";
         return "list";
     });
@@ -40,15 +39,13 @@ export default function Guia() {
             navigate("/guia", { replace: true });
             return;
         }
-        if (subtab === "historia") setViewMode("historia");
-        else if (subtab === "mapa") setViewMode("mapa");
+        if (subtab === "mapa") setViewMode("mapa");
         else setViewMode("list");
     }, [navigate, subtab]);
 
     const handleModeToggle = (mode: GuiaViewMode) => {
         setViewMode(mode);
-        if (mode === "historia") navigate("/guia/historia");
-        else if (mode === "mapa") navigate("/guia/mapa");
+        if (mode === "mapa") navigate("/guia/mapa");
         else navigate("/guia");
     };
 
@@ -61,41 +58,20 @@ export default function Guia() {
                         isActive={viewMode === "list"}
                         onClick={() => handleModeToggle("list")}
                         icon={<List className="w-3.5 h-3.5" />}
-                        label="Sedes"
+                        label={t("guia:tabs.hosts", { defaultValue: "Cidades" })}
                     />
                     <ToggleButton
                         isActive={viewMode === "mapa"}
                         onClick={() => handleModeToggle("mapa")}
                         icon={<Map className="w-3.5 h-3.5" />}
-                        label="Mapa"
-                    />
-                    <ToggleButton
-                        isActive={viewMode === "historia"}
-                        onClick={() => handleModeToggle("historia")}
-                        icon={<ScrollText className="w-3.5 h-3.5" />}
-                        label="História"
+                        label={t("guia:tabs.map", { defaultValue: "Mapa" })}
                     />
                 </div>
             </div>
 
             <div className="relative flex-1">
                 <AnimatePresence mode="wait">
-                    {viewMode === "historia" ? (
-                        <motion.div
-                            key="historia"
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -10 }}
-                            transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-                            className="relative z-10 w-full bg-transparent"
-                        >
-                            <div className="container mx-auto px-6 py-6 pb-20">
-                                <Suspense fallback={<GuiaLoadingState />}>
-                                    <HistoriaTab />
-                                </Suspense>
-                            </div>
-                        </motion.div>
-                    ) : viewMode === "mapa" ? (
+                    {viewMode === "mapa" ? (
                         <motion.div
                             key="mapa"
                             initial={{ opacity: 0, y: 10 }}

@@ -1,5 +1,7 @@
 import React, { Component, ReactNode } from "react";
 
+const SHOW_DEBUG_DETAILS = import.meta.env.DEV;
+
 interface Props {
   children?: ReactNode;
 }
@@ -61,7 +63,7 @@ export class ErrorBoundary extends Component<Props, State> {
               </button>
             </div>
 
-            {this.state.error && (
+            {this.state.error && SHOW_DEBUG_DETAILS && (
               <pre className="mt-8 w-full overflow-x-auto rounded-3xl border border-white/10 bg-black/30 p-5 text-left text-xs leading-6 text-white/75">
                 {this.state.error.toString()}
                 {this.state.error.stack && (
@@ -70,8 +72,6 @@ export class ErrorBoundary extends Component<Props, State> {
                     {this.state.error.stack}
                   </>
                 )}
-                {"\n\n"}
-                {window.location.href}
               </pre>
             )}
           </div>

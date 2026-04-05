@@ -16,7 +16,11 @@ import {
   Swords,
   Newspaper,
   TrendingUp,
+  AlertTriangle,
+  ExternalLink,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import { sanitizeExternalUrl } from "@/lib/security";
 import { useChampionship } from "@/contexts/ChampionshipContext";
 import { getChampionshipById } from "@/data/championships/definitions";
 import { useQuery } from "@tanstack/react-query";
@@ -331,6 +335,7 @@ function MatchCard({ match, color }: { match: MatchRow; color: string }) {
 
 // ─── Jogos Tab ───────────────────────────────────────────────
 function JogosTab({ championshipId, color }: { championshipId: string; color: string }) {
+  const { t } = useTranslation("championships");
   const { data: matches, isLoading } = useQuery({
     queryKey: ["championship-matches", championshipId],
     queryFn: async () => {
@@ -371,9 +376,9 @@ function JogosTab({ championshipId, color }: { championshipId: string; color: st
         <div className="w-14 h-14 rounded-2xl flex items-center justify-center border border-white/[0.08]" style={{ background: `${color}18` }}>
           <CalendarDays className="w-7 h-7" style={{ color }} />
         </div>
-        <p className="text-sm font-extrabold text-white/80">Calendário ainda não sincronizado</p>
+        <p className="text-sm font-extrabold text-white/80">{t("hub.games.unavailable_title", { defaultValue: "Calendário ainda não sincronizado" })}</p>
         <p className="text-xs text-zinc-500 max-w-[220px] leading-relaxed">
-          Os jogos oficiais deste campeonato vão aparecer aqui assim que forem publicados.
+          {t("hub.games.unavailable_desc", { defaultValue: "Os jogos oficiais deste campeonato vão aparecer aqui assim que forem publicados." })}
         </p>
       </div>
     );
@@ -386,7 +391,7 @@ function JogosTab({ championshipId, color }: { championshipId: string; color: st
       {matches && matches.filter(m => m.status === "finished").length > 6 && (
         <div className="text-center py-1">
           <span className="text-[10px] text-white/30 font-medium">
-            Mostrando últimos 6 jogos + próximos
+            {t("hub.games.recent_label", { defaultValue: "Mostrando últimos 6 jogos + próximos" })}
           </span>
         </div>
       )}
@@ -412,6 +417,7 @@ function JogosTab({ championshipId, color }: { championshipId: string; color: st
 
 // ─── Classificação Tab ───────────────────────────────────────
 function ClassificacaoTab({ championshipId, color }: { championshipId: string; color: string }) {
+  const { t } = useTranslation("championships");
   const { data: standings, isLoading } = useQuery({
     queryKey: ["standings", championshipId],
     queryFn: async () => {
@@ -470,9 +476,9 @@ function ClassificacaoTab({ championshipId, color }: { championshipId: string; c
           <div className="w-14 h-14 rounded-2xl flex items-center justify-center border border-white/[0.08]" style={{ background: `${color}18` }}>
             <BarChart3 className="w-7 h-7" style={{ color }} />
           </div>
-          <p className="text-sm font-extrabold text-white/80">Classificação ainda indisponível</p>
+          <p className="text-sm font-extrabold text-white/80">{t("hub.table.unavailable_title", { defaultValue: "Classificação ainda indisponível" })}</p>
           <p className="text-xs text-zinc-500 max-w-[220px] leading-relaxed">
-            Assim que os resultados oficiais entrarem, a tabela aparece automaticamente aqui.
+            {t("hub.table.unavailable_desc", { defaultValue: "Assim que os resultados oficiais entrarem, a tabela aparece automaticamente aqui." })}
           </p>
         </div>
       </div>
@@ -494,13 +500,16 @@ function ClassificacaoTab({ championshipId, color }: { championshipId: string; c
       <div className="mb-1 flex items-center justify-between px-1">
         {standings.updated_at ? (
           <p className="text-[10px] text-white/25">
-            Atualizado: {new Date(standings.updated_at).toLocaleDateString("pt-BR")}
+            {t("hub.table.updated_at", {
+              defaultValue: "Atualizado: {{date}}",
+              date: new Date(standings.updated_at).toLocaleDateString("pt-BR"),
+            })}
           </p>
         ) : (
           <span />
         )}
         {standings.source === "derived" && (
-          <p className="text-[10px] text-amber-300/70">Tabela provisória pelos resultados confirmados</p>
+          <p className="text-[10px] text-amber-300/70">{t("hub.table.derived_badge", { defaultValue: "Tabela provisória pelos resultados confirmados" })}</p>
         )}
       </div>
 
@@ -574,10 +583,10 @@ function ClassificacaoTab({ championshipId, color }: { championshipId: string; c
       {/* Legend */}
       <div className="flex items-center gap-4 mt-2 px-1">
         {[
-          { color: "bg-amber-400", label: "Campeão" },
-          { color: "bg-emerald-500", label: "UCL" },
-          { color: "bg-blue-400", label: "UEL" },
-          { color: "bg-red-500", label: "Rebaixamento" },
+          { color: "bg-amber-400", label: t("hub.table.legend_champion", { defaultValue: "Campeão" }) },
+          { color: "bg-emerald-500", label: t("hub.table.legend_ucl", { defaultValue: "UCL" }) },
+          { color: "bg-blue-400", label: t("hub.table.legend_uel", { defaultValue: "UEL" }) },
+          { color: "bg-red-500", label: t("hub.table.legend_relegation", { defaultValue: "Rebaixamento" }) },
         ].map(({ color: c, label }) => (
           <div key={label} className="flex items-center gap-1">
             <div className={cn("w-2 h-2 rounded-sm", c)} />
@@ -591,7 +600,15 @@ function ClassificacaoTab({ championshipId, color }: { championshipId: string; c
 
 // ─── BolaoCard ───────────────────────────────────────────────
 function BolaoCard({ bolao, onPress }: { bolao: BolaoData; onPress: () => void }) {
+  const { t } = useTranslation("championships");
   const isPrivate = bolao.category === "private";
+  const statusLabel =
+    bolao.status === "open"
+      ? t("hub.pools.status_open", { defaultValue: "Aberto para entrar" })
+      : bolao.status === "active"
+        ? t("hub.pools.status_active", { defaultValue: "Em andamento" })
+        : bolao.status;
+
   return (
     <button
       onClick={onPress}
@@ -609,9 +626,7 @@ function BolaoCard({ bolao, onPress }: { bolao: BolaoData; onPress: () => void }
           <p className="text-sm font-bold text-white truncate">{bolao.name}</p>
           {isPrivate && <Lock className="w-3 h-3 text-zinc-500 shrink-0" />}
         </div>
-        <p className="text-xs text-zinc-500 capitalize">
-          {bolao.status === "open" ? "Aberto para entrar" : bolao.status === "active" ? "Em andamento" : bolao.status}
-        </p>
+        <p className="text-xs text-zinc-500 capitalize">{statusLabel}</p>
       </div>
       <ChevronRight className="w-4 h-4 text-zinc-600 shrink-0" />
     </button>
@@ -629,6 +644,7 @@ function BolõesTab({
   color: string;
 }) {
   const navigate = useNavigate();
+  const { t } = useTranslation("championships");
 
   const { data: boloes, isLoading } = useQuery({
     queryKey: ["championship-boloes", championshipId],
@@ -652,7 +668,7 @@ function BolõesTab({
           <Plus className="w-5 h-5" style={{ color }} />
         </div>
         <div className="text-left">
-          <p className="text-sm font-bold text-white">Criar Bolão</p>
+          <p className="text-sm font-bold text-white">{t("hub.pools.create_title", { defaultValue: "Criar bolão" })}</p>
           <p className="text-xs text-zinc-500">{championship?.shortName} · {championship?.season}</p>
         </div>
         <ChevronRight className="w-4 h-4 text-zinc-500 ml-auto shrink-0" />
@@ -664,7 +680,7 @@ function BolõesTab({
         </div>
       ) : boloes && boloes.length > 0 ? (
         <div className="space-y-2">
-          <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-white/30 px-1">Bolões ativos ({boloes.length})</p>
+          <p className="text-[11px] font-bold uppercase tracking-[0.15em] text-white/30 px-1">{t("hub.pools.active_count", { defaultValue: "Bolões ativos ({{count}})", count: boloes.length })}</p>
           {boloes.map((b) => <BolaoCard key={b.id} bolao={b} onPress={() => navigate(`/boloes/${b.id}`)} />)}
         </div>
       ) : (
@@ -672,8 +688,8 @@ function BolõesTab({
           <div className="w-14 h-14 rounded-2xl flex items-center justify-center border border-white/[0.08]" style={{ background: `${color}18` }}>
             <Swords className="w-7 h-7" style={{ color }} />
           </div>
-          <p className="text-sm font-extrabold text-white/80">Nenhum bolão ainda</p>
-          <p className="text-xs text-zinc-500 max-w-[220px] leading-relaxed">Seja o primeiro a criar um bolão para este campeonato!</p>
+          <p className="text-sm font-extrabold text-white/80">{t("hub.pools.empty_title", { defaultValue: "Nenhum bolão ainda" })}</p>
+          <p className="text-xs text-zinc-500 max-w-[220px] leading-relaxed">{t("hub.pools.empty_desc", { defaultValue: "Seja o primeiro a criar um bolão para este campeonato!" })}</p>
         </div>
       )}
     </div>
@@ -682,6 +698,7 @@ function BolõesTab({
 
 // ─── News Tab ────────────────────────────────────────────────
 function NotíciasTab({ championshipId, color }: { championshipId: string; color: string }) {
+  const { t } = useTranslation("championships");
   const { news, isLoading } = useRealtimeNews({
     championshipId,
     limitCount: 10,
@@ -703,40 +720,83 @@ function NotíciasTab({ championshipId, color }: { championshipId: string; color
       <div className="w-14 h-14 rounded-2xl flex items-center justify-center border border-white/[0.08]" style={{ background: `${color}18` }}>
         <Newspaper className="w-7 h-7" style={{ color }} />
       </div>
-      <p className="text-sm font-extrabold text-white/80">Ainda sem notícias desse campeonato</p>
+      <p className="text-sm font-extrabold text-white/80">{t("hub.news.empty_title", { defaultValue: "Ainda sem notícias desse campeonato" })}</p>
       <p className="text-xs text-zinc-500 max-w-[220px] leading-relaxed">
-        Quando o feed for atualizado, os destaques e notícias mais recentes aparecem aqui.
+        {t("hub.news.empty_desc", { defaultValue: "Quando o feed for atualizado, os destaques e notícias mais recentes aparecem aqui." })}
       </p>
     </div>
   );
 
   return (
     <div className="space-y-3 mt-1">
-      {news.map((item) => (
-        <a key={item.id} href={item.url || "#"} target="_blank" rel="noopener noreferrer"
-          className="block rounded-2xl overflow-hidden bg-white/[0.04] border border-white/[0.06] hover:bg-white/[0.07] transition-colors">
-          {(item.image_url || item.url_to_image) && (
-            <div className="h-32 overflow-hidden">
-              <img src={item.image_url || item.url_to_image} alt={item.title} className="w-full h-full object-cover" loading="lazy" />
-            </div>
-          )}
-          <div className="p-3">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full border"
-                style={{ color, borderColor: `${color}40`, background: `${color}15` }}>
-                {item.source_name || item.source_country || item.category || "Destaque"}
-              </span>
-              <span className="text-[9px] text-white/30">{formatPublishedAt(item.published_at)}</span>
-            </div>
-            <p className="text-xs font-bold text-white leading-relaxed line-clamp-2">{item.title}</p>
-            {(item.summary || item.description) && (
-              <p className="mt-1 text-[11px] leading-relaxed text-white/45 line-clamp-2">
-                {item.summary || item.description}
-              </p>
+      {news.map((item) => {
+        const safeUrl = sanitizeExternalUrl(item.url);
+
+        return safeUrl ? (
+          <a
+            key={item.id}
+            href={safeUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group block rounded-2xl overflow-hidden bg-white/[0.04] border border-white/[0.06] hover:bg-white/[0.07] transition-colors"
+          >
+            {(item.image_url || item.url_to_image) && (
+              <div className="h-32 overflow-hidden">
+                <img src={item.image_url || item.url_to_image} alt={item.title} className="w-full h-full object-cover" loading="lazy" />
+              </div>
             )}
-          </div>
-        </a>
-      ))}
+            <div className="p-3">
+              <div className="flex items-center gap-2 mb-1">
+                <span
+                  className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full border"
+                  style={{ color, borderColor: `${color}40`, background: `${color}15` }}
+                >
+                  {item.source_name || item.source_country || item.category || t("hub.news.highlight", { defaultValue: "Destaque" })}
+                </span>
+                <span className="text-[9px] text-white/30">{formatPublishedAt(item.published_at)}</span>
+                <ExternalLink className="ml-auto h-3 w-3 text-white/25 transition-colors group-hover:text-white/60" />
+              </div>
+              <p className="text-xs font-bold text-white leading-relaxed line-clamp-2">{item.title}</p>
+              {(item.summary || item.description) && (
+                <p className="mt-1 text-[11px] leading-relaxed text-white/45 line-clamp-2">
+                  {item.summary || item.description}
+                </p>
+              )}
+            </div>
+          </a>
+        ) : (
+          <article
+            key={item.id}
+            className="rounded-2xl overflow-hidden bg-white/[0.04] border border-white/[0.06] opacity-95"
+          >
+            {(item.image_url || item.url_to_image) && (
+              <div className="h-32 overflow-hidden">
+                <img src={item.image_url || item.url_to_image} alt={item.title} className="w-full h-full object-cover" loading="lazy" />
+              </div>
+            )}
+            <div className="p-3">
+              <div className="flex items-center gap-2 mb-1">
+                <span
+                  className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full border"
+                  style={{ color, borderColor: `${color}40`, background: `${color}15` }}
+                >
+                  {item.source_name || item.source_country || item.category || t("hub.news.highlight", { defaultValue: "Destaque" })}
+                </span>
+                <span className="text-[9px] text-white/30">{formatPublishedAt(item.published_at)}</span>
+              </div>
+              <p className="text-xs font-bold text-white leading-relaxed line-clamp-2">{item.title}</p>
+              {(item.summary || item.description) && (
+                <p className="mt-1 text-[11px] leading-relaxed text-white/45 line-clamp-2">
+                  {item.summary || item.description}
+                </p>
+              )}
+              <p className="mt-2 text-[10px] font-medium text-white/25">
+                {t("hub.news.no_link", { defaultValue: "Fonte externa ainda sem link direto." })}
+              </p>
+            </div>
+          </article>
+        );
+      })}
     </div>
   );
 }
@@ -746,6 +806,7 @@ export default function CampeonatoHub() {
   const { championshipId } = useParams<{ championshipId: string }>();
   const navigate = useNavigate();
   const { setChampionship } = useChampionship();
+  const { t } = useTranslation(["championships", "common"]);
   const [tab, setTab] = useState<HubTab>("jogos");
 
   const championship = championshipId ? getChampionshipById(championshipId) : null;
@@ -758,12 +819,51 @@ export default function CampeonatoHub() {
     if (championshipId === "wc2026") navigate("/copa", { replace: true });
   }, [championshipId, navigate]);
 
-  if (!championship || championship.id === "wc2026") return null;
+  if (!championship) {
+    return (
+      <div className="min-h-screen bg-background px-4 pt-24 pb-32 text-white">
+        <div className="mx-auto flex max-w-md flex-col items-center gap-4 rounded-[2rem] border border-white/10 bg-white/[0.03] px-6 py-10 text-center">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-amber-500/20 bg-amber-500/10">
+            <AlertTriangle className="h-7 w-7 text-amber-400" />
+          </div>
+          <div className="space-y-2">
+            <h1 className="text-xl font-black tracking-tight">
+              {t("championships:hub.not_found_title", { defaultValue: "Campeonato não encontrado" })}
+            </h1>
+            <p className="text-sm leading-relaxed text-white/60">
+              {t("championships:hub.not_found_desc", { defaultValue: "Esse link não está mais disponível ou o campeonato ainda não foi publicado nesta área." })}
+            </p>
+          </div>
+          <div className="flex w-full flex-col gap-3 sm:flex-row">
+            <button
+              onClick={() => navigate("/campeonatos", { replace: true })}
+              className="flex-1 rounded-2xl bg-primary px-4 py-3 text-sm font-black uppercase tracking-[0.16em] text-black"
+            >
+              {t("championships:hub.not_found_cta", { defaultValue: "Ver campeonatos" })}
+            </button>
+            <button
+              onClick={() => navigate("/", { replace: true })}
+              className="flex-1 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-black uppercase tracking-[0.16em] text-white"
+            >
+              {t("common:common.back")}
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (championship.id === "wc2026") return null;
 
   const [from, to] = championship.gradient;
   const { color } = championship;
 
-  const statusLabel = championship.status === "live" ? "Ao Vivo" : championship.status === "upcoming" ? "Em Breve" : "Encerrado";
+  const statusLabel =
+    championship.status === "live"
+      ? t("championships:hub.status.live", { defaultValue: "Ao Vivo" })
+      : championship.status === "upcoming"
+        ? t("championships:hub.status.upcoming", { defaultValue: "Em breve" })
+        : t("championships:hub.status.finished", { defaultValue: "Encerrado" });
   const statusColor = championship.status === "live"
     ? "text-emerald-400 bg-emerald-500/15 border-emerald-500/30"
     : championship.status === "upcoming"
@@ -771,10 +871,10 @@ export default function CampeonatoHub() {
     : "text-zinc-400 bg-white/10 border-white/20";
 
   const tabs: { id: HubTab; label: string; icon: React.ReactNode }[] = [
-    { id: "jogos",         label: "Jogos",    icon: <CalendarDays className="w-4 h-4" /> },
-    { id: "classificacao", label: "Tabela",   icon: <BarChart3 className="w-4 h-4" /> },
-    { id: "noticias",      label: "Notícias", icon: <Newspaper className="w-4 h-4" /> },
-    { id: "boloes",        label: "Bolões",   icon: <Trophy className="w-4 h-4" /> },
+    { id: "jogos",         label: t("championships:hub.tabs.games", { defaultValue: "Jogos" }), icon: <CalendarDays className="w-4 h-4" /> },
+    { id: "classificacao", label: t("championships:hub.tabs.table", { defaultValue: "Tabela" }), icon: <BarChart3 className="w-4 h-4" /> },
+    { id: "noticias",      label: t("championships:hub.tabs.news", { defaultValue: "Notícias" }), icon: <Newspaper className="w-4 h-4" /> },
+    { id: "boloes",        label: t("championships:hub.tabs.pools", { defaultValue: "Bolões" }), icon: <Trophy className="w-4 h-4" /> },
   ];
 
   return (
@@ -817,9 +917,17 @@ export default function CampeonatoHub() {
       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}
         className="grid grid-cols-3 divide-x divide-white/[0.06] border-b border-white/[0.06] bg-white/[0.02]">
         {[
-          { icon: Users, label: "Times", value: String(championship.maxTeams) },
-          { icon: Calendar, label: "Início", value: new Date(championship.dateStart + "T12:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }) },
-          { icon: TrendingUp, label: "Formato", value: championship.format === "league" ? "Liga" : championship.format === "mixed" ? "Copa" : "Torneio" },
+          { icon: Users, label: t("championships:hub.stats.teams", { defaultValue: "Times" }), value: String(championship.maxTeams) },
+          { icon: Calendar, label: t("championships:hub.stats.start", { defaultValue: "Início" }), value: new Date(championship.dateStart + "T12:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }) },
+          {
+            icon: TrendingUp,
+            label: t("championships:hub.stats.format", { defaultValue: "Formato" }),
+            value: championship.format === "league"
+              ? t("championships:hub.stats.format_league", { defaultValue: "Liga" })
+              : championship.format === "mixed"
+                ? t("championships:hub.stats.format_cup", { defaultValue: "Copa" })
+                : t("championships:hub.stats.format_tournament", { defaultValue: "Torneio" }),
+          },
         ].map(({ icon: Icon, label, value }) => (
           <div key={label} className="flex flex-col items-center py-3 gap-0.5">
             <Icon className="w-3.5 h-3.5 text-white/30 mb-0.5" />

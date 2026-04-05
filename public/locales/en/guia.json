@@ -1,10 +1,15 @@
 {
     "title": "World Cup Guide",
     "description": "Everything about the tournament",
+    "loading": "Loading guide...",
     "calendar": "Calendar",
     "teams": "Teams",
     "stadiums": "Stadiums",
     "history": "History",
+    "tabs": {
+        "hosts": "Cities",
+        "map": "Map"
+    },
     "historia": {
         "saga": "The Saga",
         "mundial": "Global",

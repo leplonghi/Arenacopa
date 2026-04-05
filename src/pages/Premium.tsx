@@ -5,64 +5,51 @@ import { Button } from "@/components/ui/button";
 import { useMonetization } from "@/contexts/MonetizationContext";
 import { motion } from "framer-motion";
 import { monetizationEnv } from "@/lib/env";
+import { useTranslation } from "react-i18next";
 import {
   getPremiumSupportMailto,
 } from "@/services/monetization/stripe.service";
 
-const PILLARS = [
-  {
-    icon: Trophy,
-    color: "text-amber-400",
-    bg: "bg-amber-500/15",
-    border: "border-amber-500/20",
-    title: "InfoCopa",
-    subtitle: "Tudo sobre a Copa",
-    perks: [
-      "Estatísticas ao vivo",
-      "Simulador completo",
-      "Chaveamento interativo",
-      "Histórico de copas",
-    ],
-  },
-  {
-    icon: Map,
-    color: "text-sky-400",
-    bg: "bg-sky-500/15",
-    border: "border-sky-500/20",
-    title: "GuiaCopa",
-    subtitle: "Explore as sedes",
-    perks: [
-      "Mapa de estádios",
-      "Guia de cidades-sede",
-      "Infos de transporte",
-      "Dicas de hospedagem",
-    ],
-  },
-  {
-    icon: Dices,
-    color: "text-primary",
-    bg: "bg-primary/15",
-    border: "border-primary/20",
-    title: "BolãoCopa",
-    subtitle: "Jogue sem limites",
-    perks: [
-      "Bolões ilimitados",
-      "Grupos ilimitados",
-      "Caixinha & PIX",
-      "Badge Torcedor Oficial",
-    ],
-  },
-];
-
 export default function Premium() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { t } = useTranslation("premium");
   const { isPremium, purchasePremium, refreshPremiumStatus, isLoading, subscriptionStatus } =
     useMonetization();
   const [feedback, setFeedback] = useState<string | null>(null);
   const canStartPremiumCheckout =
     monetizationEnv.enablePremiumSimulation || monetizationEnv.premiumCheckoutEnabled;
   const supportMailto = getPremiumSupportMailto();
+  const priceLabel = monetizationEnv.premiumPriceLabel || "R$ 19,90";
+  const pillars = [
+    {
+      icon: Trophy,
+      color: "text-amber-400",
+      bg: "bg-amber-500/15",
+      border: "border-amber-500/20",
+      title: t("pillars.info.title"),
+      subtitle: t("pillars.info.subtitle"),
+      perks: t("pillars.info.perks", { returnObjects: true }) as string[],
+    },
+    {
+      icon: Map,
+      color: "text-sky-400",
+      bg: "bg-sky-500/15",
+      border: "border-sky-500/20",
+      title: t("pillars.guide.title"),
+      subtitle: t("pillars.guide.subtitle"),
+      perks: t("pillars.guide.perks", { returnObjects: true }) as string[],
+    },
+    {
+      icon: Dices,
+      color: "text-primary",
+      bg: "bg-primary/15",
+      border: "border-primary/20",
+      title: t("pillars.pool.title"),
+      subtitle: t("pillars.pool.subtitle"),
+      perks: t("pillars.pool.perks", { returnObjects: true }) as string[],
+    },
+  ];
 
   useEffect(() => {
     const checkoutState = searchParams.get("checkout");
@@ -77,23 +64,23 @@ export default function Premium() {
     };
 
     if (checkoutState === "cancelled") {
-      setFeedback("Checkout cancelado. Você pode tentar novamente quando quiser.");
+      setFeedback(t("feedback.cancelled"));
       clearParams();
       return;
     }
 
     if (checkoutState === "success" && sessionId) {
-      setFeedback("Pagamento recebido. Validando sua assinatura...");
+      setFeedback(t("feedback.validating"));
       void refreshPremiumStatus(sessionId)
         .then(() => {
-          setFeedback("Pagamento confirmado. Seu Copa Pass já está ativo! 🎉");
+          setFeedback(t("feedback.confirmed"));
         })
         .catch(() => {
-          setFeedback("Pagamento concluído, mas a confirmação ainda está sincronizando.");
+          setFeedback(t("feedback.syncing"));
         })
         .finally(clearParams);
     }
-  }, [refreshPremiumStatus, searchParams, setSearchParams]);
+  }, [refreshPremiumStatus, searchParams, setSearchParams, t]);
 
   return (
     <div className="min-h-screen bg-background pb-32 pt-20 px-4 text-white overflow-hidden relative">
@@ -117,13 +104,13 @@ export default function Premium() {
           </div>
           <div className="inline-flex items-center gap-2 bg-primary/15 border border-primary/25 rounded-full px-3 py-1 mb-4">
             <Zap className="w-3.5 h-3.5 text-primary" />
-            <span className="text-xs font-bold text-primary tracking-wide uppercase">Copa Pass</span>
+            <span className="text-xs font-bold text-primary tracking-wide uppercase">{t("badge")}</span>
           </div>
           <h1 className="text-4xl font-black mb-3 tracking-tighter uppercase drop-shadow">
-            Acesso <span className="text-primary">Completo</span>
+            {t("hero_title_prefix")} <span className="text-primary">{t("hero_title_highlight")}</span>
           </h1>
           <p className="text-muted-foreground text-sm max-w-xs mx-auto leading-relaxed">
-            Uma única compra vitalícia desbloqueia tudo que a Copa tem a oferecer.
+            {t("hero_subtitle")}
           </p>
         </div>
 
@@ -140,19 +127,19 @@ export default function Premium() {
             className="glass-card p-6 text-center border-primary/30"
           >
             <ShieldCheck className="w-12 h-12 text-primary mx-auto mb-4" />
-            <h2 className="text-xl font-bold mb-2">Você já tem Copa Pass!</h2>
+            <h2 className="text-xl font-bold mb-2">{t("active.title")}</h2>
             <p className="text-sm text-muted-foreground mb-6">
-              Obrigado por apoiar o Arena CUP. Todos os benefícios estão ativos para você.
+              {t("active.description")}
             </p>
             <Button onClick={() => navigate("/")} className="w-full bg-primary text-black font-bold h-12">
-              Voltar ao Início
+              {t("active.back_home")}
             </Button>
           </motion.div>
         ) : (
           <>
             {/* 3-pillar cards */}
             <div className="grid grid-cols-3 gap-3 mb-8">
-              {PILLARS.map((pillar, idx) => (
+              {pillars.map((pillar, idx) => (
                 <motion.div
                   key={pillar.title}
                   initial={{ opacity: 0, y: 20 }}
@@ -181,22 +168,22 @@ export default function Premium() {
 
             {/* Social proof strip */}
             <div className="flex items-center justify-center gap-4 mb-8 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1"><Users2 className="w-3.5 h-3.5 text-primary" /> Comunidade ativa</span>
+              <span className="flex items-center gap-1"><Users2 className="w-3.5 h-3.5 text-primary" /> {t("social_proof.community")}</span>
               <span className="w-1 h-1 rounded-full bg-white/20" />
-              <span className="flex items-center gap-1"><ShieldCheck className="w-3.5 h-3.5 text-amber-400" /> Pagamento seguro</span>
+              <span className="flex items-center gap-1"><ShieldCheck className="w-3.5 h-3.5 text-amber-400" /> {t("social_proof.secure_payment")}</span>
               <span className="w-1 h-1 rounded-full bg-white/20" />
-              <span className="flex items-center gap-1"><Star className="w-3.5 h-3.5 text-violet-400" /> Vitalício</span>
+              <span className="flex items-center gap-1"><Star className="w-3.5 h-3.5 text-violet-400" /> {t("social_proof.lifetime")}</span>
             </div>
 
             {/* Price + CTA */}
             <div className="glass-card p-5 border-primary/20 mb-4">
               <div className="flex items-end justify-center gap-1 mb-1">
                 <span className="text-4xl font-black text-primary">
-                  {monetizationEnv.premiumPriceLabel || "R$ 19,90"}
+                  {priceLabel}
                 </span>
-                <span className="text-sm text-muted-foreground mb-1.5">único</span>
+                <span className="text-sm text-muted-foreground mb-1.5">{t("price.suffix")}</span>
               </div>
-              <p className="text-center text-[11px] text-muted-foreground mb-4">Sem mensalidade. Pague uma vez, acesse para sempre.</p>
+              <p className="text-center text-[11px] text-muted-foreground mb-4">{t("price.note")}</p>
 
               <Button
                 onClick={async () => {
@@ -208,7 +195,7 @@ export default function Premium() {
 
                   const startedCheckout = await purchasePremium();
                   if (!startedCheckout) {
-                    setFeedback("Não foi possível iniciar o checkout agora. Tente novamente em instantes.");
+                    setFeedback(t("feedback.checkout_error"));
                   }
                 }}
                 disabled={isLoading}
@@ -217,9 +204,9 @@ export default function Premium() {
                 {isLoading ? (
                   <Loader2 className="w-5 h-5 animate-spin mx-auto" />
                 ) : canStartPremiumCheckout ? (
-                  `Garantir Copa Pass — ${monetizationEnv.premiumPriceLabel || "R$ 19,90"}`
+                  `${t("cta.buy")} — ${priceLabel}`
                 ) : (
-                  "Quero ser avisado"
+                  t("cta.notify")
                 )}
               </Button>
 
@@ -229,17 +216,17 @@ export default function Premium() {
                   variant="outline"
                   className="mt-3 w-full h-12 border-white/15 bg-white/[0.03] text-white hover:bg-white/[0.08]"
                 >
-                  <a href={supportMailto}>Falar com o suporte premium</a>
+                  <a href={supportMailto}>{t("cta.support")}</a>
                 </Button>
               )}
             </div>
 
             <p className="text-center text-[10px] text-muted-foreground">
               {canStartPremiumCheckout
-                ? `Checkout seguro via Stripe. Status: ${
-                    subscriptionStatus === "pending" ? "aguardando pagamento" : "pronto para compra"
-                  }.`
-                : "O checkout ainda está em preparação. Você já pode entrar na lista de aviso pelo suporte."}
+                ? t("status_copy.checkout_ready", {
+                    status: subscriptionStatus === "pending" ? t("status_copy.pending") : t("status_copy.ready"),
+                  })
+                : t("status_copy.checkout_preparing")}
             </p>
           </>
         )}

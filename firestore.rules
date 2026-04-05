@@ -20,12 +20,44 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/boloes/$(bolaoId)).data.creator_id == request.auth.uid;
     }
 
+    function getBolao(bolaoId) {
+      return get(/databases/$(database)/documents/boloes/$(bolaoId)).data;
+    }
+
+    function canSelfJoinBolao(bolaoId) {
+      let bolao = getBolao(bolaoId);
+      return bolao.status in ['open', 'active'] && (
+        bolao.category == 'public' ||
+        (
+          request.resource.data.invite_code is string &&
+          request.resource.data.invite_code == bolao.invite_code
+        )
+      );
+    }
+
     // profiles
     match /profiles/{userId} {
-      allow read: if isSignedIn();
+      allow read: if isSignedIn() && isOwner(userId);
       allow create: if isOwner(userId);
       allow update: if isOwner(userId);
       allow delete: if isOwner(userId);
+    }
+
+    // public_profiles — sanitized public identity only
+    match /public_profiles/{userId} {
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn() &&
+        isOwner(userId) &&
+        request.resource.data.user_id == request.auth.uid &&
+        request.resource.data.keys().hasOnly([
+          'user_id',
+          'name',
+          'nickname',
+          'avatar_url',
+          'created_at',
+          'updated_at'
+        ]);
+      allow delete: if isSignedIn() && isOwner(userId);
     }
 
     // matches — public read, only Firebase Admin SDK can write
@@ -93,10 +125,7 @@ service cloud.firestore {
         isOwner(resource.data.creator_id)
       );
       allow create: if isSignedIn() && isOwner(request.resource.data.creator_id);
-      allow update: if isSignedIn() && (
-        isOwner(resource.data.creator_id) ||
-        isBolaoMember(bolaoId)
-      );
+      allow update: if isSignedIn() && isOwner(resource.data.creator_id);
       allow delete: if isSignedIn() && isOwner(resource.data.creator_id);
     }
 
@@ -107,8 +136,18 @@ service cloud.firestore {
         isBolaoMember(resource.data.bolao_id)
       );
       allow create: if isSignedIn() && (
-        isOwner(request.resource.data.user_id) ||
-        isBolaoCreator(request.resource.data.bolao_id)
+        (
+          isOwner(request.resource.data.user_id) &&
+          memberId == request.auth.uid + '_' + request.resource.data.bolao_id &&
+          request.resource.data.role == 'member' &&
+          request.resource.data.payment_status in ['pending', 'exempt'] &&
+          canSelfJoinBolao(request.resource.data.bolao_id)
+        ) ||
+        (
+          isBolaoCreator(request.resource.data.bolao_id) &&
+          request.resource.data.role in ['member', 'admin'] &&
+          request.resource.data.user_id is string
+        )
       );
       allow update: if isSignedIn() && isBolaoCreator(resource.data.bolao_id);
       allow delete: if isSignedIn() && (
@@ -119,8 +158,12 @@ service cloud.firestore {
 
     // bolao_markets
     match /bolao_markets/{marketId} {
-      allow read: if isSignedIn() && isBolaoMember(resource.data.bolao_id);
-      allow create, update, delete: if isSignedIn() && isBolaoCreator(resource.data.bolao_id);
+      allow read: if isSignedIn() && (
+        isBolaoMember(resource.data.bolao_id) ||
+        isBolaoCreator(resource.data.bolao_id)
+      );
+      allow create: if isSignedIn() && isBolaoCreator(request.resource.data.bolao_id);
+      allow update, delete: if isSignedIn() && isBolaoCreator(resource.data.bolao_id);
     }
 
     // bolao_palpites
@@ -131,10 +174,16 @@ service cloud.firestore {
       );
       allow create: if isSignedIn() &&
         isOwner(request.resource.data.user_id) &&
-        isBolaoMember(request.resource.data.bolao_id);
+        isBolaoMember(request.resource.data.bolao_id) &&
+        request.resource.data.points == null &&
+        request.resource.data.user_id == request.auth.uid;
       allow update: if isSignedIn() &&
         isOwner(resource.data.user_id) &&
-        resource.data.points == null;
+        resource.data.points == null &&
+        request.resource.data.user_id == resource.data.user_id &&
+        request.resource.data.bolao_id == resource.data.bolao_id &&
+        request.resource.data.match_id == resource.data.match_id &&
+        request.resource.data.points == resource.data.points;
       allow delete: if isSignedIn() && isOwner(resource.data.user_id);
     }
 
@@ -143,10 +192,18 @@ service cloud.firestore {
       allow read: if isSignedIn() && isBolaoMember(resource.data.bolao_id);
       allow create: if isSignedIn() &&
         isOwner(request.resource.data.user_id) &&
-        isBolaoMember(request.resource.data.bolao_id);
+        isBolaoMember(request.resource.data.bolao_id) &&
+        request.resource.data.user_id == request.auth.uid &&
+        request.resource.data.points_awarded == null &&
+        request.resource.data.resolved == false;
       allow update: if isSignedIn() &&
         isOwner(resource.data.user_id) &&
-        resource.data.resolved == false;
+        resource.data.resolved == false &&
+        request.resource.data.user_id == resource.data.user_id &&
+        request.resource.data.bolao_id == resource.data.bolao_id &&
+        request.resource.data.market_id == resource.data.market_id &&
+        request.resource.data.points_awarded == resource.data.points_awarded &&
+        request.resource.data.resolved == resource.data.resolved;
       allow delete: if isSignedIn() && isOwner(resource.data.user_id);
     }
 
@@ -155,7 +212,8 @@ service cloud.firestore {
       allow read: if isSignedIn() && isBolaoMember(resource.data.bolao_id);
       allow create, update: if isSignedIn() &&
         isOwner(request.resource.data.user_id) &&
-        isBolaoMember(request.resource.data.bolao_id);
+        isBolaoMember(request.resource.data.bolao_id) &&
+        request.resource.data.user_id == request.auth.uid;
       allow delete: if isSignedIn() && isOwner(resource.data.user_id);
     }
 

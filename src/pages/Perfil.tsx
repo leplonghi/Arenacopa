@@ -127,7 +127,7 @@ const Perfil = () => {
             <span className="text-[11px] font-bold text-white uppercase tracking-[0.12em]">{t('upload_photo')}</span>
             <input
               type="file"
-              accept="image/*"
+              accept="image/png,image/jpeg,image/webp,image/gif"
               className="hidden"
               onChange={async (e) => {
                 const file = e.target.files?.[0];

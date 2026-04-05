@@ -99,6 +99,7 @@ export default function PublicInvite() {
                 user_id: user.id,
                 role: "member",
                 payment_status: "exempt",
+                invite_code: inviteCode?.toUpperCase() || null,
                 joined_at: new Date().toISOString()
             });
             toast({ title: t('invite.joined'), className: "bg-emerald-500 text-white" });

@@ -61,7 +61,7 @@ const mapSubscriptionRow = (row: PremiumSubscriptionRow | null): PremiumStatusRe
 const getFunctionsBaseUrl = () => {
   const projectId = import.meta.env.VITE_FIREBASE_PROJECT_ID;
   if (!projectId) {
-    throw new Error("Projeto Firebase não configurado para iniciar o checkout.");
+    throw new Error("O checkout premium não está disponível neste ambiente agora.");
   }
 
   return `https://us-central1-${projectId}.cloudfunctions.net`;
@@ -79,7 +79,7 @@ const getCheckoutSiteUrl = () => {
 async function callPremiumFunction<T>(functionName: string, payload: Record<string, unknown>): Promise<T> {
   const user = auth.currentUser;
   if (!user) {
-    throw new Error("Faça login para continuar com o checkout premium.");
+    throw new Error("Entre na sua conta para continuar com o checkout premium.");
   }
 
   const idToken = await user.getIdToken();
@@ -95,7 +95,12 @@ async function callPremiumFunction<T>(functionName: string, payload: Record<stri
   const data = (await response.json().catch(() => ({}))) as { error?: string } & Record<string, unknown>;
 
   if (!response.ok) {
-    throw new Error(typeof data.error === "string" ? data.error : "Não foi possível concluir o checkout premium.");
+    console.error(`Premium function ${functionName} failed`, data.error || response.status);
+    throw new Error(
+      functionName === "syncPremiumCheckoutSession"
+        ? "Não foi possível validar o checkout premium agora."
+        : "Não foi possível iniciar o checkout premium agora."
+    );
   }
 
   return data as T;

@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Crown, Sparkles, X, CheckCircle2, Zap, ShieldCheck, Trophy, Loader2 } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { useMonetization } from '@/contexts/MonetizationContext';
 import { useToast } from '@/hooks/use-toast';
 import { monetizationEnv } from '@/lib/env';
+import { useTranslation } from 'react-i18next';
 import {
     getPremiumSupportMailto,
 } from '@/services/monetization/stripe.service';
@@ -12,8 +12,10 @@ import {
 export function ElitePassModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
     const { purchasePremium, isLoading, isPremium } = useMonetization();
     const { toast } = useToast();
+    const { t } = useTranslation('premium');
     const canStartPremiumCheckout = monetizationEnv.enablePremiumSimulation || monetizationEnv.premiumCheckoutEnabled;
     const supportMailto = getPremiumSupportMailto();
+    const benefits = t('elite.benefits', { returnObjects: true }) as Array<{ title: string; desc: string }>;
 
     // If they already bought it, no need to show the sales pitch again
     if (isPremium) {
@@ -35,8 +37,8 @@ export function ElitePassModal({ isOpen, onClose }: { isOpen: boolean; onClose: 
             onClose();
         } catch (e) {
             toast({
-                title: "Erro na transação",
-                description: "Não foi possível concluir a ativação do passe.",
+                title: t('elite.transaction_error_title'),
+                description: t('elite.transaction_error_desc'),
                 variant: "destructive"
             });
         }
@@ -91,18 +93,18 @@ export function ElitePassModal({ isOpen, onClose }: { isOpen: boolean; onClose: 
                                         </div>
                                     </motion.div>
 
-                                    <h2 className="text-4xl font-black text-white tracking-tighter mb-2">Arena Elite</h2>
+                                    <h2 className="text-4xl font-black text-white tracking-tighter mb-2">{t('elite.title')}</h2>
                                     <p className="text-[11px] font-black text-yellow-500 uppercase tracking-[0.3em] flex items-center justify-center gap-2">
-                                        <Sparkles className="w-3.5 h-3.5" /> Passaporte Oficial da Copa
+                                        <Sparkles className="w-3.5 h-3.5" /> {t('elite.subtitle')}
                                     </p>
                                 </div>
 
                                 {/* Benefits List */}
                                 <div className="px-8 pb-8 space-y-4">
                                     {[
-                                        { icon: <Zap className="text-yellow-500" />, title: "Poder do Capitão", desc: "1 Palpite vale O DOBRO por rodada" },
-                                        { icon: <Trophy className="text-blue-400" />, title: "Bolões Privados Ilimitados", desc: "Crie quantos bolões quiser" },
-                                        { icon: <ShieldCheck className="text-emerald-400" />, title: "Acesso Livre de Anúncios", desc: "Experiência 100% limpa e focada" },
+                                        { icon: <Zap className="text-yellow-500" />, title: benefits[0]?.title, desc: benefits[0]?.desc },
+                                        { icon: <Trophy className="text-blue-400" />, title: benefits[1]?.title, desc: benefits[1]?.desc },
+                                        { icon: <ShieldCheck className="text-emerald-400" />, title: benefits[2]?.title, desc: benefits[2]?.desc },
                                     ].map((benefit, i) => (
                                         <motion.div
                                             initial={{ opacity: 0, x: -20 }}
@@ -132,7 +134,7 @@ export function ElitePassModal({ isOpen, onClose }: { isOpen: boolean; onClose: 
                                             <span className="text-2xl font-black mt-1">,90</span>
                                         </div>
                                         <span className="text-[10px] text-gray-500 font-black uppercase tracking-widest mt-2 bg-white/5 py-1 px-3 rounded-full">
-                                            ACESSO VITALÍCIO ATÉ 2026
+                                            {t('elite.lifetime').toUpperCase()}
                                         </span>
                                     </div>
 
@@ -147,15 +149,15 @@ export function ElitePassModal({ isOpen, onClose }: { isOpen: boolean; onClose: 
                                         <div className="relative z-10 flex items-center gap-3 text-black font-black uppercase tracking-widest text-sm">
                                             {isLoading ? (
                                                 <>
-                                                    <Loader2 className="w-5 h-5 animate-spin" /> PROCESSANDO...
+                                                    <Loader2 className="w-5 h-5 animate-spin" /> {t('elite.processing').toUpperCase()}
                                                 </>
                                             ) : !canStartPremiumCheckout ? (
                                                 <>
-                                                    <CheckCircle2 className="w-5 h-5" /> QUERO SER AVISADO
+                                                    <CheckCircle2 className="w-5 h-5" /> {t('elite.notify').toUpperCase()}
                                                 </>
                                             ) : (
                                                 <>
-                                                    <CheckCircle2 className="w-5 h-5" /> GARANTIR MEU PASSAPORTE
+                                                    <CheckCircle2 className="w-5 h-5" /> {t('elite.buy').toUpperCase()}
                                                 </>
                                             )}
                                         </div>
@@ -165,13 +167,13 @@ export function ElitePassModal({ isOpen, onClose }: { isOpen: boolean; onClose: 
                                             href={supportMailto}
                                             className="mt-3 inline-flex w-full items-center justify-center rounded-full border border-white/15 bg-white/[0.03] px-4 py-3 text-xs font-bold uppercase tracking-wider text-white transition-colors hover:bg-white/[0.08]"
                                         >
-                                            Falar com o suporte premium
+                                            {t('elite.support')}
                                         </a>
                                     )}
                                     <p className="text-[10px] text-gray-600 font-medium mt-4">
                                         {canStartPremiumCheckout
-                                            ? "Pagamento 100% seguro via Stripe. Cancele a qualquer momento."
-                                            : "O checkout ainda está em preparação. Entre na lista de aviso pelo suporte."}
+                                            ? t('elite.secure_message')
+                                            : t('elite.preparing_message')}
                                     </p>
                                 </div>
 

@@ -23,6 +23,7 @@ import { getSiteUrl } from "@/utils/site-url";
 import { useTranslation } from "react-i18next";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { getPublicProfilesByIds } from "@/services/profile/profile.service";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { teams } from "@/data/mockData";
 import { Flag } from "@/components/Flag";
@@ -214,22 +215,14 @@ export default function BolaoDetail() {
       const profileIds = Array.from(new Set(snapshot.docs.map(doc => doc.data().user_id)));
       
       // Fetch profiles in chunks
+      const publicProfiles = await getPublicProfilesByIds(profileIds);
       const profilesMap: Record<string, { name: string | null; avatar_url: string | null }> = {};
-      const chunkSize = 10;
-      for (let i = 0; i < profileIds.length; i += chunkSize) {
-        const chunk = profileIds.slice(i, i + chunkSize);
-        if (chunk.length === 0) continue;
-        const qProfiles = query(collection(db, "profiles"), where("user_id", "in", chunk));
-        const pSnap = await getDocs(qProfiles);
-        pSnap.forEach(d => {
-          const profileData = d.data();
-          const profileKey = typeof profileData.user_id === "string" ? profileData.user_id : d.id;
-          profilesMap[profileKey] = {
-            name: profileData.displayName || profileData.name || null,
-            avatar_url: profileData.photoURL || profileData.avatar_url || null,
-          };
-        });
-      }
+      publicProfiles.forEach((profile, profileId) => {
+        profilesMap[profileId] = {
+          name: profile.name ?? null,
+          avatar_url: profile.avatar_url ?? null,
+        };
+      });
 
       snapshot.docs.forEach(doc => {
         const data = doc.data();

@@ -303,6 +303,8 @@
     "join_success_title": "Você entrou no bolão.",
     "join_success_desc": "Agora é só palpitar e subir no ranking.",
     "search_placeholder": "Pesquisar meus bolões...",
+    "tabs_boloes": "Bolões",
+    "tabs_ranking": "Ranking",
     "empty_title": "Nenhum bolão encontrado",
     "empty_desc": "Crie seu primeiro bolão ou participe usando um código de convite.",
     "section_created": "Meus bolões criados",
@@ -327,7 +329,18 @@
     "join_error_desc": "Revisa o código ou tenta novamente em instantes.",
     "already_joined": "Você já está neste bolão.",
     "invalid_code_title": "Código inválido.",
-    "invalid_code_desc": "Confere o convite e tenta novamente."
+    "invalid_code_desc": "Confere o convite e tenta novamente.",
+    "join_closed_error": "Este bolão não está disponível para entrada.",
+    "rapid_title": "Bolão Rápido",
+    "rapid_desc": "Escolha um jogo, compartilhe o link e pronto.",
+    "new_badge": "Novo",
+    "intro_title": "O que é um bolão?",
+    "intro_desc_worldcup": "Um bolão é uma competição entre amigos onde cada um faz seus palpites nos jogos da Copa. Crie o seu, convide a galera e veja quem manda mais de futebol!",
+    "intro_desc_championship": "Um bolão é uma competição entre amigos onde cada um faz seus palpites nos jogos do {{championship}}. Crie o seu, convide a galera e veja quem manda mais de futebol!",
+    "create_cta": "Criar bolão",
+    "understood_cta": "Entendi",
+    "groups_title": "Grupos",
+    "groups_desc": "Reúna seus bolões em um grupo e veja o ranking geral."
   },
   "fab": {
     "pending_title": "Palpites pendentes",

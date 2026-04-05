@@ -1,0 +1,82 @@
+{
+  "status": {
+    "live": "Live",
+    "upcoming": "Coming Soon",
+    "finished": "Finished"
+  },
+  "header": {
+    "kicker": "ArenaCopa",
+    "title": "Championships"
+  },
+  "sections": {
+    "world_cup": "World Cup",
+    "leagues": "Leagues & Tournaments"
+  },
+  "hero": {
+    "special_event": "Special Event",
+    "date_range": "Jun 11 – Jul 19, 2026 · USA, Canada and Mexico",
+    "enter": "Open",
+    "pools_zero": "No pools yet",
+    "pools_one": "1 active pool",
+    "pools_other": "{{count}} active pools"
+  },
+  "card": {
+    "pools_zero": "No pools",
+    "pools_one": "1 pool",
+    "pools_other": "{{count}} pools"
+  },
+  "footer_tip": "Tap to view schedule, standings and create pools.",
+  "hub": {
+    "not_found_title": "Championship not found",
+    "not_found_desc": "This link is no longer available or the championship has not been published in this area yet.",
+    "not_found_cta": "View championships",
+    "status": {
+      "live": "Live",
+      "upcoming": "Coming soon",
+      "finished": "Finished"
+    },
+    "tabs": {
+      "games": "Matches",
+      "table": "Table",
+      "news": "News",
+      "pools": "Pools"
+    },
+    "stats": {
+      "teams": "Teams",
+      "start": "Start",
+      "format": "Format",
+      "format_league": "League",
+      "format_cup": "Cup",
+      "format_tournament": "Tournament"
+    },
+    "games": {
+      "recent_label": "Showing last 6 matches plus upcoming fixtures",
+      "unavailable_title": "Fixture list not synced yet",
+      "unavailable_desc": "Official matches for this championship will appear here as soon as they are published."
+    },
+    "table": {
+      "updated_at": "Updated: {{date}}",
+      "derived_badge": "Provisional table based on confirmed results",
+      "unavailable_title": "Standings not available yet",
+      "unavailable_desc": "As soon as official results are available, the standings will appear here automatically.",
+      "legend_champion": "Champion",
+      "legend_ucl": "UCL",
+      "legend_uel": "UEL",
+      "legend_relegation": "Relegation"
+    },
+    "pools": {
+      "create_title": "Create pool",
+      "active_count": "Active pools ({{count}})",
+      "empty_title": "No pools yet",
+      "empty_desc": "Be the first to create a pool for this championship!",
+      "status_open": "Open to join",
+      "status_active": "In progress"
+    },
+    "news": {
+      "empty_title": "No news for this championship yet",
+      "empty_desc": "As soon as the feed updates, the latest stories and highlights will appear here.",
+      "highlight": "Highlight",
+      "no_link": "External source still has no direct link."
+    }
+  }
+}

@@ -21,6 +21,15 @@ export interface ProfileRecord {
   accepted_terms_at: string | null;
 }
 
+export interface PublicProfileRecord {
+  user_id: string;
+  name: string | null;
+  nickname?: string | null;
+  avatar_url: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
 export interface ProfileUpdateInput {
   name?: string;
   avatar_url?: string | null;

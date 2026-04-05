@@ -14,6 +14,7 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { MonetizationProvider } from "@/contexts/MonetizationContext";
 import { ChampionshipProvider } from "@/contexts/ChampionshipContext";
 import FieldBackground from "@/components/FieldBackground";
+import { sanitizeInternalRedirect } from "@/lib/security";
 const Index = lazy(() => import("./pages/Index"));
 const Copa = lazy(() => import("./pages/Copa"));
 const Boloes = lazy(() => import("./pages/Boloes"));
@@ -58,7 +59,7 @@ const legacyCopaMap: Record<string, string> = {
   simulator: "/copa/simulacao",
   hosts: "/guia",
   news: "/noticias",
-  history: "/guia/historia",
+  history: "/copa/historia",
 };
 
 const legacyGuiaMap: Record<string, string> = {
@@ -67,6 +68,7 @@ const legacyGuiaMap: Record<string, string> = {
   city: "/guia",
   stadiums: "/guia",
   hosts: "/guia",
+  history: "/copa/historia",
 };
 
 function LegacyRedirect({ to }: { to: string }) {
@@ -153,7 +155,7 @@ function AuthRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const location = useLocation();
   if (loading) return <LoadingScreen />;
-  const redirectTo = new URLSearchParams(location.search).get("redirect") || "/";
+  const redirectTo = sanitizeInternalRedirect(new URLSearchParams(location.search).get("redirect"));
   if (user) return <Navigate to={redirectTo} replace />;
   return <>{children}</>;
 }
@@ -174,7 +176,6 @@ const AppRoutes = () => (
     <Route path="/copa" element={<ProtectedRoute><Layout><Copa /></Layout></ProtectedRoute>} />
     <Route path="/copa/overview" element={<ProtectedRoute><LegacyRedirect to="/copa" /></ProtectedRoute>} />
     <Route path="/copa/sedes" element={<ProtectedRoute><Navigate to="/guia" replace /></ProtectedRoute>} />
-    <Route path="/copa/historia" element={<ProtectedRoute><Navigate to="/guia/historia" replace /></ProtectedRoute>} />
     <Route path="/copa/noticias" element={<ProtectedRoute><Navigate to="/noticias" replace /></ProtectedRoute>} />
     <Route path="/copa/:subtab" element={<ProtectedRoute><Layout><Copa /></Layout></ProtectedRoute>} />
     <Route path="/cup" element={<ProtectedRoute><LegacyRedirect to="/copa" /></ProtectedRoute>} />
@@ -196,6 +197,7 @@ const AppRoutes = () => (
     <Route path="/grupos" element={<ProtectedRoute><Layout><Grupos /></Layout></ProtectedRoute>} />
     <Route path="/grupos/:grupoId" element={<ProtectedRoute><Layout><GrupoDetail /></Layout></ProtectedRoute>} />
     <Route path="/guia" element={<ProtectedRoute><Layout><Guia /></Layout></ProtectedRoute>} />
+    <Route path="/guia/historia" element={<ProtectedRoute><LegacyRedirect to="/copa/historia" /></ProtectedRoute>} />
     <Route path="/guia/:subtab" element={<ProtectedRoute><Layout><Guia /></Layout></ProtectedRoute>} />
     <Route path="/guide" element={<ProtectedRoute><LegacyRedirect to="/guia" /></ProtectedRoute>} />
     <Route path="/guide/:subtab" element={<ProtectedRoute><LegacyGuiaRedirect /></ProtectedRoute>} />

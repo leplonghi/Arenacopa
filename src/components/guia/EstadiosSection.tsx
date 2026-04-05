@@ -11,6 +11,7 @@ import {
 import { Share } from "@capacitor/share";
 import { Geolocation } from "@capacitor/geolocation";
 import { useTranslation } from "react-i18next";
+import { openSafeExternalUrl } from "@/lib/security";
 import { staggerContainer, staggerItem } from "@/components/copa/animations";
 import { hostCountries, type HostCity } from "@/data/guiaData";
 
@@ -336,9 +337,9 @@ const handleShare = async (title: string, text: string) => {
 const handleDirections = async (lat: number, lng: number, name: string) => {
     const url = `https://maps.google.com/?q=${encodeURIComponent(name)}&ll=${lat},${lng}`;
     try {
-        window.open(url, "_system");
+        openSafeExternalUrl(url, "_system");
     } catch {
-        window.open(url, "_blank");
+        openSafeExternalUrl(url, "_blank");
     }
 };
 

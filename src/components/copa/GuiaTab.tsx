@@ -94,7 +94,7 @@ export function GuiaTab() {
                         type="search"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder="Pesquisar cidade ou estádio..."
+                        placeholder={t('ui.searchPlaceholder', { defaultValue: 'Pesquisar cidade ou estádio...' })}
                         className="w-full bg-zinc-900/80 border border-white/5 rounded-xl py-3.5 pl-11 pr-4 text-xs font-medium text-white placeholder:text-zinc-600 focus:outline-none focus:border-emerald-500/30 focus:ring-1 focus:ring-emerald-500/10 transition-all backdrop-blur-sm"
                     />
                 </div>
@@ -158,7 +158,9 @@ export function GuiaTab() {
                     ))}
                     {filteredCities.length === 0 && (
                         <div className="col-span-full py-12 text-center">
-                            <p className="text-sm font-bold text-zinc-500 uppercase tracking-widest">Nenhuma cidade encontrada</p>
+                            <p className="text-sm font-bold text-zinc-500 uppercase tracking-widest">
+                                {t('ui.noCityResults', { defaultValue: 'Nenhuma cidade encontrada' })}
+                            </p>
                         </div>
                     )}
                 </div>

@@ -1,10 +1,15 @@
 {
     "title": "Guia da Copa",
     "description": "Tudo sobre o torneio",
+    "loading": "Carregando guia...",
     "calendar": "Calendário",
     "teams": "Seleções",
     "stadiums": "Estádios",
     "history": "História",
+    "tabs": {
+        "hosts": "Cidades",
+        "map": "Mapa"
+    },
     "historia": {
         "saga": "História",
         "mundial": "das Copas",

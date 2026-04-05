@@ -1,0 +1,82 @@
+{
+  "status": {
+    "live": "Ao Vivo",
+    "upcoming": "Em Breve",
+    "finished": "Encerrado"
+  },
+  "header": {
+    "kicker": "ArenaCopa",
+    "title": "Campeonatos"
+  },
+  "sections": {
+    "world_cup": "Copa do Mundo",
+    "leagues": "Ligas & Torneios"
+  },
+  "hero": {
+    "special_event": "Evento Especial",
+    "date_range": "11 Jun – 19 Jul 2026 · EUA, Canadá e México",
+    "enter": "Entrar",
+    "pools_zero": "Nenhum bolão",
+    "pools_one": "1 bolão ativo",
+    "pools_other": "{{count}} bolões ativos"
+  },
+  "card": {
+    "pools_zero": "Sem bolões",
+    "pools_one": "1 bolão",
+    "pools_other": "{{count}} bolões"
+  },
+  "footer_tip": "Toque para ver calendário, tabela e criar bolões.",
+  "hub": {
+    "not_found_title": "Campeonato não encontrado",
+    "not_found_desc": "Esse link não está mais disponível ou o campeonato ainda não foi publicado nesta área.",
+    "not_found_cta": "Ver campeonatos",
+    "status": {
+      "live": "Ao Vivo",
+      "upcoming": "Em breve",
+      "finished": "Encerrado"
+    },
+    "tabs": {
+      "games": "Jogos",
+      "table": "Tabela",
+      "news": "Notícias",
+      "pools": "Bolões"
+    },
+    "stats": {
+      "teams": "Times",
+      "start": "Início",
+      "format": "Formato",
+      "format_league": "Liga",
+      "format_cup": "Copa",
+      "format_tournament": "Torneio"
+    },
+    "games": {
+      "recent_label": "Mostrando últimos 6 jogos + próximos",
+      "unavailable_title": "Calendário ainda não sincronizado",
+      "unavailable_desc": "Os jogos oficiais deste campeonato vão aparecer aqui assim que forem publicados."
+    },
+    "table": {
+      "updated_at": "Atualizado: {{date}}",
+      "derived_badge": "Tabela provisória pelos resultados confirmados",
+      "unavailable_title": "Classificação ainda indisponível",
+      "unavailable_desc": "Assim que os resultados oficiais entrarem, a tabela aparece automaticamente aqui.",
+      "legend_champion": "Campeão",
+      "legend_ucl": "UCL",
+      "legend_uel": "UEL",
+      "legend_relegation": "Rebaixamento"
+    },
+    "pools": {
+      "create_title": "Criar bolão",
+      "active_count": "Bolões ativos ({{count}})",
+      "empty_title": "Nenhum bolão ainda",
+      "empty_desc": "Seja o primeiro a criar um bolão para este campeonato!",
+      "status_open": "Aberto para entrar",
+      "status_active": "Em andamento"
+    },
+    "news": {
+      "empty_title": "Ainda sem notícias desse campeonato",
+      "empty_desc": "Quando o feed for atualizado, os destaques e notícias mais recentes aparecem aqui.",
+      "highlight": "Destaque",
+      "no_link": "Fonte externa ainda sem link direto."
+    }
+  }
+}

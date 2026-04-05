@@ -26,8 +26,8 @@
       "calendar_desc": "Todos los partidos del torneo",
       "map_title": "Mapa",
       "map_desc": "Estadios y ciudades sede",
-      "guide_title": "Guia",
-      "guide_desc": "Sedes, mapa e historia"
+      "guide_title": "Sedes",
+      "guide_desc": "Ciudades sede, mapa y consejos de viaje"
     },
     "upcoming_matches": "Próximos Partidos",
     "view_calendar": "Ver calendario",

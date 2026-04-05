@@ -1,0 +1,101 @@
+{
+  "badge": "Copa Pass",
+  "hero_title_prefix": "Full",
+  "hero_title_highlight": "Access",
+  "hero_subtitle": "A single lifetime purchase unlocks everything the tournament has to offer.",
+  "feedback": {
+    "cancelled": "Checkout canceled. You can try again whenever you want.",
+    "validating": "Payment received. Validating your subscription...",
+    "confirmed": "Payment confirmed. Your Copa Pass is already active!",
+    "syncing": "Payment completed, but confirmation is still syncing.",
+    "checkout_error": "Could not start checkout right now. Please try again shortly."
+  },
+  "active": {
+    "title": "You already have Copa Pass!",
+    "description": "Thanks for supporting Arena CUP. All premium benefits are active for you.",
+    "back_home": "Back to home"
+  },
+  "social_proof": {
+    "community": "Active community",
+    "secure_payment": "Secure payment",
+    "lifetime": "Lifetime"
+  },
+  "price": {
+    "suffix": "one-time",
+    "note": "No monthly fee. Pay once and keep access forever."
+  },
+  "cta": {
+    "buy": "Get Copa Pass",
+    "notify": "Notify me",
+    "support": "Contact premium support"
+  },
+  "status_copy": {
+    "pending": "awaiting payment",
+    "ready": "ready to purchase",
+    "checkout_ready": "Secure checkout via Stripe. Status: {{status}}.",
+    "checkout_preparing": "Checkout is still being prepared. You can already join the waitlist through support."
+  },
+  "pillars": {
+    "info": {
+      "title": "InfoCopa",
+      "subtitle": "Everything about the tournament",
+      "perks": ["Live stats", "Full simulator", "Interactive bracket", "World Cup history"]
+    },
+    "guide": {
+      "title": "GuideCopa",
+      "subtitle": "Explore host cities",
+      "perks": ["Stadium map", "Host city guide", "Transport info", "Travel tips"]
+    },
+    "pool": {
+      "title": "PoolCopa",
+      "subtitle": "Play without limits",
+      "perks": ["Unlimited pools", "Unlimited groups", "Cash pot & PIX", "Official supporter badge"]
+    }
+  },
+  "modal": {
+    "title": "Arena Premium",
+    "subtitle": "Unlock the full potential!",
+    "description": "Become a Premium member and take your tournament experience to the next level.",
+    "benefits": [
+      "Remove all ads",
+      "Advanced stats",
+      "Exclusive supporter badge",
+      "Early access to new features"
+    ],
+    "old_price": "$19.90",
+    "single_payment": "One-time payment",
+    "processing": "Processing...",
+    "notify": "Notify me",
+    "buy": "Go premium",
+    "support": "Contact support",
+    "secure_message": "Secure, encrypted purchase. Satisfaction guaranteed.",
+    "preparing_message": "Checkout is still being prepared. Join the support waitlist."
+  },
+  "elite": {
+    "title": "Arena Elite",
+    "subtitle": "Official World Cup Passport",
+    "benefits": [
+      {
+        "title": "Captain Power",
+        "desc": "One prediction counts double each round"
+      },
+      {
+        "title": "Unlimited Private Pools",
+        "desc": "Create as many pools as you want"
+      },
+      {
+        "title": "Ad-Free Access",
+        "desc": "A 100% clean and focused experience"
+      }
+    ],
+    "lifetime": "Lifetime access through 2026",
+    "processing": "Processing...",
+    "notify": "Notify me",
+    "buy": "Get my passport",
+    "support": "Contact premium support",
+    "secure_message": "100% secure payment via Stripe. Cancel anytime.",
+    "preparing_message": "Checkout is still being prepared. Join the support waitlist.",
+    "transaction_error_title": "Transaction error",
+    "transaction_error_desc": "Could not complete pass activation."
+  }
+}

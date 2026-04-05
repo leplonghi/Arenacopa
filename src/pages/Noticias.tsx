@@ -14,6 +14,7 @@ import { getStoredFavoriteTeam, subscribeToFavoriteTeamUpdates } from "@/lib/fav
 import { useRealtimeNews, RealtimeNewsItem } from "@/hooks/useRealtimeNews";
 import { useExternalNews } from "@/hooks/useExternalNews";
 import { useTranslation } from "react-i18next";
+import { sanitizeExternalUrl } from "@/lib/security";
 
 // ── Category definitions ──────────────────────────────────────────────────────
 const CATEGORIES = [
@@ -54,7 +55,7 @@ function toNewsItem(raw: RealtimeNewsItem): NewsItem {
     title: raw.title,
     summary: raw.summary || raw.description || raw.content || undefined,
     category,
-    externalUrl: raw.url !== "#" ? raw.url : undefined,
+    externalUrl: sanitizeExternalUrl(raw.url !== "#" ? raw.url : undefined) ?? undefined,
     imageUrl: raw.image_url || raw.url_to_image || undefined,
     teams: raw.country_filter ? [raw.country_filter] : [],
     publishedAt: raw.published_at,

@@ -50,7 +50,8 @@ export function MembrosTab({ members, userId, isCreator, bolaoId, isPaid, onRefr
             });
             navigate("/boloes");
         } catch (error) {
-            toast({ title: t('common.error_title'), description: error instanceof Error ? error.message : t('common.error_title'), variant: "destructive" });
+            console.error("Error leaving bolao:", error);
+            toast({ title: t('common.error_title'), description: t('common.error_desc'), variant: "destructive" });
         }
     };
 
@@ -64,7 +65,8 @@ export function MembrosTab({ members, userId, isCreator, bolaoId, isPaid, onRefr
             });
             onRefresh();
         } catch (error) {
-            toast({ title: t('common.error_title'), description: error instanceof Error ? error.message : t('common.error_title'), variant: "destructive" });
+            console.error("Error removing bolao member:", error);
+            toast({ title: t('common.error_title'), description: t('common.error_desc'), variant: "destructive" });
         }
     };
 

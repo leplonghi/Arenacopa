@@ -24,8 +24,19 @@ import { useTranslation } from "react-i18next";
 import { getProfile } from "@/services/profile/profile.service";
 import { useQuery } from "@tanstack/react-query";
 import { listNotifications } from "@/services/notifications/notifications.service";
+import { appNavigationItems, isNavigationItemActive, type AppNavIconKey } from "@/config/navigation";
 
 const logoUrl = "/logo.png?v=20260316";
+
+const navIconMap: Record<AppNavIconKey, React.ComponentType<{ className?: string; strokeWidth?: number }>> = {
+  home: Home,
+  championships: Trophy,
+  bolao: Trophy,
+  news: Newspaper,
+  guia: BookOpen,
+  groups: Users2,
+  profile: User,
+};
 
 function Header({ className }: { className?: string }) {
   const location = useLocation();
@@ -168,36 +179,16 @@ function Header({ className }: { className?: string }) {
 function BottomTabs({ className }: { className?: string }) {
   const { t } = useTranslation('common');
   const location = useLocation();
-
-  const isTabActive = (path: string) => {
-    if (path === "/") return location.pathname === "/";
-    if (path === "/campeonatos") {
-      return (
-        location.pathname === "/campeonatos" ||
-        location.pathname === "/copa" ||
-        location.pathname.startsWith("/copa/") ||
-        location.pathname.startsWith("/campeonato/")
-      );
-    }
-    return location.pathname === path || location.pathname.startsWith(`${path}/`);
-  };
-
-  // 5-tab layout: Home | Campeonatos | ⚽ Bolões (center FAB) | Notícias | Guia
-  const tabs = [
-    { path: "/",             icon: Home,      label: t('nav.home'),        isFab: false },
-    { path: "/campeonatos",  icon: Trophy,    label: t('nav.championships'), isFab: false },
-    { path: "/boloes",       icon: null,      label: t('nav.bolao'),       isFab: true  },
-    { path: "/noticias",     icon: Newspaper, label: t('nav.news'),        isFab: false },
-    { path: "/guia",         icon: BookOpen,  label: t('nav.guia'),        isFab: false },
-  ];
+  const tabs = appNavigationItems.filter((item) => item.mobile);
 
   return (
     <nav className={cn("fixed bottom-0 inset-x-0 z-30 overflow-visible backdrop-blur-xl border-t border-white/[0.1] safe-bottom shadow-[0_-4px_30px_rgba(0,0,0,0.6)] bg-[#03100a]/65", className)}>
       <div className="mx-auto grid h-[72px] max-w-md grid-cols-5 items-center px-1 overflow-visible">
         {tabs.map((tab) => {
           if (tab.isFab) {
-            return <FabWithPending key={tab.path} isActive={isTabActive(tab.path)} />;
+            return <FabWithPending key={tab.path} isActive={isNavigationItemActive(location.pathname, tab)} />;
           }
+          const Icon = navIconMap[tab.iconKey];
           return (
             <NavLink
               key={tab.path}
@@ -212,8 +203,8 @@ function BottomTabs({ className }: { className?: string }) {
             >
               {({ isActive }) => (
                 <>
-                  {tab.icon && <tab.icon className="w-5 h-5" strokeWidth={isActive ? 2.5 : 1.8} />}
-                  <span className={cn("text-[10px] leading-none", isActive ? "font-bold" : "font-medium")}>{tab.label}</span>
+                  <Icon className="w-5 h-5" strokeWidth={isActive ? 2.5 : 1.8} />
+                  <span className={cn("text-[10px] leading-none", isActive ? "font-bold" : "font-medium")}>{t(tab.labelKey)}</span>
                 </>
               )}
             </NavLink>
@@ -227,16 +218,7 @@ function BottomTabs({ className }: { className?: string }) {
 function AppSidebar({ className }: { className?: string }) {
   const { t } = useTranslation('common');
   const location = useLocation();
-
-  const tabs = [
-    { path: "/",             icon: Home,      label: t('nav.home') },
-    { path: "/campeonatos",  icon: Trophy,    label: t('nav.championships') },
-    { path: "/noticias",     icon: Newspaper, label: t('nav.news') },
-    { path: "/guia",         icon: BookOpen,  label: t('nav.guia') },
-    { path: "/boloes",       icon: Trophy,    label: t('nav.bolao') },
-    { path: "/grupos",       icon: Users2,    label: t('nav.groups') },
-    { path: "/perfil",       icon: User,      label: t('nav.profile') },
-  ];
+  const tabs = appNavigationItems.filter((item) => item.desktop);
 
   return (
     <Sidebar className={cn("border-r border-white/10", className)} collapsible="icon">
@@ -257,30 +239,24 @@ function AppSidebar({ className }: { className?: string }) {
           </div>
           <SidebarGroupContent className="mt-4">
             <SidebarMenu>
-              {tabs.map((tab) => (
+              {tabs.map((tab) => {
+                const Icon = navIconMap[tab.iconKey];
+                const isActive = isNavigationItemActive(location.pathname, tab);
+                return (
                 <SidebarMenuItem key={tab.path}>
                   <SidebarMenuButton 
                     asChild 
-                    isActive={
-                      tab.path === "/"
-                        ? location.pathname === "/"
-                        : tab.path === "/campeonatos"
-                          ? location.pathname === "/campeonatos" ||
-                            location.pathname === "/copa" ||
-                            location.pathname.startsWith("/copa/") ||
-                            location.pathname.startsWith("/campeonato/")
-                          : location.pathname === tab.path || location.pathname.startsWith(`${tab.path}/`)
-                    } 
-                    tooltip={tab.label} 
+                    isActive={isActive}
+                    tooltip={t(tab.labelKey)}
                     className="h-12 hover:bg-white/5 active:bg-white/10 transition-colors"
                   >
                     <NavLink to={tab.path}>
-                      {tab.icon && <tab.icon className={cn(location.pathname === tab.path ? "text-primary" : "text-muted-foreground")} />}
-                      <span className="font-medium">{tab.label}</span>
+                      <Icon className={cn(isActive ? "text-primary" : "text-muted-foreground")} />
+                      <span className="font-medium">{t(tab.labelKey)}</span>
                     </NavLink>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
-              ))}
+              )})}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

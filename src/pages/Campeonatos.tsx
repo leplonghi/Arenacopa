@@ -8,14 +8,16 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
+import { useTranslation } from "react-i18next";
 
 // ─── Status badge ────────────────────────────────────────────
 function StatusBadge({ status }: { status: ChampionshipStatus }) {
+  const { t } = useTranslation("championships");
   if (status === "live") {
     return (
       <span className="flex items-center gap-1 rounded-full bg-emerald-500/20 border border-emerald-500/30 px-2 py-0.5 text-[10px] font-bold text-emerald-400 uppercase tracking-wider">
         <Radio className="w-2.5 h-2.5 animate-pulse" />
-        Ao Vivo
+        {t("status.live")}
       </span>
     );
   }
@@ -23,13 +25,13 @@ function StatusBadge({ status }: { status: ChampionshipStatus }) {
     return (
       <span className="flex items-center gap-1 rounded-full bg-amber-500/20 border border-amber-500/30 px-2 py-0.5 text-[10px] font-bold text-amber-400 uppercase tracking-wider">
         <Clock className="w-2.5 h-2.5" />
-        Em Breve
+        {t("status.upcoming")}
       </span>
     );
   }
   return (
     <span className="flex items-center gap-1 rounded-full bg-white/10 border border-white/20 px-2 py-0.5 text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
-      Encerrado
+      {t("status.finished")}
     </span>
   );
 }
@@ -46,6 +48,7 @@ function CopaHeroCard({
   bolaoCount: number;
   onSelect: () => void;
 }) {
+  const { t } = useTranslation("championships");
   return (
     <motion.button
       initial={{ opacity: 0, y: 20 }}
@@ -84,7 +87,7 @@ function CopaHeroCard({
         <div className="mb-3 inline-flex items-center gap-1.5 rounded-full bg-amber-400/15 border border-amber-400/30 px-3 py-1">
           <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
           <span className="text-[10px] font-black uppercase tracking-[0.18em] text-amber-400">
-            Evento Especial
+            {t("hero.special_event")}
           </span>
         </div>
 
@@ -128,7 +131,7 @@ function CopaHeroCard({
 
         {/* Date range */}
         <p className="text-xs text-amber-400/50 mb-3">
-          11 Jun – 19 Jul 2026 · EUA, Canadá e México
+          {t("hero.date_range")}
         </p>
 
         {/* Footer */}
@@ -137,15 +140,15 @@ function CopaHeroCard({
             <Trophy className="w-3.5 h-3.5 text-amber-400/60" />
             <span className="text-xs text-white/50">
               {bolaoCount === 0
-                ? "Nenhum bolão"
+                ? t("hero.pools_zero")
                 : bolaoCount === 1
-                ? "1 bolão ativo"
-                : `${bolaoCount} bolões ativos`}
+                ? t("hero.pools_one")
+                : t("hero.pools_other", { count: bolaoCount })}
             </span>
           </div>
           <div className="flex items-center gap-1.5 rounded-2xl bg-amber-400/15 border border-amber-400/25 px-3 py-1.5">
             <span className="text-xs font-black text-amber-400 uppercase tracking-wider">
-              Entrar
+              {t("hero.enter")}
             </span>
             <ChevronRight className="w-3.5 h-3.5 text-amber-400" />
           </div>
@@ -169,6 +172,7 @@ function ChampionshipCard({
   onSelect: () => void;
   index: number;
 }) {
+  const { t } = useTranslation("championships");
   const [from, to] = championship.gradient;
 
   return (
@@ -253,7 +257,11 @@ function ChampionshipCard({
           <div className="flex items-center gap-1">
             <Trophy className="w-3 h-3 text-white/40" />
             <span className="text-[10px] text-white/50">
-              {bolaoCount === 0 ? "Sem bolões" : `${bolaoCount} bolão${bolaoCount > 1 ? "ões" : ""}`}
+              {bolaoCount === 0
+                ? t("card.pools_zero")
+                : bolaoCount === 1
+                ? t("card.pools_one")
+                : t("card.pools_other", { count: bolaoCount })}
             </span>
           </div>
           <ChevronRight
@@ -273,6 +281,7 @@ export default function Campeonatos() {
   const navigate = useNavigate();
   const { current, all, setChampionship } = useChampionship();
   const { user } = useAuth();
+  const { t } = useTranslation("championships");
 
   const copa = all.find((c) => c.id === "wc2026")!;
   const leagues = all.filter((c) => c.id !== "wc2026");
@@ -335,10 +344,10 @@ export default function Campeonatos() {
           transition={{ duration: 0.3 }}
         >
           <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-500">
-            ArenaCopa
+            {t("header.kicker")}
           </p>
           <h1 className="text-2xl font-extrabold text-white tracking-tight leading-none">
-            Campeonatos
+            {t("header.title")}
           </h1>
         </motion.div>
       </div>
@@ -347,7 +356,7 @@ export default function Campeonatos() {
         {/* ── Copa do Mundo: hero card full-width ── */}
         <div>
           <p className="mb-2 text-[10px] font-black uppercase tracking-[0.2em] text-amber-400/70">
-            ⭐ Copa do Mundo
+            ⭐ {t("sections.world_cup")}
           </p>
           <CopaHeroCard
             championship={copa}
@@ -360,7 +369,7 @@ export default function Campeonatos() {
         {/* ── Ligas & Torneios ── */}
         <div>
           <p className="mb-2 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">
-            Ligas & Torneios
+            {t("sections.leagues")}
           </p>
           <div className="grid grid-cols-2 gap-3">
             {leagues.map((champ, i) => (
@@ -384,7 +393,7 @@ export default function Campeonatos() {
         transition={{ delay: 0.5 }}
         className="mt-6 px-6 text-center text-[11px] text-zinc-600"
       >
-        Toque para ver calendário, tabela e criar bolões.
+        {t("footer_tip")}
       </motion.p>
     </div>
   );

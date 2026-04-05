@@ -15,6 +15,8 @@
     "stadiums": "Estadios",
     "cityGuide": "Guía de la Ciudad",
     "weather": "Clima",
+    "searchPlaceholder": "Buscar ciudad o estadio...",
+    "noCityResults": "No se encontraron ciudades",
     "tabs": {
       "general": "General",
       "tourism": "Turismo",

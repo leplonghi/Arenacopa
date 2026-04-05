@@ -285,6 +285,8 @@
     "join_success_title": "You joined the pool.",
     "join_success_desc": "Now it's time to make predictions and climb the ranking.",
     "search_placeholder": "Search my pools...",
+    "tabs_boloes": "Pools",
+    "tabs_ranking": "Ranking",
     "empty_title": "No pool found",
     "empty_desc": "Create your first pool or join one with an invite code.",
     "section_created": "Pools I created",
@@ -309,7 +311,18 @@
     "join_error_desc": "Check the code or try again in a moment.",
     "already_joined": "You are already in this pool.",
     "invalid_code_title": "Invalid code.",
-    "invalid_code_desc": "Check the invite and try again."
+    "invalid_code_desc": "Check the invite and try again.",
+    "join_closed_error": "This pool is not open for new entries right now.",
+    "rapid_title": "Quick Pool",
+    "rapid_desc": "Pick one match, share the link and you're done.",
+    "new_badge": "New",
+    "intro_title": "What is a pool?",
+    "intro_desc_worldcup": "A pool is a competition between friends where everyone predicts World Cup matches. Create yours, invite the squad and see who knows football best.",
+    "intro_desc_championship": "A pool is a competition between friends where everyone predicts {{championship}} matches. Create yours, invite the squad and see who knows football best.",
+    "create_cta": "Create pool",
+    "understood_cta": "Got it",
+    "groups_title": "Groups",
+    "groups_desc": "Gather your pools in one group and track the overall ranking."
   },
   "fab": {
     "pending_title": "Pending predictions",

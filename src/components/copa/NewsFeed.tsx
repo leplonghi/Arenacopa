@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { staggerItem, staggerContainer } from "./animations";
 import { Eye, ArrowRight, TrendingUp, Newspaper, Clock } from "lucide-react";
 import { useRealtimeNews } from "@/hooks/useRealtimeNews";
+import { openSafeExternalUrl, sanitizeExternalUrl } from "@/lib/security";
 
 interface NewsItemDisplay {
     id: string;
@@ -33,7 +34,7 @@ export function NewsFeed() {
                     ? new Date(item.published_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })
                     : "Recent",
                 image: item.image_url || item.url_to_image || "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=800",
-                url: item.url || "#",
+                url: sanitizeExternalUrl(item.url) || "#",
                 views: item.views
                     ? (item.views >= 1000 ? `${(item.views / 1000).toFixed(1).replace('.0', '')}k` : `${item.views}`)
                     : `${Math.floor(Math.random() * 5) + 1}.${Math.floor(Math.random() * 9)}k`,
@@ -87,7 +88,7 @@ export function NewsFeed() {
                             layout
                             onClick={() => {
                                 if (item.url && item.url !== "#") {
-                                    window.open(item.url, '_blank');
+                                    openSafeExternalUrl(item.url);
                                 }
                             }}
                             className="group relative flex flex-col gap-0 overflow-hidden rounded-[24px] border border-white/5 bg-zinc-900/40 backdrop-blur-sm transition-all duration-300 hover:border-copa-gold/30 hover:bg-zinc-800/40 cursor-pointer hover:shadow-[0_8px_30px_rgb(0,0,0,0.4)]"

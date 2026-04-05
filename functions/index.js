@@ -22,8 +22,28 @@ const LEAGUE_CHAMPIONSHIPS = [
     { id: "premier2526", fdoId: 2021, name: "Premier League", season: "2025" },
 ];
 
-function applyCors(res) {
-    res.set("Access-Control-Allow-Origin", "*");
+function getAllowedOrigins(configuredSiteUrl = DEFAULT_SITE_URL) {
+    const configuredOrigin = configuredSiteUrl.replace(/\/$/, "");
+    return new Set([
+        configuredOrigin,
+        "https://arenacopa-web-2026.web.app",
+        "https://arenacup.net",
+        "http://localhost",
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+        "capacitor://localhost",
+    ]);
+}
+
+function applyCors(req, res) {
+    const origin = typeof req?.headers?.origin === "string" ? req.headers.origin.replace(/\/$/, "") : null;
+    const { siteUrl } = getRuntimeConfig();
+    const allowedOrigins = getAllowedOrigins(siteUrl);
+
+    if (origin && allowedOrigins.has(origin)) {
+        res.set("Access-Control-Allow-Origin", origin);
+        res.set("Vary", "Origin");
+    }
     res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
     res.set("Access-Control-Allow-Methods", "POST, OPTIONS");
 }
@@ -43,14 +63,14 @@ function getRuntimeConfig() {
 async function verifyHttpUser(req) {
     const authHeader = req.headers.authorization || "";
     if (!authHeader.startsWith("Bearer ")) {
-        throw new Error("Usuário não autenticado para iniciar o checkout.");
+        throw new Error("Autenticação obrigatória.");
     }
 
     const idToken = authHeader.slice("Bearer ".length).trim();
     return admin.auth().verifyIdToken(idToken);
 }
 
-async function stripeApiRequest({ method, path, params = null }) {
+async function stripeApiRequest({ method, path, params = null, idempotencyKey = null }) {
     const { stripeSecretKey } = getRuntimeConfig();
     if (!stripeSecretKey) {
         throw new Error("STRIPE_SECRET_KEY não configurada nas Cloud Functions.");
@@ -60,6 +80,9 @@ async function stripeApiRequest({ method, path, params = null }) {
         Authorization: `Bearer ${stripeSecretKey}`,
         "Stripe-Version": STRIPE_API_VERSION,
     };
+    if (idempotencyKey) {
+        headers["Idempotency-Key"] = idempotencyKey;
+    }
 
     let url = `${STRIPE_API_BASE_URL}${path}`;
     const requestInit = {
@@ -105,6 +128,7 @@ async function upsertPremiumSubscriptionFromSession({ session, userId }) {
         user_id: userId,
         status: mapStripeSessionStatus(session),
         stripe_checkout_session_id: session.id,
+        checkout_url: session.url || null,
         stripe_payment_intent_id: session.payment_intent || null,
         stripe_customer_id: session.customer || null,
         amount_total: session.amount_total ?? null,
@@ -135,6 +159,46 @@ async function upsertPremiumSubscriptionFromSession({ session, userId }) {
     });
 
     return created.id;
+}
+
+async function getReusablePendingPremiumSession(userId) {
+    const existingSnapshot = await db
+        .collection("premium_subscriptions")
+        .where("user_id", "==", userId)
+        .where("status", "==", "pending")
+        .orderBy("created_at", "desc")
+        .limit(1)
+        .get();
+
+    if (existingSnapshot.empty) {
+        return null;
+    }
+
+    const existingData = existingSnapshot.docs[0].data();
+    if (!existingData?.stripe_checkout_session_id) {
+        return null;
+    }
+
+    try {
+        const session = await stripeApiRequest({
+            method: "GET",
+            path: `/checkout/sessions/${existingData.stripe_checkout_session_id}`,
+        });
+
+        if (session.status === "open" && typeof session.url === "string") {
+            return {
+                url: session.url,
+                sessionId: session.id,
+            };
+        }
+    } catch (error) {
+        functions.logger.warn("Could not reuse pending premium checkout session", {
+            userId,
+            error: error?.message || error,
+        });
+    }
+
+    return null;
 }
 
 function chunkArray(items, size) {
@@ -1637,7 +1701,7 @@ function isCopaRelevant(title, description) {
 }
 
 exports.createPremiumCheckoutSession = functions.region("us-central1").https.onRequest(async (req, res) => {
-    applyCors(res);
+    applyCors(req, res);
 
     if (req.method === "OPTIONS") {
         return res.status(204).send("");
@@ -1651,14 +1715,17 @@ exports.createPremiumCheckoutSession = functions.region("us-central1").https.onR
         const decodedToken = await verifyHttpUser(req);
         const { stripePremiumPriceId, siteUrl: configuredSiteUrl } = getRuntimeConfig();
         if (!stripePremiumPriceId) {
-            throw new Error("STRIPE_PREMIUM_PRICE_ID não configurado nas Cloud Functions.");
+            throw new Error("Checkout premium indisponível.");
         }
 
-        const requestSiteUrl =
-            typeof req.body?.siteUrl === "string" && /^https?:\/\//.test(req.body.siteUrl)
-                ? req.body.siteUrl
-                : configuredSiteUrl;
-        const normalizedSiteUrl = requestSiteUrl.replace(/\/$/, "");
+        const requestSiteUrl = typeof req.body?.siteUrl === "string" ? req.body.siteUrl.replace(/\/$/, "") : "";
+        const requestOriginAllowed = getAllowedOrigins(configuredSiteUrl).has(requestSiteUrl);
+        const resolvedSiteUrl = requestOriginAllowed ? requestSiteUrl : configuredSiteUrl;
+        const reusableSession = await getReusablePendingPremiumSession(decodedToken.uid);
+        if (reusableSession) {
+            return res.status(200).json(reusableSession);
+        }
+        const normalizedSiteUrl = resolvedSiteUrl.replace(/\/$/, "");
 
         const params = {
             mode: "payment",
@@ -1681,12 +1748,14 @@ exports.createPremiumCheckoutSession = functions.region("us-central1").https.onR
             method: "POST",
             path: "/checkout/sessions",
             params,
+            idempotencyKey: `premium_checkout_${decodedToken.uid}_${Math.floor(Date.now() / 10000)}`,
         });
 
         await db.collection("premium_subscriptions").add({
             user_id: decodedToken.uid,
             status: "pending",
             stripe_checkout_session_id: session.id,
+            checkout_url: session.url || null,
             stripe_customer_id: session.customer || null,
             amount_total: session.amount_total ?? null,
             currency: session.currency ?? null,
@@ -1705,13 +1774,13 @@ exports.createPremiumCheckoutSession = functions.region("us-central1").https.onR
             error: error?.message || error,
         });
         return res.status(400).json({
-            error: error?.message || "Não foi possível iniciar o checkout premium.",
+            error: "Não foi possível iniciar o checkout premium.",
         });
     }
 });
 
 exports.syncPremiumCheckoutSession = functions.region("us-central1").https.onRequest(async (req, res) => {
-    applyCors(res);
+    applyCors(req, res);
 
     if (req.method === "OPTIONS") {
         return res.status(204).send("");
@@ -1761,13 +1830,13 @@ exports.syncPremiumCheckoutSession = functions.region("us-central1").https.onReq
             error: error?.message || error,
         });
         return res.status(400).json({
-            error: error?.message || "Não foi possível sincronizar o checkout premium.",
+            error: "Não foi possível sincronizar o checkout premium.",
         });
     }
 });
 
 exports.seedLeagueData = functions.region("us-central1").https.onRequest(async (req, res) => {
-    applyCors(res);
+    applyCors(req, res);
 
     if (req.method === "OPTIONS") {
         return res.status(204).send("");
@@ -1829,7 +1898,7 @@ exports.seedLeagueData = functions.region("us-central1").https.onRequest(async (
 });
 
 exports.syncNewsSourcesCatalog = functions.region("us-central1").https.onRequest(async (req, res) => {
-    applyCors(res);
+    applyCors(req, res);
 
     if (req.method === "OPTIONS") {
         return res.status(204).send("");
@@ -1863,7 +1932,7 @@ exports.syncNewsSourcesCatalog = functions.region("us-central1").https.onRequest
 });
 
 exports.syncRssNewsNow = functions.region("us-central1").https.onRequest(async (req, res) => {
-    applyCors(res);
+    applyCors(req, res);
 
     if (req.method === "OPTIONS") {
         return res.status(204).send("");

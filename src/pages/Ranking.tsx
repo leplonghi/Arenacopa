@@ -6,6 +6,7 @@ import { collection, query, orderBy, limit, getDocs, where, documentId } from "f
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/EmptyState";
 import { useTranslation } from "react-i18next";
+import { getPublicProfilesByIds } from "@/services/profile/profile.service";
 
 type UserStanding = {
   userId: string;
@@ -54,24 +55,11 @@ export default function Ranking() {
         // Firestore 'in' query supports up to 30 values. Filtering here for simplicity or using multiple queries.
         // For a global ranking, it's better to fetch profiles. 
         // Here we'll fetch profiles in chunks if needed, but for the top 50 it's manageable.
-        const profilesRef = collection(db, "profiles");
-        // Simple case: fetch profiles for the users we found
         const profileMap = new Map<string, ProfileSummary>();
-        
-        // Fetching profiles in batches of 30 due to Firestore limits
-        const batches = [];
-        for (let i = 0; i < userIds.length; i += 30) {
-          batches.push(userIds.slice(i, i + 30));
-        }
-
-        for (const batch of batches) {
-          const pq = query(profilesRef, where("user_id", "in", batch));
-          const ps = await getDocs(pq);
-          ps.docs.forEach(doc => {
-            const data = doc.data();
-            profileMap.set(data.user_id, data as ProfileSummary);
-          });
-        }
+        const publicProfiles = await getPublicProfilesByIds(userIds);
+        publicProfiles.forEach((profile, profileId) => {
+          profileMap.set(profileId, profile as ProfileSummary);
+        });
 
         const rows = userIds
           .map((userId) => {
@@ -149,16 +137,10 @@ export default function Ranking() {
         const uids = [...totalsMap.entries()].sort((a, b) => b[1] - a[1]);
         if (!uids.length) { setBolaoRows([]); setBolaoLoading(false); return; }
         const profileMap = new Map<string, ProfileSummary>();
-        for (let i = 0; i < uids.length; i += 30) {
-          const batch = uids.slice(i, i + 30).map(([id]) => id);
-          const ps = await getDocs(
-            query(collection(db, "profiles"), where("user_id", "in", batch))
-          );
-          ps.docs.forEach((doc) => {
-            const data = doc.data();
-            profileMap.set(data.user_id as string, data as ProfileSummary);
-          });
-        }
+        const publicProfiles = await getPublicProfilesByIds(uids.map(([id]) => id));
+        publicProfiles.forEach((profile, profileId) => {
+          profileMap.set(profileId, profile as ProfileSummary);
+        });
         setBolaoRows(
           uids.map(([userId, points]) => {
             const p = profileMap.get(userId);

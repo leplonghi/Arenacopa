@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { signInWithGoogle, signInWithPassword, signUpWithPassword } from "@/services/auth/auth.service";
 import { acceptTerms, ensureProfile, updateProfile } from "@/services/profile/profile.service";
+import { sanitizeInternalRedirect } from "@/lib/security";
 
 const Auth = () => {
   const logoUrl = "/logo.png?v=20260316";
@@ -22,7 +23,18 @@ const Auth = () => {
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const { t } = useTranslation('auth');
-  const redirectPath = searchParams.get("redirect") || "/";
+  const redirectPath = sanitizeInternalRedirect(searchParams.get("redirect"));
+
+  const getSafeAuthError = (fallback: string, error: unknown) => {
+    if (error instanceof Error) {
+      const message = error.message.toLowerCase();
+      if (message.includes("muitas tentativas")) {
+        return error.message;
+      }
+    }
+
+    return fallback;
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,10 +78,9 @@ const Auth = () => {
         navigate(redirectPath);
       }
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Algo deu errado";
       toast({
         title: t('login.error'),
-        description: message,
+        description: getSafeAuthError(t('login.error'), error),
         variant: "destructive",
       });
     } finally {
@@ -99,10 +110,9 @@ const Auth = () => {
       navigate(redirectPath);
     } catch (error) {
       console.error("Erro no login com Google:", error);
-      const message = error instanceof Error ? error.message : t('login.error_google');
       toast({
         title: t('login.error'),
-        description: message,
+        description: getSafeAuthError(t('login.error_google'), error),
         variant: "destructive",
       });
       setLoading(false);

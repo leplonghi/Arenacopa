@@ -155,8 +155,8 @@ export function useCreateBolao() {
     } catch (error) {
       console.error(`Erro ao criar bolão [${phase}]:`, error);
       toast({
-        title: `Erro [${phase}]`,
-        description: error instanceof Error ? error.message : "Erro desconhecido",
+        title: t('create.error_title', { defaultValue: 'Não foi possível criar o bolão' }),
+        description: t('create.error_desc', { defaultValue: 'Revise os dados e tente novamente em alguns instantes.' }),
         variant: "destructive",
       });
       return null;

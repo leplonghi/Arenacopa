@@ -285,6 +285,8 @@
     "join_success_title": "Entraste en la quiniela.",
     "join_success_desc": "Ahora solo queda pronosticar y subir en el ranking.",
     "search_placeholder": "Buscar mis quinielas...",
+    "tabs_boloes": "Quinielas",
+    "tabs_ranking": "Ranking",
     "empty_title": "No se encontró ninguna quiniela",
     "empty_desc": "Crea tu primera quiniela o participa usando un código de invitación.",
     "section_created": "Quinielas creadas por mí",
@@ -309,7 +311,18 @@
     "join_error_desc": "Revisa el código o inténtalo de nuevo en un momento.",
     "already_joined": "Ya estás en esta quiniela.",
     "invalid_code_title": "Código inválido.",
-    "invalid_code_desc": "Revisa la invitación e inténtalo de nuevo."
+    "invalid_code_desc": "Revisa la invitación e inténtalo de nuevo.",
+    "join_closed_error": "Esta quiniela no está disponible para nuevas entradas ahora.",
+    "rapid_title": "Quiniela Rápida",
+    "rapid_desc": "Elige un partido, comparte el enlace y listo.",
+    "new_badge": "Nuevo",
+    "intro_title": "¿Qué es una quiniela?",
+    "intro_desc_worldcup": "Una quiniela es una competencia entre amigos donde cada uno pronostica los partidos del Mundial. Crea la tuya, invita al grupo y descubre quién sabe más de fútbol.",
+    "intro_desc_championship": "Una quiniela es una competencia entre amigos donde cada uno pronostica los partidos de {{championship}}. Crea la tuya, invita al grupo y descubre quién sabe más de fútbol.",
+    "create_cta": "Crear quiniela",
+    "understood_cta": "Entendido",
+    "groups_title": "Grupos",
+    "groups_desc": "Reúne tus quinielas en un grupo y sigue la clasificación general."
   },
   "fab": {
     "pending_title": "Pronósticos pendientes",

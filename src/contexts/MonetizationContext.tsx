@@ -82,8 +82,8 @@ export function MonetizationProvider({ children }: { children: React.ReactNode }
       redirectToCheckout(checkout.url);
       return true;
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Erro ao iniciar o checkout.";
-      toast.error(message);
+      console.error("Error starting premium checkout", error);
+      toast.error("Não foi possível iniciar o checkout premium agora.");
       return false;
     } finally {
       setIsLoading(false);

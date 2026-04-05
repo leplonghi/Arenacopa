@@ -4,6 +4,7 @@ import { X, Check, Crown, Zap, Shield, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useMonetization } from "@/contexts/MonetizationContext";
 import { monetizationEnv } from "@/lib/env";
+import { useTranslation } from "react-i18next";
 import {
     getPremiumSupportMailto,
 } from "@/services/monetization/stripe.service";
@@ -16,8 +17,10 @@ interface PremiumModalProps {
 
 export function PremiumModal({ isOpen, onClose, onSuccess }: PremiumModalProps) {
     const { purchasePremium, isLoading } = useMonetization();
+    const { t } = useTranslation("premium");
     const canStartPremiumCheckout = monetizationEnv.enablePremiumSimulation || monetizationEnv.premiumCheckoutEnabled;
     const supportMailto = getPremiumSupportMailto();
+    const benefitTexts = t("modal.benefits", { returnObjects: true }) as string[];
 
     const handlePurchase = async () => {
         if (!canStartPremiumCheckout) {
@@ -58,7 +61,7 @@ export function PremiumModal({ isOpen, onClose, onSuccess }: PremiumModalProps) 
 
                         <div className="relative z-10 text-center text-white">
                             <Crown className="w-12 h-12 mx-auto drop-shadow-lg mb-2" />
-                            <h2 className="text-2xl font-black uppercase tracking-widest drop-shadow-md">Arena Premium</h2>
+                            <h2 className="text-2xl font-black uppercase tracking-widest drop-shadow-md">{t("modal.title")}</h2>
                         </div>
 
                         <button
@@ -71,16 +74,16 @@ export function PremiumModal({ isOpen, onClose, onSuccess }: PremiumModalProps) 
 
                     <div className="p-6 space-y-6">
                         <div className="text-center space-y-1">
-                            <h3 className="text-lg font-bold text-foreground">Desbloqueie o potencial máximo!</h3>
-                            <p className="text-sm text-muted-foreground">Torne-se um membro Premium e leve sua experiência na Copa para outro nível.</p>
+                            <h3 className="text-lg font-bold text-foreground">{t("modal.subtitle")}</h3>
+                            <p className="text-sm text-muted-foreground">{t("modal.description")}</p>
                         </div>
 
                         <div className="space-y-3">
                             {[
-                                { icon: <Zap className="w-4 h-4 text-yellow-500" />, text: "Remover todos os anúncios" },
-                                { icon: <Shield className="w-4 h-4 text-copa-blue" />, text: "Estatísticas avançadas" },
-                                { icon: <Sparkles className="w-4 h-4 text-copa-green-light" />, text: "Insignia exclusiva de apoiador" },
-                                { icon: <Crown className="w-4 h-4 text-copa-orange" />, text: "Acesso antecipado a novidades" },
+                                { icon: <Zap className="w-4 h-4 text-yellow-500" />, text: benefitTexts[0] },
+                                { icon: <Shield className="w-4 h-4 text-copa-blue" />, text: benefitTexts[1] },
+                                { icon: <Sparkles className="w-4 h-4 text-copa-green-light" />, text: benefitTexts[2] },
+                                { icon: <Crown className="w-4 h-4 text-copa-orange" />, text: benefitTexts[3] },
                             ].map((item, i) => (
                                 <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-secondary/50 border border-border/50">
                                     <div className="p-2 rounded-full bg-background shadow-sm">
@@ -94,10 +97,10 @@ export function PremiumModal({ isOpen, onClose, onSuccess }: PremiumModalProps) 
 
                         <div className="pt-2">
                             <div className="flex items-center justify-between mb-4">
-                                <span className="text-sm text-muted-foreground line-through">R$ 19,90</span>
+                                <span className="text-sm text-muted-foreground line-through">{t("modal.old_price")}</span>
                                 <div className="text-right">
                                     <span className="text-2xl font-black text-primary">R$ 4,99</span>
-                                    <span className="text-[10px] text-muted-foreground block uppercase font-bold tracking-wider">Pagamento Único</span>
+                                    <span className="text-[10px] text-muted-foreground block uppercase font-bold tracking-wider">{t("modal.single_payment")}</span>
                                 </div>
                             </div>
 
@@ -109,15 +112,15 @@ export function PremiumModal({ isOpen, onClose, onSuccess }: PremiumModalProps) 
                                 {isLoading ? (
                                     <span className="flex items-center gap-2">
                                         <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                        Processando...
+                                        {t("modal.processing")}
                                     </span>
                                 ) : !canStartPremiumCheckout ? (
                                     <span className="flex items-center gap-2">
-                                        QUERO SER AVISADO <Crown className="w-4 h-4 fill-current" />
+                                        {t("modal.notify").toUpperCase()} <Crown className="w-4 h-4 fill-current" />
                                     </span>
                                 ) : (
                                     <span className="flex items-center gap-2">
-                                        QUERO SER PREMIUM <Crown className="w-4 h-4 fill-current" />
+                                        {t("modal.buy").toUpperCase()} <Crown className="w-4 h-4 fill-current" />
                                     </span>
                                 )}
                             </Button>
@@ -127,13 +130,13 @@ export function PremiumModal({ isOpen, onClose, onSuccess }: PremiumModalProps) 
                                     variant="outline"
                                     className="mt-3 w-full h-11 rounded-xl border-white/15 bg-white/[0.03] text-white hover:bg-white/[0.08]"
                                 >
-                                    <a href={supportMailto}>Falar com o suporte</a>
+                                    <a href={supportMailto}>{t("modal.support")}</a>
                                 </Button>
                             )}
                             <p className="text-[10px] text-center text-muted-foreground mt-3">
                                 {canStartPremiumCheckout
-                                    ? "Compra segura e criptografada. Satisfacao garantida."
-                                    : "O checkout ainda está em preparação. Entre na lista de aviso pelo suporte."}
+                                    ? t("modal.secure_message")
+                                    : t("modal.preparing_message")}
                             </p>
                         </div>
                     </div>

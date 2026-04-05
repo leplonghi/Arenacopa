@@ -76,7 +76,7 @@ export default function Boloes() {
   const { user, session } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { t } = useTranslation('bolao');
+  const { t } = useTranslation(['bolao', 'common']);
   const { current: championship, isWorldCup } = useChampionship();
   const [activeView, setActiveView] = useState<"boloes" | "ranking">("boloes");
 
@@ -298,7 +298,7 @@ export default function Boloes() {
     loadData();
   }, [loadData]);
 
-  const completeJoin = async (bolaoId: string) => {
+  const completeJoin = async (bolaoId: string, inviteCode?: string | null) => {
     if (!user) return;
     try {
       const memberId = `${user.id}_${bolaoId}`;
@@ -307,6 +307,7 @@ export default function Boloes() {
         user_id: user.id,
         role: "member",
         payment_status: "exempt",
+        invite_code: inviteCode ?? null,
         created_at: new Date().toISOString(),
         joined_at: new Date().toISOString(),
       });
@@ -343,13 +344,13 @@ export default function Boloes() {
       const q = query(collection(db, "boloes"), where("invite_code", "==", normalizedCode), limit(1));
       const querySnap = await getDocs(q);
 
-      if (querySnap.empty) throw new Error("Código inválido.");
+      if (querySnap.empty) throw new Error(t("page.invalid_code_desc"));
       
       const bolaoDoc = querySnap.docs[0];
       const bolaoData = bolaoDoc.data();
 
       if (!statusWhitelist.includes(bolaoData.status)) {
-        throw new Error("Este bolão não está disponível para entrada.");
+        throw new Error(t("page.join_closed_error"));
       }
 
       // Check if already a member
@@ -362,13 +363,21 @@ export default function Boloes() {
         return;
       }
 
-      await completeJoin(bolaoDoc.id);
+      await completeJoin(bolaoDoc.id, normalizedCode);
       setJoinCode("");
       setShowJoin(false);
     } catch (error) {
+      const safeMessage =
+        error instanceof Error &&
+        [
+          t("page.invalid_code_desc"),
+          t("page.join_closed_error"),
+        ].includes(error.message)
+          ? error.message
+          : t('page.invalid_code_desc');
       toast({
         title: t('page.invalid_code_title'),
-        description: error instanceof Error ? error.message : t('page.invalid_code_desc'),
+        description: safeMessage,
         variant: "destructive",
       });
     } finally {
@@ -409,12 +418,12 @@ export default function Boloes() {
               <Zap className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-sm font-black text-white">⚡ Bolão Rápido</p>
-              <p className="text-xs text-zinc-400">Escolha um jogo, manda o link, pronto.</p>
+              <p className="text-sm font-black text-white">⚡ {t('page.rapid_title')}</p>
+              <p className="text-xs text-zinc-400">{t('page.rapid_desc')}</p>
             </div>
           </div>
           <div className="shrink-0 rounded-2xl bg-primary px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.14em] text-black">
-            Novo
+            {t('page.new_badge')}
           </div>
         </Link>
       )}
@@ -431,7 +440,7 @@ export default function Boloes() {
             }`}
           >
             <Trophy className="h-3.5 w-3.5 shrink-0" />
-            <span className="truncate">Bolões</span>
+            <span className="truncate">{t('page.tabs_boloes')}</span>
           </button>
           <button
             onClick={() => setActiveView("ranking")}
@@ -442,7 +451,7 @@ export default function Boloes() {
             }`}
           >
             <BarChart2 className="h-3.5 w-3.5 shrink-0" />
-            <span className="truncate">Ranking</span>
+            <span className="truncate">{t('page.tabs_ranking')}</span>
           </button>
         </div>
         {activeView === "boloes" && (
@@ -463,7 +472,7 @@ export default function Boloes() {
         <div className="mb-6 relative rounded-[24px] border border-emerald-500/10 bg-gradient-to-br from-emerald-500/5 to-[transparent] p-5 pr-12 backdrop-blur-md">
           <button
             onClick={dismissBanner}
-            aria-label="Fechar"
+            aria-label={t('common:common.close')}
             className="absolute right-4 top-4 rounded-full p-1 text-white/40 hover:text-white transition-colors"
           >
             <X className="h-4 w-4" />
@@ -471,9 +480,11 @@ export default function Boloes() {
           <div className="flex gap-4">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/15 text-2xl">{championship.emoji ?? "⚽"}</div>
             <div>
-              <p className="text-sm font-black text-white">O que é um bolão?</p>
+              <p className="text-sm font-black text-white">{t('page.intro_title')}</p>
               <p className="mt-1 text-xs text-zinc-400 leading-relaxed">
-                Um bolão é uma competição entre amigos onde cada um faz seus palpites nos jogos {isWorldCup ? "da Copa" : `do ${championship.name}`}. Crie o seu, convide a galera e veja quem manda mais de futebol!
+                {isWorldCup
+                  ? t('page.intro_desc_worldcup')
+                  : t('page.intro_desc_championship', { championship: championship.name })}
               </p>
               <div className="mt-3 flex flex-wrap gap-2">
                 <Link
@@ -482,13 +493,13 @@ export default function Boloes() {
                   className="inline-flex items-center gap-1.5 rounded-2xl bg-emerald-500 px-4 py-2 text-[11px] font-black uppercase tracking-[0.14em] text-black"
                 >
                   <Plus className="h-3.5 w-3.5" />
-                  Criar bolão
+                  {t('page.create_cta')}
                 </Link>
                 <button
                   onClick={dismissBanner}
                   className="inline-flex items-center gap-1.5 rounded-2xl bg-white/10 px-4 py-2 text-[11px] font-black uppercase tracking-[0.14em] text-white/70"
                 >
-                  Entendi
+                  {t('page.understood_cta')}
                 </button>
               </div>
             </div>
@@ -520,8 +531,8 @@ export default function Boloes() {
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/15 text-xl">👥</div>
           <div>
-            <p className="text-sm font-black">Grupos</p>
-            <p className="text-xs text-zinc-400">Reúna seus bolões em um grupo e veja o ranking geral</p>
+            <p className="text-sm font-black">{t('page.groups_title')}</p>
+            <p className="text-xs text-zinc-400">{t('page.groups_desc')}</p>
           </div>
         </div>
         <Users2 className="h-5 w-5 text-primary/60 shrink-0" />
