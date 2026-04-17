@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { db } from "@/integrations/firebase/client";
 import { 
     collection, 
@@ -148,6 +148,18 @@ export function JogosTab({
     const matchMarkets = useMemo(
         () => markets.filter((market) => market.scope === "match" && market.match_id),
         [markets]
+    );
+    const matchMarketsByMatchId = useMemo(
+        () =>
+            matchMarkets.reduce<Record<string, BolaoMarket[]>>((accumulator, market) => {
+                if (!market.match_id) return accumulator;
+                if (!accumulator[market.match_id]) {
+                    accumulator[market.match_id] = [];
+                }
+                accumulator[market.match_id].push(market);
+                return accumulator;
+            }, {}),
+        [matchMarkets]
     );
     const exactScoreMarketByMatchId = useMemo(
         () =>
@@ -409,13 +421,13 @@ export function JogosTab({
         }));
     };
 
-    const getSavedFirstScorer = (matchId: string) => {
+    const getSavedFirstScorer = useCallback((matchId: string) => {
         const market = firstScorerMarketByMatchId[matchId];
         if (!market) return "";
 
         const prediction = predictionsByMarketId[market.id];
         return typeof prediction?.prediction_value === "string" ? prediction.prediction_value : "";
-    };
+    }, [firstScorerMarketByMatchId, predictionsByMarketId]);
 
     const updateFirstScorer = (matchId: string, value: string) => {
         setDraftFirstScorers((currentDrafts) => ({
@@ -511,6 +523,85 @@ export function JogosTab({
         }
     };
 
+    const uniqueTeams = Array.from(new Set(matches.flatMap(m => [m.home_team_code, m.away_team_code]))).filter(Boolean).sort();
+    const uniqueStages = Array.from(new Set(matches.map(m => m.stage))).filter(Boolean);
+
+    const filteredMatches = matches.filter(m => {
+        if (filterTeam !== "all" && m.home_team_code !== filterTeam && m.away_team_code !== filterTeam) return false;
+        if (filterStage !== "all" && m.stage !== filterStage && new Date(m.match_date).toLocaleDateString("pt-BR") !== filterStage) return false;
+        return true;
+    });
+    const enrichedMatches = useMemo(() => {
+        return filteredMatches
+            .map((match) => {
+                const isStarted = match.status === 'live' || match.status === 'finished';
+                const marketsForMatch = matchMarketsByMatchId[match.id] ?? [];
+                const firstScorerMarket = firstScorerMarketByMatchId[match.id];
+                const savedFirstScorer = getSavedFirstScorer(match.id);
+                const currentFirstScorer = draftFirstScorers[match.id] ?? savedFirstScorer;
+                const p = getCurrentPalpite(match.id);
+                const savedHomeValue = savedPalpites[match.id]?.home ?? (p.id ? p.home : "");
+                const savedAwayValue = savedPalpites[match.id]?.away ?? (p.id ? p.away : "");
+                const scoreDirty = p.home !== savedHomeValue || p.away !== savedAwayValue;
+                const firstScorerDirty = currentFirstScorer !== savedFirstScorer;
+                const hasScoreReady = p.home !== '' && p.away !== '';
+                const hasSavedPrediction = Boolean(p.id || savedFirstScorer);
+                const isDirty = scoreDirty || firstScorerDirty;
+                const canSave = !isStarted && ((scoreDirty && hasScoreReady) || (firstScorerDirty && currentFirstScorer !== ""));
+                const isHighlighted = highlightedMatchId === match.id;
+                const hasExactScoreSaved = Boolean(
+                    (p.home !== "" && p.away !== "") ||
+                    savedPalpites[match.id]?.id
+                );
+                const hasAllOpenMatchMarketsSaved =
+                    marketsForMatch.length === 0
+                        ? hasExactScoreSaved
+                        : marketsForMatch.every((market) =>
+                              market.slug === "exact_score"
+                                  ? hasExactScoreSaved
+                                  : Boolean(predictionsByMarketId[market.id])
+                          );
+                const isPending = !isStarted && (isHighlighted || !hasAllOpenMatchMarketsSaved || isDirty);
+                const sortPriority = isHighlighted ? 0 : isPending ? 1 : isStarted ? 3 : 2;
+
+                return {
+                    match,
+                    isStarted,
+                    marketsForMatch,
+                    firstScorerMarket,
+                    savedFirstScorer,
+                    currentFirstScorer,
+                    p,
+                    hasSavedPrediction,
+                    isDirty,
+                    canSave,
+                    isHighlighted,
+                    isPending,
+                    sortPriority,
+                };
+            })
+            .sort((left, right) => {
+                if (left.sortPriority !== right.sortPriority) {
+                    return left.sortPriority - right.sortPriority;
+                }
+
+                return new Date(left.match.match_date).getTime() - new Date(right.match.match_date).getTime();
+            });
+    }, [
+        draftFirstScorers,
+        filteredMatches,
+        firstScorerMarketByMatchId,
+        getCurrentPalpite,
+        getSavedFirstScorer,
+        highlightedMatchId,
+        matchMarketsByMatchId,
+        predictionsByMarketId,
+        savedPalpites,
+    ]);
+    const pendingMatchesCount = enrichedMatches.filter((item) => item.isPending).length;
+    const lockedMatchesCount = enrichedMatches.filter((item) => item.isStarted).length;
+    const completedMatchesCount = enrichedMatches.filter((item) => !item.isStarted && !item.isPending).length;
+
     if (!matches.length) {
         return (
             <EmptyState
@@ -521,24 +612,59 @@ export function JogosTab({
         );
     }
 
-    const uniqueTeams = Array.from(new Set(matches.flatMap(m => [m.home_team_code, m.away_team_code]))).filter(Boolean).sort();
-    const uniqueStages = Array.from(new Set(matches.map(m => m.stage))).filter(Boolean);
-
-    const filteredMatches = matches.filter(m => {
-        if (filterTeam !== "all" && m.home_team_code !== filterTeam && m.away_team_code !== filterTeam) return false;
-        if (filterStage !== "all" && m.stage !== filterStage && new Date(m.match_date).toLocaleDateString("pt-BR") !== filterStage) return false;
-        return true;
-    });
-
     return (
         <div className="space-y-4">
+            <div className="rounded-[28px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(255,198,0,0.12),transparent_35%),rgba(255,255,255,0.03)] p-4">
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                    <div>
+                        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
+                            {t('palpites.header_kicker', { defaultValue: 'Sua rodada agora' })}
+                        </p>
+                        <h3 className="mt-2 text-xl font-black tracking-tight text-white sm:text-2xl">
+                            {pendingMatchesCount > 0
+                                ? t('palpites.pending_title', {
+                                      defaultValue: 'Faltam {{count}} jogos para fechar',
+                                      count: pendingMatchesCount,
+                                  })
+                                : t('palpites.pending_title_done', { defaultValue: 'Tudo salvo nesta lista' })}
+                        </h3>
+                        <p className="mt-2 max-w-2xl text-sm text-zinc-300">
+                            {pendingMatchesCount > 0
+                                ? t('palpites.pending_desc', { defaultValue: 'Comece pelos jogos destacados. Os abertos e pendentes aparecem primeiro para você resolver rápido.' })
+                                : t('palpites.pending_desc_done', { defaultValue: 'Agora você pode revisar palpites salvos, compartilhar seus bilhetes e acompanhar os jogos fechados.' })}
+                        </p>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-2 sm:min-w-[300px]">
+                        <div className="rounded-2xl border border-white/10 bg-black/20 px-3 py-3 text-center">
+                            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-zinc-500">
+                                {t('palpites.stats_pending', { defaultValue: 'Pendentes' })}
+                            </p>
+                            <p className="mt-1 text-2xl font-black text-white">{pendingMatchesCount}</p>
+                        </div>
+                        <div className="rounded-2xl border border-white/10 bg-black/20 px-3 py-3 text-center">
+                            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-zinc-500">
+                                {t('palpites.stats_saved', { defaultValue: 'Salvos' })}
+                            </p>
+                            <p className="mt-1 text-2xl font-black text-white">{completedMatchesCount}</p>
+                        </div>
+                        <div className="rounded-2xl border border-white/10 bg-black/20 px-3 py-3 text-center">
+                            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-zinc-500">
+                                {t('palpites.stats_closed', { defaultValue: 'Fechados' })}
+                            </p>
+                            <p className="mt-1 text-2xl font-black text-white">{lockedMatchesCount}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div className="flex gap-2">
                 <select 
                     value={filterTeam} 
                     onChange={e => setFilterTeam(e.target.value)}
                     className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-3 text-xs font-bold text-white outline-none focus:border-primary/50"
                 >
-                    <option value="all" className="bg-zinc-900">Todas as seleções</option>
+                    <option value="all" className="bg-zinc-900">{t('palpites.filter_all_teams', { defaultValue: 'Todas as seleções' })}</option>
                     {uniqueTeams.map(t => <option key={t} value={t} className="bg-zinc-900">{t}</option>)}
                 </select>
                 <select 
@@ -546,32 +672,12 @@ export function JogosTab({
                     onChange={e => setFilterStage(e.target.value)}
                     className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-3 text-xs font-bold text-white outline-none focus:border-primary/50"
                 >
-                    <option value="all" className="bg-zinc-900">Cronograma (Todos)</option>
+                    <option value="all" className="bg-zinc-900">{t('palpites.filter_all_stages', { defaultValue: 'Cronograma (Todos)' })}</option>
                     {uniqueStages.map(s => <option key={s} value={s} className="bg-zinc-900">{s}</option>)}
                 </select>
             </div>
 
-            {filteredMatches.map(m => {
-                const isStarted = m.status === 'live' || m.status === 'finished';
-                const marketsForMatch = matchMarkets.filter((market) => market.match_id === m.id);
-                const firstScorerMarket = firstScorerMarketByMatchId[m.id];
-                const savedFirstScorer = getSavedFirstScorer(m.id);
-                const currentFirstScorer = draftFirstScorers[m.id] ?? savedFirstScorer;
-                const p = getCurrentPalpite(m.id);
-                const savedHomeValue = savedPalpites[m.id]?.home ?? (p.id ? p.home : "");
-                const savedAwayValue = savedPalpites[m.id]?.away ?? (p.id ? p.away : "");
-                const scoreDirty =
-                    p.home !== savedHomeValue ||
-                    p.away !== savedAwayValue;
-                const firstScorerDirty = currentFirstScorer !== savedFirstScorer;
-                const hasScoreReady = p.home !== '' && p.away !== '';
-                const hasSavedPrediction = Boolean(p.id || savedFirstScorer);
-                const isDirty =
-                    scoreDirty ||
-                    firstScorerDirty;
-                const canSave = !isStarted && ((scoreDirty && hasScoreReady) || (firstScorerDirty && currentFirstScorer !== ""));
-                const isHighlighted = highlightedMatchId === m.id;
-
+            {enrichedMatches.map(({ match: m, isStarted, marketsForMatch, firstScorerMarket, savedFirstScorer, currentFirstScorer, p, hasSavedPrediction, isDirty, canSave, isHighlighted, isPending }) => {
                 return (
                     <div id={`match-card-${m.id}`} key={m.id} className={cn(
                         "relative p-6 bg-white/[0.03] border rounded-[32px] overflow-hidden transition-all",
@@ -579,7 +685,9 @@ export function JogosTab({
                     )}>
                         {isStarted && <div className="absolute inset-0 bg-black/50 z-10 backdrop-blur-sm pointer-events-none flex flex-col items-center justify-center">
                             <Lock className="w-8 h-8 text-gray-500 mb-2" />
-                            <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">Palpites Encerrados</span>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">
+                                {t('palpites.closed_label', { defaultValue: 'Palpites encerrados' })}
+                            </span>
                             {m.status === 'finished' && p.id && (
                                 <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="mt-4 flex flex-col items-center">
                                     <span className="text-4xl font-black text-white">{p.points}</span>
@@ -643,9 +751,11 @@ export function JogosTab({
                             </div>
                         )}
 
-                        {isHighlighted && (
+                        {isPending && (
                             <div className="mb-4 rounded-2xl border border-primary/20 bg-primary/10 px-4 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-primary">
-                                Este jogo está pendente para você.
+                                {isHighlighted
+                                    ? t('palpites.highlighted_pending', { defaultValue: 'Este jogo está pendente para você.' })
+                                    : t('palpites.queue_pending', { defaultValue: 'Resolva este jogo antes do próximo prazo.' })}
                             </div>
                         )}
 
@@ -722,7 +832,7 @@ export function JogosTab({
                                 <div className="mb-3 flex items-center justify-between gap-3">
                                     <div>
                                         <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">Mercado extra da partida</p>
-                                        <p className="mt-1 text-sm font-bold text-white">Quem marca primeiro?</p>
+                                        <p className="mt-1 text-sm font-bold text-white">{t('palpites.first_scorer_title', { defaultValue: 'Quem marca primeiro?' })}</p>
                                     </div>
                                     <TooltipProvider delayDuration={120}>
                                         <Tooltip>
@@ -733,7 +843,7 @@ export function JogosTab({
                                                     aria-label={`Entender mercado ${firstScorerMarket.title}`}
                                                 >
                                                     <CircleHelp className="h-3.5 w-3.5 text-primary" />
-                                                    Como pontua
+                                                    {t('palpites.how_it_scores', { defaultValue: 'Como pontua' })}
                                                 </button>
                                             </TooltipTrigger>
                                             <TooltipContent className="max-w-[240px] rounded-2xl border-white/10 bg-zinc-950 px-4 py-3 text-left text-xs text-zinc-200">
@@ -748,7 +858,7 @@ export function JogosTab({
                                     {[
                                         { value: m.home_team_code, label: m.home_team_code },
                                         { value: m.away_team_code, label: m.away_team_code },
-                                        { value: "none", label: "Sem gols" },
+                                        { value: "none", label: t('palpites.no_goals', { defaultValue: 'Sem gols' }) },
                                     ].map((option) => {
                                         const isSelected = currentFirstScorer === option.value;
                                         return (
@@ -771,7 +881,7 @@ export function JogosTab({
 
                                 {savedFirstScorer && (
                                     <p className="mt-3 text-xs text-zinc-400">
-                                        Salvo: <span className="font-black text-white">{savedFirstScorer === "none" ? "Sem gols" : savedFirstScorer}</span>
+                                        {t('palpites.saved_label', { defaultValue: 'Salvo:' })} <span className="font-black text-white">{savedFirstScorer === "none" ? t('palpites.no_goals', { defaultValue: 'Sem gols' }) : savedFirstScorer}</span>
                                     </p>
                                 )}
                             </div>
@@ -784,7 +894,11 @@ export function JogosTab({
                                     disabled={!canSave || savingMatchId === m.id}
                                     className="flex-1 mt-6 py-4 rounded-xl font-black uppercase text-[10px] tracking-widest transition-all hover:scale-[1.02] active:scale-95 bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white disabled:opacity-50 disabled:hover:scale-100"
                                 >
-                                    {savingMatchId === m.id ? "Salvando..." : hasSavedPrediction && !isDirty ? "Palpite Salvo" : "Salvar Palpite"}
+                                    {savingMatchId === m.id
+                                        ? t('palpites.saving_cta', { defaultValue: 'Salvando...' })
+                                        : hasSavedPrediction && !isDirty
+                                            ? t('palpites.saved_cta', { defaultValue: 'Palpite salvo' })
+                                            : t('palpites.save_cta', { defaultValue: 'Salvar palpite' })}
                                 </button>
                                 <button
                                     onClick={() => openShareModal(m.id, m.home_team_code, m.away_team_code)}

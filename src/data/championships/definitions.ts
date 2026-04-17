@@ -1,5 +1,7 @@
 import type { Championship } from "@/types/championship";
 
+const CHAMPIONSHIP_LOGO_VERSION = "20260405b";
+
 // ============================================================
 // Static definitions of all championships supported by ArenaCopa
 // Ordered by priority / current relevance
@@ -12,7 +14,7 @@ export const CHAMPIONSHIPS: Championship[] = [
     name: "Copa do Mundo 2026",
     shortName: "Copa 2026",
     logo: "🌍",
-    logoUrl: "/images/championships/wc2026.svg",
+    logoUrl: `/images/championships/wc2026.png?v=${CHAMPIONSHIP_LOGO_VERSION}`,
     color: "#22c55e",
     gradient: ["#064e3b", "#14532d"],
     confederation: "FIFA",
@@ -36,7 +38,7 @@ export const CHAMPIONSHIPS: Championship[] = [
     name: "Brasileirão Série A",
     shortName: "Brasileirão",
     logo: "🇧🇷",
-    logoUrl: "/images/championships/brasileirao2026.svg",
+    logoUrl: `/images/championships/brasileirao2026.png?v=${CHAMPIONSHIP_LOGO_VERSION}`,
     color: "#22c55e",
     gradient: ["#001d0e", "#003419"],
     country: "BR",
@@ -61,7 +63,7 @@ export const CHAMPIONSHIPS: Championship[] = [
     name: "UEFA Champions League",
     shortName: "Champions",
     logo: "⭐",
-    logoUrl: "/images/championships/ucl2526.svg",
+    logoUrl: `/images/championships/ucl2526.png?v=${CHAMPIONSHIP_LOGO_VERSION}`,
     color: "#60a5fa",
     gradient: ["#000a1f", "#001035"],
     confederation: "UEFA",
@@ -85,7 +87,7 @@ export const CHAMPIONSHIPS: Championship[] = [
     name: "La Liga",
     shortName: "La Liga",
     logo: "🇪🇸",
-    logoUrl: "/images/championships/laliga2526.svg",
+    logoUrl: `/images/championships/laliga2526.png?v=${CHAMPIONSHIP_LOGO_VERSION}`,
     color: "#fb923c",
     gradient: ["#280800", "#4d1000"],
     country: "ES",
@@ -110,7 +112,7 @@ export const CHAMPIONSHIPS: Championship[] = [
     name: "Premier League",
     shortName: "Premier",
     logo: "🏴󠁧󠁢󠁥󠁮󠁧󠁿",
-    logoUrl: "/images/championships/premier2526.svg",
+    logoUrl: `/images/championships/premier2526.png?v=${CHAMPIONSHIP_LOGO_VERSION}`,
     color: "#c084fc",
     gradient: ["#120016", "#38003c"],
     country: "GB",

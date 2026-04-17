@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Redirecting…</title>
+    <script>
+      (function () {
+        var currentPath =
+          window.location.pathname +
+          window.location.search +
+          window.location.hash;
+        try {
+          sessionStorage.setItem("spa_redirect", currentPath);
+        } catch (error) {}
+        window.location.replace("/?redirect=" + encodeURIComponent(currentPath));
+      })();
+    </script>
+  </head>
+  <body></body>
+  </html>

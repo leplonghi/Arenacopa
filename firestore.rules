@@ -16,8 +16,17 @@ service cloud.firestore {
       return exists(/databases/$(database)/documents/bolao_members/$(request.auth.uid + '_' + bolaoId));
     }
 
+    function isBolaoMemberAfter(bolaoId) {
+      return existsAfter(/databases/$(database)/documents/bolao_members/$(request.auth.uid + '_' + bolaoId));
+    }
+
     function isBolaoCreator(bolaoId) {
       return get(/databases/$(database)/documents/boloes/$(bolaoId)).data.creator_id == request.auth.uid;
+    }
+
+    function isBolaoCreatorAfter(bolaoId) {
+      return existsAfter(/databases/$(database)/documents/boloes/$(bolaoId)) &&
+        getAfter(/databases/$(database)/documents/boloes/$(bolaoId)).data.creator_id == request.auth.uid;
     }
 
     function getBolao(bolaoId) {
@@ -140,11 +149,11 @@ service cloud.firestore {
           isOwner(request.resource.data.user_id) &&
           memberId == request.auth.uid + '_' + request.resource.data.bolao_id &&
           request.resource.data.role == 'member' &&
-          request.resource.data.payment_status in ['pending', 'exempt'] &&
+          request.resource.data.payment_status == 'pending' &&
           canSelfJoinBolao(request.resource.data.bolao_id)
         ) ||
         (
-          isBolaoCreator(request.resource.data.bolao_id) &&
+          (isBolaoCreator(request.resource.data.bolao_id) || isBolaoCreatorAfter(request.resource.data.bolao_id)) &&
           request.resource.data.role in ['member', 'admin'] &&
           request.resource.data.user_id is string
         )
@@ -162,7 +171,10 @@ service cloud.firestore {
         isBolaoMember(resource.data.bolao_id) ||
         isBolaoCreator(resource.data.bolao_id)
       );
-      allow create: if isSignedIn() && isBolaoCreator(request.resource.data.bolao_id);
+      allow create: if isSignedIn() && (
+        isBolaoCreator(request.resource.data.bolao_id) ||
+        isBolaoCreatorAfter(request.resource.data.bolao_id)
+      );
       allow update, delete: if isSignedIn() && isBolaoCreator(resource.data.bolao_id);
     }
 
@@ -212,7 +224,11 @@ service cloud.firestore {
       allow read: if isSignedIn() && isBolaoMember(resource.data.bolao_id);
       allow create, update: if isSignedIn() &&
         isOwner(request.resource.data.user_id) &&
-        isBolaoMember(request.resource.data.bolao_id) &&
+        (
+          isBolaoMember(request.resource.data.bolao_id) ||
+          isBolaoMemberAfter(request.resource.data.bolao_id) ||
+          isBolaoCreatorAfter(request.resource.data.bolao_id)
+        ) &&
         request.resource.data.user_id == request.auth.uid;
       allow delete: if isSignedIn() && isOwner(resource.data.user_id);
     }

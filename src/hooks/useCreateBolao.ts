@@ -5,9 +5,10 @@ import {
   orderBy,
   getDocs,
   getDoc,
-  addDoc,
   doc,
   writeBatch,
+  where,
+  limit,
 } from "firebase/firestore";
 import { Haptics, ImpactStyle } from "@capacitor/haptics";
 import { db } from "@/integrations/firebase/client";
@@ -57,6 +58,21 @@ export function useCreateBolao() {
     try { await Haptics.impact({ style }); } catch { /* no-op on web */ }
   };
 
+  const generateUniqueInviteCode = async () => {
+    for (let attempt = 0; attempt < 6; attempt += 1) {
+      const candidate = Math.random().toString(36).substring(2, 8).toUpperCase();
+      const existing = await getDocs(
+        query(collection(db, "boloes"), where("invite_code", "==", candidate), limit(1))
+      );
+
+      if (existing.empty) {
+        return candidate;
+      }
+    }
+
+    throw new Error("Não foi possível gerar um código de convite único.");
+  };
+
   const createBolao = async (params: CreateBolaoParams): Promise<CreateBolaoResult | null> => {
     if (!user || !params.name.trim()) return null;
     const championEnabled = params.selectedMarketIds.includes("champion");
@@ -66,7 +82,9 @@ export function useCreateBolao() {
     let phase = "prepare";
     try {
       phase = "generate_invite";
-      const inviteCodeVal = Math.random().toString(36).substring(2, 8).toUpperCase();
+      const inviteCodeVal = await generateUniqueInviteCode();
+      const boloesRef = collection(db, "boloes");
+      const bolaoDoc = doc(boloesRef);
       
       phase = "data_setup";
       const insertData = {
@@ -92,12 +110,9 @@ export function useCreateBolao() {
         updated_at: new Date().toISOString(),
       };
 
-      phase = "create_bolao_doc";
-      const boloesRef = collection(db, "boloes");
-      const bolaoDoc = await addDoc(boloesRef, insertData);
-
       phase = "batch_init";
       const batch = writeBatch(db);
+      batch.set(bolaoDoc, insertData);
 
       phase = "fetch_matches";
       let matchRows: Array<{ id: string; match_date: string; stage?: string | null; group_id?: string | null; home_team_code?: string | null; away_team_code?: string | null }>;
@@ -121,6 +136,7 @@ export function useCreateBolao() {
       batch.set(doc(db, "bolao_members", `${user.id}_${bolaoDoc.id}`), {
         bolao_id: bolaoDoc.id, user_id: user.id, role: "admin",
         payment_status: "exempt", created_at: new Date().toISOString(),
+        joined_at: new Date().toISOString(),
       });
 
       phase = "batch_onboarding";

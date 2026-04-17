@@ -44,6 +44,26 @@ import { EmptyState } from "@/components/EmptyState";
 import { saveBolaoPrediction } from "@/services/boloes/bolao-prediction.service";
 import type { BolaoActivity, BolaoData, BolaoMarket, BolaoOnboardingState, BolaoPrediction, MemberData, Palpite } from "@/types/bolao";
 
+type BolaoDetailTab = "palpites" | "ranking" | "pessoas" | "resumo";
+
+function normalizeBolaoTab(tab: string | null): BolaoDetailTab | null {
+  switch (tab) {
+    case "palpitar":
+    case "palpites":
+      return "palpites";
+    case "ranking":
+      return "ranking";
+    case "galera":
+    case "pessoas":
+      return "pessoas";
+    case "config":
+    case "resumo":
+      return "resumo";
+    default:
+      return null;
+  }
+}
+
 export default function BolaoDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -52,12 +72,8 @@ export default function BolaoDetail() {
   const { user } = useAuth();
   const { toast } = useToast();
 
-  const initialTab = searchParams.get("tab") || "ranking";
+  const requestedTab = normalizeBolaoTab(searchParams.get("tab"));
   const highlightedMatch = searchParams.get("match");
-  const validTabs = useMemo(
-    () => new Set(["palpitar", "ranking", "galera", "config"]),
-    []
-  );
 
   const [bolao, setBolao] = useState<BolaoData | null>(null);
   const [members, setMembers] = useState<MemberData[]>([]);
@@ -74,7 +90,8 @@ export default function BolaoDetail() {
   const [championOpen, setChampionOpen] = useState(false);
   const [championSelection, setChampionSelection] = useState("");
   const [myChampion, setMyChampion] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState(validTabs.has(initialTab) ? initialTab : "ranking");
+  const [activeTab, setActiveTab] = useState<BolaoDetailTab>(requestedTab ?? (highlightedMatch ? "palpites" : "resumo"));
+  const initialTabHydratedRef = useRef(false);
 
   // Inline Editing
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -125,6 +142,78 @@ export default function BolaoDetail() {
         strategic: t('bolao_detail.format_strategic'),
       } as const)[bolao.format_id] ?? bolao.format_id
     : null;
+  const predictionMarketIds = useMemo(
+    () => new Set(myMarketPredictions.map((prediction) => prediction.market_id)),
+    [myMarketPredictions]
+  );
+  const savedLegacyMatchIds = useMemo(
+    () =>
+      new Set(
+        myPalpites
+          .filter((palpite) => palpite.home_score != null && palpite.away_score != null)
+          .map((palpite) => palpite.match_id)
+      ),
+    [myPalpites]
+  );
+  const pendingOverview = useMemo(() => {
+    const openMatchMap = new Map<string, BolaoMarket[]>();
+
+    matchMarkets.forEach((market) => {
+      if (!market.match_id || market.status !== "open") return;
+      const existing = openMatchMap.get(market.match_id) ?? [];
+      existing.push(market);
+      openMatchMap.set(market.match_id, existing);
+    });
+
+    const pendingMatches = Array.from(openMatchMap.entries()).filter(([matchId, marketsForMatch]) => {
+      const scoreSaved =
+        savedLegacyMatchIds.has(matchId) ||
+        marketsForMatch.some(
+          (market) => market.slug === "exact_score" && predictionMarketIds.has(market.id)
+        );
+
+      return marketsForMatch.some((market) =>
+        market.slug === "exact_score" ? !scoreSaved : !predictionMarketIds.has(market.id)
+      );
+    }).length;
+
+    const openPhase = phaseMarkets.filter((market) => market.status === "open");
+    const openTournament = tournamentMarkets.filter((market) => market.status === "open");
+    const openSpecial = specialMarkets.filter((market) => market.status === "open");
+
+    const pendingPhase = openPhase.filter((market) => !predictionMarketIds.has(market.id)).length;
+    const pendingTournament = openTournament.filter((market) => !predictionMarketIds.has(market.id)).length;
+    const pendingSpecial = openSpecial.filter((market) => !predictionMarketIds.has(market.id)).length;
+
+    const totalOpen =
+      openMatchMap.size +
+      openPhase.length +
+      openTournament.length +
+      openSpecial.length;
+    const totalPending =
+      pendingMatches +
+      pendingPhase +
+      pendingTournament +
+      pendingSpecial;
+
+    const summaryParts = [
+      pendingMatches > 0 ? `${pendingMatches} ${pendingMatches === 1 ? "jogo" : "jogos"}` : null,
+      pendingPhase > 0 ? `${pendingPhase} ${pendingPhase === 1 ? "mercado de fase" : "mercados de fase"}` : null,
+      pendingTournament > 0 ? `${pendingTournament} ${pendingTournament === 1 ? "mercado de campeonato" : "mercados de campeonato"}` : null,
+      pendingSpecial > 0 ? `${pendingSpecial} ${pendingSpecial === 1 ? "especial" : "especiais"}` : null,
+    ].filter(Boolean) as string[];
+
+    return {
+      pendingMatches,
+      pendingPhase,
+      pendingTournament,
+      pendingSpecial,
+      totalOpen,
+      totalPending,
+      completed: Math.max(totalOpen - totalPending, 0),
+      summary: summaryParts.join(" • "),
+    };
+  }, [matchMarkets, phaseMarkets, predictionMarketIds, savedLegacyMatchIds, specialMarkets, tournamentMarkets]);
 
   const loadBolao = useCallback(async () => {
     if (!id || !user) return;
@@ -441,7 +530,7 @@ export default function BolaoDetail() {
 
   const handleBolaoIntroToPredictions = useCallback(() => {
     void persistBolaoIntroState({ seen_markets: true });
-    setActiveTab("palpitar");
+    setActiveTab("palpites");
     setShowBolaoIntro(false);
   }, [persistBolaoIntroState]);
 
@@ -452,7 +541,7 @@ export default function BolaoDetail() {
       return "ranking" as const;
     }
 
-    if (activeTab === "palpitar" && !onboardingState?.seen_markets) {
+    if (activeTab === "palpites" && !onboardingState?.seen_markets) {
       return "jogos" as const;
     }
 
@@ -472,10 +561,15 @@ export default function BolaoDetail() {
 
   const tabs = useMemo(
     () => [
-      { id: "palpitar", label: highlightedMatch ? t('bolao_detail.tab_palpitar_pending') : t('bolao_detail.tab_palpitar') },
-      { id: "ranking",  label: t('bolao_detail.tab_ranking') },
-      { id: "galera",   label: t('bolao_detail.tab_galera') },
-      { id: "config",   label: t('bolao_detail.tab_config') },
+      {
+        id: "palpites" as const,
+        label: highlightedMatch
+          ? t('bolao_detail.tab_palpitar_pending', { defaultValue: "Palpites pendentes" })
+          : t('bolao_detail.tab_palpite', { defaultValue: "Palpites" }),
+      },
+      { id: "ranking" as const, label: t('bolao_detail.tab_ranking', { defaultValue: "Ranking" }) },
+      { id: "pessoas" as const, label: t('bolao_detail.tab_people', { defaultValue: "Pessoas" }) },
+      { id: "resumo" as const, label: t('bolao_detail.tab_summary', { defaultValue: "Resumo" }) },
     ],
     [highlightedMatch, t]
   );
@@ -484,18 +578,20 @@ export default function BolaoDetail() {
 
   useEffect(() => {
     if (highlightedMatch) {
-      setActiveTab("palpitar");
+      setActiveTab("palpites");
     }
   }, [highlightedMatch]);
 
   useEffect(() => {
-    if (validTabs.has(initialTab)) {
-      setActiveTab(initialTab);
-      return;
-    }
+    const fallbackTab: BolaoDetailTab =
+      highlightedMatch || pendingOverview.totalPending > 0 ? "palpites" : "resumo";
+    const nextTab = requestedTab ?? fallbackTab;
 
-    setActiveTab("palpitar");
-  }, [initialTab, validTabs]);
+    if (!initialTabHydratedRef.current || requestedTab) {
+      setActiveTab(nextTab);
+      initialTabHydratedRef.current = true;
+    }
+  }, [highlightedMatch, pendingOverview.totalPending, requestedTab]);
 
   if (loading) return <BolaoDetailSkeleton t={t} />;
   if (!bolao) return <EmptyState icon="🏆" title={t('bolao_detail.not_found_title')} description={t('bolao_detail.not_found_desc')} />;
@@ -627,7 +723,7 @@ export default function BolaoDetail() {
         
         {isCreator && (
           <button 
-            onClick={() => setActiveTab('galera')}
+            onClick={() => setActiveTab('resumo')}
             className="surface-chip rounded-xl px-4 py-2 flex items-center gap-2 border border-orange-500/30 bg-orange-500/10 hover:bg-orange-500/20 transition-colors"
           >
             <Crown className="h-4 w-4 text-orange-500" />
@@ -646,6 +742,60 @@ export default function BolaoDetail() {
             {t('bolao_detail.active_markets_count', { count: bolaoMarkets.length })}
           </div>
         )}
+      </div>
+
+      <div className="mb-6 rounded-[32px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(255,198,0,0.16),transparent_35%),linear-gradient(135deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02))] p-5">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="max-w-2xl">
+            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-primary">
+              {t("bolao_detail.next_play_kicker", { defaultValue: "Próxima jogada" })}
+            </p>
+            <h2 className="mt-2 text-2xl font-black tracking-tight text-white sm:text-3xl">
+              {pendingOverview.totalPending > 0
+                ? t("bolao_detail.pending_title", {
+                    defaultValue: "Você ainda tem {{count}} pendências abertas",
+                    count: pendingOverview.totalPending,
+                  })
+                : t("bolao_detail.caught_up_title", {
+                    defaultValue: "Você está em dia neste bolão",
+                  })}
+            </h2>
+            <p className="mt-2 text-sm leading-relaxed text-zinc-300">
+              {pendingOverview.totalPending > 0
+                ? pendingOverview.summary || t("bolao_detail.pending_desc_fallback", { defaultValue: "Abra seus palpites e feche tudo antes do próximo prazo." })
+                : t("bolao_detail.caught_up_desc", {
+                    defaultValue: "Agora você pode acompanhar o ranking, a galera e os mercados resolvidos sem correr contra o relógio.",
+                  })}
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-stretch">
+            <div className="rounded-[24px] border border-white/10 bg-black/20 px-4 py-3 text-left sm:min-w-[150px] sm:text-right">
+              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-zinc-500">
+                {t("bolao_detail.progress_label", { defaultValue: "Progresso" })}
+              </p>
+              <p className="mt-1 text-2xl font-black text-white">
+                {pendingOverview.totalOpen > 0 ? `${pendingOverview.completed}/${pendingOverview.totalOpen}` : "0/0"}
+              </p>
+              <p className="text-xs text-zinc-400">
+                {pendingOverview.totalPending > 0
+                  ? t("bolao_detail.progress_pending", {
+                      defaultValue: "Faltam {{count}} para fechar",
+                      count: pendingOverview.totalPending,
+                    })
+                  : t("bolao_detail.progress_done", { defaultValue: "Tudo salvo por enquanto" })}
+              </p>
+            </div>
+            <button
+              onClick={() => setActiveTab(pendingOverview.totalPending > 0 ? "palpites" : "ranking")}
+              className="rounded-[24px] bg-primary px-5 py-4 text-[11px] font-black uppercase tracking-[0.18em] text-black transition-transform hover:scale-[1.02] active:scale-[0.99]"
+            >
+              {pendingOverview.totalPending > 0
+                ? t("bolao_detail.go_to_predictions", { defaultValue: "Palpitar agora" })
+                : t("bolao_detail.go_to_ranking", { defaultValue: "Ver ranking" })}
+            </button>
+          </div>
+        </div>
       </div>
 
       <div className="mb-8 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:flex lg:flex-wrap lg:gap-3">
@@ -668,8 +818,8 @@ export default function BolaoDetail() {
       <div className="surface-card-strong rounded-[32px] p-4 md:p-6">
         {activeTourTab && <BolaoTour tab={activeTourTab} onDismiss={dismissTour} />}
 
-        {/* ── Palpitar: jogos + fases collapsíveis ── */}
-        {activeTab === "palpitar" && (
+        {/* ── Palpites: jogos + fases collapsíveis ── */}
+        {activeTab === "palpites" && (
           <div className="space-y-4">
             <JogosTab bolaoId={bolao.id} bolao={bolao} highlightedMatchId={highlightedMatch || undefined} markets={bolaoMarkets} predictions={myMarketPredictions} />
             {(phaseMarkets.length > 0 || tournamentMarkets.length > 0 || bolaoMarkets.length === 0 || specialMarkets.length > 0) && (
@@ -718,8 +868,8 @@ export default function BolaoDetail() {
         {/* ── Ranking ── */}
         {activeTab === "ranking" && <RealtimeRankingTab bolaoId={bolao.id} rules={bolao.scoring_rules} />}
 
-        {/* ── A Galera: Rivais + Membros ── */}
-        {activeTab === "galera" && (
+        {/* ── Pessoas: Rivais + Membros ── */}
+        {activeTab === "pessoas" && (
           <div>
             <div className="mb-4 flex gap-2">
               <button onClick={() => setGaleraView("rivais")}
@@ -736,8 +886,8 @@ export default function BolaoDetail() {
           </div>
         )}
 
-        {/* ── Config: Overview + Caixinha ── */}
-        {activeTab === "config" && bolao && (
+        {/* ── Resumo: Overview + Admin ── */}
+        {activeTab === "resumo" && bolao && (
           <div className="space-y-6">
             <OverviewTab bolao={bolao} members={members} palpites={myPalpites} userId={user!.id} isCreator={isCreator} markets={bolaoMarkets} marketPredictions={allMarketPredictions} activityFeed={activityFeed} onShare={handleShareInvite} />
             <div className="border-t border-white/10 pt-6">

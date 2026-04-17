@@ -44,24 +44,6 @@ type PublicBolaoRow = BolaoRow & {
   leader_score: number;
 };
 
-type MembershipRow = {
-  bolao_id: string;
-  role: string;
-};
-
-type BolaoSelectRow = {
-  id: string;
-  name: string;
-  description: string | null;
-  creator_id: string;
-  invite_code: string;
-  created_at: string;
-  avatar_url: string | null;
-  category: "public" | "private";
-  status: string;
-  bolao_members: { count: number }[];
-};
-
 const statusWhitelist = ["open", "active"];
 
 function chunkValues<T>(values: T[], chunkSize: number) {
@@ -89,7 +71,6 @@ export default function Boloes() {
   const [showJoin, setShowJoin] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [publicBoloesUnavailable, setPublicBoloesUnavailable] = useState(false);
-  const [expressOpen, setExpressOpen] = useState(false);
   const [showIntroBanner, setShowIntroBanner] = useState(() =>
     !localStorage.getItem(BOLOES_INTRO_SEEN_KEY)
   );
@@ -404,6 +385,23 @@ export default function Boloes() {
 
   const myBoloes = filtered.filter((b) => b.isCreator);
   const joinedBoloes = filtered.filter((b) => !b.isCreator);
+  const activeBoloes = filtered.filter((b) => statusWhitelist.includes(b.status ?? ""));
+  const spotlightBolao = activeBoloes[0] ?? filtered[0] ?? null;
+  const hasAnyBolao = filtered.length > 0;
+  const quickStats = [
+    {
+      label: t("page.stat_participating", { defaultValue: "Participando" }),
+      value: filtered.length,
+    },
+    {
+      label: t("page.stat_created", { defaultValue: "Criados por você" }),
+      value: myBoloes.length,
+    },
+    {
+      label: t("page.stat_public", { defaultValue: "Públicos para explorar" }),
+      value: publicBoloes.length,
+    },
+  ];
 
   return (
     <div className="mx-auto max-w-5xl px-4 pb-28 pt-6 text-white">
@@ -428,47 +426,100 @@ export default function Boloes() {
         </Link>
       )}
 
-      {/* ── Tab switcher ─────────────────────────────────────── */}
-      <div className="mb-6 flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-4 w-full">
-        <div className="flex w-full sm:w-auto max-w-md gap-1 rounded-2xl bg-white/5 border border-white/10 p-1">
-          <button
-            onClick={() => setActiveView("boloes")}
-            className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-[11px] font-black uppercase tracking-[0.16em] transition-all ${
-              activeView === "boloes"
-                ? "bg-primary text-black shadow-md shadow-primary/25"
-                : "text-zinc-400 hover:text-zinc-200"
-            }`}
-          >
-            <Trophy className="h-3.5 w-3.5 shrink-0" />
-            <span className="truncate">{t('page.tabs_boloes')}</span>
-          </button>
-          <button
-            onClick={() => setActiveView("ranking")}
-            className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-[11px] font-black uppercase tracking-[0.16em] transition-all ${
-              activeView === "ranking"
-                ? "bg-primary text-black shadow-md shadow-primary/25"
-                : "text-zinc-400 hover:text-zinc-200"
-            }`}
-          >
-            <BarChart2 className="h-3.5 w-3.5 shrink-0" />
-            <span className="truncate">{t('page.tabs_ranking')}</span>
-          </button>
+      <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <div>
+          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">
+            {t("page.kicker", { defaultValue: "ArenaCopa" })}
+          </p>
+          <h1 className="mt-1 text-3xl font-black">
+            {t("page.title", { defaultValue: "Bolões" })}
+          </h1>
+          <p className="mt-2 max-w-2xl text-sm text-zinc-400">
+            {t("page.subtitle", {
+              defaultValue: "Entre, crie e continue seus bolões sem precisar pensar demais.",
+            })}
+          </p>
         </div>
-        {activeView === "boloes" && (
-          <div className="flex w-full sm:w-auto justify-center">
-            <Link
-              to="/boloes/criar"
-              className="inline-flex w-full sm:w-auto justify-center items-center gap-2 rounded-2xl bg-primary px-6 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-black shadow-lg shadow-primary/25 transition-transform hover:scale-105 active:scale-95"
-            >
-              <Plus className="h-4 w-4 shrink-0" />
-              {t('page.create')}
-            </Link>
-          </div>
-        )}
+
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => setActiveView((currentView) => currentView === "boloes" ? "ranking" : "boloes")}
+            className="surface-card-soft inline-flex items-center gap-2 rounded-2xl px-4 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-zinc-200"
+          >
+            <BarChart2 className="h-4 w-4" />
+            {activeView === "boloes"
+              ? t("page.view_ranking", { defaultValue: "Ver ranking" })
+              : t("page.view_boloes", { defaultValue: "Voltar aos bolões" })}
+          </button>
+          <Link
+            to="/boloes/criar"
+            className="inline-flex items-center gap-2 rounded-2xl bg-primary px-6 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-black shadow-lg shadow-primary/25 transition-transform hover:scale-105 active:scale-95"
+          >
+            <Plus className="h-4 w-4 shrink-0" />
+            {t('page.create')}
+          </Link>
+        </div>
       </div>
 
+      {activeView === "boloes" && spotlightBolao && (
+        <Link
+          to={`/boloes/${spotlightBolao.id}`}
+          className="mb-6 block rounded-[28px] border border-primary/20 bg-gradient-to-br from-primary/12 via-white/[0.03] to-transparent p-5 transition-all hover:border-primary/35 hover:bg-primary/15"
+        >
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div className="flex items-start gap-4">
+              <div className="surface-card-soft flex h-14 w-14 items-center justify-center rounded-[22px] text-2xl">
+                {spotlightBolao.avatar_url || "🏆"}
+              </div>
+              <div>
+                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">
+                  {t("page.continue_kicker", { defaultValue: "Continuar agora" })}
+                </p>
+                <h2 className="mt-1 text-xl font-black text-white">{spotlightBolao.name}</h2>
+                <p className="mt-1 max-w-xl text-sm text-zinc-400">
+                  {spotlightBolao.description || t("page.no_description")}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <div className="surface-chip rounded-full px-4 py-2">
+                <Users className="h-4 w-4 text-primary" />
+                {t("page.members_count", { count: spotlightBolao.memberCount })}
+              </div>
+              <div className="surface-chip rounded-full px-4 py-2">
+                <Hash className="h-4 w-4 text-primary" />
+                {spotlightBolao.invite_code}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 flex items-center justify-between border-t border-white/5 pt-4">
+            <p className="text-xs text-zinc-400">
+              {spotlightBolao.isCreator
+                ? t("page.continue_admin", { defaultValue: "Você está administrando este bolão." })
+                : t("page.continue_member", { defaultValue: "Abra para palpitar, acompanhar o ranking e chamar a galera." })}
+            </p>
+            <span className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">
+              {t("page.continue_action", { defaultValue: "Abrir bolão" })}
+            </span>
+          </div>
+        </Link>
+      )}
+
+      {activeView === "boloes" && hasAnyBolao && (
+        <div className="mb-6 grid gap-3 sm:grid-cols-3">
+          {quickStats.map((stat) => (
+            <div key={stat.label} className="surface-card-soft rounded-[24px] p-4">
+              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-zinc-500">{stat.label}</p>
+              <p className="mt-2 text-2xl font-black text-white">{stat.value}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* ── First-visit intro banner ─────────────────────────── */}
-      {showIntroBanner && activeView === "boloes" && (
+      {showIntroBanner && activeView === "boloes" && !hasAnyBolao && (
         <div className="mb-6 relative rounded-[24px] border border-emerald-500/10 bg-gradient-to-br from-emerald-500/5 to-[transparent] p-5 pr-12 backdrop-blur-md">
           <button
             onClick={dismissBanner}
@@ -516,16 +567,6 @@ export default function Boloes() {
 
       {/* ── Bolões View ──────────────────────────────────────── */}
       {activeView === "boloes" && <>
-      <div className="mb-6 flex flex-col items-center text-center gap-3">
-        <div className="flex flex-col items-center">
-          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">{t('page.kicker')}</p>
-          <h1 className="mt-1 text-3xl font-black">{t('page.kicker')}</h1>
-          <p className="mt-2 max-w-2xl text-sm text-zinc-400">
-            {t('page.description')}
-          </p>
-        </div>
-      </div>
-
       {/* Grupos banner */}
       <Link to="/grupos" className="mb-6 flex items-center justify-between gap-3 rounded-[24px] border border-primary/20 bg-primary/5 px-5 py-4 transition-all hover:bg-primary/10">
         <div className="flex items-center gap-3">
@@ -553,7 +594,7 @@ export default function Boloes() {
           </button>
         </div>
 
-        {showJoin && (
+        {(showJoin || !hasAnyBolao) && (
           <div className="mt-4 flex flex-col gap-3 md:flex-row">
             <input
               value={joinCode}
