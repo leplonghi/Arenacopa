@@ -99,7 +99,6 @@ Estados recomendados:
 
 - `draft`
 - `published`
-- `locked`
 - `live`
 - `finished`
 - `archived`
@@ -107,24 +106,60 @@ Estados recomendados:
 ### 7.1 Regras de transição
 
 - `draft -> published`
-  - após validação completa da configuração
-- `published -> locked`
-  - quando ocorrer primeiro evento crítico de integridade
-- `published|locked -> live`
+  - após validação completa da configuração e geração do snapshot publicado
+- `published -> live`
   - quando a competição efetivamente estiver em andamento
 - `live -> finished`
   - após encerramento oficial
 - `finished -> archived`
   - para organização histórica
 
-### 7.2 Gatilhos de lock estrutural
+`locked` não deve existir como estado de lifecycle. O lock estrutural é uma propriedade de integridade, não uma fase de vida do bolão.
 
-O backend deve travar estrutura ao detectar qualquer um destes eventos:
+### 7.2 Integridade estrutural
+
+O lifecycle responde "em que fase o bolão está".
+
+A integridade responde "o que ainda pode ser alterado com segurança".
+
+Campos mínimos:
+
+- `integrity.is_structure_locked`
+- `integrity.structure_locked_at`
+- `integrity.structure_lock_reason`
+- `integrity.lock_trigger`
+- `editable_sections`
+
+Regras:
+
+- `editable_sections` é o contrato autoritativo de edição para backend e UI.
+- `integrity.is_structure_locked` é um sinal agregado de integridade e compatibilidade, não substitui `editable_sections`.
+- Um bolão pode estar `published` e ainda não estar totalmente travado.
+- Um bolão pode estar `live` e estar travado ao mesmo tempo.
+
+### 7.3 Locks por seção
+
+- `presentation`
+  - permanece editável em qualquer fase
+- `competition_rules`
+  - trava ao publicar
+- `finance_rules`
+  - trava ao publicar
+- `context`
+  - trava ao publicar, exceto vínculo com grupo quando a política explicitamente permitir antes da entrada de participante externo
+- `access_policy`
+  - pode continuar editável após publicação somente enquanto não houver participante externo nem convite aceito que gere expectativa pública válida
+
+### 7.4 Gatilhos de lock estrutural agregado
+
+O backend deve marcar `integrity.is_structure_locked = true` ao detectar qualquer um destes eventos:
 
 - entrada de participante além do criador
 - primeiro palpite salvo
 - primeiro pagamento confirmado
 - início oficial da disputa
+
+O lock agregado existe para sinalizar que nenhuma mudança estrutural remanescente deve ser permitida.
 
 ## 8. Fluxo de Criação Recomendado
 
@@ -151,6 +186,27 @@ Regras:
 - o contexto define quais políticas de acesso fazem sentido
 - o sistema previne combinações contraditórias
 - o usuário precisa entender onde o bolão vai viver antes de configurar regras competitivas
+
+### 8.2.1 Contrato entre grupo e bolão
+
+O vínculo grupo-bolão deve ser explícito:
+
+- `group_binding_mode = none`
+  - bolão sem grupo
+- `group_binding_mode = linked_discovery`
+  - bolão aparece no grupo, mas acesso é governado pela política do bolão
+- `group_binding_mode = group_gated`
+  - bolão aparece no grupo e a entrada exige membership ativo no grupo no momento da entrada
+
+Regras:
+
+- `group_admin` não herda administração do bolão por padrão.
+- `pool_owner` continua sendo o dono do bolão mesmo que depois perca papel administrativo no grupo.
+- Se o bolão estiver em `group_gated`, ele não pode ser público para fora do grupo.
+- Se o grupo for privado e o bolão precisar ser público, o modo válido é `linked_discovery`, nunca `group_gated`.
+- Sair do grupo não remove automaticamente o usuário do bolão depois que ele já entrou.
+- Remover usuário do grupo e remover usuário do bolão são ações distintas, com auditoria distinta.
+- Após publicação com participante externo ou lock estrutural, o `group_binding_mode` torna-se imutável.
 
 ### 8.3 Etapa 2: Tipo de disputa
 
@@ -227,6 +283,8 @@ A edição não deve mais ser tratada como um conjunto de alterações equivalen
 
 ### 9.2 Matriz de edição
 
+A matriz abaixo define "o que" pode ser alterado por categoria. A autorização final depende também do ator.
+
 #### Identidade
 
 Inclui:
@@ -250,7 +308,7 @@ Inclui:
 
 Regra:
 
-- editável até publicação ou até entrada de outro participante
+- editável apenas enquanto não houver participante externo, convite aceito que gere expectativa pública válida ou lock estrutural agregado
 
 #### Regras
 
@@ -281,7 +339,52 @@ Regra:
 
 - depende do estado do bolão
 
-### 9.3 UX da edição
+### 9.3 Matriz de permissões por ator
+
+Atores mínimos:
+
+- `pool_owner`
+- `pool_member`
+- `group_admin`
+- `group_member`
+- `non_member`
+- `service_actor`
+
+Regras:
+
+- `pool_owner`
+  - pode executar operações permitidas por `editable_sections` e estado
+- `pool_member`
+  - nunca altera estrutura, finanças, acesso ou lifecycle
+- `group_admin`
+  - administra o grupo, mas não ganha permissão estrutural no bolão automaticamente
+- `group_member`
+  - não recebe permissão administrativa no bolão por ser membro do grupo
+- `non_member`
+  - não pode editar bolão
+- `service_actor`
+  - executa migração, backfill, lock, auditoria e sincronizações internas
+
+Permissões mínimas por operação:
+
+- criar rascunho
+  - `pool_owner`
+- atualizar configuração estrutural
+  - `pool_owner` e somente dentro de `editable_sections`
+- alterar apresentação
+  - `pool_owner`
+- publicar
+  - `pool_owner`
+- duplicar
+  - `pool_owner`
+- encerrar/arquivar
+  - `pool_owner`
+- entrar no bolão
+  - `non_member` ou `group_member`, conforme política de acesso
+- remover membro do bolão
+  - `pool_owner`
+
+### 9.4 UX da edição
 
 - Remover a edição inline como solução principal para configuração.
 - Criar uma experiência dedicada de edição com seções, locks e explicações.
@@ -290,7 +393,7 @@ Regra:
   - `Editável com restrição`
   - `Travada para preservar a justiça`
 
-### 9.4 Alternativa segura
+### 9.5 Alternativa segura
 
 Quando o usuário tentar alterar algo estrutural depois do lock:
 
@@ -330,7 +433,36 @@ Quando o usuário tentar alterar algo estrutural depois do lock:
 - datas e regras de fechamento
 - status
 
-### 10.4 Responsabilidades do backend
+### 10.4 Modelo financeiro
+
+O financeiro continua sendo organizacional e externo ao app.
+
+Campos recomendados:
+
+- `finance_mode = free | paid_external`
+- `entry_fee_amount`
+- `currency`
+- `distribution_model`
+- `distribution_custom_text`
+
+Status de pagamento por membro:
+
+- `not_required`
+- `pending`
+- `confirmed`
+- `waived`
+- `refunded`
+
+Regras:
+
+- `free -> paid_external` só é permitido em `draft`
+- `paid_external -> free` só é permitido em `draft`
+- valor de entrada e rateio travam ao publicar
+- o app não executa cobrança nem reembolso, apenas registra estado
+- se houver empate em posição premiada, a regra padrão é dividir igualmente a soma das faixas empatadas
+- pagamento pendente não altera pontuação por padrão, apenas gestão operacional, a menos que o produto futuramente defina o contrário
+
+### 10.5 Responsabilidades do backend
 
 - calcular `is_structure_locked`
 - calcular `editable_sections`
@@ -355,21 +487,54 @@ Mesmo que o armazenamento continue em um documento principal por bolão, o backe
 
 - `lifecycle.status`
 - `lifecycle.published_at`
+- `lifecycle.finished_at`
 - `integrity.is_structure_locked`
 - `integrity.structure_locked_at`
 - `integrity.structure_lock_reason`
+- `integrity.lock_trigger`
 - `integrity.config_version`
 - `integrity.published_snapshot`
 - `audit_meta.last_actor_id`
 - `audit_meta.last_updated_at`
+
+### 11.1.1 Semântica de `published_snapshot`
+
+`published_snapshot` não é apenas auditoria.
+
+Ele é a fotografia canônica da configuração sensível publicada:
+
+- `context`
+- `competition_rules`
+- `access_policy`
+- `finance_rules`
+- `schema_version`
+
+Regras:
+
+- ranking, validação de elegibilidade e regras competitivas devem ler a configuração congelada publicada, não a configuração viva mutável
+- `presentation` não faz parte do snapshot
+- duplicação deve usar `published_snapshot` por padrão quando a origem já tiver sido publicada
+- para rascunhos ainda não publicados, duplicação pode usar a configuração viva
+- o snapshot também serve para auditoria e comparação de mudanças proibidas
 
 ### 11.2 Legado
 
 Bolões antigos devem suportar:
 
 - `legacy_mode: true`
+- `schema_version`
 - `editable_sections` compatíveis
 - fallback de leitura para estruturas antigas enquanto a migração não terminar
+
+Regras operacionais para legados:
+
+- leitura sempre passa por um adapter que normaliza o documento para o contrato novo
+- bolões legados publicados ou em andamento devem entrar em modo conservador:
+  - apresentação editável
+  - estrutura não editável
+  - duplicação permitida
+- migração deve ser idempotente
+- background backfill deve preencher `schema_version`, `published_snapshot` quando aplicável e `editable_sections`
 
 ## 12. Firestore Rules e Functions
 
@@ -388,6 +553,115 @@ Bolões antigos devem suportar:
 - aplicação de lock
 - logging de auditoria
 - validação de entrada
+
+### 12.3 Contratos mínimos das operações sensíveis
+
+As operações sensíveis não devem ser apenas nomes de intent. Elas precisam ter contratos estáveis para UI e backend.
+
+#### `createDraft`
+
+Entrada:
+
+- contexto inicial
+- tipo de disputa
+- apresentação mínima opcional
+
+Saída:
+
+- `bolao_id`
+- `lifecycle.status`
+- `integrity.config_version`
+- `editable_sections`
+
+#### `updateConfiguration`
+
+Entrada:
+
+- `bolao_id`
+- `expected_config_version`
+- patch por seção permitida
+
+Validações:
+
+- ator autorizado
+- seção permitida por `editable_sections`
+- estado compatível
+- patch coerente
+
+Erros esperados:
+
+- `permission_denied`
+- `invalid_state`
+- `structure_locked`
+- `validation_failed`
+- `config_conflict`
+
+#### `publishBolao`
+
+Entrada:
+
+- `bolao_id`
+- `expected_config_version`
+
+Validações:
+
+- configuração obrigatória completa
+- integridade do contexto
+- coerência de acesso
+- coerência financeira
+
+Saída:
+
+- novo `lifecycle.status`
+- `published_at`
+- `published_snapshot`
+- `editable_sections`
+
+#### `duplicateBolao`
+
+Entrada:
+
+- `source_bolao_id`
+- origem desejada: `published_snapshot` ou `live_draft`
+- overrides permitidos de apresentação e contexto inicial
+
+Saída:
+
+- novo `bolao_id`
+- novo `config_version`
+- `draft`
+
+#### `alterPresentation`
+
+Entrada:
+
+- `bolao_id`
+- patch de apresentação
+
+Saída:
+
+- bloco `presentation` atualizado
+- `audit_meta`
+
+#### `finishBolao` / `archiveBolao`
+
+Entrada:
+
+- `bolao_id`
+- motivo opcional
+
+Saída:
+
+- novo `lifecycle.status`
+- timestamps
+
+### 12.4 Concorrência e idempotência
+
+- Toda operação de configuração deve usar `expected_config_version`
+- Se a versão enviada estiver desatualizada, a operação falha com `config_conflict`
+- Publicação não deve correr em paralelo com atualização estrutural
+- Migração e backfill precisam ser idempotentes
+- Duplicação deve ser segura para repetição quando receber o mesmo `request_id`, caso essa proteção seja adotada
 
 ## 13. Auditoria e Observabilidade
 
@@ -412,6 +686,28 @@ Eventos importantes:
 - lock aplicado
 - duplicação
 
+### 13.1 Telemetria de produto
+
+Além da auditoria de segurança, o sistema deve registrar eventos de experiência:
+
+- `draft_created`
+- `creation_step_completed`
+- `creation_abandoned`
+- `pool_published`
+- `time_to_publish`
+- `edit_blocked`
+- `field_repeatedly_blocked`
+- `pool_duplicated_after_lock`
+- `join_denied_policy`
+- `join_denied_group_requirement`
+
+Objetivo:
+
+- medir abandono por etapa
+- detectar pontos de atrito
+- entender se locks estão claros ou apenas frustrando
+- monitorar se duplicação está virando workaround frequente demais
+
 ## 14. Migração
 
 ### 14.1 Onda 1
@@ -419,16 +715,28 @@ Eventos importantes:
 - Introduzir novo contrato backend
 - Implementar locks estruturais
 - Manter compatibilidade com bolões existentes
+- Introduzir `schema_version`
+- Introduzir adapter de leitura
 
 ### 14.2 Onda 2
 
 - Lançar nova criação guiada
 - Lançar nova edição baseada em permissões
+- Expor `editable_sections` para a UI
+- Instrumentar telemetria de funil
 
 ### 14.3 Onda 3
 
 - Migrar bolões antigos para o novo modelo
 - Manter fallback para casos legados ainda não migrados
+
+### 14.4 Estratégia operacional de migração
+
+- Bolões legados são lidos via adapter desde o primeiro dia
+- Backfill migra dados em lote sem exigir parada do sistema
+- Enquanto `legacy_mode = true`, a UI deve assumir permissões conservadoras
+- Structural edits em bolões legados publicados devem ser bloqueadas
+- A saída oficial para legado incompatível é duplicação
 
 ## 15. Testes Obrigatórios
 
@@ -447,12 +755,17 @@ Eventos importantes:
 - editar depois do lock
 - entrar em bolão conforme política de acesso
 - duplicar bolão travado
+- atualizar configuração com `config_version` desatualizada
+- validar grupo `linked_discovery` vs `group_gated`
+- validar regras financeiras em publicação
 
 ### 15.3 Segurança / Rules
 
 - impedir update estrutural direto
 - impedir entrada indevida
 - impedir mudança de status não autorizada
+- impedir actor de grupo editar bolão sem papel explícito
+- impedir mudança financeira após publicação
 
 ### 15.4 E2E
 
@@ -462,6 +775,8 @@ Eventos importantes:
 - convidar participantes
 - editar campos permitidos
 - bloquear edição sensível após atividade real
+- sair do grupo sem remover participação do bolão
+- duplicar bolão publicado e travado
 
 ## 16. Rollout Recomendado
 
@@ -477,9 +792,12 @@ Ordem:
 - A criação será completa, não simplificada.
 - O fluxo será intuitivo e progressivo, não técnico.
 - O bolão pode existir com ou sem grupo.
+- `locked` não será estado de lifecycle; será tratado como integridade.
 - Edição estrutural será permitida apenas antes do lock.
 - Edição posterior ficará limitada a apresentação e operações seguras.
 - Mudanças estruturais pós-lock usarão duplicação como saída oficial.
+- `group_admin` não recebe governança automática no bolão.
+- `published_snapshot` será a fonte congelada da configuração competitiva publicada.
 - Segurança será garantida no backend, não apenas no frontend.
 
 ## 18. Critérios de Sucesso
