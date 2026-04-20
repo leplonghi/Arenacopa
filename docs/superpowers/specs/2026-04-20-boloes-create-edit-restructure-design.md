@@ -137,6 +137,15 @@ Regras:
 - Um bolão pode estar `published` e ainda não estar totalmente travado.
 - Um bolão pode estar `live` e estar travado ao mesmo tempo.
 
+Decisão de modelagem para `editable_sections`:
+
+- modelo híbrido
+- o valor é persistido no documento como contrato operacional pronto para UI, legado e leitura barata
+- o valor também deve ser sempre recalculável a partir de `lifecycle`, `integrity`, `context`, `access_policy`, fatos de membership e fatos financeiros
+- o backend deve recalcular e persistir `editable_sections` no mesmo fluxo transacional de publicação, lock, mudança de configuração, mudança relevante de membership e mudança relevante de `payment_status`
+- o cliente nunca escreve `editable_sections` diretamente
+- se o valor persistido estiver ausente, antigo ou inconsistente, o backend recalcula, usa o valor recalculado como fonte de verdade e autocorrige o persistido
+
 ### 7.3 Locks por seção
 
 - `presentation`
@@ -148,7 +157,7 @@ Regras:
 - `context`
   - trava ao publicar, exceto vínculo com grupo quando a política explicitamente permitir antes da entrada de participante externo
 - `access_policy`
-  - pode continuar editável após publicação somente enquanto não houver participante externo nem convite aceito que gere expectativa pública válida
+  - pode continuar editável após publicação somente enquanto não houver participante externo nem expectativa pública válida de entrada sob a configuração atual
 
 ### 7.4 Gatilhos de lock estrutural agregado
 
@@ -158,6 +167,18 @@ O backend deve marcar `integrity.is_structure_locked = true` ao detectar qualque
 - primeiro palpite salvo
 - primeiro pagamento confirmado
 - início oficial da disputa
+
+### 7.5 Definições operacionais
+
+Para esta spec:
+
+- `participante_externo`
+  - qualquer usuário diferente do `pool_owner` com entrada efetiva no bolão e membership ativa
+  - convite emitido, link compartilhado, solicitação pendente ou simples pertencimento ao grupo não contam por si só
+- `expectativa_publica_valida`
+  - promessa de acesso ou permanência gerada pelo produto para terceiros sob a configuração atual e já exposta fora da esfera privada do criador
+  - casos mínimos: bolão publicado com entrada pública ativa, convite aceito, solicitação aprovada ou vaga reservada/confirmada para terceiro
+  - convite apenas criado e ainda não aceito não conta
 
 O lock agregado existe para sinalizar que nenhuma mudança estrutural remanescente deve ser permitida.
 
@@ -308,7 +329,7 @@ Inclui:
 
 Regra:
 
-- editável apenas enquanto não houver participante externo, convite aceito que gere expectativa pública válida ou lock estrutural agregado
+- editável apenas enquanto não houver participante externo, expectativa pública válida de entrada sob a configuração atual ou lock estrutural agregado
 
 #### Regras
 
@@ -383,6 +404,25 @@ Permissões mínimas por operação:
   - `non_member` ou `group_member`, conforme política de acesso
 - remover membro do bolão
   - `pool_owner`
+
+### 9.3.1 Política de remoção de membros por estado
+
+- `draft`
+  - `pool_owner` pode cancelar convites, rejeitar solicitações e remover membros ativos não criadores
+- `published`
+  - `pool_owner` pode remover membro ativo somente se esse membro ainda não tiver salvo palpite e não tiver `payment_status = confirmed`
+  - a remoção exige motivo auditado
+- `published` com atividade do membro
+  - se o membro já tiver palpite salvo ou pagamento confirmado, a remoção comum é bloqueada
+  - a saída passa a ser `withdrawn_by_member` ou `removed_for_moderation`, sempre preservando histórico
+- `live`
+  - `pool_owner` não remove participante ativo por fluxo comum
+  - apenas `service_actor` ou moderação pode afastar participação por fraude, abuso ou exigência legal, sem apagar trilha competitiva
+- `finished` e `archived`
+  - não existe remoção destrutiva
+  - apenas marcação administrativa compatível com auditoria e histórico
+- sair do grupo nunca remove automaticamente do bolão
+- remoção de membro sempre é transição de status, nunca hard delete
 
 ### 9.4 UX da edição
 
@@ -460,12 +500,17 @@ Regras:
 - valor de entrada e rateio travam ao publicar
 - o app não executa cobrança nem reembolso, apenas registra estado
 - se houver empate em posição premiada, a regra padrão é dividir igualmente a soma das faixas empatadas
-- pagamento pendente não altera pontuação por padrão, apenas gestão operacional, a menos que o produto futuramente defina o contrário
+- `payment_status` não controla elegibilidade competitiva nesta versão
+- elegibilidade competitiva depende de membership ativa, política de entrada e lifecycle, não do estado financeiro
+- elegibilidade financeira para premiação depende de regra organizacional e, por padrão, exige `payment_status in {confirmed, waived}` no fechamento financeiro definido pelo organizador
+- `pending` pode participar e pontuar, mas permanece inelegível para premiação até regularização
+- `refunded` perde elegibilidade financeira desde o reembolso e não entra no rateio final, preservando histórico competitivo
+- qualquer futuro modelo em que pagamento bloqueie ranking, palpites ou entrada deve nascer como política explícita nova, nunca como efeito implícito de `payment_status`
 
 ### 10.5 Responsabilidades do backend
 
 - calcular `is_structure_locked`
-- calcular `editable_sections`
+- recalcular e persistir `editable_sections`
 - rejeitar edição estrutural após lock
 - registrar motivo do lock
 - salvar snapshot estrutural na publicação
@@ -516,6 +561,18 @@ Regras:
 - duplicação deve usar `published_snapshot` por padrão quando a origem já tiver sido publicada
 - para rascunhos ainda não publicados, duplicação pode usar a configuração viva
 - o snapshot também serve para auditoria e comparação de mudanças proibidas
+
+### 11.1.2 Semântica de `editable_sections`
+
+`editable_sections` segue modelo híbrido.
+
+Regras:
+
+- é persistido para servir como contrato barato e imediato para UI, adapter legado e operações simples
+- continua sendo totalmente derivável a partir do estado canônico do bolão
+- o cliente nunca é autor do campo
+- leituras críticas e operações sensíveis podem recalcular o valor e corrigir drift automaticamente
+- o campo persistido deve ser atualizado de forma atômica com mudanças que afetem permissão de edição
 
 ### 11.2 Legado
 
@@ -631,6 +688,35 @@ Saída:
 - novo `config_version`
 - `draft`
 
+#### `removePoolMember`
+
+Entrada:
+
+- `bolao_id`
+- `member_id`
+- `reason_code`
+- `reason_text` opcional
+
+Validações:
+
+- ator autorizado
+- alvo não é `pool_owner`
+- estado do bolão permite remoção
+- estado do membro permite remoção
+- motivo auditado obrigatório quando já publicado
+
+Erros esperados:
+
+- `permission_denied`
+- `invalid_state`
+- `member_protected`
+- `removal_blocked`
+
+Saída:
+
+- novo `membership.status`
+- `audit_meta`
+
 #### `alterPresentation`
 
 Entrada:
@@ -700,6 +786,8 @@ Além da auditoria de segurança, o sistema deve registrar eventos de experiênc
 - `pool_duplicated_after_lock`
 - `join_denied_policy`
 - `join_denied_group_requirement`
+- `member_removal_blocked`
+- `editable_sections_recomputed`
 
 Objetivo:
 
@@ -707,6 +795,17 @@ Objetivo:
 - detectar pontos de atrito
 - entender se locks estão claros ou apenas frustrando
 - monitorar se duplicação está virando workaround frequente demais
+
+Gates que devem consumir essa telemetria:
+
+- Gate de backend protegido
+  - revisar `editable_sections_recomputed`, `edit_blocked` e conflitos de configuração para garantir que o contrato híbrido não esteja gerando drift ou falso bloqueio
+- Gate de nova criação
+  - comparar `draft_created`, `creation_step_completed`, `creation_abandoned` e `time_to_publish` contra baseline do fluxo antigo antes de ampliar rollout
+- Gate de nova edição
+  - revisar `edit_blocked`, `field_repeatedly_blocked`, `member_removal_blocked` e `pool_duplicated_after_lock` para confirmar que o novo modelo está claro e não está empurrando o usuário para workarounds
+- Gate de aposentadoria do legado
+  - revisar `join_denied_policy`, `join_denied_group_requirement` e volume de recomputação/correção de `editable_sections` antes de desligar o fluxo antigo
 
 ## 14. Migração
 
@@ -724,11 +823,13 @@ Objetivo:
 - Lançar nova edição baseada em permissões
 - Expor `editable_sections` para a UI
 - Instrumentar telemetria de funil
+- Definir baseline comparável do fluxo antigo para abandono, publicação e tempo até publicar
 
 ### 14.3 Onda 3
 
 - Migrar bolões antigos para o novo modelo
 - Manter fallback para casos legados ainda não migrados
+- Avançar apenas se os gates de telemetria estiverem saudáveis
 
 ### 14.4 Estratégia operacional de migração
 
@@ -737,6 +838,7 @@ Objetivo:
 - Enquanto `legacy_mode = true`, a UI deve assumir permissões conservadoras
 - Structural edits em bolões legados publicados devem ser bloqueadas
 - A saída oficial para legado incompatível é duplicação
+- rollout não avança de onda sem revisão explícita das métricas definidas em `13.1`
 
 ## 15. Testes Obrigatórios
 
@@ -746,6 +848,7 @@ Objetivo:
 - transições de estado
 - regras de lock
 - coerência de configuração
+- separação entre elegibilidade competitiva e elegibilidade financeira
 
 ### 15.2 Integração
 
@@ -758,6 +861,7 @@ Objetivo:
 - atualizar configuração com `config_version` desatualizada
 - validar grupo `linked_discovery` vs `group_gated`
 - validar regras financeiras em publicação
+- validar remoção de membro por estado do bolão e atividade do membro
 
 ### 15.3 Segurança / Rules
 
@@ -766,6 +870,7 @@ Objetivo:
 - impedir mudança de status não autorizada
 - impedir actor de grupo editar bolão sem papel explícito
 - impedir mudança financeira após publicação
+- impedir hard delete de membro com histórico competitivo
 
 ### 15.4 E2E
 
@@ -777,15 +882,20 @@ Objetivo:
 - bloquear edição sensível após atividade real
 - sair do grupo sem remover participação do bolão
 - duplicar bolão publicado e travado
+- tentar remover membro após palpite ou pagamento confirmado e receber bloqueio correto
 
 ## 16. Rollout Recomendado
 
 Ordem:
 
 1. proteger backend
+   Gate: drift de `editable_sections` sob controle e sem falso bloqueio estrutural relevante.
 2. lançar nova criação
+   Gate: abandono e `time_to_publish` dentro da meta comparativa definida na onda 2.
 3. lançar nova edição
+   Gate: taxa de `field_repeatedly_blocked`, `member_removal_blocked` e duplicação por lock aceitável.
 4. aposentar fluxo antigo
+   Gate: adapter legado estável, entradas negadas revisadas e telemetria sem regressão estrutural.
 
 ## 17. Decisões Consolidadas
 
@@ -798,6 +908,10 @@ Ordem:
 - Mudanças estruturais pós-lock usarão duplicação como saída oficial.
 - `group_admin` não recebe governança automática no bolão.
 - `published_snapshot` será a fonte congelada da configuração competitiva publicada.
+- `editable_sections` seguirá modelo híbrido: persistido para consumo rápido, recalculável pelo backend e nunca editável pelo cliente.
+- `payment_status` não definirá elegibilidade competitiva nesta versão; definirá apenas elegibilidade financeira por padrão.
+- Remoção de membro será sempre transição auditada de status e ficará muito mais restrita após atividade competitiva ou financeira.
+- Rollout só avançará com gate explícito baseado em telemetria de experiência e integridade.
 - Segurança será garantida no backend, não apenas no frontend.
 
 ## 18. Critérios de Sucesso
