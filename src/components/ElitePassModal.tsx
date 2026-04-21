@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Crown, Sparkles, X, CheckCircle2, Zap, ShieldCheck, Trophy, Loader2 } from 'lucide-react';
 import { useMonetization } from '@/contexts/MonetizationContext';
 import { useToast } from '@/hooks/use-toast';
 import { monetizationEnv } from '@/lib/env';
 import { useTranslation } from 'react-i18next';
+import { formatCurrency, formatCurrencyParts } from '@/i18n/currency';
 import {
     getPremiumSupportMailto,
 } from '@/services/monetization/stripe.service';
@@ -12,10 +13,13 @@ import {
 export function ElitePassModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
     const { purchasePremium, isLoading, isPremium } = useMonetization();
     const { toast } = useToast();
-    const { t } = useTranslation('premium');
+    const { t, i18n } = useTranslation('premium');
     const canStartPremiumCheckout = monetizationEnv.enablePremiumSimulation || monetizationEnv.premiumCheckoutEnabled;
     const supportMailto = getPremiumSupportMailto();
     const benefits = t('elite.benefits', { returnObjects: true }) as Array<{ title: string; desc: string }>;
+    const activeLanguage = i18n.resolvedLanguage || i18n.language;
+    const oldPrice = useMemo(() => formatCurrency(activeLanguage, 49.9), [activeLanguage]);
+    const currentPrice = useMemo(() => formatCurrencyParts(activeLanguage, 29.9), [activeLanguage]);
 
     // If they already bought it, no need to show the sales pitch again
     if (isPremium) {
@@ -127,11 +131,11 @@ export function ElitePassModal({ isOpen, onClose }: { isOpen: boolean; onClose: 
                                 {/* Pricing & CTA */}
                                 <div className="p-8 bg-white/[0.02] border-t border-white/5 text-center">
                                     <div className="mb-6 flex flex-col items-center justify-center">
-                                        <span className="text-sm text-gray-500 font-bold line-through decoration-red-500/50">R$ 49,90</span>
+                                        <span className="text-sm text-gray-500 font-bold line-through decoration-red-500/50">{oldPrice}</span>
                                         <div className="flex items-start gap-2 text-yellow-500">
-                                            <span className="text-2xl font-black mt-1">R$</span>
-                                            <span className="text-6xl font-black tracking-tighter leading-none">29</span>
-                                            <span className="text-2xl font-black mt-1">,90</span>
+                                            <span className="text-2xl font-black mt-1">{currentPrice.currencySymbol}</span>
+                                            <span className="text-6xl font-black tracking-tighter leading-none">{currentPrice.integerPart}</span>
+                                            <span className="text-2xl font-black mt-1">{`${currentPrice.decimalSeparator}${currentPrice.fractionPart}`}</span>
                                         </div>
                                         <span className="text-[10px] text-gray-500 font-black uppercase tracking-widest mt-2 bg-white/5 py-1 px-3 rounded-full">
                                             {t('elite.lifetime').toUpperCase()}

@@ -3,7 +3,7 @@
   "pending": {
     "title_one": "Tienes {{count}} pronóstico pendiente",
     "title_other": "Tienes {{count}} pronósticos pendientes",
-    "subtitle": "Toca para apostar antes de los partidos"
+    "subtitle": "Toca para pronosticar antes de que empiecen los partidos"
   },
   "stats": {
     "rank": "Rango",
@@ -20,8 +20,8 @@
   "my_pools": {
     "title": "Mis Quinielas",
     "manage": "Gestionar",
-    "join_title": "Únete a una Quiniela",
-    "join_desc": "Crea tu liga o únete a una existente.",
+    "join_title": "Únete a una quiniela",
+    "join_desc": "Crea tu quiniela o únete a una existente.",
     "start_now": "Empezar ahora",
     "rank_place": "{{rank}}º Lugar",
     "pts": "pts",
@@ -73,9 +73,12 @@
   "cta_predict": "Hacer Pronósticos",
   "live_card": {
     "loading": "Cargando...",
+    "competition_fallback": "Competición oficial",
+    "live_badge": "En vivo",
     "live_label": "En vivo",
-    "follow_btn": "Seguir en el Bolao",
-    "next_game": "Próximo Partido"
+    "follow_btn": "Seguir en la quiniela",
+    "next_game": "Próximo partido",
+    "open_match_center": "Abrir campeonato"
   },
   "action_of_day": {
     "pending_title": "Pronósticos pendientes",

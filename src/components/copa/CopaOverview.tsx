@@ -243,7 +243,7 @@ export function CopaOverview() {
                 {/* Guia Quick Access */}
                 <motion.div
                     variants={staggerItem}
-                    onClick={() => navigate("/guia")}
+                    onClick={() => navigate("/copa/guia")}
                     className="glass-card p-4 relative overflow-hidden group cursor-pointer border-l-4 border-l-secondary-foreground/20 hover:border-l-green-400 transition-colors"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
@@ -331,7 +331,7 @@ export function CopaOverview() {
                                 <div>
                                     <div className="flex items-baseline gap-2">
                                         <span className="text-xl font-black">{scenario.currentPoints}</span>
-                                        <span className="text-[10px] text-muted-foreground uppercase font-bold">pts</span>
+                                        <span className="text-[10px] text-muted-foreground uppercase font-bold">{t('overview.calculator.points_abbr', { defaultValue: 'pts' })}</span>
                                     </div>
                                     <span className={cn(
                                         "text-[10px] font-bold px-2 py-0.5 rounded-full inline-block",

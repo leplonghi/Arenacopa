@@ -1,4 +1,5 @@
 import { Layers3, Minus, Sparkles, Swords, Target, Check, Trophy } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 
 export function RankingLegend({
@@ -62,13 +63,15 @@ export function RankingLegend({
 }
 
 function LegendItem({ icon, label, points, color, bg, border }: { icon: React.ReactNode; label: string; points: number; color: string; bg: string; border: string }) {
+    const { t } = useTranslation("ranking");
+
     return (
         <div className={cn("group rounded-3xl p-6 border transition-all hover:scale-105 hover:shadow-2xl flex flex-col items-center text-center", bg, border)}>
             <div className={cn("mb-4 transform group-hover:rotate-12 transition-transform", color)}>{icon}</div>
             <span className="text-[9px] font-black text-zinc-500 uppercase tracking-widest mb-2 leading-tight px-2">{label}</span>
             <div className="flex items-baseline gap-1">
                 <span className={cn("text-2xl font-black", color)}>{points}</span>
-                <span className="text-[10px] font-black text-zinc-600">PTS</span>
+                <span className="text-[10px] font-black text-zinc-600">{t("common.points_short")}</span>
             </div>
         </div>
     );

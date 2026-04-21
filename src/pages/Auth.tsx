@@ -6,8 +6,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { signInWithGoogle, signInWithPassword, signUpWithPassword } from "@/services/auth/auth.service";
+import { getDefaultProfileName } from "@/i18n/language";
 import { acceptTerms, ensureProfile, updateProfile } from "@/services/profile/profile.service";
 import { sanitizeInternalRedirect } from "@/lib/security";
+import { BrandWordmark } from "@/components/BrandWordmark";
 
 const Auth = () => {
   const logoUrl = "/logo.png?v=20260316";
@@ -22,7 +24,8 @@ const Auth = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
-  const { t } = useTranslation('auth');
+  const { t } = useTranslation(['auth', 'common']);
+  const brandName = t('common:brand.name');
   const redirectPath = sanitizeInternalRedirect(searchParams.get("redirect"));
 
   const getSafeAuthError = (fallback: string, error: unknown) => {
@@ -104,7 +107,7 @@ const Auth = () => {
       });
 
       await updateProfile(googleUser.uid, {
-        name: googleUser.displayName || googleUser.email?.split("@")[0] || "Torcedor",
+        name: googleUser.displayName || googleUser.email?.split("@")[0] || getDefaultProfileName(),
       });
 
       navigate(redirectPath);
@@ -126,12 +129,19 @@ const Auth = () => {
       {/* Background is handled globally by FieldBackground component in App.tsx */}
 
       {/* ── Content ── */}
-      <div className="relative z-10 flex flex-col items-center mb-10">
-        <div className="w-32 h-32 p-4 mb-4 rounded-[32px] border border-primary/20 bg-primary/10 drop-shadow-[0_0_30px_rgba(34,197,94,0.2)] transition-transform hover:scale-105 duration-500">
-          <img src={logoUrl} alt="ArenaCup" className="w-full h-full object-contain brightness-110" />
+      <div className="relative z-10 mb-10 flex flex-col items-center">
+        <div className="mb-4 flex h-32 w-32 items-center justify-center">
+          <img
+            src={logoUrl}
+            alt={brandName}
+            className="h-full w-full object-contain brightness-110"
+          />
         </div>
-        <h1 className="font-black text-3xl tracking-tighter uppercase italic drop-shadow-lg">
-          ARENA<span className="text-primary not-italic">CUP</span>
+        <h1 className="drop-shadow-lg">
+          <BrandWordmark
+            label={brandName}
+            className="font-black text-3xl tracking-tighter italic text-white"
+          />
         </h1>
         <p className="text-muted-foreground font-medium uppercase tracking-[0.2em] text-[10px] mt-1 opacity-80">
           {t('login.subtitle')}
@@ -139,13 +149,13 @@ const Auth = () => {
       </div>
 
       <div className="relative z-10 w-full max-w-md animate-in fade-in zoom-in duration-500">
-        <div className="flex gap-2 mb-8 bg-black/20 p-1 rounded-full border border-white/5 backdrop-blur-sm">
+        <div className="mx-auto mb-8 flex w-fit items-center justify-center gap-2 rounded-full border border-white/5 bg-black/20 p-1 backdrop-blur-sm">
           {(["login", "signup"] as const).map((m) => (
             <button
               key={m}
               onClick={() => setMode(m)}
               className={cn(
-                "px-8 py-2 rounded-full text-[10px] uppercase tracking-widest font-black transition-all duration-300",
+                "min-w-[140px] rounded-full px-8 py-2 text-center text-[10px] font-black uppercase tracking-widest transition-all duration-300",
                 mode === m 
                   ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" 
                   : "text-muted-foreground hover:text-white"

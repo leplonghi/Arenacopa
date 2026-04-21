@@ -201,7 +201,7 @@ export function PalpitesTab({ bolaoId, palpites, setPalpites, userId }: Palpites
                                             disabled={isLocked}
                                         >
                                             <Zap className={cn("w-3 h-3", scores.isPowerPlay && "fill-yellow-500")} />
-                                            <span className="text-[9px] uppercase tracking-tighter italic">BP x2</span>
+                                            <span className="text-[9px] uppercase tracking-tighter italic">{t('palpites.power_play_badge')}</span>
                                         </motion.button>
                                         <button
                                             onClick={() => setSelectedMatch(m)}
@@ -280,7 +280,7 @@ export function PalpitesTab({ bolaoId, palpites, setPalpites, userId }: Palpites
                                                 <div className="w-4 h-4 rounded-full bg-yellow-500/20 flex items-center justify-center border border-yellow-500/30">
                                                     <Zap className="w-2.5 h-2.5 text-yellow-400 fill-yellow-400/20" />
                                                 </div>
-                                                <span className="text-[9px] text-yellow-400 font-black uppercase tracking-tighter">BP ACTIVE</span>
+                                                <span className="text-[9px] text-yellow-400 font-black uppercase tracking-tighter">{t('palpites.power_play_active_badge')}</span>
                                             </div>
                                         )}
                                     </div>

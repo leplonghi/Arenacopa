@@ -10,7 +10,7 @@
     "groups": "Groups",
     "ranking": "Ranking",
     "profile": "Account",
-    "menu": "Account"
+    "menu": "Menu"
   },
   "header": {
     "titles": {
@@ -73,16 +73,104 @@
     "live": "Live",
     "scheduled": "Scheduled"
   },
+  "brand": {
+    "name": "ArenaCUP"
+  },
   "footer": {
     "rights": "© 2026 ArenaCup. All rights reserved.",
     "terms": "Terms",
     "privacy": "Privacy",
     "contact": "Contact"
   },
+  "rules_page": {
+    "back_aria": "Go back",
+    "title": "Rules",
+    "subtitle": "Arena Cup 2026 • Official handbook",
+    "hero_title": "Pool Rules",
+    "hero_desc": "Welcome to ArenaCup! Understand how our scoring system, deadlines and tiebreak criteria work so you can climb the global ranking.",
+    "points_title": "Points System",
+    "points_label": "points",
+    "operation_title": "How it works",
+    "tiebreak_title": "Tiebreak Criteria",
+    "footer_desc": "Questions about the system? Reach out to official support through the app.",
+    "footer_cta": "Good luck, fan! ⚽",
+    "cards": {
+      "exact": {
+        "title": "Exact Score",
+        "example": "You predicted 2-1 and the match ended 2-1."
+      },
+      "winner_goal_diff": {
+        "title": "Winner + Goal Difference",
+        "example": "You predicted 3-1 (goal diff 2) and it ended 2-0 (goal diff 2)."
+      },
+      "winner_and_goals": {
+        "title": "Winner + Goals for one team",
+        "example": "You predicted 2-1 and it ended 2-0 (winner A + 2 goals A)."
+      },
+      "winner_only": {
+        "title": "Only Winner/Draw",
+        "example": "You predicted 1-0 and the match ended 3-1."
+      },
+      "single_score": {
+        "title": "Only one score right",
+        "example": "You predicted 1-1 and the match ended 0-1."
+      }
+    },
+    "operation": {
+      "deadlines_title": "Prediction Deadlines",
+      "deadlines_desc": "Predictions can be made or changed until 30 minutes before each match starts in local time.",
+      "live_update_title": "Instant Updates",
+      "live_update_desc": "The official ranking and participant points are processed automatically at the final whistle of each match.",
+      "responsibility_title": "Responsibility",
+      "responsibility_desc": "In private groups with prizes, responsibility belongs exclusively to the organizer. ArenaCup is only the automation platform."
+    },
+    "tiebreak": {
+      "items": {
+        "exact_scores": "More Exact Scores",
+        "last_round": "Last Round",
+        "seniority": "Seniority"
+      }
+    }
+  },
   "actions": {
     "back": "Back",
+    "share": "Share",
+    "link_copied": "Link copied.",
     "open_notifications": "Open notifications",
     "open_account": "Open account"
   },
-  "app_loading": "Loading ArenaCUP..."
+  "cookie": {
+    "banner_text": "We only use essential cookies for authentication.",
+    "learn_more": "Learn more in our Privacy Policy.",
+    "accept": "Got it"
+  },
+  "app_loading": "Loading ArenaCUP...",
+  "ui": {
+    "dialog": {
+      "close": "Close"
+    },
+    "sheet": {
+      "close": "Close"
+    },
+    "pagination": {
+      "label": "Pagination",
+      "previous": "Previous",
+      "previous_aria": "Go to previous page",
+      "next": "Next",
+      "next_aria": "Go to next page",
+      "more_pages": "More pages"
+    },
+    "carousel": {
+      "roledescription": "carousel",
+      "previous_slide": "Previous slide",
+      "next_slide": "Next slide"
+    },
+    "sidebar": {
+      "toggle": "Toggle sidebar"
+    },
+    "breadcrumb": {
+      "label": "Breadcrumb",
+      "more": "More"
+    }
+  }
 }

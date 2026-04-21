@@ -12,7 +12,7 @@ import { staggerContainer, staggerItem } from "../../animations";
 import { MarketTooltip } from "./MarketTooltip";
 import type { BolaoMarket, BolaoPrediction, PredictionValue } from "@/types/bolao";
 
-function formatDeadline(value?: string | null, locale = "pt-BR", fallback = "Sem corte definido") {
+function formatDeadline(value?: string | null, locale = "pt-BR", fallback = "") {
     if (!value) return fallback;
 
     const date = new Date(value);
@@ -424,7 +424,7 @@ export function PhaseMarketsTab({
                                     <div className="mt-5 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                                         <p className="text-xs text-zinc-400">
                                             {resolvedTeams.length > 0
-                                                ? t("markets.current_result") + ": " + resolvedTeams.join(", ")
+                                                ? t("markets.current_result_with_value", { value: resolvedTeams.join(", ") })
                                                 : t("markets.no_official_result")}
                                         </p>
                                         <button

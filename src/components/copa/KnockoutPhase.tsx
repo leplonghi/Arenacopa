@@ -7,6 +7,7 @@ import { Trophy, HelpCircle } from "lucide-react";
 import { useSimulacao } from "@/contexts/SimulacaoContext";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import {
   type KnockoutRound, type KnockoutMatchFull, type KnockoutScore,
   KNOCKOUT_ROUNDS, ROUND_LABELS, ROUND_FULL_LABELS,
@@ -32,6 +33,7 @@ function KOScoreInput({ value, onChange }: { value: number | null; onChange: (v:
 
 function TeamSlot({ code, side }: { code: string | null; side: "home" | "away" }) {
   const navigate = useNavigate();
+  const { t } = useTranslation("copa");
   if (!code) {
     return (
       <div className={cn("flex items-center gap-1.5", side === "home" ? "flex-1 justify-end" : "flex-1")}>
@@ -39,7 +41,7 @@ function TeamSlot({ code, side }: { code: string | null; side: "home" | "away" }
           <div className="w-8 h-8 rounded-full bg-secondary/80 border border-border/50 flex items-center justify-center">
             <HelpCircle className="w-4 h-4 text-muted-foreground/50" />
           </div>
-          <span className="text-xs font-medium text-muted-foreground/50">TBD</span>
+          <span className="text-xs font-medium text-muted-foreground/50">{t("knockout.tbd")}</span>
         </div>
       </div>
     );
@@ -68,6 +70,7 @@ function KnockoutMatchCard({
   round: KnockoutRound;
   matchIdx: number;
 }) {
+  const { t } = useTranslation("copa");
   const { updateKnockoutScore } = useSimulacao();
   const canEdit = !!match.home && !!match.away;
   const isDraw = isDrawRegulation(match.score);
@@ -105,7 +108,7 @@ function KnockoutMatchCard({
       {/* Penalties (only show if regulation draw) */}
       {isDraw && round !== "third" && (
         <div className="flex items-center justify-center gap-3 pt-1 border-t border-border/20">
-          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Pênaltis</span>
+          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{t("knockout.penalties")}</span>
           <div className="flex items-center gap-1.5">
             <input
               type="number"
@@ -141,7 +144,7 @@ function KnockoutMatchCard({
         <div className="flex items-center justify-center gap-1.5 pt-1">
           <Trophy className="w-3 h-3 text-copa-success" />
           <span className="text-[10px] font-bold text-copa-success">
-            {getTeam(winner).name} avança
+            {t("knockout.advance_label", { team: getTeam(winner).name })}
           </span>
         </div>
       )}
@@ -150,6 +153,7 @@ function KnockoutMatchCard({
 }
 
 export function KnockoutPhase() {
+  const { t } = useTranslation("copa");
   const { knockoutData, isGroupsComplete } = useSimulacao();
   const [selectedRound, setSelectedRound] = useState<KnockoutRound>("r32");
 
@@ -157,9 +161,9 @@ export function KnockoutPhase() {
     return (
       <div className="glass-card p-6 text-center">
         <span className="text-3xl mb-2 block">🏟️</span>
-        <p className="text-sm font-bold">Fase de Grupos incompleta</p>
+        <p className="text-sm font-bold">{t("knockout.incomplete_title")}</p>
         <p className="text-[11px] text-muted-foreground mt-1">
-          Preencha todos os jogos dos 12 grupos para desbloquear as eliminatórias
+          {t("knockout.incomplete_desc")}
         </p>
       </div>
     );
@@ -199,7 +203,7 @@ export function KnockoutPhase() {
         <div>
           <h3 className="text-base font-black">{ROUND_FULL_LABELS[selectedRound]}</h3>
           <p className="text-[10px] text-muted-foreground">
-            {filledInRound}/{totalInRound} {totalInRound === 1 ? "jogo definido" : "jogos definidos"}
+            {t("knockout.defined_count", { count: filledInRound, total: totalInRound })}
           </p>
         </div>
       </div>

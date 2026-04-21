@@ -38,7 +38,7 @@ const rankBgs = [
 ];
 
 function formatNumber(n: number): string {
-    return n.toLocaleString("pt-BR");
+    return new Intl.NumberFormat().format(n);
 }
 
 export function HistoriaTab() {
@@ -453,8 +453,8 @@ function ParticipacoesSection() {
                         <Flag code="BRA" size="sm" />
                     </div>
                     <div>
-                        <p className="text-sm font-black text-white">Brasil: Único em Todas</p>
-                        <p className="text-[11px] text-muted-foreground">A única seleção presente em todas as 22 edições da Copa do Mundo</p>
+                        <p className="text-sm font-black text-white">{t('historia.highlights.brazil_all_title')}</p>
+                        <p className="text-[11px] text-muted-foreground">{t('historia.highlights.brazil_all_desc')}</p>
                     </div>
                 </div>
             </div>

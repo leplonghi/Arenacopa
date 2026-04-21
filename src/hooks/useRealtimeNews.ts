@@ -103,6 +103,8 @@ export function useRealtimeNews(options: UseRealtimeNewsOptions = {}) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    setIsLoading(true);
+
     const shouldUseLegacyFeed = !!countryFilter && !championshipId && !sourceCountry;
     const newsRef = collection(db, shouldUseLegacyFeed ? "copa_news" : "news_articles");
 
@@ -110,7 +112,6 @@ export function useRealtimeNews(options: UseRealtimeNewsOptions = {}) {
       ? query(
           newsRef,
           where("country_filter", "==", countryFilter),
-          orderBy("published_at", "desc"),
           limit(limitCount)
         )
       : championshipId

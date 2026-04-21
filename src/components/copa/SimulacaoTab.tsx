@@ -17,6 +17,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
+import { openWhatsAppShare } from "@/lib/security";
 
 function ScoreInput({ value, onChange }: { value: number | null; onChange: (v: number | null) => void }) {
   return (
@@ -59,9 +60,16 @@ function SimShareSheet({ open, onClose, sim }: {
   };
 
   const shareText = buildShareText();
-  const encoded = encodeURIComponent(shareText);
 
-  const shareWhatsApp = () => { window.open(`https://wa.me/?text=${encoded}`, "_blank"); onClose(); };
+  const shareWhatsApp = () => {
+    if (!openWhatsAppShare(shareText)) {
+      navigator.clipboard.writeText(shareText);
+      toast({ title: t('simulator.share.copied'), description: t('simulator.share.copied_desc') });
+      onClose();
+      return;
+    }
+    onClose();
+  };
   const copyText = () => {
     navigator.clipboard.writeText(shareText);
     toast({ title: t('simulator.share.copied'), description: t('simulator.share.copied_desc') });
@@ -267,12 +275,12 @@ function SimulationList() {
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-0.5">
-              <h2 className="text-base font-black text-white">Simulador de Copa</h2>
+              <h2 className="text-base font-black text-white">{t('simulator.list.hero_title', { defaultValue: 'Simulador de Copa' })}</h2>
               <span className="text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded-full bg-amber-500 text-black leading-none">
                 NOVO
               </span>
             </div>
-            <p className="text-[11px] text-amber-200/70">Simule resultados e veja quem avança na Copa 2026</p>
+              <p className="text-[11px] text-amber-200/70">{t('simulator.list.hero_desc', { defaultValue: 'Simule resultados e veja quem avança na Copa 2026' })}</p>
           </div>
           <button
             onClick={() => setCreateOpen(true)}
@@ -288,7 +296,7 @@ function SimulationList() {
       {simulations.length > 0 && (
         <div className="flex items-center justify-between px-1">
           <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
-            Suas Simulações
+            {t('simulator.list.yours', { defaultValue: 'Suas Simulações' })}
           </p>
         </div>
       )}

@@ -4,7 +4,6 @@ import {
   query, 
   where, 
   getDocs, 
-  orderBy, 
   doc, 
   updateDoc, 
   writeBatch 
@@ -25,14 +24,18 @@ export async function listNotifications(userId: string) {
   try {
     const q = query(
       collection(db, "notifications"),
-      where("user_id", "==", userId),
-      orderBy("created_at", "desc")
+      where("user_id", "==", userId)
     );
     const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    })) as NotificationRecord[];
+    return querySnapshot.docs
+      .map((doc) => ({
+        id: doc.id,
+        ...doc.data()
+      }) as NotificationRecord)
+      .sort(
+        (left, right) =>
+          new Date(right.created_at).getTime() - new Date(left.created_at).getTime()
+      );
   } catch (error) {
     console.error("Error listing notifications:", error);
     throw error;
@@ -53,14 +56,15 @@ export async function markAllNotificationsAsRead(userId: string) {
   try {
     const q = query(
       collection(db, "notifications"),
-      where("user_id", "==", userId),
-      where("read", "==", false)
+      where("user_id", "==", userId)
     );
     const querySnapshot = await getDocs(q);
     
     const batch = writeBatch(db);
     querySnapshot.docs.forEach((doc) => {
-      batch.update(doc.ref, { read: true });
+      if (doc.data().read === false) {
+        batch.update(doc.ref, { read: true });
+      }
     });
     
     await batch.commit();
@@ -69,4 +73,3 @@ export async function markAllNotificationsAsRead(userId: string) {
     throw error;
   }
 }
-

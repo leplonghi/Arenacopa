@@ -1,36 +1,21 @@
 import { LegalPage } from "@/components/LegalPage";
+import { useTranslation } from "react-i18next";
 
 export default function Privacidade() {
+    const { t } = useTranslation("common");
     return (
-        <LegalPage title="Política de Privacidade">
-            <p>
-                A sua privacidade é importante para nós. É política do Arena CUP respeitar a sua
-                privacidade em relação a qualquer informação sua que possamos coletar no site
-                Arena CUP, e outros sites que possuímos e operamos.
-            </p>
+        <LegalPage title={t("legal.privacy.title")}>
+            <p>{t("legal.privacy.intro_1")}</p>
 
-            <p>
-                Solicitamos informações pessoais apenas quando realmente precisamos delas para
-                lhe fornecer um serviço. Fazemo-lo por meios justos e legais, com o seu
-                conhecimento e consentimento. Também informamos por que estamos coletando e
-                como será usado.
-            </p>
+            <p>{t("legal.privacy.intro_2")}</p>
 
-            <h2 className="text-xl font-bold text-white mt-8 mb-4">Uso de Cookies</h2>
-            <p>
-                Usamos apenas cookies essenciais para autenticação e segurança da sua conta.
-                Não utilizamos cookies de rastreamento de terceiros ou para fins publicitários.
-            </p>
+            <h2 className="text-xl font-bold text-white mt-8 mb-4">{t("legal.privacy.cookies_title")}</h2>
+            <p>{t("legal.privacy.cookies_desc")}</p>
 
-            <h2 className="text-xl font-bold text-white mt-8 mb-4">Compartilhamento de Dados</h2>
-            <p>
-                Não compartilhamos informações de identificação pessoal publicamente ou com
-                terceiros, exceto quando exigido por lei.
-            </p>
+            <h2 className="text-xl font-bold text-white mt-8 mb-4">{t("legal.privacy.data_sharing_title")}</h2>
+            <p>{t("legal.privacy.data_sharing_desc")}</p>
 
-            <p className="mt-8">
-                Esta política é efetiva a partir de março de 2026.
-            </p>
+            <p className="mt-8">{t("legal.privacy.effective_date")}</p>
         </LegalPage>
     );
 }

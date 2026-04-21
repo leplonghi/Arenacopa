@@ -86,7 +86,7 @@ export async function getDashboardData(userId: string) {
     //    for accurate per-bolão pending prediction counting.
     const matchesQuery = query(
       collection(db, "matches"),
-      where("status", "==", "scheduled")
+      where("status", "in", ["scheduled", "upcoming"])
     );
     const scheduledMatchesPromise = getDocs(matchesQuery);
 

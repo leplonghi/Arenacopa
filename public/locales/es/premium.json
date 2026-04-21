@@ -12,7 +12,7 @@
   },
   "active": {
     "title": "¡Ya tienes Copa Pass!",
-    "description": "Gracias por apoyar Arena CUP. Todos los beneficios premium ya están activos para ti.",
+    "description": "Gracias por apoyar ArenaCUP. Todos tus beneficios premium ya están activos.",
     "back_home": "Volver al inicio"
   },
   "social_proof": {
@@ -47,7 +47,7 @@
       "perks": ["Mapa de estadios", "Guía de ciudades sede", "Info de transporte", "Consejos de viaje"]
     },
     "pool": {
-      "title": "QuinielaCopa",
+      "title": "Quinielas",
       "subtitle": "Juega sin límites",
       "perks": ["Quinielas ilimitadas", "Grupos ilimitados", "Bote y PIX", "Insignia oficial de aficionado"]
     }
@@ -93,7 +93,7 @@
     "notify": "Quiero aviso",
     "buy": "Conseguir mi pasaporte",
     "support": "Hablar con soporte premium",
-    "secure_message": "Pago 100% seguro con Stripe. Cancela cuando quieras.",
+    "secure_message": "Pago 100% seguro con Stripe.",
     "preparing_message": "El checkout todavía se está preparando. Únete a la lista de aviso por soporte.",
     "transaction_error_title": "Error en la transacción",
     "transaction_error_desc": "No se pudo completar la activación del pase."

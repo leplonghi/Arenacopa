@@ -1,83 +1,53 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useAuth } from '@/contexts/AuthContext';
-import { toast } from 'sonner';
-import { getProfile, updatePreferredLanguage } from '@/services/profile/profile.service';
+import type { AppLanguage } from './language';
+import { applyDocumentLanguage, getSystemLanguage, normalizeLanguage } from './language';
 
-export type Language = 'pt-BR' | 'en' | 'es';
-
-function normalizeLanguage(lang?: string | null): Language {
-    const normalized = lang?.toLowerCase().trim() || '';
-
-    if (normalized.startsWith('pt')) return 'pt-BR';
-    if (normalized.startsWith('es')) return 'es';
-
-    return 'en';
-}
-
-function isDemoModeEnabled() {
-    return localStorage.getItem("demo_mode") === "true" || localStorage.getItem("arenacopa_demo_mode") === "true";
-}
+export type Language = AppLanguage;
 
 export function useLanguage() {
     const { i18n } = useTranslation();
-    const { user } = useAuth();
-    const [isLoading, setIsLoading] = useState(false);
-
+    const [systemLanguage, setSystemLanguage] = useState<Language>(() => getSystemLanguage());
 
     useEffect(() => {
-        if (!user || isDemoModeEnabled()) return;
+        if (typeof window === 'undefined') return;
 
-        const syncLanguage = async () => {
+        const syncLanguageWithSystem = async () => {
+            const nextSystemLanguage = getSystemLanguage();
+            setSystemLanguage((current) => current === nextSystemLanguage ? current : nextSystemLanguage);
+
+            const currentLanguage = normalizeLanguage(i18n.resolvedLanguage || i18n.language);
+            if (currentLanguage === nextSystemLanguage) {
+                return;
+            }
+
             try {
-                const profile = await getProfile(user.id);
-                const preferredLanguage = normalizeLanguage(profile?.preferred_language);
-                if (profile?.preferred_language && preferredLanguage !== normalizeLanguage(i18n.language)) {
-                    await i18n.changeLanguage(preferredLanguage);
-                }
-            } catch (err) {
-                console.error('Error syncing language:', err);
+                await i18n.changeLanguage(nextSystemLanguage);
+            } catch (error) {
+                console.error('Error syncing language with system settings:', error);
             }
         };
 
-        syncLanguage();
-    }, [i18n, user]);
+        void syncLanguageWithSystem();
 
-    const changeLanguage = async (lang: Language) => {
-        setIsLoading(true);
-        try {
-            const normalizedLanguage = normalizeLanguage(lang);
+        const handleLanguageChange = () => {
+            void syncLanguageWithSystem();
+        };
 
-            // 1. Change language in i18n immediately (UI updates right away)
-            await i18n.changeLanguage(normalizedLanguage);
-            localStorage.setItem("i18nextLng", normalizedLanguage);
+        window.addEventListener('languagechange', handleLanguageChange);
+        return () => window.removeEventListener('languagechange', handleLanguageChange);
+    }, [i18n]);
 
-            // 2. Show success toast right after UI update
-            const messages = {
-                'pt-BR': 'Idioma alterado para Português',
-                'en': 'Language changed to English',
-                'es': 'Idioma cambiado a Español'
-            };
-            toast.success(messages[normalizedLanguage]);
+    const language = normalizeLanguage(i18n.resolvedLanguage || i18n.language || systemLanguage);
 
-            // 3. Persist to Firestore silently in the background (fire-and-forget)
-            // A Firestore failure must NOT affect the user experience
-            if (user && !isDemoModeEnabled()) {
-                updatePreferredLanguage(user.id, normalizedLanguage).catch(err =>
-                    console.error('Failed to persist language preference to Firestore:', err)
-                );
-            }
-        } catch (error) {
-            console.error('Error changing language:', error);
-            toast.error('Erro ao alterar idioma');
-        } finally {
-            setIsLoading(false);
-        }
-    };
+    useEffect(() => {
+        applyDocumentLanguage(language);
+    }, [language]);
 
     return {
-        language: normalizeLanguage(i18n.language),
-        changeLanguage,
-        isLoading
+        language,
+        systemLanguage,
+        isSystemLanguage: language === systemLanguage,
+        isLoading: false
     };
 }

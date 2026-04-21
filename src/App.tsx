@@ -14,6 +14,7 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { MonetizationProvider } from "@/contexts/MonetizationContext";
 import { ChampionshipProvider } from "@/contexts/ChampionshipContext";
 import FieldBackground from "@/components/FieldBackground";
+import { useLanguage } from "@/i18n/useLanguage";
 import { sanitizeInternalRedirect } from "@/lib/security";
 const Index = lazy(() => import("./pages/Index"));
 const Copa = lazy(() => import("./pages/Copa"));
@@ -26,9 +27,11 @@ const Rules = lazy(() => import("./pages/Rules"));
 const TeamDetails = lazy(() => import("./pages/TeamDetails"));
 const Auth = lazy(() => import("./pages/Auth"));
 const Guia = lazy(() => import("./pages/Guia"));
+const MenuPage = lazy(() => import("./pages/Menu"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Premium = lazy(() => import("./pages/Premium"));
 const PublicInvite = lazy(() => import("./pages/PublicInvite"));
+const PublicGroupInvite = lazy(() => import("./pages/PublicGroupInvite"));
 const Grupos = lazy(() => import("./pages/Grupos"));
 const GrupoDetail = lazy(() => import("./pages/GrupoDetail"));
 const Privacidade = lazy(() => import("./pages/Privacidade"));
@@ -54,25 +57,40 @@ const legacyCopaMap: Record<string, string> = {
   overview: "/copa",
   today: "/copa",
   calendar: "/copa/calendario",
+  schedule: "/copa/calendario",
   groups: "/copa/grupos",
+  standings: "/copa/grupos",
   bracket: "/copa/chaves",
+  knockout: "/copa/chaves",
   simulator: "/copa/simulacao",
-  hosts: "/guia",
+  simulation: "/copa/simulacao",
+  hosts: "/copa/guia",
+  guide: "/copa/guia",
   news: "/noticias",
+  noticias: "/noticias",
   history: "/copa/historia",
+  historia: "/copa/historia",
 };
 
 const legacyGuiaMap: Record<string, string> = {
-  map: "/guia/mapa",
-  cities: "/guia",
-  city: "/guia",
-  stadiums: "/guia",
-  hosts: "/guia",
+  map: "/copa/guia/mapa",
+  mapa: "/copa/guia/mapa",
+  cities: "/copa/guia",
+  city: "/copa/guia",
+  stadiums: "/copa/guia",
+  hosts: "/copa/guia",
+  sedes: "/copa/guia",
   history: "/copa/historia",
+  historia: "/copa/historia",
 };
 
 function LegacyRedirect({ to }: { to: string }) {
   return <Navigate to={to} replace />;
+}
+
+function LegacyRedirectWithSearch({ to }: { to: string }) {
+  const location = useLocation();
+  return <Navigate to={`${to}${location.search}${location.hash}`} replace />;
 }
 
 function LegacyCopaRedirect() {
@@ -84,7 +102,7 @@ function LegacyCopaRedirect() {
 function LegacyGuiaRedirect() {
   const location = useLocation();
   const slug = location.pathname.split("/").filter(Boolean)[1] ?? "";
-  return <Navigate to={legacyGuiaMap[slug] ?? "/guia"} replace />;
+  return <Navigate to={legacyGuiaMap[slug] ?? "/copa/guia"} replace />;
 }
 
 function LegacyPoolDetailRedirect() {
@@ -116,6 +134,11 @@ function DeepLinkListener() {
 
 function PushNotificationListener() {
   usePushNotifications();
+  return null;
+}
+
+function LanguageRuntime() {
+  useLanguage();
   return null;
 }
 
@@ -165,6 +188,7 @@ const AppRoutes = () => (
     <Route path="/auth" element={<AuthRoute><Auth /></AuthRoute>} />
     {/* /b/:inviteCode — shareable invite link. Public so unauthenticated users can see the "Join" screen. */}
     <Route path="/b/:inviteCode" element={<PublicInvite />} />
+    <Route path="/grupos/entrar/:inviteCode" element={<PublicGroupInvite />} />
     {/* Legal / compliance pages — intentionally PUBLIC (Play Store / App Store requirement).
         /excluir-conta must be public so unauthenticated users can still request deletion. */}
     <Route path="/privacidade" element={<Privacidade />} />
@@ -172,11 +196,14 @@ const AppRoutes = () => (
     <Route path="/excluir-conta" element={<ExcluirConta />} />
     <Route path="/privacy" element={<LegacyRedirect to="/privacidade" />} />
     <Route path="/terms" element={<LegacyRedirect to="/termos" />} />
+    <Route path="/news" element={<ProtectedRoute><LegacyRedirect to="/noticias" /></ProtectedRoute>} />
     <Route path="/" element={<ProtectedRoute><Layout><Index /></Layout></ProtectedRoute>} />
     <Route path="/copa" element={<ProtectedRoute><Layout><Copa /></Layout></ProtectedRoute>} />
     <Route path="/copa/overview" element={<ProtectedRoute><LegacyRedirect to="/copa" /></ProtectedRoute>} />
-    <Route path="/copa/sedes" element={<ProtectedRoute><Navigate to="/guia" replace /></ProtectedRoute>} />
+    <Route path="/copa/sedes" element={<ProtectedRoute><Navigate to="/copa/guia" replace /></ProtectedRoute>} />
     <Route path="/copa/noticias" element={<ProtectedRoute><Navigate to="/noticias" replace /></ProtectedRoute>} />
+    <Route path="/copa/guia" element={<ProtectedRoute><Layout><Guia /></Layout></ProtectedRoute>} />
+    <Route path="/copa/guia/:subtab" element={<ProtectedRoute><Layout><Guia /></Layout></ProtectedRoute>} />
     <Route path="/copa/:subtab" element={<ProtectedRoute><Layout><Copa /></Layout></ProtectedRoute>} />
     <Route path="/cup" element={<ProtectedRoute><LegacyRedirect to="/copa" /></ProtectedRoute>} />
     <Route path="/cup/:subtab" element={<ProtectedRoute><LegacyCopaRedirect /></ProtectedRoute>} />
@@ -190,18 +217,19 @@ const AppRoutes = () => (
     <Route path="/boloes/rapido" element={<ProtectedRoute><Layout><BolaoRapido /></Layout></ProtectedRoute>} />
     <Route path="/boloes/criar" element={<ProtectedRoute><Layout><CriarBolao /></Layout></ProtectedRoute>} />
     <Route path="/boloes/:id" element={<ProtectedRoute><Layout><BolaoDetail /></Layout></ProtectedRoute>} />
-    <Route path="/criar-bolao" element={<ProtectedRoute><LegacyRedirect to="/boloes/criar" /></ProtectedRoute>} />
+    <Route path="/criar-bolao" element={<ProtectedRoute><LegacyRedirectWithSearch to="/boloes/criar" /></ProtectedRoute>} />
     <Route path="/pools" element={<ProtectedRoute><LegacyRedirect to="/boloes" /></ProtectedRoute>} />
-    <Route path="/pools/create" element={<ProtectedRoute><LegacyRedirect to="/boloes/criar" /></ProtectedRoute>} />
+    <Route path="/pools/create" element={<ProtectedRoute><LegacyRedirectWithSearch to="/boloes/criar" /></ProtectedRoute>} />
     <Route path="/pools/:id" element={<ProtectedRoute><LegacyPoolDetailRedirect /></ProtectedRoute>} />
     <Route path="/grupos" element={<ProtectedRoute><Layout><Grupos /></Layout></ProtectedRoute>} />
     <Route path="/grupos/:grupoId" element={<ProtectedRoute><Layout><GrupoDetail /></Layout></ProtectedRoute>} />
-    <Route path="/guia" element={<ProtectedRoute><Layout><Guia /></Layout></ProtectedRoute>} />
+    <Route path="/guia" element={<ProtectedRoute><LegacyRedirect to="/copa/guia" /></ProtectedRoute>} />
     <Route path="/guia/historia" element={<ProtectedRoute><LegacyRedirect to="/copa/historia" /></ProtectedRoute>} />
-    <Route path="/guia/:subtab" element={<ProtectedRoute><Layout><Guia /></Layout></ProtectedRoute>} />
-    <Route path="/guide" element={<ProtectedRoute><LegacyRedirect to="/guia" /></ProtectedRoute>} />
+    <Route path="/guia/:subtab" element={<ProtectedRoute><LegacyGuiaRedirect /></ProtectedRoute>} />
+    <Route path="/guide" element={<ProtectedRoute><LegacyRedirect to="/copa/guia" /></ProtectedRoute>} />
     <Route path="/guide/:subtab" element={<ProtectedRoute><LegacyGuiaRedirect /></ProtectedRoute>} />
     <Route path="/team/:code" element={<ProtectedRoute><Layout><TeamDetails /></Layout></ProtectedRoute>} />
+    <Route path="/menu" element={<ProtectedRoute><Layout><MenuPage /></Layout></ProtectedRoute>} />
     <Route path="/perfil" element={<ProtectedRoute><Layout><Perfil /></Layout></ProtectedRoute>} />
     <Route path="/profile" element={<ProtectedRoute><LegacyRedirect to="/perfil" /></ProtectedRoute>} />
     <Route path="/account" element={<ProtectedRoute><LegacyRedirect to="/perfil" /></ProtectedRoute>} />
@@ -224,6 +252,7 @@ const App = () => (
         <MonetizationProvider>
           <ChampionshipProvider>
             <Suspense fallback={<LoadingScreen />}>
+              <LanguageRuntime />
               <FieldBackground />
               <BrowserRouter>
                 <DeepLinkListener />

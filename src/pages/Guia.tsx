@@ -1,5 +1,5 @@
 import { Suspense, lazy, useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     List,
@@ -17,7 +17,9 @@ const VALID_SUBTABS = new Set(["mapa"]);
 export default function Guia() {
     const { subtab } = useParams<{ subtab?: string }>();
     const navigate = useNavigate();
+    const location = useLocation();
     const { t } = useTranslation(["guia", "sedes"]);
+    const basePath = location.pathname.startsWith("/copa/guia") ? "/copa/guia" : "/guia";
 
     const GuiaLoadingState = () => (
         <div className="surface-card rounded-[28px] p-6 text-sm font-bold uppercase tracking-[0.18em] text-zinc-400">
@@ -36,17 +38,17 @@ export default function Guia() {
             return;
         }
         if (!VALID_SUBTABS.has(subtab)) {
-            navigate("/guia", { replace: true });
+            navigate(basePath, { replace: true });
             return;
         }
         if (subtab === "mapa") setViewMode("mapa");
         else setViewMode("list");
-    }, [navigate, subtab]);
+    }, [basePath, navigate, subtab]);
 
     const handleModeToggle = (mode: GuiaViewMode) => {
         setViewMode(mode);
-        if (mode === "mapa") navigate("/guia/mapa");
-        else navigate("/guia");
+        if (mode === "mapa") navigate(`${basePath}/mapa`);
+        else navigate(basePath);
     };
 
     return (

@@ -308,11 +308,14 @@ export default function Campeonatos() {
           const bolaoDocs = await getDocs(
             query(
               collection(db, "boloes"),
-              where("__name__", "in", chunk),
-              where("status", "in", ["active", "open"])
+              where("__name__", "in", chunk)
             )
           );
           bolaoDocs.forEach((doc) => {
+            const status = doc.data().status;
+            if (status !== "active" && status !== "open") {
+              return;
+            }
             const champId: string = doc.data().championship_id ?? "wc2026";
             counts[champId] = (counts[champId] ?? 0) + 1;
           });

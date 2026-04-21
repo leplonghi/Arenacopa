@@ -32,7 +32,7 @@ function getPredictionLabel(prediction: BolaoPrediction | undefined, t: (k: stri
         const maybeChampion = typeof value.champion === "string" ? value.champion : "";
         if (maybeFinalists.length > 0 || maybeChampion) {
             const finalistsLabel = maybeFinalists.length > 0 ? maybeFinalists.join(" x ") : t('special_markets.final_undefined');
-            return `${finalistsLabel}${maybeChampion ? ` | Campeão: ${maybeChampion}` : ""}`;
+            return `${finalistsLabel}${maybeChampion ? ` | ${t("special_markets.champion_prefix", { champion: maybeChampion })}` : ""}`;
         }
     }
     return "";

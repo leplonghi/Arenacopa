@@ -63,11 +63,11 @@ export function GroupDetails({
                 {/* Header */}
                 <div className="sticky top-0 z-10 flex items-center justify-between p-6 pb-4 bg-card/95 backdrop-blur-xl border-b border-white/5">
                     <div>
-                        <span className="text-xs font-bold text-primary uppercase tracking-widest">Detalhes do</span>
+                        <span className="text-xs font-bold text-primary uppercase tracking-widest">{t('group_details.kicker')}</span>
                         <div className="flex items-center gap-2">
-                            <h2 className="text-2xl font-black text-foreground">Grupo {groupId}</h2>
+                            <h2 className="text-2xl font-black text-foreground">{t('team_details.group_label', { group: groupId })}</h2>
                             {useSimData && (
-                                <span className="bg-primary/20 text-primary text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Simulação</span>
+                                <span className="bg-primary/20 text-primary text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">{t('groups.mode.simulation')}</span>
                             )}
                         </div>
                     </div>
@@ -84,17 +84,17 @@ export function GroupDetails({
                     <section>
                         <div className="flex items-center gap-2 mb-4">
                             <Trophy className="w-5 h-5 text-primary" />
-                            <h3 className="text-lg font-bold">Classificação</h3>
+                            <h3 className="text-lg font-bold">{t('group_details.table_title')}</h3>
                         </div>
 
                         <div className="bg-secondary/30 rounded-2xl overflow-hidden border border-white/5">
                             <div className="grid grid-cols-[auto_1fr_32px_32px_32px_42px] gap-x-2 px-4 py-3 text-[10px] font-bold uppercase tracking-wider text-muted-foreground bg-secondary/50">
                                 <span className="w-4 text-center">#</span>
-                                <span>Seleção</span>
-                                <span className="text-center">J</span>
-                                <span className="text-center">SG</span>
-                                <span className="text-center">Pts</span>
-                                <span className="text-right text-muted-foreground">{viewMode === "real" ? "%" : "J"}</span>
+                                <span>{t('groups.table.country')}</span>
+                                <span className="text-center">{t('groups.table.j')}</span>
+                                <span className="text-center">{t('groups.table.gd')}</span>
+                                <span className="text-center">{t('groups.table.p')}</span>
+                                <span className="text-right text-muted-foreground">{viewMode === "real" ? "%" : t('groups.table.j')}</span>
                             </div>
 
                             {displayStandings.map((s, i) => {
@@ -147,7 +147,7 @@ export function GroupDetails({
                     <section>
                         <div className="flex items-center gap-2 mb-4">
                             <CalendarDays className="w-5 h-5 text-primary" />
-                            <h3 className="text-lg font-bold">Jogos</h3>
+                            <h3 className="text-lg font-bold">{t('group_details.matches_title')}</h3>
                         </div>
 
                         <div className="space-y-3">
@@ -160,7 +160,7 @@ export function GroupDetails({
                                     <MatchCard key={match.id} match={match} index={idx} />
                                 ))
                             ) : (
-                                <p className="text-center text-muted-foreground py-8">Nenhum jogo encontrado para este grupo.</p>
+                                <p className="text-center text-muted-foreground py-8">{t('grupos.no_games')}</p>
                             )}
                         </div>
                     </section>

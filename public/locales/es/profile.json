@@ -8,23 +8,38 @@
     "preferences": "Preferencias",
     "language": "Idioma",
     "language_choose": "Elige tu idioma",
+    "language_auto": "Idioma automático",
+    "language_following_system": "La app sigue el idioma de tu dispositivo.",
+    "language_system": "Idioma detectado en el sistema: {{language}}.",
+    "language_names": {
+        "ptBR": "Portugués",
+        "en": "English",
+        "es": "Español"
+    },
     "nickname": "Apodo",
     "nationality": "Nacionalidad",
     "nationality_placeholder": "Ej: Argentino",
+    "default_user_name": "Usuario",
     "my_team": "Mi Equipo",
     "edit_team": "Editar",
     "quick_switch": "Cambio Rápido",
+    "favorite_team": {
+        "select_aria": "Elegir {{team}} como equipo favorito",
+        "open_selector_aria": "Abrir el selector completo de equipos"
+    },
     "fun_mode": "Modo Fiesta",
     "fun_mode_desc": "Activa animaciones de fiesta, confeti en los goles y comentarios divertidos.",
+    "fun_mode_enable": "Activar modo fiesta",
+    "fun_mode_disable": "Desactivar modo fiesta",
     "notifications_title": "Notificaciones",
     "browser_notifications_unsupported": "Tu navegador no soporta notificaciones.",
     "notifications_denied_title": "Permiso denegado",
     "notifications_denied_desc": "Activa las notificaciones del navegador para recibir alertas de gol.",
-    "goals_notif": "Goles de los Partidos",
+    "goals_notif": "Goles de los partidos",
     "goals_notif_desc": "Alertas instantáneas de gol",
     "news_notif": "Noticias y Fichajes",
     "news_notif_desc": "Resumen diario",
-    "match_start_notif": "Inicio de Partido",
+    "match_start_notif": "Inicio del partido",
     "match_start_notif_desc": "15 min antes del juego",
     "version": "Versión",
     "edit_modal_title": "Editar Perfil",
@@ -50,9 +65,33 @@
     "stat_exact_scores": "Marcadores exactos",
     "stat_titles": "Títulos",
     "achievements_title": "Logros desbloqueados",
+    "achievements": {
+        "locked": "Bloqueado",
+        "first_prediction": {
+            "title": "Primer Disparo",
+            "desc": "Hiciste tu primer pronóstico"
+        },
+        "exact_score": {
+            "title": "En el Blanco",
+            "desc": "Acertaste 1 marcador exacto"
+        },
+        "pool_creator": {
+            "title": "Líder Nato",
+            "desc": "Creaste una quiniela"
+        },
+        "combo_three": {
+            "title": "Hat-trick",
+            "desc": "Acertaste 3 marcadores exactos"
+        },
+        "champion": {
+            "title": "Campeón",
+            "desc": "Ganaste una quiniela completa"
+        }
+    },
     "premium_title": "Copa Premium",
     "premium_card_title": "Desbloquea ArenaCUP",
-    "premium_card_desc": "Quinielas ilimitadas, sin anuncios y badge exclusivo.",
+  "premium_card_desc": "Quinielas ilimitadas, sin anuncios e insignia exclusiva.",
+    "premium_open_aria": "Abrir la página de ArenaCUP Premium",
     "support_title": "Apoya ArenaCUP",
     "support_desc": "La app es gratis. Si te gustó, considera apoyar el desarrollo.",
     "support_action": "Enviar apoyo",
@@ -61,5 +100,85 @@
     "help_title": "Ayuda e información",
     "help_rules": "Reglas y FAQ",
     "help_terms": "Términos de uso",
-    "help_privacy": "Política de privacidad"
+    "help_privacy": "Política de privacidad",
+    "menu": {
+        "kicker": "Ajustes",
+        "title": "Menú",
+        "profile_title": "Mi perfil",
+        "profile_desc": "Equipo favorito, preferencias",
+        "rules_title": "Reglas y reglamento",
+        "notifications_title": "Notificaciones",
+        "notifications_desc": "Alertas, push y preferencias",
+        "settings_title": "Ajustes",
+        "settings_desc": "Cuenta, idioma y preferencias",
+        "privacy_title": "Privacidad y términos",
+        "privacy_desc": "Políticas y uso de la plataforma",
+        "help_title": "Ayuda y FAQ",
+        "help_desc": "Reglas, dudas y guía rápida",
+        "logout": "Cerrar sesión"
+    },
+    "delete_account": {
+        "title": "Eliminar cuenta",
+        "brand_label": "ArenaCup 2026",
+        "mail": {
+            "subject": "Solicitud de eliminación de cuenta",
+            "body": "Hola, me gustaría solicitar la eliminación de mi cuenta y de todos mis datos de ArenaCup."
+        },
+        "confirm": {
+            "warning": "Esta acción es permanente y no se puede deshacer.",
+            "list_intro": "Lo siguiente se eliminará permanentemente:",
+            "connected_as": "Conectado como",
+            "cancel": "Cancelar",
+            "cta": "Eliminar mi cuenta",
+            "items": {
+                "account": "Tu cuenta de acceso",
+                "profile": "Perfil y foto",
+                "predictions": "Todos tus pronósticos",
+                "memberships": "Participación en quinielas",
+                "champion": "Predicción de campeón",
+                "tokens": "Tokens de notificación"
+            }
+        },
+        "not_logged_in": {
+            "intro": "Para eliminar tu cuenta y todos tus datos, abre la app y sigue estos pasos:",
+            "email_prefix": "¿Prefieres solicitarlo por correo electrónico?",
+            "cta": "Iniciar sesión para eliminar",
+            "steps": {
+                "login": "Abre ArenaCup e inicia sesión",
+                "settings_prefix": "Ve a",
+                "settings_path": "Perfil → Ajustes",
+                "delete_prefix": "Toca",
+                "delete_label": "Eliminar cuenta",
+                "confirm": "Confirma la acción"
+            }
+        },
+        "reauth": {
+            "desc": "Por seguridad, confirma tu contraseña para continuar.",
+            "password_placeholder": "Tu contraseña",
+            "back": "Volver",
+            "confirm": "Confirmar eliminación"
+        },
+        "deleting": {
+            "title": "Eliminando tus datos...",
+            "desc": "Esto puede tardar algunos segundos. No cierres la página."
+        },
+        "done": {
+            "title": "Cuenta eliminada con éxito",
+            "desc": "Todos tus datos fueron eliminados permanentemente de ArenaCup.",
+            "cta": "Volver al inicio"
+        },
+        "error": {
+            "title": "No se pudo eliminar la cuenta",
+            "retry": "Intentar de nuevo"
+        },
+        "errors": {
+            "incorrect_password": "Contraseña incorrecta. Verifícala e inténtalo de nuevo. Si olvidaste tu contraseña, restablécela antes de eliminar la cuenta.",
+            "recent_login": "Por seguridad, cierra sesión e inicia sesión nuevamente antes de eliminar la cuenta.",
+            "generic": "Ocurrió un error al eliminar tu cuenta. Inténtalo de nuevo o contacta: {{email}}"
+        },
+        "footer": {
+            "prefix": "Para dudas sobre protección de datos, consulta nuestra",
+            "link": "Política de privacidad"
+        }
+    }
 }

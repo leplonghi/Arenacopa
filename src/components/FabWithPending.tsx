@@ -1,254 +1,8 @@
-/* eslint-disable react-refresh/only-export-components */
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
-import { Clock } from "lucide-react";
-
-/** Classic Telstar black-and-white soccer ball */
-function RealisticBall({ active = false }: { active?: boolean }) {
-  return (
-    <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full drop-shadow-[0_2px_8px_rgba(0,0,0,0.55)]">
-      <defs>
-        {/* Sphere: white with subtle top-left sheen */}
-        <radialGradient id="bMain" cx="36%" cy="28%" r="70%">
-          <stop offset="0%"   stopColor="#FFFFFF" />
-          <stop offset="55%"  stopColor="#F5F5F5" />
-          <stop offset="100%" stopColor="#C8C8C8" />
-        </radialGradient>
-        {/* Bottom-right shadow on sphere */}
-        <radialGradient id="bShadow" cx="70%" cy="75%" r="50%">
-          <stop offset="0%"   stopColor="rgba(0,0,0,0.30)" />
-          <stop offset="100%" stopColor="rgba(0,0,0,0)" />
-        </radialGradient>
-        {/* Pentagon patch gradient — rich black with slight shimmer */}
-        <radialGradient id="bPatch" cx="35%" cy="25%" r="75%">
-          <stop offset="0%"   stopColor="#2A2A2A" />
-          <stop offset="100%" stopColor="#000000" />
-        </radialGradient>
-        <clipPath id="bClip">
-          <circle cx="32" cy="32" r="28" />
-        </clipPath>
-      </defs>
-
-      {/* === SPHERE === */}
-      <g clipPath="url(#bClip)">
-        {/* Base white */}
-        <circle cx="32" cy="32" r="28" fill="url(#bMain)" />
-        {/* Bottom shadow */}
-        <circle cx="32" cy="32" r="28" fill="url(#bShadow)" />
-
-        {/* ── Telstar pentagons ── */}
-        {/* Centre */}
-        <path d="M32 18 L39.5 23.5 L36.8 32.5 L27.2 32.5 L24.5 23.5 Z" fill="url(#bPatch)" />
-        {/* Top-left */}
-        <path d="M14 17 L18.5 14.5 L23 21 L19.5 26.5 L13 24 Z" fill="url(#bPatch)" />
-        {/* Top-right */}
-        <path d="M41 14.5 L48 17 L49 24 L43 26.5 L39 21 Z" fill="url(#bPatch)" />
-        {/* Left */}
-        <path d="M5 28 L10 24.5 L15 31.5 L11.5 38.5 L5 37 Z" fill="url(#bPatch)" />
-        {/* Right */}
-        <path d="M49 24.5 L57 28 L57 37 L51.5 38.5 L48 31.5 Z" fill="url(#bPatch)" />
-        {/* Bottom */}
-        <path d="M22 39 L32 36.5 L42 39 L40 47.5 L24 47.5 Z" fill="url(#bPatch)" />
-
-        {/* Seam lines between patches */}
-        <g stroke="rgba(0,0,0,0.12)" strokeWidth="0.7" fill="none" strokeLinecap="round">
-          <path d="M24.5 23.5 L19.5 26.5" />
-          <path d="M39.5 23.5 L43 26.5" />
-          <path d="M32 18 L41 14.5" />
-          <path d="M32 18 L23 21" />
-          <path d="M36.8 32.5 L42 39" />
-          <path d="M27.2 32.5 L22 39" />
-          <path d="M15 31.5 L22 39" />
-          <path d="M49 24.5 L43 26.5" />
-          <path d="M13 24 L5 28" />
-          <path d="M10 24.5 L15 31.5" />
-          <path d="M24 47.5 L11.5 38.5" />
-          <path d="M40 47.5 L51.5 38.5" />
-        </g>
-      </g>
-
-      {/* Hard edge ring */}
-      <circle cx="32" cy="32" r="28"
-        stroke={active ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.20)"}
-        strokeWidth="0.8" fill="none"
-      />
-
-      {/* Specular highlight — upper left */}
-      <ellipse cx="23" cy="20" rx="7" ry="4"
-        fill="rgba(255,255,255,0.75)"
-        transform="rotate(-30 23 20)"
-      />
-      {/* Soft secondary fill */}
-      <ellipse cx="38" cy="38" rx="5" ry="3"
-        fill="rgba(255,255,255,0.12)"
-        transform="rotate(15 38 38)"
-      />
-    </svg>
-  );
-}
-import { useAuth } from "@/contexts/AuthContext";
-import { db } from "@/integrations/firebase/client";
+import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Flag } from "@/components/Flag";
-import { collection, getDocs, onSnapshot, orderBy, query, where } from "firebase/firestore";
 import { useTranslation } from "react-i18next";
 
-export type PendingMatch = {
-  id: string;
-  stage: string | null;
-  home_team_code: string | null;
-  away_team_code: string | null;
-  match_date: string;
-};
-
-export type PendingPredictionItem = {
-  match: PendingMatch;
-  bolaoIds: string[];
-};
-
-type MembershipRow = {
-  bolao_id: string;
-};
-
-type PredictionRow = {
-  match_id: string;
-  bolao_id: string;
-};
-
-type FirestoreMatchRow = PendingMatch & {
-  status?: string;
-};
-
-const normalizeMatchDate = (value: string | { toDate?: () => Date } | undefined) => {
-  if (!value) return new Date(0).toISOString();
-  if (typeof value === "string") return value;
-  if (typeof value === "object" && typeof value.toDate === "function") {
-    return value.toDate().toISOString();
-  }
-  return new Date(0).toISOString();
-};
-
-export function usePendingPredictions() {
-  const { user } = useAuth();
-  const [pendingItems, setPendingItems] = useState<PendingPredictionItem[]>([]);
-
-  const fetchPending = useCallback(async () => {
-    if (!user?.id) {
-      setPendingItems([]);
-      return;
-    }
-
-    try {
-      const membershipsSnapshot = await getDocs(
-        query(collection(db, "bolao_members"), where("user_id", "==", user.id))
-      );
-
-      const memberships = membershipsSnapshot.docs.map((docSnapshot) => docSnapshot.data() as MembershipRow);
-
-      if (!memberships.length) {
-        setPendingItems([]);
-        return;
-      }
-
-      const bolaoIds = memberships.map((m: MembershipRow) => m.bolao_id);
-
-      const [matchesSnapshot, predictionsSnapshot] = await Promise.all([
-        getDocs(query(collection(db, "matches"), orderBy("match_date", "asc"))),
-        getDocs(query(collection(db, "bolao_palpites"), where("user_id", "==", user.id))),
-      ]);
-
-      const now = Date.now();
-      const upcomingMatches = matchesSnapshot.docs
-        .map((docSnapshot) => {
-          const data = docSnapshot.data() as FirestoreMatchRow & { match_date?: string | { toDate?: () => Date } };
-          return {
-            id: docSnapshot.id,
-            stage: data.stage || null,
-            home_team_code: data.home_team_code || null,
-            away_team_code: data.away_team_code || null,
-            match_date: normalizeMatchDate(data.match_date),
-            status: data.status,
-          };
-        })
-        .filter((match) => (match.status || "").toLowerCase() === "scheduled")
-        .filter((match) => new Date(match.match_date).getTime() >= now)
-        .slice(0, 20);
-
-      if (!upcomingMatches.length) {
-        setPendingItems([]);
-        return;
-      }
-
-      const matchIds = upcomingMatches.map((m) => m.id);
-
-      const existingPredictions = predictionsSnapshot.docs
-        .map((docSnapshot) => docSnapshot.data() as PredictionRow)
-        .filter((row) => bolaoIds.includes(row.bolao_id) && matchIds.includes(row.match_id));
-
-      const predictionsIndex = new Map<string, Set<string>>();
-      (existingPredictions || []).forEach((row: PredictionRow) => {
-        if (!predictionsIndex.has(row.match_id)) {
-          predictionsIndex.set(row.match_id, new Set());
-        }
-        predictionsIndex.get(row.match_id)!.add(row.bolao_id);
-      });
-
-      const pending = upcomingMatches
-        .map((match: PendingMatch) => {
-          const predictedIn = predictionsIndex.get(match.id) || new Set<string>();
-          const missingFor = bolaoIds.filter((id: string) => !predictedIn.has(id));
-          if (!missingFor.length) return null;
-          return {
-            match,
-            bolaoIds: missingFor,
-          } satisfies PendingPredictionItem;
-        })
-        .filter(Boolean) as PendingPredictionItem[];
-
-      setPendingItems(pending);
-    } catch (error) {
-      console.error("Error loading pending predictions:", error);
-      setPendingItems([]);
-    }
-  }, [user?.id]);
-
-  useEffect(() => {
-    if (!user?.id) {
-      setPendingItems([]);
-      return;
-    }
-
-    void fetchPending();
-
-    const membershipQuery = query(collection(db, "bolao_members"), where("user_id", "==", user.id));
-    const predictionsQuery = query(collection(db, "bolao_palpites"), where("user_id", "==", user.id));
-    const matchesQuery = query(collection(db, "matches"), orderBy("match_date", "asc"));
-
-    const unsubscribeMemberships = onSnapshot(membershipQuery, () => {
-      void fetchPending();
-    });
-    const unsubscribePredictions = onSnapshot(predictionsQuery, () => {
-      void fetchPending();
-    });
-    const unsubscribeMatches = onSnapshot(matchesQuery, () => {
-      void fetchPending();
-    });
-
-    const intervalId = window.setInterval(() => {
-      void fetchPending();
-    }, 30000);
-
-    return () => {
-      unsubscribeMemberships();
-      unsubscribePredictions();
-      unsubscribeMatches();
-      window.clearInterval(intervalId);
-    };
-  }, [fetchPending, user?.id]);
-
-  return pendingItems;
-}
+const realBallImageUrl = "/images/bola-nav-real.png";
 
 export function FabWithPending({
   className,
@@ -258,49 +12,37 @@ export function FabWithPending({
   isActive?: boolean;
 }) {
   const { t } = useTranslation("bolao");
-  const pendingItems = usePendingPredictions();
-
-  const totalMissingPredictions = useMemo(
-    () => pendingItems.reduce((acc, item) => acc + item.bolaoIds.length, 0),
-    [pendingItems]
-  );
 
   const fabButton = (
     <div className="relative flex h-full flex-col items-center justify-center gap-1 py-2">
       {/* ── Ball container — protrudes upward ── */}
       <div
         className={cn(
-          "absolute -top-[28px] left-1/2 -translate-x-1/2 flex items-center justify-center transition-all duration-300 rounded-full",
-          isActive ? "scale-[1.12] shadow-[0_4px_25px_rgba(34,197,94,0.6)]" : "scale-100 hover:scale-[1.05] active:scale-95 shadow-[0_4px_15px_rgba(34,197,94,0.4)]"
+          "absolute -top-[24px] left-1/2 flex items-center justify-center rounded-full transition-all duration-300 -translate-x-1/2",
+          isActive
+            ? "shadow-[0_4px_25px_rgba(34,197,94,0.6)]"
+            : "shadow-[0_4px_15px_rgba(34,197,94,0.4)]"
         )}
         style={{ width: 68, height: 68 }}
       >
-        {/* Glowing Gradient Ring */}
-        <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-[#1A4D2E] via-[#22c55e] to-emerald-400 animate-pulse-slow shadow-lg">
-          {/* Inner Ball Container */}
-          <div className="relative w-full h-full rounded-full bg-black/90 flex items-center justify-center overflow-hidden">
-            <img 
-              src="https://firebasestorage.googleapis.com/v0/b/arenacopa-web-2026.firebasestorage.app/o/assets%2Fbola_oficial_bw.png?alt=media&token=a21b815e-3b09-4c80-81e1-7f3164f04ebb" 
-              alt="Bolão" 
+        <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-[#1A4D2E] via-[#22c55e] to-emerald-400 p-[3px] animate-pulse-slow shadow-lg">
+          <div className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-[#07160d]">
+            <img
+              src={realBallImageUrl}
+              alt={t("nav.bolao", { defaultValue: "Bolões" })}
               className={cn(
-                "w-full h-full object-cover transition-all duration-300 scale-[1.05]",
-                isActive ? "brightness-125" : "brightness-100"
-              )} 
+                "h-full w-full object-cover object-center transition-all duration-300",
+                isActive ? "scale-[1.34] brightness-125" : "scale-[1.28] brightness-110"
+              )}
             />
             {isActive && <div className="absolute inset-0 bg-white/5 rounded-full" />}
           </div>
         </div>
 
-        {/* Pending-predictions badge */}
-        {totalMissingPredictions > 0 && (
-          <span className="absolute right-1 top-2 min-w-[20px] h-[20px] rounded-full bg-red-600 flex items-center justify-center px-1 text-[9px] font-black text-white shadow-lg ring-2 ring-[#0f3a21] z-10">
-            {totalMissingPredictions > 9 ? "9+" : totalMissingPredictions}
-          </span>
-        )}
       </div>
 
       {/* Spacer to match icon height from other nav items */}
-      <div className="h-5 w-5 invisible" />
+      <div className="invisible h-8 w-8" />
 
       {/* Navigation Label - Matches Layout.tsx logic exactly */}
       <span className={cn(

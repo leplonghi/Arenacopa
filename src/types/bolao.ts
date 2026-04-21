@@ -1,3 +1,5 @@
+import type { BolaoLifecycleStatus, EditableSections } from "@/types/bolao-config";
+
 export interface ScoringRules {
     exact: number;
     winner: number;
@@ -200,6 +202,22 @@ export interface BolaoData {
     cutoff_mode?: "per_match" | "per_phase" | "manual";
     /** Championship this bolão belongs to. Defaults to "wc2026" for legacy records. */
     championship_id?: string;
+    schema_version?: number;
+    editable_sections?: EditableSections;
+    lifecycle?: {
+        status: BolaoLifecycleStatus;
+        published_at?: string | null;
+        finished_at?: string | null;
+        archived_at?: string | null;
+    };
+    integrity?: {
+        is_structure_locked?: boolean;
+        config_version?: number;
+        structure_locked_at?: string | null;
+        structure_lock_reason?: string | null;
+        lock_trigger?: string | null;
+        published_snapshot?: Record<string, unknown> | null;
+    };
 }
 
 export interface MemberData {

@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
+import { hasPremiumAccessByEmail } from "@/lib/access";
 import { monetizationEnv } from "@/lib/env";
 import {
   activatePremiumSimulation,
@@ -39,6 +40,11 @@ export function MonetizationProvider({ children }: { children: React.ReactNode }
   const refreshPremiumStatus = useCallback(async (checkoutSessionId?: string) => {
     if (!user) {
       applyPremiumState(false, "inactive");
+      return;
+    }
+
+    if (hasPremiumAccessByEmail(user.email)) {
+      applyPremiumState(true, "active");
       return;
     }
 

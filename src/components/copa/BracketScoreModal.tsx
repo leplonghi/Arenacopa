@@ -10,6 +10,7 @@ import { Minus, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { KnockoutMatchFull, KnockoutRound, KnockoutScore } from "@/utils/knockoutBracket";
 import { ROUND_FULL_LABELS } from "@/utils/knockoutBracket";
+import { useTranslation } from "react-i18next";
 
 interface BracketScoreModalProps {
   open: boolean;
@@ -50,6 +51,7 @@ function ScoreInput({ value, onChange, label }: { value: number; onChange: (v: n
 }
 
 export function BracketScoreModal({ open, onOpenChange, match, round, matchIdx, onSave }: BracketScoreModalProps) {
+  const { t } = useTranslation("copa");
   const [homeScore, setHomeScore] = useState(0);
   const navigate = useNavigate();
   const [awayScore, setAwayScore] = useState(0);
@@ -86,7 +88,7 @@ export function BracketScoreModal({ open, onOpenChange, match, round, matchIdx, 
       <DialogContent className="max-w-sm">
         <DialogHeader>
           <DialogTitle className="text-center text-sm">
-            {round ? ROUND_FULL_LABELS[round] : "Editar Placar"}
+            {round ? ROUND_FULL_LABELS[round] : t("bracket_modal.edit_score")}
           </DialogTitle>
         </DialogHeader>
 
@@ -102,7 +104,7 @@ export function BracketScoreModal({ open, onOpenChange, match, round, matchIdx, 
                 <Flag code={homeTeam.code} size="lg" />
                 <span className="text-xs font-bold text-center leading-tight hover:underline">{homeTeam.name}</span>
               </div>
-              <ScoreInput value={homeScore} onChange={setHomeScore} label="Gols" />
+              <ScoreInput value={homeScore} onChange={setHomeScore} label={t("bracket_modal.goals_label")} />
             </div>
 
             <span className="text-lg font-black text-muted-foreground">×</span>
@@ -116,7 +118,7 @@ export function BracketScoreModal({ open, onOpenChange, match, round, matchIdx, 
                 <Flag code={awayTeam.code} size="lg" />
                 <span className="text-xs font-bold text-center leading-tight hover:underline">{awayTeam.name}</span>
               </div>
-              <ScoreInput value={awayScore} onChange={setAwayScore} label="Gols" />
+              <ScoreInput value={awayScore} onChange={setAwayScore} label={t("bracket_modal.goals_label")} />
             </div>
           </div>
 
@@ -124,7 +126,7 @@ export function BracketScoreModal({ open, onOpenChange, match, round, matchIdx, 
           {isDraw && (
             <div className="border-t border-border/30 pt-3">
               <p className="text-[10px] font-bold text-muted-foreground text-center uppercase tracking-wider mb-3">
-                Pênaltis (empate no tempo normal)
+                {t("bracket_modal.penalties_title")}
               </p>
               <div className="flex items-center justify-between gap-2">
                 <div className="flex-1 flex justify-center">
@@ -137,7 +139,7 @@ export function BracketScoreModal({ open, onOpenChange, match, round, matchIdx, 
               </div>
               {isDraw && homePenalty === awayPenalty && (
                 <p className="text-[9px] text-destructive text-center mt-2">
-                  Pênaltis não podem terminar empatados
+                  {t("bracket_modal.penalties_error")}
                 </p>
               )}
             </div>
@@ -150,7 +152,7 @@ export function BracketScoreModal({ open, onOpenChange, match, round, matchIdx, 
             className="w-full"
             disabled={isDraw && homePenalty === awayPenalty}
           >
-            Salvar Placar
+            {t("bracket_modal.save_score")}
           </Button>
         </DialogFooter>
       </DialogContent>

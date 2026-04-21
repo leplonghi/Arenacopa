@@ -7,6 +7,7 @@ import { type MemberData } from "@/types/bolao";
 import { motion, AnimatePresence } from "framer-motion";
 import { staggerContainer, staggerItem } from "../animations";
 import { removeBolaoMember, updateBolaoMemberPaymentStatus } from "@/services/boloes/bolao.service";
+import { removePoolMember } from "@/services/boloes/bolao-config.service";
 
 interface MembrosTabProps {
     members: MemberData[];
@@ -58,7 +59,14 @@ export function MembrosTab({ members, userId, isCreator, bolaoId, isPaid, onRefr
     const handleRemove = async (targetUserId: string) => {
         if (!confirm(t('members.remove_confirm'))) return;
         try {
-            await removeBolaoMember(bolaoId, targetUserId);
+            await removePoolMember({
+                payload: {
+                    bolao_id: bolaoId,
+                    member_id: `${targetUserId}_${bolaoId}`,
+                    reason_code: "owner_removed_member",
+                    reason_text: "Remoção iniciada pelo criador na tela de membros.",
+                },
+            });
             toast({
                 title: t('members.removed_success'),
                 className: "bg-emerald-500 border-emerald-600 text-white font-black uppercase text-[10px] tracking-widest"
@@ -66,7 +74,11 @@ export function MembrosTab({ members, userId, isCreator, bolaoId, isPaid, onRefr
             onRefresh();
         } catch (error) {
             console.error("Error removing bolao member:", error);
-            toast({ title: t('common.error_title'), description: t('common.error_desc'), variant: "destructive" });
+            toast({
+                title: t('common.error_title'),
+                description: "Esse participante pode estar protegido por pagamento confirmado, palpite salvo ou fase atual do bolão.",
+                variant: "destructive",
+            });
         }
     };
 
@@ -118,7 +130,7 @@ export function MembrosTab({ members, userId, isCreator, bolaoId, isPaid, onRefr
                             </div>
                             <div className="text-right">
                                 <span className="text-2xl font-black text-white">{paymentProgress}%</span>
-                                <span className="text-[8px] font-black uppercase tracking-widest text-emerald-500 block">TOTAL PAID</span>
+                                <span className="text-[8px] font-black uppercase tracking-widest text-emerald-500 block">{t('members.total_paid')}</span>
                             </div>
                         </div>
 

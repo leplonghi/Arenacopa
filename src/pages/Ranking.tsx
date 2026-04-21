@@ -101,14 +101,17 @@ export default function Ranking() {
         );
         const bolaoIds = membSnap.docs.map((d) => d.data().bolao_id as string);
         if (!bolaoIds.length) return;
-        const names: { id: string; name: string }[] = [];
-        for (let i = 0; i < bolaoIds.length; i += 30) {
-          const batch = bolaoIds.slice(i, i + 30);
-          const snap = await getDocs(
-            query(collection(db, "boloes"), where(documentId(), "in", batch))
-          );
-          snap.docs.forEach((d) => names.push({ id: d.id, name: d.data().name as string }));
-        }
+        const nameGroups = await Promise.all(
+          Array.from({ length: Math.ceil(bolaoIds.length / 30) }, (_, index) => {
+            const batch = bolaoIds.slice(index * 30, index * 30 + 30);
+            return getDocs(
+              query(collection(db, "boloes"), where(documentId(), "in", batch))
+            );
+          })
+        );
+        const names = nameGroups.flatMap((snap) =>
+          snap.docs.map((d) => ({ id: d.id, name: d.data().name as string }))
+        );
         setUserBoloes(names);
       } catch (e) {
         console.error("Error fetching user boloes:", e);

@@ -24,6 +24,8 @@
     },
     "modal": {
       "seats": "Lugares",
+      "capacity": "Capacidade",
+      "opened": "Inauguração",
       "safety": "Segurança",
       "transport": "Transporte",
       "transportDesc": "Oferece uma malha eficiente para torcedores e turistas.",

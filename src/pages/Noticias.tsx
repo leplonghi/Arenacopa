@@ -17,16 +17,6 @@ import { useTranslation } from "react-i18next";
 import { sanitizeExternalUrl } from "@/lib/security";
 
 // ── Category definitions ──────────────────────────────────────────────────────
-const CATEGORIES = [
-  { id: "all",       label: "Todos",     emoji: "📰" },
-  { id: "copa",      label: "Copa 2026", emoji: "🏆" },
-  { id: "teams",     label: "Seleções",  emoji: "🌍" },
-  { id: "general",   label: "Futebol",   emoji: "⚽" },
-  { id: "matches",   label: "Partidas",  emoji: "🎯" },
-  { id: "travel",    label: "Viagem",    emoji: "✈️" },
-  { id: "tickets",   label: "Ingressos", emoji: "🎟️" },
-];
-
 const HOME_PREFS_KEY = "arenacopa_home_news_prefs";
 const ONBOARDING_KEY = "arenacopa_news_onboarded";
 
@@ -41,6 +31,12 @@ type NewsItem = {
   teams: string[];
   publishedAt?: string;
   sourceName?: string;
+};
+
+type NewsCategory = {
+  id: string;
+  label: string;
+  emoji: string;
 };
 
 function toNewsItem(raw: RealtimeNewsItem): NewsItem {
@@ -64,23 +60,36 @@ function toNewsItem(raw: RealtimeNewsItem): NewsItem {
 }
 
 // ── Helper: format date compactly ─────────────────────────────────────────────
-function formatDate(iso?: string): string {
+function formatDate(
+  iso: string | undefined,
+  locale: string,
+  t: (key: string, options?: Record<string, unknown>) => string
+): string {
   if (!iso) return "";
   const d = new Date(iso);
   const now = Date.now();
   const diffMs = now - d.getTime();
   const diffMin = Math.floor(diffMs / 60_000);
-  if (diffMin < 1) return "agora";
-  if (diffMin < 60) return `${diffMin} min atrás`;
+  if (diffMin < 1) return t("news_page.time.now", { defaultValue: "agora" });
+  if (diffMin < 60) return t("news_page.time.minutes_ago", { count: diffMin, defaultValue: `${diffMin} min atrás` });
   const diffH = Math.floor(diffMin / 60);
-  if (diffH < 24) return `${diffH}h atrás`;
-  return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
+  if (diffH < 24) return t("news_page.time.hours_ago", { count: diffH, defaultValue: `${diffH}h atrás` });
+  return d.toLocaleDateString(locale, { day: "2-digit", month: "short" });
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
 export default function Noticias() {
   const { user } = useAuth();
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation("common");
+  const categories: NewsCategory[] = [
+    { id: "all", label: t("news_page.categories.all", { defaultValue: "Todos" }), emoji: "📰" },
+    { id: "copa", label: t("news_page.categories.copa", { defaultValue: "Copa 2026" }), emoji: "🏆" },
+    { id: "teams", label: t("news_page.categories.teams", { defaultValue: "Seleções" }), emoji: "🌍" },
+    { id: "general", label: t("news_page.categories.general", { defaultValue: "Futebol" }), emoji: "⚽" },
+    { id: "matches", label: t("news_page.categories.matches", { defaultValue: "Partidas" }), emoji: "🎯" },
+    { id: "travel", label: t("news_page.categories.travel", { defaultValue: "Viagem" }), emoji: "✈️" },
+    { id: "tickets", label: t("news_page.categories.tickets", { defaultValue: "Ingressos" }), emoji: "🎟️" },
+  ];
 
   // Firestore real-time feed (manually curated / admin-pushed articles)
   const { news: firestoreNews, isLoading: firestoreLoading } = useRealtimeNews({ limitCount: 60 });
@@ -201,11 +210,9 @@ export default function Noticias() {
               <div className="mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-primary/15 ring-2 ring-primary/30">
                 <span className="text-3xl">📰</span>
               </div>
-              <h2 className="text-2xl font-black">Notícias ao Vivo</h2>
+              <h2 className="text-2xl font-black">{t("news_page.onboarding.title", { defaultValue: "Notícias ao Vivo" })}</h2>
               <p className="mt-2 text-sm text-zinc-400 leading-relaxed">
-                Acompanhe a Copa 2026 com notícias em tempo real de{" "}
-                <strong className="text-white">7 fontes mundiais</strong> — BBC Sport,
-                ESPN, The Guardian, Globo Esporte, Sky Sports, Marca e UOL.
+                {t("news_page.onboarding.description", { defaultValue: "Acompanhe a Copa 2026 com notícias em tempo real de 7 fontes mundiais — BBC Sport, ESPN, The Guardian, Globo Esporte, Sky Sports, Marca e UOL." })}
               </p>
             </div>
 
@@ -220,9 +227,10 @@ export default function Noticias() {
 
             {/* Quick category pick */}
             <p className="mb-3 text-center text-[11px] font-black uppercase tracking-[0.18em] text-primary">
-              Quais categorias na sua Home?
+              {t("news_page.onboarding.pick_categories", { defaultValue: "Quais categorias na sua Home?" })}
             </p>
             <OnboardingCategoryPicker
+              categories={categories}
               initial={homePrefs}
               onConfirm={(selected) => dismissOnboarding(selected)}
             />
@@ -232,7 +240,7 @@ export default function Noticias() {
               onClick={() => dismissOnboarding()}
               className="mt-3 w-full py-2.5 text-center text-[11px] font-bold text-zinc-500 hover:text-zinc-300 transition-colors"
             >
-              Pular por agora
+              {t("news_page.onboarding.skip", { defaultValue: "Pular por agora" })}
             </button>
           </div>
         </div>
@@ -244,12 +252,12 @@ export default function Noticias() {
           <div className="flex items-center gap-2 mb-1">
             <span className="inline-block w-2 h-2 rounded-full bg-red-500 animate-pulse" />
             <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">
-              Ao vivo · Tempo real
+              {t("news_page.live_kicker", { defaultValue: "Ao vivo · Tempo real" })}
             </p>
           </div>
-          <h1 className="text-3xl font-black">Notícias</h1>
+          <h1 className="text-3xl font-black">{t("news_page.title", { defaultValue: "Notícias" })}</h1>
           <p className="mt-1 text-sm text-zinc-400">
-            Copa 2026 e futebol mundial
+            {t("news_page.subtitle", { defaultValue: "Copa 2026 e futebol mundial" })}
           </p>
         </div>
 
@@ -274,7 +282,7 @@ export default function Noticias() {
             <div className="flex items-center gap-2">
               <Radio className="h-3.5 w-3.5 text-primary animate-pulse" />
               <p className="text-[11px] font-black uppercase tracking-[0.14em] text-zinc-400">
-                Carregando fontes
+              {t("news_page.loading_sources", { defaultValue: "Carregando fontes" })}
               </p>
             </div>
             <p className="text-[11px] font-black text-zinc-500">
@@ -297,7 +305,7 @@ export default function Noticias() {
             <div className="flex items-center gap-2">
               <Star className="h-4 w-4 text-primary" />
               <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">
-                Personalizar tela inicial
+              {t("news_page.home_customization_title", { defaultValue: "Personalizar tela inicial" })}
               </p>
             </div>
             <button
@@ -308,10 +316,10 @@ export default function Noticias() {
             </button>
           </div>
           <p className="mb-4 text-sm text-zinc-400">
-            Escolha quais categorias aparecem na sua tela inicial:
+            {t("news_page.home_customization_desc", { defaultValue: "Escolha quais categorias aparecem na sua tela inicial:" })}
           </p>
           <div className="flex flex-wrap gap-2">
-            {CATEGORIES.filter((c) => c.id !== "all").map((cat) => (
+            {categories.filter((c) => c.id !== "all").map((cat) => (
               <button
                 key={cat.id}
                 onClick={() => toggleHomePref(cat.id)}
@@ -331,8 +339,8 @@ export default function Noticias() {
           </div>
           <p className="mt-3 text-xs text-zinc-500">
             {homePrefs.length === 0
-              ? "Nenhuma categoria ativa na Home"
-              : `${homePrefs.length} ${homePrefs.length === 1 ? "categoria ativa" : "categorias ativas"} na tela inicial`}
+              ? t("news_page.home_none", { defaultValue: "Nenhuma categoria ativa na Home" })
+              : t("news_page.home_active_count", { count: homePrefs.length, defaultValue: `${homePrefs.length} categorias ativas na tela inicial` })}
           </p>
         </div>
       )}
@@ -356,7 +364,7 @@ export default function Noticias() {
             <div className="mb-3 flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-primary" />
               <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">
-                Para você · {favoriteTeam}
+                {t("news_page.for_you", { team: favoriteTeam, defaultValue: `Para você · ${favoriteTeam}` })}
               </p>
             </div>
             <h2 className="text-xl font-black leading-snug">
@@ -374,7 +382,7 @@ export default function Noticias() {
                 rel="noreferrer"
                 className="mt-4 inline-flex items-center gap-2 rounded-2xl bg-primary px-4 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-black transition-opacity hover:opacity-90"
               >
-                Ler notícia completa
+                {t("news_page.read_full", { defaultValue: "Ler notícia completa" })}
                 <ExternalLink className="h-4 w-4" />
               </a>
             )}
@@ -384,7 +392,7 @@ export default function Noticias() {
 
       {/* ── Category pills ────────────────────────────────────────────────────── */}
       <div className="mb-5 flex flex-wrap gap-2 px-4 pb-1">
-        {CATEGORIES.map((cat) => (
+        {categories.map((cat) => (
           <button
             key={cat.id}
             onClick={() => setActiveCategory(cat.id)}
@@ -406,7 +414,7 @@ export default function Noticias() {
           <div className="flex items-center gap-2">
             <TrendingUp className="h-3.5 w-3.5 text-primary" />
             <p className="text-[11px] font-black uppercase tracking-[0.14em] text-zinc-500">
-              {filteredNews.length} notícias
+              {t("news_page.news_count", { count: filteredNews.length, defaultValue: `${filteredNews.length} notícias` })}
             </p>
           </div>
           {allFeedsLoaded && (
@@ -430,9 +438,9 @@ export default function Noticias() {
       ) : filteredNews.length === 0 ? (
         <div className="mx-4 rounded-[28px] border border-white/10 bg-white/5 p-10 text-center">
           <Newspaper className="mx-auto mb-4 h-12 w-12 text-zinc-700" />
-          <p className="font-black text-zinc-400">Nenhuma notícia nesta categoria</p>
+          <p className="font-black text-zinc-400">{t("news_page.empty_title", { defaultValue: "Nenhuma notícia nesta categoria" })}</p>
           <p className="mt-2 text-sm text-zinc-600">
-            Novas notícias são adicionadas automaticamente em tempo real
+            {t("news_page.empty_desc", { defaultValue: "Novas notícias são adicionadas automaticamente em tempo real" })}
           </p>
         </div>
       ) : (
@@ -459,10 +467,10 @@ export default function Noticias() {
                 <div className="mb-3 flex items-center justify-between gap-3">
                   <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.14em] text-zinc-300">
                     <span>
-                      {CATEGORIES.find((c) => c.id === item.category)?.emoji ?? "📰"}
+                      {categories.find((c) => c.id === item.category)?.emoji ?? "📰"}
                     </span>
                     <span>
-                      {CATEGORIES.find((c) => c.id === item.category)?.label ??
+                      {categories.find((c) => c.id === item.category)?.label ??
                         item.category.toUpperCase()}
                     </span>
                   </span>
@@ -483,7 +491,7 @@ export default function Noticias() {
 
                 <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
                   <span className="text-xs text-zinc-600">
-                    {formatDate(item.publishedAt)}
+                    {formatDate(item.publishedAt, i18n.language, t)}
                   </span>
                   {item.externalUrl && (
                     <a
@@ -492,7 +500,7 @@ export default function Noticias() {
                       rel="noreferrer"
                       className="inline-flex items-center gap-2 rounded-2xl border border-primary/30 bg-primary/15 px-4 py-2.5 text-[11px] font-black uppercase tracking-[0.18em] text-primary transition-colors hover:bg-primary/25"
                     >
-                      Ler mais
+                      {t("news_page.read_more", { defaultValue: "Ler mais" })}
                       <ExternalLink className="h-3.5 w-3.5" />
                     </a>
                   )}
@@ -508,12 +516,15 @@ export default function Noticias() {
 
 // ── Onboarding category picker ────────────────────────────────────────────────
 function OnboardingCategoryPicker({
+  categories,
   initial,
   onConfirm,
 }: {
+  categories: NewsCategory[];
   initial: string[];
   onConfirm: (selected: string[]) => void;
 }) {
+  const { t } = useTranslation("common");
   const [selected, setSelected] = useState<string[]>(initial);
 
   const toggle = (id: string) =>
@@ -524,7 +535,7 @@ function OnboardingCategoryPicker({
   return (
     <>
       <div className="flex flex-wrap justify-center gap-2 mb-5">
-        {CATEGORIES.filter((c) => c.id !== "all").map((cat) => (
+        {categories.filter((c) => c.id !== "all").map((cat) => (
           <button
             key={cat.id}
             onClick={() => toggle(cat.id)}
@@ -545,7 +556,7 @@ function OnboardingCategoryPicker({
         disabled={selected.length === 0}
         className="w-full rounded-2xl bg-primary py-4 text-[12px] font-black uppercase tracking-[0.18em] text-black transition-opacity disabled:opacity-40 hover:opacity-90"
       >
-        Confirmar e Entrar
+        {t("news_page.onboarding.confirm", { defaultValue: "Confirmar e Entrar" })}
       </button>
     </>
   );

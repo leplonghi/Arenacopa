@@ -1,48 +1,44 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { render, screen, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { useLanguage } from "@/i18n/useLanguage";
 
-const useAuthMock = vi.fn();
 const changeLanguageMock = vi.fn();
-const getProfileMock = vi.fn();
-const updatePreferredLanguageMock = vi.fn();
-const toastSuccessMock = vi.fn();
-const toastErrorMock = vi.fn();
 
-vi.mock("@/contexts/AuthContext", () => ({
-  useAuth: () => useAuthMock(),
-}));
+const i18nMock = {
+  language: "pt-BR",
+  resolvedLanguage: "pt-BR",
+  changeLanguage: changeLanguageMock,
+};
+
+const RealDateTimeFormat = Intl.DateTimeFormat;
+
+function mockTimeZone(timeZone: string) {
+  Intl.DateTimeFormat = vi.fn(((...args: ConstructorParameters<typeof Intl.DateTimeFormat>) => {
+    if (args.length === 0) {
+      return {
+        resolvedOptions: () => ({ timeZone }),
+      } as Intl.DateTimeFormat;
+    }
+
+    return new RealDateTimeFormat(...args);
+  }) as unknown as typeof Intl.DateTimeFormat);
+}
 
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({
-    t: (key: string) => key,
-    i18n: {
-      language: "pt-BR",
-      changeLanguage: changeLanguageMock,
-    },
+    i18n: i18nMock,
   }),
 }));
 
-vi.mock("@/services/profile/profile.service", () => ({
-  getProfile: (...args: unknown[]) => getProfileMock(...args),
-  updatePreferredLanguage: (...args: unknown[]) => updatePreferredLanguageMock(...args),
-}));
-
-vi.mock("sonner", () => ({
-  toast: {
-    success: (...args: unknown[]) => toastSuccessMock(...args),
-    error: (...args: unknown[]) => toastErrorMock(...args),
-  },
-}));
-
 function Harness() {
-  const { language, changeLanguage, isLoading } = useLanguage();
+  const { language, systemLanguage, isSystemLanguage, isLoading } = useLanguage();
 
   return (
     <div>
       <span data-testid="language">{language}</span>
+      <span data-testid="system-language">{systemLanguage}</span>
+      <span data-testid="system-match">{String(isSystemLanguage)}</span>
       <span data-testid="loading">{String(isLoading)}</span>
-      <button onClick={() => void changeLanguage("en")}>change</button>
     </div>
   );
 }
@@ -50,31 +46,98 @@ function Harness() {
 describe("useLanguage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    localStorage.clear();
-    getProfileMock.mockResolvedValue(null);
-    updatePreferredLanguageMock.mockResolvedValue(undefined);
-    changeLanguageMock.mockResolvedValue(undefined);
+    mockTimeZone("UTC");
+    i18nMock.language = "pt-BR";
+    i18nMock.resolvedLanguage = "pt-BR";
+    changeLanguageMock.mockImplementation(async (language: string) => {
+      i18nMock.language = language;
+      i18nMock.resolvedLanguage = language;
+    });
+
+    Object.defineProperty(window.navigator, "language", {
+      configurable: true,
+      value: "es-MX",
+    });
+
+    Object.defineProperty(window.navigator, "languages", {
+      configurable: true,
+      value: ["es-MX", "en-US"],
+    });
   });
 
-  it("troca idioma em demo sem tentar persistir no Firestore", async () => {
-    localStorage.setItem("demo_mode", "true");
-    useAuthMock.mockReturnValue({
-      user: {
-        id: "demo-user-id",
-        email: "demo@arenacup.com",
-      },
+  afterEach(() => {
+    Intl.DateTimeFormat = RealDateTimeFormat;
+  });
+
+  it("sincroniza o idioma do app com o idioma do sistema", async () => {
+    const { rerender } = render(<Harness />);
+
+    await waitFor(() => {
+      expect(changeLanguageMock).toHaveBeenCalledWith("es");
+    });
+
+    rerender(<Harness />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("language").textContent).toBe("es");
+      expect(screen.getByTestId("system-language").textContent).toBe("es");
+      expect(screen.getByTestId("system-match").textContent).toBe("true");
+      expect(screen.getByTestId("loading").textContent).toBe("false");
+    });
+  });
+
+  it("mantem o idioma quando o app ja esta alinhado com o sistema", async () => {
+    i18nMock.language = "en";
+    i18nMock.resolvedLanguage = "en";
+
+    Object.defineProperty(window.navigator, "language", {
+      configurable: true,
+      value: "en-US",
+    });
+
+    Object.defineProperty(window.navigator, "languages", {
+      configurable: true,
+      value: ["en-US", "es-MX"],
     });
 
     render(<Harness />);
 
-    fireEvent.click(screen.getByText("change"));
-
     await waitFor(() => {
-      expect(changeLanguageMock).toHaveBeenCalledWith("en");
+      expect(screen.getByTestId("language").textContent).toBe("en");
+      expect(screen.getByTestId("system-language").textContent).toBe("en");
+      expect(screen.getByTestId("system-match").textContent).toBe("true");
     });
 
-    expect(updatePreferredLanguageMock).not.toHaveBeenCalled();
-    expect(localStorage.getItem("i18nextLng")).toBe("en");
-    expect(toastSuccessMock).toHaveBeenCalled();
+    expect(changeLanguageMock).not.toHaveBeenCalled();
+  });
+
+  it("prioriza pt-BR quando o aparelho esta em um fuso horario do Brasil", async () => {
+    i18nMock.language = "en";
+    i18nMock.resolvedLanguage = "en";
+
+    Object.defineProperty(window.navigator, "language", {
+      configurable: true,
+      value: "en-US",
+    });
+
+    Object.defineProperty(window.navigator, "languages", {
+      configurable: true,
+      value: ["en-US"],
+    });
+
+    mockTimeZone("America/Fortaleza");
+
+    const { rerender } = render(<Harness />);
+
+    await waitFor(() => {
+      expect(changeLanguageMock).toHaveBeenCalledWith("pt-BR");
+    });
+
+    rerender(<Harness />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId("language").textContent).toBe("pt-BR");
+      expect(screen.getByTestId("system-language").textContent).toBe("pt-BR");
+    });
   });
 });

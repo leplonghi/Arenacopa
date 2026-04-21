@@ -334,7 +334,7 @@ export function CityDetailsModal({ city, dynamicStatus, onClose, t }: { city: Ho
 
                     <button
                         onClick={onClose}
-                        aria-label="Fechar"
+                        aria-label={t("ui.modal.close")}
                         className="absolute top-4 right-4 z-20 w-9 h-9 rounded-full bg-black/60 border border-white/10 flex items-center justify-center text-white backdrop-blur-md"
                     >
                         <X className="w-4 h-4" />
@@ -343,7 +343,7 @@ export function CityDetailsModal({ city, dynamicStatus, onClose, t }: { city: Ho
                     <div className="absolute bottom-4 left-4 right-4">
                         <div className="inline-flex bg-white/10 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/10 items-center gap-1.5 text-[9px] font-black uppercase text-white tracking-widest mb-2">
                             <Flag code={city.countryCode} size="sm" />
-                            {city.countryCode} • Copa 2026
+                            {t("ui.modal.host_city_badge", { country: city.countryCode })}
                         </div>
                         <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight leading-none">
                             {t(`cities.${city.id}.name`, { defaultValue: city.name })}
@@ -354,22 +354,22 @@ export function CityDetailsModal({ city, dynamicStatus, onClose, t }: { city: Ho
                 {/* Quick-facts strip */}
                 <div className="shrink-0 flex gap-0 divide-x divide-white/[0.06] bg-zinc-900/60 border-b border-white/[0.06]">
                     <div className="flex-1 flex flex-col items-center py-3 gap-0.5">
-                        <span className="text-[9px] font-black uppercase tracking-widest text-gray-500">Estádio</span>
+                        <span className="text-[9px] font-black uppercase tracking-widest text-gray-500">{t("ui.modal.stadium")}</span>
                         <span className="text-xs font-black text-white text-center leading-tight px-1">{city.stadiumName}</span>
                     </div>
                     <div className="flex-1 flex flex-col items-center py-3 gap-0.5">
-                        <span className="text-[9px] font-black uppercase tracking-widest text-gray-500">Capacidade</span>
+                        <span className="text-[9px] font-black uppercase tracking-widest text-gray-500">{t("ui.modal.capacity")}</span>
                         <span className="text-xs font-black text-emerald-400">{(city.stadiumCapacity / 1000).toFixed(0)}k</span>
                     </div>
                     <div className="flex-1 flex flex-col items-center py-3 gap-0.5">
-                        <span className="text-[9px] font-black uppercase tracking-widest text-gray-500">Clima</span>
+                        <span className="text-[9px] font-black uppercase tracking-widest text-gray-500">{t("ui.modal.weather")}</span>
                         <span className="text-xs font-black text-amber-400">
                             {dynamicStatus ? `${dynamicStatus.temperature}°C` : city.avgTempSummer || "–"}
                         </span>
                     </div>
                     {city.wcMatches && (
                         <div className="flex-1 flex flex-col items-center py-3 gap-0.5">
-                            <span className="text-[9px] font-black uppercase tracking-widest text-gray-500">Jogos</span>
+                            <span className="text-[9px] font-black uppercase tracking-widest text-gray-500">{t("ui.modal.matches")}</span>
                             <span className="text-xs font-black text-white">{city.wcMatches}</span>
                         </div>
                     )}
@@ -389,7 +389,7 @@ export function CityDetailsModal({ city, dynamicStatus, onClose, t }: { city: Ho
                                     : "text-gray-500 border-transparent"
                             )}
                         >
-                            {tab === 'geral' ? 'Geral' : tab === 'turismo' ? 'Turismo' : 'Gastronomia'}
+                            {tab === 'geral' ? t("ui.tabs.general") : tab === 'turismo' ? t("ui.tabs.tourism") : t("ui.tabs.gastronomy")}
                         </button>
                     ))}
                 </div>
@@ -409,7 +409,7 @@ export function CityDetailsModal({ city, dynamicStatus, onClose, t }: { city: Ho
                                     <Trophy className="w-6 h-6 text-emerald-400" />
                                 </div>
                                 <div>
-                                    <p className="text-[10px] font-black uppercase tracking-widest text-emerald-400 mb-0.5">Estádio Sede</p>
+                                    <p className="text-[10px] font-black uppercase tracking-widest text-emerald-400 mb-0.5">{t("ui.modal.host_stadium")}</p>
                                     <h4 className="font-black text-white leading-tight">{city.stadiumName}</h4>
                                     <p className="text-xs text-gray-400 mt-0.5">{city.stadiumCapacity.toLocaleString('pt-BR')} lugares
                                         {city.stadiumYearBuilt ? ` • Inaugurado em ${city.stadiumYearBuilt}` : ""}
@@ -425,7 +425,7 @@ export function CityDetailsModal({ city, dynamicStatus, onClose, t }: { city: Ho
                             {city.curiosities?.length > 0 && (
                                 <div>
                                     <h3 className="text-[10px] font-black uppercase tracking-widest text-amber-400 mb-3 flex items-center gap-2">
-                                        <Zap className="w-3.5 h-3.5" /> Curiosidades
+                                        <Zap className="w-3.5 h-3.5" /> {t("ui.curiosity")}
                                     </h3>
                                     <div className="space-y-2">
                                         {city.curiosities.map((c, i) => (
@@ -443,7 +443,7 @@ export function CityDetailsModal({ city, dynamicStatus, onClose, t }: { city: Ho
                                 {city.travelGuide?.transport && (
                                     <div className="bg-zinc-900 rounded-xl border border-white/[0.06] p-3">
                                         <div className="flex items-center gap-1.5 text-[9px] font-black uppercase text-blue-400 tracking-widest mb-2">
-                                            <Plane className="w-3 h-3" /> Aeroporto
+                                            <Plane className="w-3 h-3" /> {t("ui.modal.airport")}
                                         </div>
                                         <p className="text-xs font-bold text-white">{city.travelGuide.transport.airport}</p>
                                         <p className="text-[11px] text-gray-400 mt-1 leading-relaxed">{city.travelGuide.transport.publicTransport}</p>
@@ -452,7 +452,7 @@ export function CityDetailsModal({ city, dynamicStatus, onClose, t }: { city: Ho
                                 {city.travelGuide?.safety && (
                                     <div className="bg-zinc-900 rounded-xl border border-white/[0.06] p-3">
                                         <div className="flex items-center gap-1.5 text-[9px] font-black uppercase text-red-400 tracking-widest mb-2">
-                                            <AlertTriangle className="w-3 h-3" /> Segurança
+                                            <AlertTriangle className="w-3 h-3" /> {t("ui.modal.safety")}
                                         </div>
                                         {city.travelGuide.safety.tips.slice(0, 2).map((tip, i) => (
                                             <p key={i} className="text-[11px] text-gray-400 leading-relaxed mb-0.5">• {tip}</p>
@@ -464,20 +464,20 @@ export function CityDetailsModal({ city, dynamicStatus, onClose, t }: { city: Ho
                             {/* Accommodation prices */}
                             {city.travelGuide?.accommodation && (
                                 <div className="bg-zinc-900 rounded-xl border border-white/[0.06] p-4">
-                                    <p className="text-[9px] font-black uppercase tracking-widest text-gray-500 mb-3">Hospedagem estimada (Copa)</p>
+                                    <p className="text-[9px] font-black uppercase tracking-widest text-gray-500 mb-3">{t("ui.modal.accommodation_title")}</p>
                                     <div className="grid grid-cols-2 gap-3">
                                         <div>
-                                            <p className="text-[10px] text-gray-500 font-bold mb-0.5">Hotel</p>
+                                            <p className="text-[10px] text-gray-500 font-bold mb-0.5">{t("ui.modal.hotel")}</p>
                                             <p className="text-sm font-black text-white">{city.travelGuide.accommodation.avgHotelPrice}</p>
                                         </div>
                                         <div>
-                                            <p className="text-[10px] text-gray-500 font-bold mb-0.5">Airbnb</p>
+                                            <p className="text-[10px] text-gray-500 font-bold mb-0.5">{t("ui.modal.airbnb")}</p>
                                             <p className="text-sm font-black text-white">{city.travelGuide.accommodation.avgAirbnbPrice}</p>
                                         </div>
                                     </div>
                                     {city.travelGuide.accommodation.bestAreas?.length > 0 && (
                                         <div className="mt-3 pt-3 border-t border-white/[0.06]">
-                                            <p className="text-[9px] font-black uppercase tracking-widest text-gray-500 mb-1.5">Melhores bairros</p>
+                                            <p className="text-[9px] font-black uppercase tracking-widest text-gray-500 mb-1.5">{t("ui.modal.best_areas")}</p>
                                             <div className="flex flex-wrap gap-1.5">
                                                 {city.travelGuide.accommodation.bestAreas.map((area, i) => (
                                                     <span key={i} className="bg-white/[0.06] text-[10px] font-medium text-gray-300 px-2 py-0.5 rounded-full border border-white/[0.06]">{area}</span>
@@ -492,20 +492,20 @@ export function CityDetailsModal({ city, dynamicStatus, onClose, t }: { city: Ho
                             <div className="grid grid-cols-3 gap-2">
                                 <div className="bg-zinc-900/60 rounded-xl p-3 border border-white/[0.05] text-center">
                                     <Users className="w-4 h-4 text-blue-400 mx-auto mb-1" />
-                                    <p className="text-[9px] text-gray-500 font-black uppercase tracking-widest">Popul.</p>
+                                    <p className="text-[9px] text-gray-500 font-black uppercase tracking-widest">{t("ui.modal.population_short")}</p>
                                     <p className="text-xs font-black text-white mt-0.5">{city.population}</p>
                                 </div>
                                 {city.timezone && (
                                     <div className="bg-zinc-900/60 rounded-xl p-3 border border-white/[0.05] text-center">
                                         <Globe className="w-4 h-4 text-purple-400 mx-auto mb-1" />
-                                        <p className="text-[9px] text-gray-500 font-black uppercase tracking-widest">Fuso</p>
+                                        <p className="text-[9px] text-gray-500 font-black uppercase tracking-widest">{t("ui.modal.timezone_short")}</p>
                                         <p className="text-xs font-black text-white mt-0.5">{city.timezone}</p>
                                     </div>
                                 )}
                                 {city.altitude && (
                                     <div className="bg-zinc-900/60 rounded-xl p-3 border border-white/[0.05] text-center">
                                         <TrendingUp className="w-4 h-4 text-yellow-400 mx-auto mb-1" />
-                                        <p className="text-[9px] text-gray-500 font-black uppercase tracking-widest">Alt.</p>
+                                        <p className="text-[9px] text-gray-500 font-black uppercase tracking-widest">{t("ui.modal.altitude_short")}</p>
                                         <p className="text-xs font-black text-white mt-0.5">{city.altitude}m</p>
                                     </div>
                                 )}
@@ -518,7 +518,7 @@ export function CityDetailsModal({ city, dynamicStatus, onClose, t }: { city: Ho
                         <>
                             <div>
                                 <h3 className="text-[10px] font-black uppercase tracking-widest text-emerald-400 mb-4 flex items-center gap-2">
-                                    <Camera className="w-4 h-4" /> Principais Atrações
+                                    <Camera className="w-4 h-4" /> {t("ui.modal.attractions")}
                                 </h3>
                                 <div className="space-y-3">
                                     {(city.travelGuide?.tourism.topAttractions || []).map((attr, i) => (
@@ -542,7 +542,7 @@ export function CityDetailsModal({ city, dynamicStatus, onClose, t }: { city: Ho
 
                             {city.travelGuide?.tourism.hiddenGems?.length > 0 && (
                                 <div>
-                                    <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-3">Segredos Locais</h3>
+                                    <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-3">{t("ui.modal.hiddenGems")}</h3>
                                     <div className="space-y-2">
                                         {city.travelGuide.tourism.hiddenGems.map((gem, i) => (
                                             <div key={i} className="flex items-start gap-2 bg-white/[0.03] rounded-xl p-3 border border-white/[0.05]">
@@ -557,7 +557,7 @@ export function CityDetailsModal({ city, dynamicStatus, onClose, t }: { city: Ho
                             {/* Highlights from HostCity */}
                             {city.highlights?.length > 0 && (
                                 <div>
-                                    <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-3">Destaques</h3>
+                                    <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-3">{t("ui.modal.highlights")}</h3>
                                     <div className="flex flex-wrap gap-2">
                                         {city.highlights.map((h, i) => (
                                             <span key={i} className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs font-bold px-3 py-1.5 rounded-full">
@@ -599,7 +599,7 @@ export function CityDetailsModal({ city, dynamicStatus, onClose, t }: { city: Ho
                             {city.travelGuide.gastronomy.tips?.length > 0 && (
                                 <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4">
                                     <h3 className="text-[10px] font-black uppercase tracking-widest text-amber-400 mb-3 flex items-center gap-2">
-                                        <Star className="w-3.5 h-3.5" /> Dicas Locais
+                                        <Star className="w-3.5 h-3.5" /> {t("ui.modal.localTips")}
                                     </h3>
                                     {city.travelGuide.gastronomy.tips.map((tip, i) => (
                                         <p key={i} className="text-xs text-amber-100/70 leading-relaxed mb-1">• {tip}</p>
@@ -619,13 +619,13 @@ export function CityDetailsModal({ city, dynamicStatus, onClose, t }: { city: Ho
                         )}
                         className="flex-1 h-11 flex items-center justify-center rounded-2xl bg-white/[0.06] border border-white/[0.08] text-[11px] font-black uppercase tracking-widest text-white"
                     >
-                        Compartilhar
+                        {t("actions.share")}
                     </button>
                     <button
                         onClick={() => setActiveTab("turismo")}
                         className="flex-[2] h-11 flex items-center justify-center gap-2 rounded-2xl bg-emerald-500 text-[11px] font-black uppercase tracking-widest text-black"
                     >
-                        <Plane className="w-4 h-4" /> Ver Roteiro
+                        <Plane className="w-4 h-4" /> {t("ui.modal.view_itinerary")}
                     </button>
                 </div>
             </motion.div>

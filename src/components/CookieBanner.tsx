@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 
 export function CookieBanner() {
+    const { t } = useTranslation("common");
     const [isVisible, setIsVisible] = useState(false);
 
     useEffect(() => {
@@ -23,13 +25,13 @@ export function CookieBanner() {
         <div className="fixed bottom-0 left-0 right-0 z-50 p-4 pb-20 md:pb-4 md:p-6 bg-background/95 backdrop-blur-md border-t border-border shadow-lg">
             <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
                 <p className="text-sm text-muted-foreground text-center sm:text-left flex-1 max-w-3xl">
-                    Usamos apenas cookies essenciais para autenticação.
+                    {t("cookie.banner_text")}
                     <Link to="/privacidade" className="text-primary hover:underline ml-1">
-                        Saiba mais na nossa Política de Privacidade.
+                        {t("cookie.learn_more")}
                     </Link>
                 </p>
                 <Button onClick={handleAccept} className="w-full sm:w-auto font-bold bg-primary text-primary-foreground">
-                    Entendi
+                    {t("cookie.accept")}
                 </Button>
             </div>
         </div>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Loader2, Share2, X, Zap } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { collection, query, orderBy, where, limit, getDocs } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -8,6 +9,7 @@ import { useCreateBolao } from "@/hooks/useCreateBolao";
 import { getSiteUrl } from "@/utils/site-url";
 import { getDefaultMarketIdsForFormat } from "@/services/boloes/bolao-format.service";
 import { cn } from "@/lib/utils";
+import { openWhatsAppShare } from "@/lib/security";
 
 interface Match { id: string; home_team_code: string; away_team_code: string; match_date: string; }
 const EMOJIS = ["⚽", "🔥", "🦁", "🎯", "💪", "🏅"];
@@ -16,6 +18,7 @@ const DEFAULT_RULES = { exact: 10, winner: 3, draw: 3, participation: 1 };
 interface Props { open: boolean; onClose: () => void; }
 
 export function BolaoExpressSheet({ open, onClose }: Props) {
+  const { t, i18n } = useTranslation("bolao");
   const navigate = useNavigate();
   const { toast } = useToast();
   const { createBolao, creating } = useCreateBolao();
@@ -53,7 +56,7 @@ export function BolaoExpressSheet({ open, onClose }: Props) {
 
   const handleSelectMatch = (m: Match) => {
     setSelectedMatch(m);
-    setName(`Bolão ${m.home_team_code} x ${m.away_team_code}`);
+    setName(t("express_sheet.default_name", { home: m.home_team_code, away: m.away_team_code }));
   };
 
   const handleCreate = async () => {
@@ -63,9 +66,10 @@ export function BolaoExpressSheet({ open, onClose }: Props) {
       formatId: "strategic",
       selectedMarketIds: getDefaultMarketIdsForFormat("strategic"),
       scoringRules: DEFAULT_RULES, champion: "",
+      matchId: selectedMatch.id,
     });
     if (result) {
-      toast({ title: "Bolão criado! ⚡", className: "bg-emerald-500 text-white font-black" });
+      toast({ title: t("express_sheet.created_toast"), className: "bg-emerald-500 text-white font-black" });
       setCreatedId(result.bolaoId);
       setCreatedCode(result.inviteCode);
     }
@@ -83,15 +87,21 @@ export function BolaoExpressSheet({ open, onClose }: Props) {
         <div className="w-full max-w-lg rounded-t-[32px] bg-[#0f1f14] p-6 pb-10 text-white" onClick={(e) => e.stopPropagation()}>
           <div className="mb-4 text-center text-4xl">⚡</div>
           <p className="text-center text-xl font-black">{name}</p>
-          <p className="mt-1 text-center text-sm text-zinc-400">Bolão criado! Compartilhe agora.</p>
-          <button onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(`Vem pro meu bolão "${name}"! ${url}`)}`, "_blank")}
+          <p className="mt-1 text-center text-sm text-zinc-400">{t("express_sheet.created_desc")}</p>
+          <button onClick={() => {
+            const opened = openWhatsAppShare(t("express_sheet.whatsapp_message", { name, url }));
+            if (!opened) {
+              navigator.clipboard.writeText(url);
+              toast({ title: t("express_sheet.link_copied") });
+            }
+          }}
             className="mt-5 w-full rounded-2xl bg-primary py-4 text-[11px] font-black uppercase tracking-widest text-black">
-            Compartilhar no WhatsApp
+            {t("express_sheet.share_whatsapp")}
           </button>
-          <button onClick={() => { navigator.clipboard.writeText(url); toast({ title: "Link copiado!" }); }}
+          <button onClick={() => { navigator.clipboard.writeText(url); toast({ title: t("express_sheet.link_copied") }); }}
             className="mt-2 w-full truncate rounded-2xl bg-white/5 px-4 py-3 text-xs text-zinc-400">{url}</button>
           <button onClick={() => { handleClose(); navigate(`/boloes/${createdId}`); }}
-            className="mt-3 w-full rounded-2xl border border-white/10 py-3 text-sm font-bold">Ver bolão</button>
+            className="mt-3 w-full rounded-2xl border border-white/10 py-3 text-sm font-bold">{t("express_sheet.open_pool")}</button>
         </div>
       </div>
     );
@@ -104,13 +114,13 @@ export function BolaoExpressSheet({ open, onClose }: Props) {
         <div className="mb-5 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Zap className="h-5 w-5 text-primary" />
-            <span className="text-lg font-black">Bolão Express</span>
+            <span className="text-lg font-black">{t("express_sheet.title")}</span>
           </div>
           <button onClick={handleClose} className="rounded-full bg-white/10 p-2"><X className="h-4 w-4" /></button>
         </div>
 
         {/* Match picker */}
-        <p className="mb-2 text-xs font-bold uppercase tracking-widest text-zinc-400">Escolha o jogo</p>
+        <p className="mb-2 text-xs font-bold uppercase tracking-widest text-zinc-400">{t("express_sheet.pick_match")}</p>
         <div className="mb-4 flex flex-col gap-2 max-h-40 overflow-y-auto">
           {loadingMatches && (
             <div className="space-y-2 animate-pulse">
@@ -122,12 +132,12 @@ export function BolaoExpressSheet({ open, onClose }: Props) {
           {!loadingMatches && matches.length === 0 && (
             <div className="flex flex-col items-center gap-3 rounded-2xl bg-white/5 py-6 text-center">
               <span className="text-3xl">📅</span>
-              <p className="text-sm font-bold text-zinc-300">Nenhuma partida agendada</p>
-              <p className="text-xs text-zinc-500 px-4">Assim que jogos forem cadastrados, eles aparecem aqui.</p>
+              <p className="text-sm font-bold text-zinc-300">{t("express_sheet.empty_title")}</p>
+              <p className="text-xs text-zinc-500 px-4">{t("express_sheet.empty_desc")}</p>
               <button
                 onClick={() => { onClose(); navigate("/boloes/criar"); }}
                 className="mt-1 rounded-xl bg-primary/20 border border-primary/40 px-4 py-2 text-xs font-black text-primary hover:bg-primary/30 transition-colors">
-                Criar bolão personalizado →
+                {t("express_sheet.create_custom")}
               </button>
             </div>
           )}
@@ -137,7 +147,7 @@ export function BolaoExpressSheet({ open, onClose }: Props) {
                 selectedMatch?.id === m.id ? "bg-primary/20 border border-primary" : "bg-white/5 hover:bg-white/10")}>
               {m.home_team_code} × {m.away_team_code}
               <span className="ml-2 text-xs font-normal text-zinc-400">
-                {new Date(m.match_date).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}
+                {new Date(m.match_date).toLocaleDateString(i18n.language, { day: "2-digit", month: "short" })}
               </span>
             </button>
           ))}
@@ -155,12 +165,12 @@ export function BolaoExpressSheet({ open, onClose }: Props) {
           </div>
         </div>
         <input value={name} onChange={(e) => setName(e.target.value)}
-          placeholder="Nome do bolão"
+          placeholder={t("express_sheet.name_placeholder")}
           className="mb-4 w-full rounded-2xl bg-white/10 px-4 py-3 text-base font-black placeholder:font-normal placeholder:text-zinc-500 outline-none" />
 
         <button onClick={handleCreate} disabled={!selectedMatch || !name.trim() || creating}
           className="w-full rounded-2xl bg-primary py-4 text-[11px] font-black uppercase tracking-widest text-black disabled:opacity-60">
-          {creating ? <span className="inline-flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" />Criando...</span> : "⚡ Criar agora"}
+          {creating ? <span className="inline-flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" />{t("express_sheet.creating")}</span> : t("express_sheet.create_now")}
         </button>
       </div>
     </div>

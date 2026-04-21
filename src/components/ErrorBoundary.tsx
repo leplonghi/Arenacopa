@@ -1,4 +1,5 @@
 import React, { Component, ReactNode } from "react";
+import i18n from "@/i18n/config";
 
 const SHOW_DEBUG_DETAILS = import.meta.env.DEV;
 
@@ -35,17 +36,22 @@ export class ErrorBoundary extends Component<Props, State> {
     window.location.assign("/");
   };
 
+  private getMessage(key: string, fallback: string) {
+    const value = i18n.t(key, { defaultValue: fallback });
+    return value === key ? fallback : value;
+  }
+
   public render() {
     if (this.state.hasError) {
       return (
         <div className="min-h-screen bg-[#04140f] px-6 py-10 text-white">
           <div className="mx-auto flex min-h-[calc(100vh-5rem)] max-w-xl flex-col items-center justify-center text-center">
             <div className="mb-6 inline-flex rounded-full border border-red-400/30 bg-red-500/10 px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] text-red-200">
-              Recuperacao de erro
+              {this.getMessage("errors:error_boundary.badge", "Recuperação de erro")}
             </div>
-            <h1 className="text-4xl font-black tracking-tight text-white">Algo saiu do ritmo da partida</h1>
+            <h1 className="text-4xl font-black tracking-tight text-white">{this.getMessage("errors:error_boundary.title", "Algo saiu do ritmo da partida")}</h1>
             <p className="mt-4 max-w-md text-sm leading-6 text-white/75">
-              A tela encontrou um erro inesperado. Voce pode tentar carregar novamente ou voltar para o inicio sem perder o restante do app.
+              {this.getMessage("errors:error_boundary.description", "A tela encontrou um erro inesperado. Você pode tentar carregar novamente ou voltar para o início sem perder o restante do app.")}
             </p>
 
             <div className="mt-8 flex w-full max-w-sm flex-col gap-3">
@@ -53,13 +59,13 @@ export class ErrorBoundary extends Component<Props, State> {
                 onClick={this.handleRetry}
                 className="w-full rounded-2xl bg-primary px-5 py-4 text-sm font-black uppercase tracking-[0.18em] text-black transition hover:brightness-110"
               >
-                Tentar novamente
+                {this.getMessage("errors:error_boundary.retry", "Tentar novamente")}
               </button>
               <button
                 onClick={this.handleGoHome}
                 className="w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-sm font-black uppercase tracking-[0.18em] text-white transition hover:bg-white/10"
               >
-                Voltar ao inicio
+                {this.getMessage("errors:error_boundary.go_home", "Voltar ao início")}
               </button>
             </div>
 

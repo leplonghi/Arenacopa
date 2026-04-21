@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">2 de Mayo</title>
+  <desc id="desc">Placeholder crest for 2 de Mayo</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#111827"/>
+      <stop offset="100%" stop-color="#1f2937"/>
+    </linearGradient>
+  </defs>
+  <rect x="24" y="24" width="464" height="464" rx="120" fill="url(#bg)" stroke="#374151" stroke-width="16"/>
+  <circle cx="256" cy="180" r="72" fill="#0f172a" stroke="#4b5563" stroke-width="12"/>
+  <path d="M160 320c24-28 60-44 96-44s72 16 96 44v64H160z" fill="#0f172a" stroke="#4b5563" stroke-width="12"/>
+  <text x="256" y="438" fill="#f9fafb" font-size="72" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle">2 D</text>
+</svg>

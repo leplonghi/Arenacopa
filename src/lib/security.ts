@@ -36,3 +36,13 @@ export function openSafeExternalUrl(url?: string | null, target = "_blank") {
   window.open(safeUrl, target, "noopener,noreferrer");
   return true;
 }
+
+export function buildWhatsAppShareUrl(text: string) {
+  const shareUrl = new URL("https://wa.me/");
+  shareUrl.searchParams.set("text", text);
+  return sanitizeExternalUrl(shareUrl.toString());
+}
+
+export function openWhatsAppShare(text: string, target = "_blank") {
+  return openSafeExternalUrl(buildWhatsAppShareUrl(text), target);
+}

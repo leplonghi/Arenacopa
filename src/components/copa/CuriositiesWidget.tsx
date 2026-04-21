@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Lightbulb, RotateCcw } from "lucide-react";
 import { staggerItem } from "./animations";
 import { generalCuriosities, hostCountries } from "@/data/guiaData";
+import { useTranslation } from "react-i18next";
 
 interface Curiosity {
     id: string;
@@ -13,6 +14,7 @@ interface Curiosity {
 }
 
 export function CuriositiesWidget() {
+    const { t } = useTranslation("sedes");
     const [curiosity, setCuriosity] = useState<Curiosity | null>(null);
     const [loading, setLoading] = useState(true);
     const curiosityPool = useMemo<Curiosity[]>(() => {
@@ -71,7 +73,7 @@ export function CuriositiesWidget() {
                 <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
                         <Lightbulb className="w-4 h-4 text-yellow-500" />
-                        <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Você Sabia?</span>
+                        <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">{t("ui.curiosity")}</span>
                     </div>
                     <button
                         onClick={fetchRandomCuriosity}

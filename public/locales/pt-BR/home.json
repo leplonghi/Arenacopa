@@ -73,9 +73,12 @@
   "cta_predict": "Fazer Palpites",
   "live_card": {
     "loading": "Carregando...",
+    "competition_fallback": "Competição oficial",
+    "live_badge": "Ao vivo",
     "live_label": "Ao vivo",
     "follow_btn": "Acompanhar no Bolão",
-    "next_game": "Próximo Jogo"
+    "next_game": "Próximo Jogo",
+    "open_match_center": "Abrir campeonato"
   },
   "action_of_day": {
     "pending_title": "Palpites pendentes",

@@ -283,7 +283,33 @@ export const teams: Team[] = [
   },
 ];
 
-export const getTeam = (code: string) => teams.find(t => t.code === code)!;
+function createFallbackTeam(code: string): Team {
+  const normalizedCode = code?.trim().toUpperCase() || "---";
+
+  return {
+    code: normalizedCode,
+    name: normalizedCode,
+    flag: "🏳️",
+    group: "?",
+    confederation: "Unknown",
+    demographics: {
+      population: "-",
+      currency: "-",
+      language: "-",
+    },
+    stats: {
+      titles: 0,
+      appearances: 0,
+      firstAppearance: 0,
+      bestResult: "-",
+      hdi: 0,
+      area: 0,
+      gdp: 0,
+    },
+  };
+}
+
+export const getTeam = (code: string) => teams.find(t => t.code === code) ?? createFallbackTeam(code);
 export const getGroupTeams = (group: string) => teams.filter(t => t.group === group);
 export const groups = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"];
 
@@ -797,7 +823,24 @@ export const formatMatchDate = (dateStr: string, locale: string = 'pt-BR') => {
   return d.toLocaleDateString(locale, { weekday: "short", day: "numeric", month: "short" });
 };
 
-export const getStadium = (id: string) => stadiums.find(s => s.id === id);
+export const getStadium = (id: string) => stadiums.find(s => s.id === id) ?? {
+  id: id || "unknown",
+  name: "Stadium TBD",
+  city: "Unknown city",
+  country: "Unknown country",
+  capacity: 0,
+  lat: 0,
+  lng: 0,
+  timezone: "UTC",
+  climaHint: "-",
+  details: {
+    yearBuilt: 0,
+    roofType: "open",
+    avgTempHigh: 0,
+    avgRainfall: 0,
+    description: "Venue information is not available yet.",
+  },
+};
 
 export const phaseLabels: Record<MatchPhase, string> = {
   "groups": "Fase de Grupos",

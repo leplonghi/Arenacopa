@@ -5,6 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { DollarSign, MessageSquare } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { openWhatsAppShare } from "@/lib/security";
 
 interface BolaoData {
   id: string;
@@ -87,7 +88,11 @@ export function CaixinhaPanel({ bolao, isCreator }: Props) {
       pix: pix,
       prize: prize
     });
-    window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, "_blank");
+    const opened = openWhatsAppShare(msg);
+    if (!opened) {
+      navigator.clipboard.writeText(msg);
+      toast({ title: "Mensagem copiada" });
+    }
   };
 
   // Read-only view for participants

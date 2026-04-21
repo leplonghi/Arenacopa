@@ -5,6 +5,11 @@ export type NewsCountry = "BR" | "ES" | "GB" | "EU";
 export type ChampionshipNewsTarget =
   | "wc2026"
   | "brasileirao2026"
+  | "libertadores2026"
+  | "bundesliga2526"
+  | "ligue12526"
+  | "mls2026"
+  | "saudipro2526"
   | "ucl2526"
   | "laliga2526"
   | "premier2526";

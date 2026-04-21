@@ -3,5 +3,14 @@
     "not_found": "Recurso no encontrado.",
     "unauthorized": "Debes iniciar sesión.",
     "network": "Error de conexión.",
-    "validation": "Verifica los datos proporcionados."
+    "validation": "Verifica los datos proporcionados.",
+    "page_not_found": "Ups, página no encontrada",
+    "back_home": "Volver al inicio",
+    "error_boundary": {
+        "badge": "Recuperación de error",
+        "title": "Algo se salió del ritmo del partido",
+        "description": "Esta pantalla encontró un error inesperado. Puedes intentar cargarla de nuevo o volver al inicio sin perder el resto de la app.",
+        "retry": "Intentar de nuevo",
+        "go_home": "Volver al inicio"
+    }
 }

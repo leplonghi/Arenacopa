@@ -3,5 +3,14 @@
     "not_found": "Resource not found.",
     "unauthorized": "You must be logged in.",
     "network": "Connection error.",
-    "validation": "Check the provided data."
+    "validation": "Check the provided data.",
+    "page_not_found": "Oops! Page not found",
+    "back_home": "Back to home",
+    "error_boundary": {
+        "badge": "Error recovery",
+        "title": "Something fell out of the match rhythm",
+        "description": "This screen hit an unexpected error. You can try loading it again or go back home without losing the rest of the app.",
+        "retry": "Try again",
+        "go_home": "Go home"
+    }
 }

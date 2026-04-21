@@ -2,6 +2,8 @@ const functions = require("firebase-functions");
 const admin = require("firebase-admin");
 const https = require("https");
 const NEWS_SOURCES = require("./newsSources");
+const bolaoConfigHandlers = require("./bolao-config/handlers");
+const bolaoConfigRepository = require("./bolao-config/repository");
 
 admin.initializeApp();
 
@@ -17,10 +19,19 @@ const SCORING = {
 };
 const LEAGUE_CHAMPIONSHIPS = [
     { id: "brasileirao2026", fdoId: 2013, name: "Brasileirão", season: "2026" },
+    { id: "libertadores2026", fdoId: 2152, name: "Libertadores", season: "2026" },
+    { id: "bundesliga2526", fdoId: 2002, name: "Bundesliga", season: "2025" },
+    { id: "ligue12526", fdoId: 2015, name: "Ligue 1", season: "2025" },
     { id: "ucl2526", fdoId: 2001, name: "Champions League", season: "2025" },
     { id: "laliga2526", fdoId: 2014, name: "La Liga", season: "2025" },
     { id: "premier2526", fdoId: 2021, name: "Premier League", season: "2025" },
 ];
+let footballDataRequestCount = 0;
+let footballDataWindowStartedAt = Date.now();
+
+function sleep(ms) {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 function getAllowedOrigins(configuredSiteUrl = DEFAULT_SITE_URL) {
     const configuredOrigin = configuredSiteUrl.replace(/\/$/, "");
@@ -59,6 +70,152 @@ function getRuntimeConfig() {
         seedToken: runtimeConfig?.seed?.token || process.env.SEED_ADMIN_TOKEN || "",
     };
 }
+
+function mapBolaoOperationError(error) {
+    const code = error?.message || "internal";
+    if (code === "permission_denied") {
+        return { status: 403, error: code };
+    }
+    if (["not_found"].includes(code)) {
+        return { status: 404, error: code };
+    }
+    if (["config_conflict"].includes(code)) {
+        return { status: 409, error: code };
+    }
+    if (["invalid_state", "structure_locked", "member_protected", "removal_blocked", "validation_failed"].includes(code)) {
+        return { status: 400, error: code };
+    }
+
+    return { status: 500, error: "internal" };
+}
+
+function createAuthedBolaoEndpoint(handler) {
+    return functions.region("us-central1").https.onRequest(async (req, res) => {
+        applyCors(req, res);
+
+        if (req.method === "OPTIONS") {
+            return res.status(204).send("");
+        }
+
+        if (req.method !== "POST") {
+            return res.status(405).json({ error: "Método não permitido." });
+        }
+
+        try {
+            const auth = await verifyHttpUser(req);
+            const nowIso = new Date().toISOString();
+            const payload = await handler({
+                req,
+                res,
+                auth,
+                nowIso,
+            });
+
+            if (res.headersSent) {
+                return null;
+            }
+
+            return res.status(200).json(payload);
+        } catch (error) {
+            const mapped = mapBolaoOperationError(error);
+            functions.logger.error("Bolao operation failed", {
+                error: error?.message || error,
+                route: req.path,
+                body: req.body,
+            });
+
+            return res.status(mapped.status).json({ error: mapped.error });
+        }
+    });
+}
+
+exports.resolvePublicInvite = functions.region("us-central1").https.onRequest(async (req, res) => {
+    applyCors(req, res);
+
+    if (req.method === "OPTIONS") {
+        return res.status(204).send("");
+    }
+
+    if (req.method !== "POST") {
+        return res.status(405).json({ error: "Método não permitido." });
+    }
+
+    try {
+        const inviteCode = typeof req.body?.inviteCode === "string" ? req.body.inviteCode.trim().toUpperCase() : "";
+        const kind = req.body?.kind;
+
+        if (!inviteCode || !["bolao", "group"].includes(kind)) {
+            return res.status(400).json({ error: "Payload inválido." });
+        }
+
+        if (kind === "bolao") {
+            const bolaoSnapshot = await db
+                .collection("boloes")
+                .where("invite_code", "==", inviteCode)
+                .limit(1)
+                .get();
+
+            if (bolaoSnapshot.empty) {
+                return res.status(404).json({ found: false });
+            }
+
+            const bolaoDoc = bolaoSnapshot.docs[0];
+            const bolaoData = bolaoDoc.data();
+            const membersSnapshot = await db
+                .collection("bolao_members")
+                .where("bolao_id", "==", bolaoDoc.id)
+                .get();
+
+            return res.status(200).json({
+                found: true,
+                data: {
+                    id: bolaoDoc.id,
+                    name: bolaoData.name || "",
+                    description: bolaoData.description || null,
+                    avatar_url: bolaoData.avatar_url || null,
+                    category: bolaoData.category || null,
+                    is_paid: Boolean(bolaoData.is_paid),
+                    memberCount: membersSnapshot.size,
+                },
+            });
+        }
+
+        const groupSnapshot = await db
+            .collection("grupos")
+            .where("invite_code", "==", inviteCode)
+            .limit(1)
+            .get();
+
+        if (groupSnapshot.empty) {
+            return res.status(404).json({ found: false });
+        }
+
+        const groupDoc = groupSnapshot.docs[0];
+        const groupData = groupDoc.data();
+        const membersSnapshot = await db
+            .collection("grupo_members")
+            .where("grupo_id", "==", groupDoc.id)
+            .get();
+
+        return res.status(200).json({
+            found: true,
+            data: {
+                id: groupDoc.id,
+                name: groupData.name || "",
+                description: groupData.description || null,
+                emoji: groupData.emoji || "👥",
+                category: groupData.category || null,
+                memberCount: membersSnapshot.size,
+            },
+        });
+    } catch (error) {
+        functions.logger.error("Could not resolve public invite", {
+            error: error?.message || error,
+            body: req.body,
+        });
+        return res.status(500).json({ error: "Não foi possível resolver o convite." });
+    }
+});
 
 async function verifyHttpUser(req) {
     const authHeader = req.headers.authorization || "";
@@ -230,7 +387,7 @@ function normalizeBreakdown(current = {}) {
 function mapFootballDataStatus(status) {
     if (status === "FINISHED" || status === "AWARDED") return "finished";
     if (status === "IN_PLAY" || status === "PAUSED") return "live";
-    return "upcoming";
+    return "scheduled";
 }
 
 async function footballDataRequest(path) {
@@ -239,9 +396,24 @@ async function footballDataRequest(path) {
         throw new Error("FOOTBALL_DATA_API_KEY não configurada.");
     }
 
+    footballDataRequestCount += 1;
+    if (footballDataRequestCount > 9) {
+        const elapsed = Date.now() - footballDataWindowStartedAt;
+        if (elapsed < 62000) {
+            const waitMs = 62000 - elapsed;
+            functions.logger.info("Respeitando rate limit da football-data", {
+                waitMs,
+                path,
+            });
+            await sleep(waitMs);
+        }
+        footballDataRequestCount = 1;
+        footballDataWindowStartedAt = Date.now();
+    }
+
     const url = `https://api.football-data.org/v4${path}`;
 
-    return new Promise((resolve, reject) => {
+    const executeRequest = () => new Promise((resolve, reject) => {
         const request = https.request(url, {
             method: "GET",
             headers: {
@@ -259,9 +431,20 @@ async function footballDataRequest(path) {
 
             response.on("end", () => {
                 const body = Buffer.concat(chunks).toString("utf8");
+                const statusCode = response.statusCode || 0;
 
-                if (!response.statusCode || response.statusCode < 200 || response.statusCode >= 300) {
-                    return reject(new Error(`football-data ${path} ${response.statusCode || 0}: ${body}`));
+                if (statusCode === 429) {
+                    const retryAfterHeader = Number(response.headers["retry-after"] || 0);
+                    const retryAfterBody = Number((body.match(/Wait\s+(\d+)\s+seconds/i) || [])[1] || 0);
+                    const retryAfterMs = Math.max(retryAfterHeader, retryAfterBody, 30) * 1000;
+                    return reject(Object.assign(new Error(`football-data ${path} 429: ${body}`), {
+                        retryAfterMs,
+                        statusCode,
+                    }));
+                }
+
+                if (statusCode < 200 || statusCode >= 300) {
+                    return reject(new Error(`football-data ${path} ${statusCode}: ${body}`));
                 }
 
                 try {
@@ -282,6 +465,20 @@ async function footballDataRequest(path) {
 
         request.end();
     });
+
+    try {
+        return await executeRequest();
+    } catch (error) {
+        if (error?.statusCode === 429 && error?.retryAfterMs) {
+            functions.logger.warn("football-data limit atingido, aguardando para tentar novamente", {
+                path,
+                retryAfterMs: error.retryAfterMs,
+            });
+            await sleep(error.retryAfterMs);
+            return executeRequest();
+        }
+        throw error;
+    }
 }
 
 async function seedTeamsForChampionship(championship) {
@@ -443,6 +640,126 @@ async function seedLeagueNewsCollection() {
             views: 9800,
         },
         {
+            id: "news-libertadores-1",
+            championship_id: "libertadores2026",
+            title: "Libertadores 2026: fase de grupos já coloca favoritos sob pressão",
+            content: "A CONMEBOL Libertadores 2026 segue movimentando o continente com confrontos pesados, clubes brasileiros em destaque e clima de decisão desde a abertura.",
+            category: "Libertadores",
+            source_name: "ge",
+            published_at: now,
+            url_to_image: "https://images.unsplash.com/photo-1517927033932-b3d18e61fb3a?auto=format&fit=crop&q=80&w=1200",
+            url: "https://ge.globo.com/futebol/libertadores/",
+            views: 10100,
+        },
+        {
+            id: "news-libertadores-2",
+            championship_id: "libertadores2026",
+            title: "CONMEBOL confirma calendário e reta final da Libertadores 2026",
+            content: "A edição 2026 da competição será disputada ao longo da temporada sul-americana, com a final única marcando o encerramento da corrida pela Glória Eterna.",
+            category: "Libertadores",
+            source_name: "CONMEBOL",
+            published_at: now,
+            url_to_image: "https://images.unsplash.com/photo-1508098682722-e99c643e7485?auto=format&fit=crop&q=80&w=1200",
+            url: "https://gol.conmebol.com/libertadores/",
+            views: 8700,
+        },
+        {
+            id: "news-bundesliga-1",
+            championship_id: "bundesliga2526",
+            title: "Bundesliga 2025-26 chega à reta decisiva com pressão no topo",
+            content: "A liga alemã entra em semanas decisivas, com favoritos tradicionais e concorrentes diretos brigando por liderança e vagas continentais.",
+            category: "Bundesliga",
+            source_name: "The Guardian",
+            published_at: now,
+            url_to_image: "https://images.unsplash.com/photo-1518604666860-9ed391f76460?auto=format&fit=crop&q=80&w=1200",
+            url: "https://www.theguardian.com/football/bundesligafootball",
+            views: 7900,
+        },
+        {
+            id: "news-bundesliga-2",
+            championship_id: "bundesliga2526",
+            title: "Bayern e Leverkusen puxam a corrida pelo título da Bundesliga",
+            content: "A temporada alemã continua altamente competitiva, com duelos diretos que podem redesenhar a tabela a qualquer rodada.",
+            category: "Bundesliga",
+            source_name: "ESPN",
+            published_at: now,
+            url_to_image: "https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?auto=format&fit=crop&q=80&w=1200",
+            url: "https://www.espn.com.br/futebol/",
+            views: 7200,
+        },
+        {
+            id: "news-ligue1-1",
+            championship_id: "ligue12526",
+            title: "Ligue 1 2025-26 mantém a briga viva por título e Champions",
+            content: "A principal liga francesa segue com disputa apertada na parte de cima e pressão crescente na reta mais importante da temporada.",
+            category: "Ligue 1",
+            source_name: "The Guardian",
+            published_at: now,
+            url_to_image: "https://images.unsplash.com/photo-1522778119026-d647f0565c6a?auto=format&fit=crop&q=80&w=1200",
+            url: "https://www.theguardian.com/football/ligue1football",
+            views: 6500,
+        },
+        {
+            id: "news-ligue1-2",
+            championship_id: "ligue12526",
+            title: "PSG e rivais encaram fase decisiva da Ligue 1",
+            content: "Cada rodada ganhou peso de decisão na corrida francesa por título, vagas europeias e permanência.",
+            category: "Ligue 1",
+            source_name: "ESPN",
+            published_at: now,
+            url_to_image: "https://images.unsplash.com/photo-1547347298-4074fc3086f0?auto=format&fit=crop&q=80&w=1200",
+            url: "https://www.espn.com.br/futebol/",
+            views: 6100,
+        },
+        {
+            id: "news-mls-1",
+            championship_id: "mls2026",
+            title: "MLS 2026 ganha peso extra em ano de Copa do Mundo",
+            content: "A liga norte-americana vive temporada estratégica, com atenção ampliada por causa do Mundial e pelo crescimento técnico recente da competição.",
+            category: "MLS",
+            source_name: "ESPN",
+            published_at: now,
+            url_to_image: "https://images.unsplash.com/photo-1570498839593-e565b39455fc?auto=format&fit=crop&q=80&w=1200",
+            url: "https://www.espn.com.br/futebol/",
+            views: 5600,
+        },
+        {
+            id: "news-mls-2",
+            championship_id: "mls2026",
+            title: "Conferências da MLS começam a desenhar favoritos em 2026",
+            content: "A Major League Soccer segue com equilíbrio entre as conferências e projeção cada vez maior para a reta decisiva do calendário.",
+            category: "MLS",
+            source_name: "The Guardian",
+            published_at: now,
+            url_to_image: "https://images.unsplash.com/photo-1459865264687-595d652de67e?auto=format&fit=crop&q=80&w=1200",
+            url: "https://www.theguardian.com/football/mls",
+            views: 5200,
+        },
+        {
+            id: "news-saudi-1",
+            championship_id: "saudipro2526",
+            title: "Saudi Pro League segue atraindo holofotes globais em 2025-26",
+            content: "A elite saudita mantém investimento alto e jogos de grande repercussão, consolidando uma temporada acompanhada em escala internacional.",
+            category: "Saudi Pro League",
+            source_name: "ESPN",
+            published_at: now,
+            url_to_image: "https://images.unsplash.com/photo-1508098682722-e99c643e7485?auto=format&fit=crop&q=80&w=1200",
+            url: "https://www.espn.com.br/futebol/",
+            views: 5800,
+        },
+        {
+            id: "news-saudi-2",
+            championship_id: "saudipro2526",
+            title: "Al Hilal, Al Nassr e rivais pressionam topo da liga saudita",
+            content: "A Saudi Pro League entra em fase decisiva com favoritos separados por margens curtas e confrontos de peso na agenda.",
+            category: "Saudi Pro League",
+            source_name: "The Guardian",
+            published_at: now,
+            url_to_image: "https://images.unsplash.com/photo-1517927033932-b3d18e61fb3a?auto=format&fit=crop&q=80&w=1200",
+            url: "https://www.theguardian.com/football",
+            views: 5400,
+        },
+        {
             id: "news-laliga-1",
             championship_id: "laliga2526",
             title: "La Liga 2025-26: temporada caminha para desfecho emocionante",
@@ -533,6 +850,11 @@ function slugifyText(value) {
 const CHAMPIONSHIP_KEYWORDS = {
     wc2026: ["copa do mundo", "world cup", "mundial", "fifa world cup", "selecao", "seleção"],
     brasileirao2026: ["brasileirao", "brasileirão", "serie a", "série a", "cbf", "palmeiras", "flamengo", "corinthians"],
+    libertadores2026: ["libertadores", "conmebol libertadores", "gloria eterna", "glória eterna", "boca juniors", "river plate", "flamengo", "palmeiras"],
+    bundesliga2526: ["bundesliga", "bayern", "borussia dortmund", "leverkusen", "eintracht frankfurt", "rb leipzig"],
+    ligue12526: ["ligue 1", "psg", "paris saint-germain", "marseille", "lyon", "monaco"],
+    mls2026: ["major league soccer", "mls", "inter miami", "la galaxy", "lafc", "atlanta united"],
+    saudipro2526: ["saudi pro league", "liga saudita", "al hilal", "al nassr", "al ittihad", "roshn"],
     ucl2526: ["champions", "champions league", "liga dos campeoes", "liga dos campeões", "uefa champions"],
     laliga2526: ["la liga", "laliga", "real madrid", "barcelona", "atletico", "atlético", "el clasico", "el clásico"],
     premier2526: ["premier league", "premier", "manchester city", "arsenal", "liverpool", "chelsea", "tottenham", "manchester united"],
@@ -2134,3 +2456,134 @@ exports.fetchNewsScheduled = functions.pubsub
         functions.logger.info(`[fetchNews] Completed. Total added: ${totalAdded}`);
         return null;
     });
+
+exports.createBolaoDraft = createAuthedBolaoEndpoint(async ({ auth, nowIso, req }) => {
+    const bolaoRef = db.collection("boloes").doc();
+    const payload = bolaoConfigHandlers.buildDraftBolaoDocument({
+        bolaoId: bolaoRef.id,
+        actorId: auth.uid,
+        nowIso,
+        input: req.body || {},
+    });
+
+    const created = await bolaoConfigRepository.createDraft({
+        db,
+        bolaoId: bolaoRef.id,
+        payload,
+    });
+
+    return {
+        bolao_id: bolaoRef.id,
+        ...created,
+    };
+});
+
+exports.updateBolaoConfiguration = createAuthedBolaoEndpoint(async ({ auth, nowIso, req }) => {
+    const updated = await bolaoConfigRepository.updateConfiguration({
+        db,
+        bolaoId: req.body?.bolao_id,
+        actorId: auth.uid,
+        expectedConfigVersion: Number(req.body?.expected_config_version),
+        patch: req.body?.patch || {},
+        nowIso,
+    });
+
+    return {
+        bolao_id: updated.id,
+        ...updated,
+    };
+});
+
+exports.publishBolao = createAuthedBolaoEndpoint(async ({ auth, nowIso, req }) => {
+    const updated = await bolaoConfigRepository.publishBolao({
+        db,
+        bolaoId: req.body?.bolao_id,
+        actorId: auth.uid,
+        expectedConfigVersion: Number(req.body?.expected_config_version),
+        nowIso,
+    });
+
+    return {
+        bolao_id: updated.id,
+        ...updated,
+    };
+});
+
+exports.duplicateBolao = createAuthedBolaoEndpoint(async ({ auth, nowIso, req }) => {
+    const duplicated = await bolaoConfigRepository.duplicateBolao({
+        db,
+        sourceBolaoId: req.body?.source_bolao_id,
+        actorId: auth.uid,
+        nowIso,
+        origin: req.body?.origin || "published_snapshot",
+        overrides: req.body?.overrides || {},
+    });
+
+    return {
+        bolao_id: duplicated.id,
+        ...duplicated,
+    };
+});
+
+exports.alterBolaoPresentation = createAuthedBolaoEndpoint(async ({ auth, nowIso, req }) => {
+    const updated = await bolaoConfigRepository.alterPresentation({
+        db,
+        bolaoId: req.body?.bolao_id,
+        actorId: auth.uid,
+        patch: req.body?.patch || {},
+        nowIso,
+    });
+
+    return {
+        bolao_id: updated.id,
+        ...updated,
+    };
+});
+
+exports.finishBolao = createAuthedBolaoEndpoint(async ({ auth, nowIso, req }) => {
+    const updated = await bolaoConfigRepository.finishBolao({
+        db,
+        bolaoId: req.body?.bolao_id,
+        actorId: auth.uid,
+        nowIso,
+        reason: req.body?.reason || null,
+    });
+
+    return {
+        bolao_id: updated.id,
+        ...updated,
+    };
+});
+
+exports.archiveBolao = createAuthedBolaoEndpoint(async ({ auth, nowIso, req }) => {
+    const updated = await bolaoConfigRepository.archiveBolao({
+        db,
+        bolaoId: req.body?.bolao_id,
+        actorId: auth.uid,
+        nowIso,
+        reason: req.body?.reason || null,
+    });
+
+    return {
+        bolao_id: updated.id,
+        ...updated,
+    };
+});
+
+exports.removePoolMember = createAuthedBolaoEndpoint(async ({ auth, nowIso, req }) => {
+    const updated = await bolaoConfigRepository.removePoolMember({
+        db,
+        bolaoId: req.body?.bolao_id,
+        memberId: req.body?.member_id,
+        actorId: auth.uid,
+        nowIso,
+        reasonCode: req.body?.reason_code || "",
+        reasonText: req.body?.reason_text || "",
+    });
+
+    return {
+        member_id: updated.id,
+        membership_status: updated.membership_status,
+        removal_reason_code: updated.removal_reason_code || null,
+    };
+});

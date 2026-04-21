@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { ArrowLeft, ChevronDown, Crown, Info, Share2, Trophy, Users } from "lucide-react";
 import confetti from "canvas-confetti";
@@ -25,26 +25,67 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { getPublicProfilesByIds } from "@/services/profile/profile.service";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { BolaoAvatar } from "@/components/BolaoAvatar";
 import { teams } from "@/data/mockData";
 import { Flag } from "@/components/Flag";
 import { cn } from "@/lib/utils";
-import { JogosTab } from "@/components/copa/bolao/JogosTab";
-import { RealtimeRankingTab } from "@/components/copa/bolao/RealtimeRankingTab";
-import { CaixinhaPanel } from "@/components/CaixinhaPanel";
-import { GrupoLinkPanel } from "@/components/copa/bolao/GrupoLinkPanel";
-import { PublicPalpitesTab } from "@/components/copa/bolao/PublicPalpitesTab";
-import { OverviewTab } from "@/components/copa/bolao/OverviewTab";
-import { MembrosTab } from "@/components/copa/bolao/MembrosTab";
-import { ExtrasTab } from "@/components/copa/bolao/ExtrasTab";
-import { PhaseMarketsTab } from "@/components/copa/bolao/markets/PhaseMarketsTab";
-import { SpecialMarketsTab } from "@/components/copa/bolao/markets/SpecialMarketsTab";
-import { BolaoIntroModal } from "@/components/copa/bolao/onboarding/BolaoIntroModal";
-import { BolaoTour } from "@/components/copa/bolao/onboarding/BolaoTour";
 import { EmptyState } from "@/components/EmptyState";
 import { saveBolaoPrediction } from "@/services/boloes/bolao-prediction.service";
+import { BolaoEditPanel } from "@/features/boloes/edit/BolaoEditPanel";
 import type { BolaoActivity, BolaoData, BolaoMarket, BolaoOnboardingState, BolaoPrediction, MemberData, Palpite } from "@/types/bolao";
 
 type BolaoDetailTab = "palpites" | "ranking" | "pessoas" | "resumo";
+
+const JogosTab = lazy(() =>
+  import("@/components/copa/bolao/JogosTab").then((module) => ({ default: module.JogosTab }))
+);
+const RealtimeRankingTab = lazy(() =>
+  import("@/components/copa/bolao/RealtimeRankingTab").then((module) => ({
+    default: module.RealtimeRankingTab,
+  }))
+);
+const CaixinhaPanel = lazy(() =>
+  import("@/components/CaixinhaPanel").then((module) => ({ default: module.CaixinhaPanel }))
+);
+const GrupoLinkPanel = lazy(() =>
+  import("@/components/copa/bolao/GrupoLinkPanel").then((module) => ({
+    default: module.GrupoLinkPanel,
+  }))
+);
+const PublicPalpitesTab = lazy(() =>
+  import("@/components/copa/bolao/PublicPalpitesTab").then((module) => ({
+    default: module.PublicPalpitesTab,
+  }))
+);
+const OverviewTab = lazy(() =>
+  import("@/components/copa/bolao/OverviewTab").then((module) => ({ default: module.OverviewTab }))
+);
+const MembrosTab = lazy(() =>
+  import("@/components/copa/bolao/MembrosTab").then((module) => ({ default: module.MembrosTab }))
+);
+const ExtrasTab = lazy(() =>
+  import("@/components/copa/bolao/ExtrasTab").then((module) => ({ default: module.ExtrasTab }))
+);
+const PhaseMarketsTab = lazy(() =>
+  import("@/components/copa/bolao/markets/PhaseMarketsTab").then((module) => ({
+    default: module.PhaseMarketsTab,
+  }))
+);
+const SpecialMarketsTab = lazy(() =>
+  import("@/components/copa/bolao/markets/SpecialMarketsTab").then((module) => ({
+    default: module.SpecialMarketsTab,
+  }))
+);
+const BolaoIntroModal = lazy(() =>
+  import("@/components/copa/bolao/onboarding/BolaoIntroModal").then((module) => ({
+    default: module.BolaoIntroModal,
+  }))
+);
+const BolaoTour = lazy(() =>
+  import("@/components/copa/bolao/onboarding/BolaoTour").then((module) => ({
+    default: module.BolaoTour,
+  }))
+);
 
 function normalizeBolaoTab(tab: string | null): BolaoDetailTab | null {
   switch (tab) {
@@ -62,6 +103,16 @@ function normalizeBolaoTab(tab: string | null): BolaoDetailTab | null {
     default:
       return null;
   }
+}
+
+function DetailSectionFallback() {
+  return (
+    <div className="space-y-4">
+      <Skeleton className="h-24 rounded-3xl bg-white/10" />
+      <Skeleton className="h-40 rounded-3xl bg-white/10" />
+      <Skeleton className="h-32 rounded-3xl bg-white/10" />
+    </div>
+  );
 }
 
 export default function BolaoDetail() {
@@ -93,28 +144,7 @@ export default function BolaoDetail() {
   const [activeTab, setActiveTab] = useState<BolaoDetailTab>(requestedTab ?? (highlightedMatch ? "palpites" : "resumo"));
   const initialTabHydratedRef = useRef(false);
 
-  // Inline Editing
-  const [isEditingTitle, setIsEditingTitle] = useState(false);
-  const [editName, setEditName] = useState("");
-  const [editDesc, setEditDesc] = useState("");
-
-  const handleSaveEdit = async () => {
-    if (!id || !user || !bolao) return;
-    if (bolao.creator_id !== user.id) return;
-    
-    try {
-      await setDoc(doc(db, "boloes", id), {
-        name: editName,
-        description: editDesc
-      }, { merge: true });
-      
-      setBolao(prev => prev ? { ...prev, name: editName, description: editDesc } : null);
-      setIsEditingTitle(false);
-      toast({ title: "Salvo com sucesso!", className: "bg-emerald-500 text-white border-none font-black" });
-    } catch (e) {
-      toast({ title: "Erro ao salvar", variant: "destructive" });
-    }
-  };
+  const [showEditPanel, setShowEditPanel] = useState(false);
 
   // Guard setState calls that happen after async operations finish.
   // If the user navigates away while loadBolao() is still in-flight, we must
@@ -261,8 +291,13 @@ export default function BolaoDetail() {
         status: bData.status || 'active',
         format_id: bData.format_id,
         scoring_mode: bData.scoring_mode,
+        grupo_id: bData.grupo_id ?? null,
         visibility_mode: bData.visibility_mode,
         cutoff_mode: bData.cutoff_mode,
+        schema_version: bData.schema_version,
+        editable_sections: bData.editable_sections,
+        lifecycle: bData.lifecycle,
+        integrity: bData.integrity,
       } as BolaoData);
 
       setMemberCount(countSnap.data().count);
@@ -598,17 +633,19 @@ export default function BolaoDetail() {
 
   return (
     <div className="mx-auto max-w-6xl px-4 pb-28 pt-6 text-white">
-      <BolaoIntroModal
-        open={showBolaoIntro && Boolean(bolao)}
-        bolaoName={bolao.name}
-        formatLabel={formatLabel}
-        matchMarketsCount={matchMarkets.length}
-        phaseMarketsCount={phaseMarkets.length}
-        tournamentMarketsCount={tournamentMarkets.length}
-        specialMarketsCount={specialMarkets.length}
-        onClose={closeBolaoIntro}
-        onGoToPredictions={handleBolaoIntroToPredictions}
-      />
+      <Suspense fallback={null}>
+        <BolaoIntroModal
+          open={showBolaoIntro && Boolean(bolao)}
+          bolaoName={bolao.name}
+          formatLabel={formatLabel}
+          matchMarketsCount={matchMarkets.length}
+          phaseMarketsCount={phaseMarkets.length}
+          tournamentMarketsCount={tournamentMarkets.length}
+          specialMarketsCount={specialMarkets.length}
+          onClose={closeBolaoIntro}
+          onGoToPredictions={handleBolaoIntroToPredictions}
+        />
+      </Suspense>
 
       <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
         <div className="flex items-start gap-3">
@@ -625,58 +662,26 @@ export default function BolaoDetail() {
               {bolao.category === "public" ? t('bolao_detail.category_public') : t('bolao_detail.category_private')}
             </p>
             <div className="mt-2 flex items-start gap-4">
-              <div className="surface-card-soft flex h-16 w-16 shrink-0 items-center justify-center rounded-[24px] text-3xl">
-                {bolao.avatar_url || "🏆"}
-              </div>
+              <BolaoAvatar
+                avatarUrl={bolao.avatar_url}
+                alt={bolao.name}
+                className="surface-card-soft flex h-16 w-16 shrink-0 items-center justify-center rounded-[24px] text-3xl"
+              />
               <div className="flex-1">
-                {isEditingTitle ? (
-                  <div className="space-y-3">
-                    <input
-                      type="text"
-                      className="surface-input w-full rounded-xl px-4 py-3 text-lg font-black placeholder:text-zinc-600"
-                      value={editName}
-                      onChange={(e) => setEditName(e.target.value)}
-                      placeholder="Nome do bolão"
-                      maxLength={40}
-                      autoFocus
-                    />
-                    <textarea
-                      className="surface-input w-full rounded-xl px-4 py-3 text-sm placeholder:text-zinc-600 resize-none"
-                      value={editDesc}
-                      onChange={(e) => setEditDesc(e.target.value)}
-                      placeholder="Descrição do bolão (opcional)"
-                      maxLength={140}
-                      rows={2}
-                    />
-                    <div className="flex gap-2">
-                      <button onClick={handleSaveEdit} className="rounded-xl bg-primary px-5 py-2.5 text-xs font-black uppercase tracking-wider text-black">
-                        Salvar
-                      </button>
-                      <button onClick={() => setIsEditingTitle(false)} className="rounded-xl border border-white/10 px-5 py-2.5 text-xs font-black uppercase tracking-wider text-white hover:bg-white/5">
-                        Cancelar
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="group relative pr-8">
-                    <h1 className="text-3xl font-black leading-tight sm:text-4xl">{bolao.name}</h1>
-                    {bolao.description && <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-zinc-400">{bolao.description}</p>}
-                    
-                    {isCreator && (
-                      <button
-                        onClick={() => {
-                          setEditName(bolao.name);
-                          setEditDesc(bolao.description || "");
-                          setIsEditingTitle(true);
-                        }}
-                        className="absolute right-0 top-1 rounded-lg p-2 text-zinc-500 opacity-100 transition-opacity hover:bg-white/5 hover:text-white sm:opacity-0 sm:group-hover:opacity-100"
-                        title="Editar bolão"
-                      >
-                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></svg>
-                      </button>
-                    )}
-                  </div>
-                )}
+                <div className="group relative pr-8">
+                  <h1 className="text-3xl font-black leading-tight sm:text-4xl">{bolao.name}</h1>
+                  {bolao.description && <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-zinc-400">{bolao.description}</p>}
+
+                  {isCreator && (
+                    <button
+                      onClick={() => setShowEditPanel(true)}
+                      className="absolute right-0 top-1 rounded-lg p-2 text-zinc-500 opacity-100 transition-opacity hover:bg-white/5 hover:text-white sm:opacity-0 sm:group-hover:opacity-100"
+                      title="Editar bolão"
+                    >
+                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></svg>
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -714,7 +719,7 @@ export default function BolaoDetail() {
         <div className="surface-chip rounded-xl px-4 py-2 flex items-center gap-2 border border-white/5 bg-white/5">
           <Users className="h-4 w-4 text-primary" />
           <span className="font-bold text-white">{memberCount}</span>
-          <span className="text-xs">membros</span>
+          <span className="text-xs">{t('bolao_detail.members_label')}</span>
         </div>
         <div className="surface-chip rounded-xl px-4 py-2 flex items-center gap-2 border border-white/5 bg-white/5">
           <Share2 className="h-4 w-4 text-primary" />
@@ -727,7 +732,7 @@ export default function BolaoDetail() {
             className="surface-chip rounded-xl px-4 py-2 flex items-center gap-2 border border-orange-500/30 bg-orange-500/10 hover:bg-orange-500/20 transition-colors"
           >
             <Crown className="h-4 w-4 text-orange-500" />
-            <span className="font-black text-orange-500 uppercase tracking-wider text-[10px]">Admin</span>
+            <span className="font-black text-orange-500 uppercase tracking-wider text-[10px]">{t('bolao_detail.admin_badge')}</span>
           </button>
         )}
         {formatLabel && (
@@ -816,90 +821,126 @@ export default function BolaoDetail() {
       </div>
 
       <div className="surface-card-strong rounded-[32px] p-4 md:p-6">
-        {activeTourTab && <BolaoTour tab={activeTourTab} onDismiss={dismissTour} />}
+        <Suspense fallback={null}>
+          {activeTourTab && <BolaoTour tab={activeTourTab} onDismiss={dismissTour} />}
+      </Suspense>
+
+      <BolaoEditPanel
+        bolao={bolao}
+        open={showEditPanel}
+        onOpenChange={setShowEditPanel}
+        onBolaoUpdated={(patch) =>
+          setBolao((currentBolao) =>
+            currentBolao
+              ? {
+                  ...currentBolao,
+                  ...patch,
+                }
+              : currentBolao,
+          )
+        }
+      />
 
         {/* ── Palpites: jogos + fases collapsíveis ── */}
         {activeTab === "palpites" && (
-          <div className="space-y-4">
-            <JogosTab bolaoId={bolao.id} bolao={bolao} highlightedMatchId={highlightedMatch || undefined} markets={bolaoMarkets} predictions={myMarketPredictions} />
-            {(phaseMarkets.length > 0 || tournamentMarkets.length > 0 || bolaoMarkets.length === 0 || specialMarkets.length > 0) && (
-              <Accordion type="multiple" className="space-y-2">
-                {phaseMarkets.length > 0 && (
-                  <AccordionItem value="fase" className="rounded-2xl border-0 bg-white/5 overflow-hidden">
-                    <AccordionTrigger className="px-4 py-3 text-sm font-black uppercase tracking-widest text-zinc-400 hover:no-underline hover:text-zinc-200 [&>svg]:hidden">
-                      <span className="flex items-center justify-between w-full">
-                        {t('bolao_detail.group_stage_label')} <ChevronDown className="w-4 h-4 transition-transform duration-200 [[data-state=open]_&]:rotate-180" />
-                      </span>
-                    </AccordionTrigger>
-                    <AccordionContent className="px-0 pb-0">
-                      <PhaseMarketsTab bolaoId={bolao.id} userId={user!.id} markets={phaseMarkets} predictions={myMarketPredictions} canManage={isCreator} />
-                    </AccordionContent>
-                  </AccordionItem>
-                )}
-                {(tournamentMarkets.length > 0 || bolaoMarkets.length === 0) && (
-                  <AccordionItem value="campeonato" className="rounded-2xl border-0 bg-white/5 overflow-hidden">
-                    <AccordionTrigger className="px-4 py-3 text-sm font-black uppercase tracking-widest text-zinc-400 hover:no-underline hover:text-zinc-200 [&>svg]:hidden">
-                      <span className="flex items-center justify-between w-full">
-                        {t('bolao_detail.championship_label')} <ChevronDown className="w-4 h-4 transition-transform duration-200 [[data-state=open]_&]:rotate-180" />
-                      </span>
-                    </AccordionTrigger>
-                    <AccordionContent className="px-0 pb-0">
-                      <ExtrasTab bolaoId={bolao.id} userId={user!.id} markets={bolaoMarkets} predictions={myMarketPredictions} canManage={isCreator} />
-                    </AccordionContent>
-                  </AccordionItem>
-                )}
-                {specialMarkets.length > 0 && (
-                  <AccordionItem value="especiais" className="rounded-2xl border-0 bg-white/5 overflow-hidden">
-                    <AccordionTrigger className="px-4 py-3 text-sm font-black uppercase tracking-widest text-zinc-400 hover:no-underline hover:text-zinc-200 [&>svg]:hidden">
-                      <span className="flex items-center justify-between w-full">
-                        {t('bolao_detail.specials_label')} <ChevronDown className="w-4 h-4 transition-transform duration-200 [[data-state=open]_&]:rotate-180" />
-                      </span>
-                    </AccordionTrigger>
-                    <AccordionContent className="px-0 pb-0">
-                      <SpecialMarketsTab bolaoId={bolao.id} userId={user!.id} markets={specialMarkets} predictions={myMarketPredictions} phaseMarkets={phaseMarkets} canManage={isCreator} />
-                    </AccordionContent>
-                  </AccordionItem>
-                )}
-              </Accordion>
-            )}
-          </div>
+          <Suspense fallback={<DetailSectionFallback />}>
+            <div className="space-y-4">
+              <JogosTab bolaoId={bolao.id} bolao={bolao} highlightedMatchId={highlightedMatch || undefined} markets={bolaoMarkets} predictions={myMarketPredictions} />
+              {(phaseMarkets.length > 0 || tournamentMarkets.length > 0 || bolaoMarkets.length === 0 || specialMarkets.length > 0) && (
+                <Accordion type="multiple" className="space-y-2">
+                  {phaseMarkets.length > 0 && (
+                    <AccordionItem value="fase" className="rounded-2xl border-0 bg-white/5 overflow-hidden">
+                      <AccordionTrigger className="px-4 py-3 text-sm font-black uppercase tracking-widest text-zinc-400 hover:no-underline hover:text-zinc-200 [&>svg]:hidden">
+                        <span className="flex items-center justify-between w-full">
+                          {t('bolao_detail.group_stage_label')} <ChevronDown className="w-4 h-4 transition-transform duration-200 [[data-state=open]_&]:rotate-180" />
+                        </span>
+                      </AccordionTrigger>
+                      <AccordionContent className="px-0 pb-0">
+                        <PhaseMarketsTab bolaoId={bolao.id} userId={user!.id} markets={phaseMarkets} predictions={myMarketPredictions} canManage={isCreator} />
+                      </AccordionContent>
+                    </AccordionItem>
+                  )}
+                  {(tournamentMarkets.length > 0 || bolaoMarkets.length === 0) && (
+                    <AccordionItem value="campeonato" className="rounded-2xl border-0 bg-white/5 overflow-hidden">
+                      <AccordionTrigger className="px-4 py-3 text-sm font-black uppercase tracking-widest text-zinc-400 hover:no-underline hover:text-zinc-200 [&>svg]:hidden">
+                        <span className="flex items-center justify-between w-full">
+                          {t('bolao_detail.championship_label')} <ChevronDown className="w-4 h-4 transition-transform duration-200 [[data-state=open]_&]:rotate-180" />
+                        </span>
+                      </AccordionTrigger>
+                      <AccordionContent className="px-0 pb-0">
+                        <ExtrasTab bolaoId={bolao.id} userId={user!.id} markets={bolaoMarkets} predictions={myMarketPredictions} canManage={isCreator} />
+                      </AccordionContent>
+                    </AccordionItem>
+                  )}
+                  {specialMarkets.length > 0 && (
+                    <AccordionItem value="especiais" className="rounded-2xl border-0 bg-white/5 overflow-hidden">
+                      <AccordionTrigger className="px-4 py-3 text-sm font-black uppercase tracking-widest text-zinc-400 hover:no-underline hover:text-zinc-200 [&>svg]:hidden">
+                        <span className="flex items-center justify-between w-full">
+                          {t('bolao_detail.specials_label')} <ChevronDown className="w-4 h-4 transition-transform duration-200 [[data-state=open]_&]:rotate-180" />
+                        </span>
+                      </AccordionTrigger>
+                      <AccordionContent className="px-0 pb-0">
+                        <SpecialMarketsTab bolaoId={bolao.id} userId={user!.id} markets={specialMarkets} predictions={myMarketPredictions} phaseMarkets={phaseMarkets} canManage={isCreator} />
+                      </AccordionContent>
+                    </AccordionItem>
+                  )}
+                </Accordion>
+              )}
+            </div>
+          </Suspense>
         )}
 
         {/* ── Ranking ── */}
-        {activeTab === "ranking" && <RealtimeRankingTab bolaoId={bolao.id} rules={bolao.scoring_rules} />}
+        {activeTab === "ranking" && (
+          <Suspense fallback={<DetailSectionFallback />}>
+            <RealtimeRankingTab bolaoId={bolao.id} rules={bolao.scoring_rules} />
+          </Suspense>
+        )}
 
         {/* ── Pessoas: Rivais + Membros ── */}
         {activeTab === "pessoas" && (
-          <div>
-            <div className="mb-4 flex gap-2">
-              <button onClick={() => setGaleraView("rivais")}
-                className={cn("rounded-2xl px-4 py-2 text-sm font-black transition-all", galeraView === "rivais" ? "bg-white text-black" : "surface-card-soft text-zinc-400")}>
-                {t('bolao_detail.rivals_tab')}
-              </button>
-              <button onClick={() => setGaleraView("membros")}
-                className={cn("rounded-2xl px-4 py-2 text-sm font-black transition-all", galeraView === "membros" ? "bg-white text-black" : "surface-card-soft text-zinc-400")}>
-                {t('bolao_detail.members_tab')}
-              </button>
+          <Suspense fallback={<DetailSectionFallback />}>
+            <div>
+              <div className="mb-4 flex gap-2">
+                <button onClick={() => setGaleraView("rivais")}
+                  className={cn("rounded-2xl px-4 py-2 text-sm font-black transition-all", galeraView === "rivais" ? "bg-white text-black" : "surface-card-soft text-zinc-400")}>
+                  {t('bolao_detail.rivals_tab')}
+                </button>
+                <button onClick={() => setGaleraView("membros")}
+                  className={cn("rounded-2xl px-4 py-2 text-sm font-black transition-all", galeraView === "membros" ? "bg-white text-black" : "surface-card-soft text-zinc-400")}>
+                  {t('bolao_detail.members_tab')}
+                </button>
+              </div>
+              {galeraView === "rivais" && <PublicPalpitesTab bolaoId={bolao.id} />}
+              {galeraView === "membros" && <MembrosTab members={members} userId={user!.id} bolaoId={bolao.id} isCreator={isCreator} isPaid={isPaid} onRefresh={() => {}} />}
             </div>
-            {galeraView === "rivais" && <PublicPalpitesTab bolaoId={bolao.id} />}
-            {galeraView === "membros" && <MembrosTab members={members} userId={user!.id} bolaoId={bolao.id} isCreator={isCreator} isPaid={isPaid} onRefresh={() => {}} />}
-          </div>
+          </Suspense>
         )}
 
         {/* ── Resumo: Overview + Admin ── */}
         {activeTab === "resumo" && bolao && (
-          <div className="space-y-6">
-            <OverviewTab bolao={bolao} members={members} palpites={myPalpites} userId={user!.id} isCreator={isCreator} markets={bolaoMarkets} marketPredictions={allMarketPredictions} activityFeed={activityFeed} onShare={handleShareInvite} />
-            <div className="border-t border-white/10 pt-6">
-               <p className="mb-4 text-xs font-black uppercase tracking-widest text-zinc-400">{t('bolao_detail.caixinha_header')}</p>
-              <CaixinhaPanel bolao={bolao} isCreator={isCreator} />
-            </div>
-            {isCreator && (
+          <Suspense fallback={<DetailSectionFallback />}>
+            <div className="space-y-6">
+              <OverviewTab bolao={bolao} members={members} palpites={myPalpites} userId={user!.id} isCreator={isCreator} markets={bolaoMarkets} marketPredictions={allMarketPredictions} activityFeed={activityFeed} onShare={handleShareInvite} />
               <div className="border-t border-white/10 pt-6">
-                <GrupoLinkPanel bolaoId={bolao.id} currentGrupoId={bolao.grupo_id || null} />
+                 <p className="mb-4 text-xs font-black uppercase tracking-widest text-zinc-400">{t('bolao_detail.caixinha_header')}</p>
+                <CaixinhaPanel bolao={bolao} isCreator={isCreator} />
               </div>
-            )}
-          </div>
+              {isCreator && (
+                <div className="border-t border-white/10 pt-6">
+                  <GrupoLinkPanel
+                    bolaoId={bolao.id}
+                    currentGrupoId={bolao.grupo_id || null}
+                    onLinkedGroupChange={(grupoId) =>
+                      setBolao((currentBolao) =>
+                        currentBolao ? { ...currentBolao, grupo_id: grupoId } : currentBolao
+                      )
+                    }
+                  />
+                </div>
+              )}
+            </div>
+          </Suspense>
         )}
       </div>
 

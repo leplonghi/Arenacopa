@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useMonetization } from "@/contexts/MonetizationContext";
 import { monetizationEnv } from "@/lib/env";
 import { useTranslation } from "react-i18next";
+import { formatCurrency } from "@/i18n/currency";
 import {
     getPremiumSupportMailto,
 } from "@/services/monetization/stripe.service";
@@ -17,10 +18,12 @@ interface PremiumModalProps {
 
 export function PremiumModal({ isOpen, onClose, onSuccess }: PremiumModalProps) {
     const { purchasePremium, isLoading } = useMonetization();
-    const { t } = useTranslation("premium");
+    const { t, i18n } = useTranslation("premium");
     const canStartPremiumCheckout = monetizationEnv.enablePremiumSimulation || monetizationEnv.premiumCheckoutEnabled;
     const supportMailto = getPremiumSupportMailto();
     const benefitTexts = t("modal.benefits", { returnObjects: true }) as string[];
+    const oldPrice = formatCurrency(i18n.resolvedLanguage || i18n.language, 19.9);
+    const currentPrice = formatCurrency(i18n.resolvedLanguage || i18n.language, 4.99);
 
     const handlePurchase = async () => {
         if (!canStartPremiumCheckout) {
@@ -97,9 +100,9 @@ export function PremiumModal({ isOpen, onClose, onSuccess }: PremiumModalProps) 
 
                         <div className="pt-2">
                             <div className="flex items-center justify-between mb-4">
-                                <span className="text-sm text-muted-foreground line-through">{t("modal.old_price")}</span>
+                                <span className="text-sm text-muted-foreground line-through">{oldPrice}</span>
                                 <div className="text-right">
-                                    <span className="text-2xl font-black text-primary">R$ 4,99</span>
+                                    <span className="text-2xl font-black text-primary">{currentPrice}</span>
                                     <span className="text-[10px] text-muted-foreground block uppercase font-bold tracking-wider">{t("modal.single_payment")}</span>
                                 </div>
                             </div>

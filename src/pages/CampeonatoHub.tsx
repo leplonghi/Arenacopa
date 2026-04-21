@@ -20,6 +20,11 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import {
+  getMatchStageLabel,
+  normalizeMatchDateValue,
+  normalizeMatchFeedStatus,
+} from "@/lib/match-feed";
 import { sanitizeExternalUrl } from "@/lib/security";
 import { useChampionship } from "@/contexts/ChampionshipContext";
 import { getChampionshipById } from "@/data/championships/definitions";
@@ -29,13 +34,13 @@ import {
   collection,
   query,
   where,
-  orderBy,
   getDocs,
   doc,
   getDoc,
   limit,
 } from "firebase/firestore";
 import { cn } from "@/lib/utils";
+import { getTeamImageUrl } from "@/lib/team-flags";
 import { tabContentVariants } from "@/components/copa/animations";
 import type { BolaoData } from "@/types/bolao";
 import { useRealtimeNews } from "@/hooks/useRealtimeNews";
@@ -45,6 +50,8 @@ type HubTab = "jogos" | "classificacao" | "noticias" | "boloes";
 
 interface MatchRow {
   id: string;
+  home_team_id?: string | null;
+  away_team_id?: string | null;
   home_team_code: string;
   away_team_code: string;
   home_team_name?: string;
@@ -54,10 +61,16 @@ interface MatchRow {
   home_score: number | null;
   away_score: number | null;
   match_date: string;
-  status: string;
-  stage: string;
+  status: "scheduled" | "live" | "finished";
+  stage: string | null;
   round?: number | null;
   group_id?: string | null;
+}
+
+interface FirestoreMatchRow extends Omit<MatchRow, "match_date" | "status" | "stage"> {
+  match_date?: string | { toDate?: () => Date } | null;
+  status?: string | null;
+  stage?: string | null;
 }
 
 interface StandingRow {
@@ -88,32 +101,50 @@ interface StandingsDoc {
 }
 
 // ─── Helpers ─────────────────────────────────────────────────
-function formatMatchDate(dateStr: string): string {
+function formatMatchDate(dateStr: string, locale: string): string {
   const d = new Date(dateStr.includes("T") ? dateStr : `${dateStr}T12:00:00`);
-  return d.toLocaleDateString("pt-BR", {
+  return d.toLocaleDateString(locale, {
     weekday: "short",
     day: "2-digit",
     month: "short",
   });
 }
 
-function formatMatchTime(dateStr: string): string {
+function formatMatchTime(dateStr: string, locale: string): string {
   if (!dateStr.includes("T")) return "--:--";
   const d = new Date(dateStr);
-  return d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  return d.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
 }
 
-function groupByDate(matches: MatchRow[]): Array<{ date: string; label: string; matches: MatchRow[] }> {
-  const map = new Map<string, MatchRow[]>();
-  for (const m of matches) {
-    const key = m.match_date.split("T")[0];
-    if (!map.has(key)) map.set(key, []);
-    map.get(key)!.push(m);
+function getLocalDayKey(dateStr: string) {
+  const date = new Date(dateStr);
+  if (Number.isNaN(date.getTime())) return "0000-00-00";
+
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, "0");
+  const day = `${date.getDate()}`.padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function groupByDate(
+  matches: MatchRow[],
+  locale: string
+): Array<{ date: string; label: string; matches: MatchRow[] }> {
+  const map = new Map<string, { labelSource: string; matches: MatchRow[] }>();
+
+  for (const match of matches) {
+    const key = getLocalDayKey(match.match_date);
+    if (!map.has(key)) {
+      map.set(key, { labelSource: match.match_date, matches: [] });
+    }
+
+    map.get(key)!.matches.push(match);
   }
-  return Array.from(map.entries()).map(([date, matches]) => ({
+
+  return Array.from(map.entries()).map(([date, group]) => ({
     date,
-    label: formatMatchDate(date),
-    matches,
+    label: formatMatchDate(group.labelSource, locale),
+    matches: group.matches,
   }));
 }
 
@@ -122,19 +153,6 @@ function formColor(result: string): string {
   if (result === "D") return "bg-amber-500 text-white";
   if (result === "L") return "bg-red-500 text-white";
   return "bg-white/10 text-white/30";
-}
-
-function stageLabel(stage: string, round?: number | null): string {
-  const map: Record<string, string> = {
-    REGULAR_SEASON: round ? `Rod. ${round}` : "Liga",
-    GROUP_STAGE: "Fase de Grupos",
-    ROUND_OF_16: "Oitavas",
-    QUARTER_FINALS: "Quartas",
-    SEMI_FINALS: "Semifinal",
-    FINAL: "Final",
-    "3RD_PLACE": "3° Lugar",
-  };
-  return map[stage] ?? (round ? `Rod. ${round}` : stage.replace(/_/g, " "));
 }
 
 function buildDerivedStandings(matches: MatchRow[]): StandingRow[] {
@@ -238,17 +256,27 @@ function buildDerivedStandings(matches: MatchRow[]): StandingRow[] {
 function TeamCrest({
   crest,
   code,
+  teamId,
   size = 28,
 }: {
   crest?: string;
   code: string;
+  teamId?: string | null;
   size?: number;
 }) {
   const [err, setErr] = useState(false);
-  if (crest && !err) {
+  const imageUrl = !err
+    ? getTeamImageUrl({
+        code,
+        crestUrl: crest,
+        teamId,
+      })
+    : null;
+
+  if (imageUrl) {
     return (
       <img
-        src={crest}
+        src={imageUrl}
         alt={code}
         width={size}
         height={size}
@@ -269,11 +297,23 @@ function TeamCrest({
 }
 
 // ─── MatchCard ───────────────────────────────────────────────
-function MatchCard({ match, color }: { match: MatchRow; color: string }) {
-  const isFinished = match.status === "finished";
+function MatchCard({
+  match,
+  locale,
+}: {
+  match: MatchRow;
+  locale: string;
+}) {
   const isLive = match.status === "live";
   const hasScore = match.home_score !== null && match.away_score !== null;
-  const stageTxt = stageLabel(match.stage, match.round);
+  const stageTxt = getMatchStageLabel(
+    {
+      groupId: match.group_id,
+      round: match.round,
+      stage: match.stage,
+    },
+    locale
+  );
 
   return (
     <div className="flex items-center gap-2 px-3 py-2.5 rounded-2xl bg-white/[0.04] border border-white/[0.06] hover:bg-white/[0.07] transition-colors">
@@ -285,7 +325,12 @@ function MatchCard({ match, color }: { match: MatchRow; color: string }) {
         <span className="text-[11px] font-bold text-white/70 text-right leading-none xs:hidden">
           {match.home_team_code}
         </span>
-        <TeamCrest crest={match.home_crest} code={match.home_team_code} size={26} />
+        <TeamCrest
+          crest={match.home_crest}
+          code={match.home_team_code}
+          teamId={match.home_team_id}
+          size={26}
+        />
       </div>
 
       {/* Score / Time */}
@@ -305,7 +350,7 @@ function MatchCard({ match, color }: { match: MatchRow; color: string }) {
         ) : (
           <div className="flex flex-col items-center gap-0.5">
             <span className="text-[12px] font-black text-white/70 leading-none">
-              {formatMatchTime(match.match_date)}
+              {formatMatchTime(match.match_date, locale)}
             </span>
             {isLive && (
               <span className="text-[9px] font-bold text-emerald-400 uppercase tracking-wider">
@@ -321,7 +366,12 @@ function MatchCard({ match, color }: { match: MatchRow; color: string }) {
 
       {/* Away */}
       <div className="flex-1 flex items-center gap-2 min-w-0">
-        <TeamCrest crest={match.away_crest} code={match.away_team_code} size={26} />
+        <TeamCrest
+          crest={match.away_crest}
+          code={match.away_team_code}
+          teamId={match.away_team_id}
+          size={26}
+        />
         <span className="text-xs font-bold text-white truncate leading-none hidden xs:block">
           {match.away_team_name?.split(" ").pop() || match.away_team_code}
         </span>
@@ -333,9 +383,63 @@ function MatchCard({ match, color }: { match: MatchRow; color: string }) {
   );
 }
 
+function MatchSection({
+  title,
+  countLabel,
+  accentClassName,
+  groups,
+  locale,
+}: {
+  title: string;
+  countLabel: string;
+  accentClassName: string;
+  groups: Array<{ date: string; label: string; matches: MatchRow[] }>;
+  locale: string;
+}) {
+  if (!groups.length) return null;
+
+  return (
+    <section className="space-y-3">
+      <div className="flex items-center gap-2 px-1">
+        <span className={cn("text-[11px] font-black uppercase tracking-[0.18em]", accentClassName)}>
+          {title}
+        </span>
+        <div className="h-px flex-1 bg-white/[0.06]" />
+        <span className="text-[10px] text-white/25">{countLabel}</span>
+      </div>
+
+      <div className="space-y-4">
+        {groups.map(({ date, label, matches }) => (
+          <div key={date}>
+            <div className="mb-2 flex items-center gap-2">
+              <span className="text-[11px] font-bold uppercase tracking-[0.15em] text-white/40">
+                {label}
+              </span>
+              <div className="h-px flex-1 bg-white/[0.06]" />
+              <span className="text-[10px] text-white/20">
+                {matches.length} jogo{matches.length > 1 ? "s" : ""}
+              </span>
+            </div>
+
+            <div className="space-y-1.5">
+              {matches.map((match) => (
+                <MatchCard
+                  key={match.id}
+                  match={match}
+                  locale={locale}
+                />
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 // ─── Jogos Tab ───────────────────────────────────────────────
 function JogosTab({ championshipId, color }: { championshipId: string; color: string }) {
-  const { t } = useTranslation("championships");
+  const { t, i18n } = useTranslation("championships");
   const { data: matches, isLoading } = useQuery({
     queryKey: ["championship-matches", championshipId],
     queryFn: async () => {
@@ -343,22 +447,46 @@ function JogosTab({ championshipId, color }: { championshipId: string; color: st
       const q = query(
         ref,
         where("championship_id", "==", championshipId),
-        orderBy("match_date", "asc"),
         limit(200)
       );
       const snap = await getDocs(q);
-      return snap.docs.map((d) => ({ id: d.id, ...d.data() })) as MatchRow[];
+
+      return snap.docs
+        .map((docSnapshot) => {
+          const data = docSnapshot.data() as FirestoreMatchRow;
+          const matchDate = normalizeMatchDateValue(data.match_date);
+
+          return {
+            id: docSnapshot.id,
+            home_team_id: data.home_team_id ?? null,
+            away_team_id: data.away_team_id ?? null,
+            home_team_code: data.home_team_code || "---",
+            away_team_code: data.away_team_code || "---",
+            home_team_name: data.home_team_name || data.home_team_code || "---",
+            away_team_name: data.away_team_name || data.away_team_code || "---",
+            home_crest: data.home_crest || "",
+            away_crest: data.away_crest || "",
+            home_score: data.home_score ?? null,
+            away_score: data.away_score ?? null,
+            match_date: matchDate,
+            status: normalizeMatchFeedStatus({
+              status: data.status,
+              matchDate,
+              homeScore: data.home_score ?? null,
+              awayScore: data.away_score ?? null,
+            }),
+            stage: data.stage ?? null,
+            round: typeof data.round === "number" ? data.round : null,
+            group_id: data.group_id ?? null,
+          } satisfies MatchRow;
+        })
+        .sort(
+          (left, right) =>
+            new Date(left.match_date).getTime() - new Date(right.match_date).getTime()
+        );
     },
     staleTime: 5 * 60 * 1000,
   });
-
-  // Filter to show: last 3 finished + all upcoming (or all if few)
-  const filtered = (() => {
-    if (!matches) return [];
-    const finished = matches.filter((m) => m.status === "finished");
-    const rest = matches.filter((m) => m.status !== "finished");
-    return [...finished.slice(-6), ...rest];
-  })();
 
   if (isLoading) {
     return (
@@ -370,7 +498,22 @@ function JogosTab({ championshipId, color }: { championshipId: string; color: st
     );
   }
 
-  if (!filtered.length) {
+  const upcomingCutoff = Date.now() - 30 * 60 * 1000;
+  const liveMatches = (matches ?? []).filter((match) => match.status === "live");
+  const upcomingMatches = (matches ?? []).filter(
+    (match) =>
+      match.status === "scheduled" &&
+      new Date(match.match_date).getTime() >= upcomingCutoff
+  );
+  const recentFinishedMatches = [...(matches ?? [])]
+    .filter((match) => match.status === "finished")
+    .sort(
+      (left, right) =>
+        new Date(right.match_date).getTime() - new Date(left.match_date).getTime()
+    )
+    .slice(0, 6);
+
+  if (!liveMatches.length && !upcomingMatches.length && !recentFinishedMatches.length) {
     return (
       <div className="mt-6 flex flex-col items-center gap-3 text-center py-10">
         <div className="w-14 h-14 rounded-2xl flex items-center justify-center border border-white/[0.08]" style={{ background: `${color}18` }}>
@@ -384,33 +527,40 @@ function JogosTab({ championshipId, color }: { championshipId: string; color: st
     );
   }
 
-  const grouped = groupByDate(filtered);
-
   return (
     <div className="space-y-4 mt-1">
-      {matches && matches.filter(m => m.status === "finished").length > 6 && (
-        <div className="text-center py-1">
-          <span className="text-[10px] text-white/30 font-medium">
-            {t("hub.games.recent_label", { defaultValue: "Mostrando últimos 6 jogos + próximos" })}
-          </span>
-        </div>
-      )}
-      {grouped.map(({ date, label, matches: dayMatches }) => (
-        <div key={date}>
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-[11px] font-bold uppercase tracking-[0.15em] text-white/40">
-              {label}
-            </span>
-            <div className="flex-1 h-px bg-white/[0.06]" />
-            <span className="text-[10px] text-white/20">{dayMatches.length} jogo{dayMatches.length > 1 ? "s" : ""}</span>
-          </div>
-          <div className="space-y-1.5">
-            {dayMatches.map((m) => (
-              <MatchCard key={m.id} match={m} color={color} />
-            ))}
-          </div>
-        </div>
-      ))}
+      <MatchSection
+        title={t("hub.games.live_title", { defaultValue: "Ao vivo agora" })}
+        countLabel={t("hub.games.live_count", {
+          defaultValue: "{{count}} em andamento",
+          count: liveMatches.length,
+        })}
+        accentClassName="text-emerald-400"
+        groups={groupByDate(liveMatches, i18n.language)}
+        locale={i18n.language}
+      />
+
+      <MatchSection
+        title={t("hub.games.upcoming_title", { defaultValue: "Próximos jogos" })}
+        countLabel={t("hub.games.upcoming_count", {
+          defaultValue: "{{count}} agendado(s)",
+          count: upcomingMatches.length,
+        })}
+        accentClassName="text-white/70"
+        groups={groupByDate(upcomingMatches, i18n.language)}
+        locale={i18n.language}
+      />
+
+      <MatchSection
+        title={t("hub.games.results_title", { defaultValue: "Resultados recentes" })}
+        countLabel={t("hub.games.results_count", {
+          defaultValue: "Últimos {{count}}",
+          count: recentFinishedMatches.length,
+        })}
+        accentClassName="text-amber-300"
+        groups={groupByDate(recentFinishedMatches, i18n.language)}
+        locale={i18n.language}
+      />
     </div>
   );
 }
@@ -430,7 +580,34 @@ function ClassificacaoTab({ championshipId, color }: { championshipId: string; c
       const matchesSnap = await getDocs(
         query(collection(db, "matches"), where("championship_id", "==", championshipId), limit(380))
       );
-      const matches = matchesSnap.docs.map((item) => ({ id: item.id, ...item.data() })) as MatchRow[];
+      const matches = matchesSnap.docs.map((docSnapshot) => {
+        const data = docSnapshot.data() as FirestoreMatchRow;
+        const matchDate = normalizeMatchDateValue(data.match_date);
+
+        return {
+          id: docSnapshot.id,
+          home_team_id: data.home_team_id ?? null,
+          away_team_id: data.away_team_id ?? null,
+          home_team_code: data.home_team_code || "---",
+          away_team_code: data.away_team_code || "---",
+          home_team_name: data.home_team_name || data.home_team_code || "---",
+          away_team_name: data.away_team_name || data.away_team_code || "---",
+          home_crest: data.home_crest || "",
+          away_crest: data.away_crest || "",
+          home_score: data.home_score ?? null,
+          away_score: data.away_score ?? null,
+          match_date: matchDate,
+          status: normalizeMatchFeedStatus({
+            status: data.status,
+            matchDate,
+            homeScore: data.home_score ?? null,
+            awayScore: data.away_score ?? null,
+          }),
+          stage: data.stage ?? null,
+          round: typeof data.round === "number" ? data.round : null,
+          group_id: data.group_id ?? null,
+        } satisfies MatchRow;
+      });
       const finishedMatches = matches.filter(
         (match) => match.status === "finished" && match.home_score != null && match.away_score != null
       );
@@ -522,7 +699,7 @@ function ClassificacaoTab({ championshipId, color }: { championshipId: string; c
             {col}
           </span>
         ))}
-        <span className="w-16 text-center shrink-0 text-[10px] font-bold uppercase tracking-wider text-white/30">Forma</span>
+        <span className="w-16 text-center shrink-0 text-[10px] font-bold uppercase tracking-wider text-white/30">{t("hub.table.form", { defaultValue: "Forma" })}</span>
       </div>
 
       {/* Rows */}
@@ -545,7 +722,12 @@ function ClassificacaoTab({ championshipId, color }: { championshipId: string; c
 
               {/* Team */}
               <div className="flex-1 flex items-center gap-2 min-w-0 pl-1">
-                <TeamCrest crest={row.crest} code={row.team_tla} size={20} />
+                <TeamCrest
+                  crest={row.crest}
+                  code={row.team_tla}
+                  teamId={row.team_id}
+                  size={20}
+                />
                 <span className="text-xs font-bold text-white truncate">
                   {row.team_short || row.team_name}
                 </span>

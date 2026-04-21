@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { onAuthStateChanged, type User as FirebaseUser } from "firebase/auth";
 import { auth } from "@/integrations/firebase/client";
+import { isAppAdminEmail } from "@/lib/access";
 import { ensureProfile } from "@/services/profile/profile.service";
 import { signOutUser } from "@/services/auth/auth.service";
 
@@ -13,6 +14,7 @@ export interface User {
 interface AuthContextType {
   user: User | null;
   session: FirebaseUser | null;
+  isAppAdmin: boolean;
   loading: boolean;
   signOut: () => Promise<void>;
 }
@@ -20,6 +22,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
   user: null,
   session: null,
+  isAppAdmin: false,
   loading: true,
   signOut: async () => { },
 });
@@ -29,6 +32,7 @@ export const useAuth = () => useContext(AuthContext);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<FirebaseUser | null>(null);
+  const [isAppAdmin, setIsAppAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   useEffect(() => {
     const mapUser = (firebaseUser: FirebaseUser | null) => {
@@ -49,6 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setSession(firebaseUser); // Using Firebase user as session object
         const mappedUser = mapUser(firebaseUser);
         setUser(mappedUser);
+        setIsAppAdmin(isAppAdminEmail(mappedUser?.email));
 
         if (mappedUser) {
           ensureProfile({
@@ -62,6 +67,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } else {
         setSession(null);
         setUser(null);
+        setIsAppAdmin(false);
       }
       setLoading(false);
     });
@@ -76,7 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signOut }}>
+    <AuthContext.Provider value={{ user, session, isAppAdmin, loading, signOut }}>
       {children}
     </AuthContext.Provider>
   );

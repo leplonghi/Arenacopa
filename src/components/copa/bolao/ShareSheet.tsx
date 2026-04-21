@@ -9,6 +9,7 @@ import { type BolaoData } from "@/types/bolao";
 import { QRCodeSVG } from "qrcode.react";
 import { ShareCardGenerator } from "./ShareCardGenerator";
 import { getInviteUrl } from "@/utils/site-url";
+import { openWhatsAppShare } from "@/lib/security";
 
 interface ShareSheetProps {
     open: boolean;
@@ -24,7 +25,6 @@ export function ShareSheet({ open, onClose, bolao }: ShareSheetProps) {
 
     const shareUrl = getInviteUrl(`/b/${bolao.invite_code}?utm_source=app&utm_medium=share_sheet&utm_campaign=bolao_invite`);
     const shareText = t('share.invite_msg', { name: bolao.name, code: bolao.invite_code, url: shareUrl });
-    const shareTextEncoded = encodeURIComponent(shareText);
 
     const handleShareImage = async () => {
         if (!shareRef.current) return;
@@ -59,7 +59,12 @@ export function ShareSheet({ open, onClose, bolao }: ShareSheetProps) {
             color: "bg-[#25D366]",
             bgClass: "bg-[#25D366]/10 border-[#25D366]/20",
             action: () => {
-                window.open(`https://wa.me/?text=${shareTextEncoded}`, "_blank");
+                if (!openWhatsAppShare(shareText)) {
+                    navigator.clipboard.writeText(shareText);
+                    toast({ title: t('share.copied') });
+                    onClose();
+                    return;
+                }
                 onClose();
             }
         },

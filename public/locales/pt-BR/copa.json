@@ -94,18 +94,38 @@
     }
   },
   "bracket": {
+    "page_title": "Chaves",
+    "page_subtitle": "Baseado na sua simulação",
+    "incomplete_title": "Fase de Grupos incompleta",
+    "incomplete_desc": "Complete todos os jogos dos 12 grupos para ver o chaveamento.",
+    "simulation_hint": "Preencha placares na aba Simulador para ver os confrontos.",
+    "locked_desc_prefix": "Preencha todos os jogos dos 12 grupos na aba",
+    "locked_desc_suffix": "para desbloquear o chaveamento visual.",
+    "progress_hint": "Progresso em andamento...",
+    "view_bracket": "Chaveamento",
+    "view_list": "Lista",
     "rounds": {
       "r32": "32 avos",
+      "r32_full": "32 avos de Final",
       "r16": "Oitavas",
+      "r16_full": "Oitavas de Final",
       "quarter": "Quartas",
+      "quarter_full": "Quartas de Final",
       "semi": "Semis",
+      "semi_full": "Semifinais",
       "third": "3º Lugar",
-      "final": "Final"
+      "final": "Final",
+      "final_full": "Grande Final"
     },
     "champion_label": "Campeão Mundial",
     "champion_sub": "CAMPEÃO MUNDIAL 2026",
     "tbd": "A definir",
     "third_place": "Disputa de 3º Lugar"
+  },
+  "group_details": {
+    "kicker": "Detalhes do",
+    "table_title": "Classificação",
+    "matches_title": "Jogos"
   },
   "overview": {
     "featured": "Destaque",
@@ -224,6 +244,13 @@
     "downloaded": "Imagem baixada! Anexe no WhatsApp",
     "btn_label": "Compartilhar"
   },
+  "bracket_modal": {
+    "edit_score": "Editar placar",
+    "goals_label": "Gols",
+    "penalties_title": "Pênaltis (empate no tempo normal)",
+    "penalties_error": "Pênaltis não podem terminar empatados",
+    "save_score": "Salvar placar"
+  },
   "calendario": {
     "empty_title": "Nenhum jogo por aqui",
     "empty_desc": "O calendário aparece assim que os jogos forem carregados.",
@@ -257,6 +284,93 @@
       "teams": "Seleções",
       "travel": "Turismo",
       "tickets": "Ingressos"
+    }
+  },
+  "team_details": {
+    "not_found_title": "Seleção não encontrada",
+    "back": "Voltar",
+    "group_label": "Grupo {{group}}",
+    "vs": "vs",
+    "stats": {
+      "fifa_ranking": "Ranking FIFA",
+      "world_titles": "Títulos Mundiais"
+    },
+    "performance": {
+      "title": "Desempenho Atual",
+      "points_short": "PTS",
+      "played_short": "J",
+      "wins_short": "V",
+      "goal_diff_short": "SG"
+    },
+    "facts_title": "Curiosidades",
+    "facts": {
+      "capital": "Capital",
+      "population": "População",
+      "currency": "Moeda",
+      "language": "Idioma"
+    },
+    "history_title": "Histórico na Copa do Mundo",
+    "history": {
+      "titles": "Títulos",
+      "appearances": "Participações",
+      "first_appearance": "Primeira Copa",
+      "best_result": "Melhor resultado"
+    },
+    "rivalries_title": "Grandes Rivalidades",
+    "qualifiers_title": "Nas Eliminatórias",
+    "matches_title": "Jogos na Copa",
+    "no_matches": "Nenhum jogo encontrado.",
+    "rivalries": {
+      "BRA": {
+        "ARG": "El Clásico das Américas, a maior rivalidade do futebol sul-americano.",
+        "URU": "A dor do Maracanazo (1950) ainda ressoa na memória brasileira.",
+        "GER": "O 7x1 na semifinal da Copa de 2014 é o capítulo mais marcante desta rivalidade."
+      },
+      "ARG": {
+        "BRA": "El Clásico das Américas reúne décadas de rivalidade intensa.",
+        "ENG": "A Mão de Deus (1986) e a guerra das Malvinas tornam este duelo único.",
+        "URU": "Clásico del Río de la Plata, o derby mais antigo das Américas."
+      },
+      "GER": {
+        "NED": "A final de 1974 inaugurou uma das maiores rivalidades do futebol europeu.",
+        "ENG": "1966, 1990 e 1996 marcaram meio século de encontros decisivos.",
+        "BRA": "O 7x1 em 2014 virou o jogo mais simbólico desta rivalidade."
+      },
+      "FRA": {
+        "GER": "A semifinal de 1982 é um dos jogos mais polêmicos da história das Copas.",
+        "ARG": "A final de 2022 é considerada por muitos a melhor final de todos os tempos.",
+        "POR": "Semifinais de Copa e Euro fortaleceram essa rivalidade ibero-latina."
+      },
+      "ENG": {
+        "ARG": "A Mão de Deus, em 1986, criou um dos duelos mais controversos do esporte.",
+        "GER": "1966, 1990 e 1996 consolidaram o confronto entre gigantes europeus.",
+        "URU": "A derrota em 1954 marcou o início de um clássico transatlântico."
+      },
+      "ESP": {
+        "POR": "El Derbi Ibérico coloca vizinhos históricos frente a frente.",
+        "NED": "A final de 2010 foi física, polêmica e definitiva para a Espanha.",
+        "GER": "É um confronto recorrente entre potências dos grandes torneios europeus."
+      },
+      "ITA": {
+        "BRA": "As finais de 1970 e 1994 aproximaram dois países gigantes do futebol.",
+        "FRA": "A final de 2006 e a cabeçada de Zidane tornaram esse duelo inesquecível.",
+        "URU": "A final de 1930 está na origem dessa rivalidade histórica."
+      },
+      "URU": {
+        "BRA": "O Maracanazo de 1950 é a vitória mais lembrada do futebol uruguaio.",
+        "ARG": "Clásico del Río de la Plata, um dos clássicos mais antigos do mundo.",
+        "ITA": "A final de 1930 deu ao Uruguai seu primeiro título mundial."
+      },
+      "NED": {
+        "GER": "A final de 1974 e o peso histórico europeu tornam essa rivalidade especial.",
+        "ESP": "A revanche da final de 2010 nunca veio, mas a tensão segue viva.",
+        "ARG": "Confrontos em 1974 e 2022 mantiveram essa rivalidade em alta."
+      },
+      "POR": {
+        "ESP": "El Derbi Ibérico une língua, proximidade e rivalidade histórica.",
+        "FRA": "Semifinais recentes e gerações estreladas mantêm esse duelo aquecido.",
+        "ENG": "As quartas de 2006 carregam o capítulo mais marcante deste confronto."
+      }
     }
   }
 }

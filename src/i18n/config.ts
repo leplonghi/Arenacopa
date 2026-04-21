@@ -1,27 +1,23 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
-import LanguageDetector from 'i18next-browser-languagedetector';
 import Backend from 'i18next-http-backend';
+import {
+    applyDocumentLanguage,
+    DEFAULT_LANGUAGE,
+    getSystemLanguage,
+    normalizeLanguage,
+    SUPPORTED_LANGUAGES,
+} from './language';
 
-const I18N_VERSION = '20260404-2';
-
-const normalizeLanguage = (language?: string | null) => {
-    const normalized = language?.toLowerCase().trim() || '';
-
-    if (normalized.startsWith('pt')) return 'pt-BR';
-    if (normalized.startsWith('es')) return 'es';
-    if (normalized.startsWith('en')) return 'en';
-
-    return 'en';
-};
+const I18N_VERSION = '20260419-2';
 
 i18n
     .use(Backend)
-    .use(LanguageDetector)
     .use(initReactI18next)
     .init({
-        fallbackLng: 'en',
-        supportedLngs: ['pt-BR', 'en', 'es'],
+        lng: getSystemLanguage(),
+        fallbackLng: DEFAULT_LANGUAGE,
+        supportedLngs: [...SUPPORTED_LANGUAGES],
         load: 'currentOnly',
         debug: import.meta.env.DEV, // Enable debug only in development
 
@@ -33,13 +29,6 @@ i18n
             loadPath: `/locales/{{lng}}/{{ns}}.json?v=${I18N_VERSION}`,
         },
 
-        detection: {
-            order: ['localStorage', 'navigator'],
-            lookupLocalStorage: 'i18nextLng',
-            caches: ['localStorage'], // Cache user language preference
-            convertDetectedLanguage: (lng: string) => normalizeLanguage(lng),
-        },
-
         // Namespaces configuration
         ns: ['common', 'auth', 'copa', 'bolao', 'guia', 'ranking', 'profile', 'errors', 'sedes', 'home', 'premium', 'championships'],
         defaultNS: 'common',
@@ -49,6 +38,12 @@ i18n
         }
     });
 
-void i18n.changeLanguage(normalizeLanguage(i18n.resolvedLanguage || i18n.language));
+i18n.on('languageChanged', (language) => {
+    applyDocumentLanguage(normalizeLanguage(language));
+});
+
+const initialLanguage = normalizeLanguage(i18n.resolvedLanguage || i18n.language || getSystemLanguage());
+applyDocumentLanguage(initialLanguage);
+void i18n.changeLanguage(initialLanguage);
 
 export default i18n;

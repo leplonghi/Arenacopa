@@ -63,6 +63,9 @@ console.log(`\n🔥 Firebase: ${firebaseConfig.projectId}`);
 // ── Campeonatos ─────────────────────────────────────────────────
 const CHAMPS = [
   { id: "brasileirao2026", fdoId: 2013, name: "Brasileirão",       season: "2026"    },
+  { id: "libertadores2026",fdoId: 2152, name: "Libertadores",      season: "2026"    },
+  { id: "bundesliga2526",  fdoId: 2002, name: "Bundesliga",        season: "2025"    },
+  { id: "ligue12526",      fdoId: 2015, name: "Ligue 1",           season: "2025"    },
   { id: "ucl2526",         fdoId: 2001, name: "Champions League",  season: "2025"    },
   { id: "laliga2526",      fdoId: 2014, name: "La Liga",           season: "2025"    },
   { id: "premier2526",     fdoId: 2021, name: "Premier League",    season: "2024"    },
@@ -98,7 +101,7 @@ async function fdo(path) {
 function mapStatus(s) {
   if (s === "FINISHED" || s === "AWARDED") return "finished";
   if (s === "IN_PLAY" || s === "PAUSED") return "live";
-  return "upcoming";
+  return "scheduled";
 }
 
 // ── Batch write helper (max 500/batch) ─────────────────────────
@@ -163,7 +166,7 @@ async function seedMatches(champId, fdoId, season) {
       venue_id: "",
     }));
     await batchWrite(matches, "matches", (m) => m.id);
-    console.log(`   📊 ${matches.filter(m => m.status === "finished").length} finalizados, ${matches.filter(m => m.status === "upcoming").length} agendados`);
+    console.log(`   📊 ${matches.filter(m => m.status === "finished").length} finalizados, ${matches.filter(m => m.status === "scheduled").length} agendados`);
     return matches;
   } catch (e) {
     console.error(`   ⚠️  Erro partidas ${champId}: ${e.message}`);
@@ -266,6 +269,126 @@ async function seedLeagueNews() {
       url_to_image: "https://images.unsplash.com/photo-1555500578-24b1d65fa9a9?auto=format&fit=crop&q=80&w=1200",
       url: "https://uefa.com",
       views: 9800,
+    },
+    {
+      id: "news-libertadores-1",
+      championship_id: "libertadores2026",
+      title: "Libertadores 2026: fase de grupos começa com brasileiros em destaque",
+      content: "A edição 2026 da CONMEBOL Libertadores já movimenta o continente com clubes brasileiros e argentinos entre os favoritos ao mata-mata.",
+      category: "Libertadores",
+      source_name: "ge",
+      published_at: now,
+      url_to_image: "https://images.unsplash.com/photo-1517927033932-b3d18e61fb3a?auto=format&fit=crop&q=80&w=1200",
+      url: "https://ge.globo.com/futebol/libertadores/",
+      views: 10100,
+    },
+    {
+      id: "news-libertadores-2",
+      championship_id: "libertadores2026",
+      title: "CONMEBOL define caminho até a final da Libertadores 2026",
+      content: "A competição continental será disputada de fevereiro a novembro, com a final única encerrando mais uma corrida pela Glória Eterna.",
+      category: "Libertadores",
+      source_name: "CONMEBOL",
+      published_at: now,
+      url_to_image: "https://images.unsplash.com/photo-1508098682722-e99c643e7485?auto=format&fit=crop&q=80&w=1200",
+      url: "https://gol.conmebol.com/libertadores/",
+      views: 8700,
+    },
+    {
+      id: "news-bundesliga-1",
+      championship_id: "bundesliga2526",
+      title: "Bundesliga 2025-26 entra na reta final com disputa aberta no topo",
+      content: "A Bundesliga segue intensa na reta decisiva da temporada, com gigantes alemães brigando ponto a ponto pela liderança e pelas vagas europeias.",
+      category: "Bundesliga",
+      source_name: "The Guardian",
+      published_at: now,
+      url_to_image: "https://images.unsplash.com/photo-1518604666860-9ed391f76460?auto=format&fit=crop&q=80&w=1200",
+      url: "https://www.theguardian.com/football/bundesligafootball",
+      views: 7900,
+    },
+    {
+      id: "news-bundesliga-2",
+      championship_id: "bundesliga2526",
+      title: "Bayern e Leverkusen puxam a corrida pela Bundesliga",
+      content: "Os favoritos tradicionais seguem pressionados em uma temporada de alto nível técnico e calendário apertado na Alemanha.",
+      category: "Bundesliga",
+      source_name: "ESPN",
+      published_at: now,
+      url_to_image: "https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?auto=format&fit=crop&q=80&w=1200",
+      url: "https://www.espn.com.br/futebol/",
+      views: 7200,
+    },
+    {
+      id: "news-ligue1-1",
+      championship_id: "ligue12526",
+      title: "Ligue 1 2025-26 mantém disputa firme por Champions e título",
+      content: "A principal liga francesa segue equilibrada, com pressão no topo da tabela e muita disputa por vagas continentais.",
+      category: "Ligue 1",
+      source_name: "The Guardian",
+      published_at: now,
+      url_to_image: "https://images.unsplash.com/photo-1522778119026-d647f0565c6a?auto=format&fit=crop&q=80&w=1200",
+      url: "https://www.theguardian.com/football/ligue1football",
+      views: 6500,
+    },
+    {
+      id: "news-ligue1-2",
+      championship_id: "ligue12526",
+      title: "PSG e rivais encaram fase decisiva da Ligue 1",
+      content: "Com a temporada entrando em sua reta final, cada rodada passou a ter peso de decisão no campeonato francês.",
+      category: "Ligue 1",
+      source_name: "ESPN",
+      published_at: now,
+      url_to_image: "https://images.unsplash.com/photo-1547347298-4074fc3086f0?auto=format&fit=crop&q=80&w=1200",
+      url: "https://www.espn.com.br/futebol/",
+      views: 6100,
+    },
+    {
+      id: "news-mls-1",
+      championship_id: "mls2026",
+      title: "MLS 2026 ganha atenção extra em temporada de Copa do Mundo na América do Norte",
+      content: "A liga norte-americana vive temporada estratégica, com estrelas internacionais, calendário intenso e foco ampliado por causa do Mundial de 2026.",
+      category: "MLS",
+      source_name: "ESPN",
+      published_at: now,
+      url_to_image: "https://images.unsplash.com/photo-1570498839593-e565b39455fc?auto=format&fit=crop&q=80&w=1200",
+      url: "https://www.espn.com.br/futebol/",
+      views: 5600,
+    },
+    {
+      id: "news-mls-2",
+      championship_id: "mls2026",
+      title: "Inter Miami e gigantes do Oeste aquecem corrida da MLS",
+      content: "A temporada 2026 da Major League Soccer começa a desenhar favoritos em ambas as conferências.",
+      category: "MLS",
+      source_name: "The Guardian",
+      published_at: now,
+      url_to_image: "https://images.unsplash.com/photo-1459865264687-595d652de67e?auto=format&fit=crop&q=80&w=1200",
+      url: "https://www.theguardian.com/football/mls",
+      views: 5200,
+    },
+    {
+      id: "news-saudi-1",
+      championship_id: "saudipro2526",
+      title: "Saudi Pro League mantém vitrine global com estrelas e jogos decisivos",
+      content: "A elite saudita segue atraindo atenção internacional e vive mais uma temporada marcada por investimento pesado e confrontos de alto impacto.",
+      category: "Saudi Pro League",
+      source_name: "ESPN",
+      published_at: now,
+      url_to_image: "https://images.unsplash.com/photo-1508098682722-e99c643e7485?auto=format&fit=crop&q=80&w=1200",
+      url: "https://www.espn.com.br/futebol/",
+      views: 5800,
+    },
+    {
+      id: "news-saudi-2",
+      championship_id: "saudipro2526",
+      title: "Al Hilal, Al Nassr e rivais pressionam topo da liga saudita",
+      content: "A Saudi Pro League continua competitiva na reta mais importante da temporada, com favoritos cercados por pressão constante.",
+      category: "Saudi Pro League",
+      source_name: "The Guardian",
+      published_at: now,
+      url_to_image: "https://images.unsplash.com/photo-1517927033932-b3d18e61fb3a?auto=format&fit=crop&q=80&w=1200",
+      url: "https://www.theguardian.com/football",
+      views: 5400,
     },
     {
       id: "news-laliga-1",

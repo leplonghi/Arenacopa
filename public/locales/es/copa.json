@@ -29,11 +29,11 @@
       "guide_title": "Sedes",
       "guide_desc": "Ciudades sede, mapa y consejos de viaje"
     },
-    "upcoming_matches": "Próximos Partidos",
+    "upcoming_matches": "Próximos partidos",
     "view_calendar": "Ver calendario",
     "calculator": {
       "title": "Calculadora",
-      "select_team": "Selecciona una Selección para Simular",
+      "select_team": "Selecciona una selección para simular",
       "status": {
         "qualified": "Clasificado",
         "eliminated": "Eliminado",
@@ -51,11 +51,11 @@
       "title": "Hazte Premium",
       "desc": "Elimina anuncios y desbloquea funciones"
     },
-    "no_upcoming": "Sin partidos próximos ahora",
-    "no_upcoming_desc": "Pronto aparecerán nuevos partidos aquí."
+    "no_upcoming": "No hay partidos próximos por ahora",
+    "no_upcoming_desc": "Aquí aparecerán nuevos partidos muy pronto."
   },
   "match_details": {
-    "sr_title": "Detalles del Partido: {{home}} vs {{away}}",
+    "sr_title": "Detalles del partido: {{home}} vs {{away}}",
     "tabs": {
       "summary": "Resumen",
       "comparison": "Comparación"
@@ -82,42 +82,42 @@
       "gdp": "PIB (Billones)"
     },
     "editor": {
-      "selected_groups": "{{count}} grupo selecionado",
-      "selected_groups_plural": "{{count}} grupos selecionados",
-      "progress": "Progresso",
-      "games_count": "{{filled}}/{{total}} jogos",
-      "phase_groups": "Fase de Grupos",
-      "phase_knockout": "Eliminatórias",
+      "selected_groups": "{{count}} grupo seleccionado",
+      "selected_groups_plural": "{{count}} grupos seleccionados",
+      "progress": "Progreso",
+      "games_count": "{{filled}}/{{total}} partidos",
+      "phase_groups": "Fase de grupos",
+      "phase_knockout": "Eliminatorias",
       "group_complete": "Completo",
-      "standings": "Classificação"
+      "standings": "Clasificación"
     },
     "list": {
-      "title": "Minhas Simulações",
-      "subtitle": "Crie e gerencie suas simulações",
-      "new": "Nova",
-      "empty_title": "Nenhuma simulação ainda",
-      "empty_desc": "Simule os resultados da Copa e compartilhe!",
-      "create_first": "Criar Simulação",
-      "login_title": "Faça login para simular",
-      "login_desc": "Suas simulações ficam salvas na sua conta",
+      "title": "Mis simulaciones",
+      "subtitle": "Crea y gestiona tus simulaciones",
+      "new": "Nueva",
+      "empty_title": "Todavía no hay simulaciones",
+      "empty_desc": "Simula los resultados de la Copa y compártelos.",
+      "create_first": "Crear simulación",
+      "login_title": "Inicia sesión para simular",
+      "login_desc": "Tus simulaciones se guardarán en tu cuenta",
       "groups_count": "{{count}} grupos",
-      "games_count": "{{filled}}/{{total}} preenchidos",
-      "created": "Simulação criada!",
-      "deleted": "Simulação excluída"
+      "games_count": "{{filled}}/{{total}} completados",
+      "created": "¡Simulación creada!",
+      "deleted": "Simulación eliminada"
     },
     "knockout": {
-      "incomplete_title": "Fase de Grupos Incompleta",
-      "incomplete_desc": "Preencha todos os jogos dos 12 grupos para desbloquear as eliminatórias",
-      "penalties": "Pênaltis",
-      "advances": "{{team}} avança",
-      "defined_games": "{{filled}}/{{total}} jogos definidos",
-      "defined_games_singular": "{{filled}}/{{total}} jogo definido"
+      "incomplete_title": "Fase de grupos incompleta",
+      "incomplete_desc": "Completa todos los partidos de los 12 grupos para desbloquear las eliminatorias.",
+      "penalties": "Penaltis",
+      "advances": "{{team}} avanza",
+      "defined_games": "{{filled}}/{{total}} partidos definidos",
+      "defined_games_singular": "{{filled}}/{{total}} partido definido"
     }
   },
   "simulator": {
     "share": {
-      "title": "Compartir Simulación",
-      "desc": "Envía tu simulación a amigos",
+      "title": "Compartir simulación",
+      "desc": "Envía tu simulación a tus amigos",
       "whatsapp": "WhatsApp",
       "whatsapp_desc": "Enviar por mensaje",
       "copy": "Copiar Texto",
@@ -128,15 +128,15 @@
       "copied_desc": "Simulación copiada al portapapeles",
       "text_intro": "⚽ Mi simulación \"{{name}}\" - Copa 2026\n\n",
       "text_group": "📊 Grupo {{group}}:\n",
-      "text_footer": "🏆 ¡Hecho en ArenaCup!"
+      "text_footer": "🏆 ¡Hecho en ArenaCUP!"
     },
     "create": {
-      "title": "Nueva Simulación",
-      "name_label": "Nombre de la Simulación",
+      "title": "Nueva simulación",
+      "name_label": "Nombre de la simulación",
       "name_placeholder": "Ej: Copa de mis sueños",
-      "groups_label": "Grupos para Simular",
+      "groups_label": "Grupos para simular",
       "select_all": "Seleccionar todos",
-      "button": "Crea Simulación"
+      "button": "Crear simulación"
     },
     "list": {
       "title": "Mis Simulaciones",
@@ -148,7 +148,7 @@
       "login_title": "Inicia sesión para guardar",
       "login_desc": "Tus simulaciones se guardarán en tu cuenta",
       "groups_count": "{{count}} grupos",
-      "games_count": "{{filled}}/{{total}} llenos",
+      "games_count": "{{filled}}/{{total}} completados",
       "created": "Simulación creada",
       "deleted": "Simulación eliminada",
       "groups_count_plural": "{{count}} grupos"
@@ -158,14 +158,14 @@
       "selected_groups_plural": "{{count}} grupos seleccionados",
       "progress": "Progreso",
       "games_count": "{{filled}}/{{total}} partidos",
-      "phase_groups": "Fase de Grupos",
+      "phase_groups": "Fase de grupos",
       "phase_knockout": "Eliminatorias",
       "group_complete": "Completo",
       "standings": "Clasificación"
     },
     "knockout": {
-      "incomplete_title": "Fase de Grupos Incompleta",
-      "incomplete_desc": "Completa todos los partidos de los 12 grupos para desbloquear las eliminatorias",
+      "incomplete_title": "Fase de grupos incompleta",
+      "incomplete_desc": "Completa todos los partidos de los 12 grupos para desbloquear las eliminatorias.",
       "penalties": "Penaltis",
       "advances": "{{team}} avanza",
       "defined_games": "{{filled}}/{{total}} partidos definidos",
@@ -173,10 +173,10 @@
     }
   },
   "match_card": {
-    "live": "En Curso",
-    "next_game": "Próximo Partido",
+    "live": "En curso",
+    "next_game": "Próximo partido",
     "live_badge": "En Vivo",
-    "details_cta": "Ver Detalles",
+    "details_cta": "Ver detalles",
     "group": "Grupo {{group}}",
     "my_prediction": "Tu predicción:",
     "edit": "Editar"
@@ -188,6 +188,13 @@
     "not_supported": "Compartir no compatible en este navegador",
     "downloaded": "¡Imagen descargada! Adjunta en WhatsApp",
     "btn_label": "Compartir"
+  },
+  "bracket_modal": {
+    "edit_score": "Editar marcador",
+    "goals_label": "Goles",
+    "penalties_title": "Penaltis (empate en el tiempo reglamentario)",
+    "penalties_error": "Los penaltis no pueden terminar empatados",
+    "save_score": "Guardar marcador"
   },
   "calendario": {
     "empty_title": "Ningún partido aquí",
@@ -206,18 +213,38 @@
     "day_label": "Día {{current}}/{{total}}"
   },
   "bracket": {
+    "page_title": "Cuadro",
+    "page_subtitle": "Basado en tu simulación",
+    "incomplete_title": "Fase de grupos incompleta",
+    "incomplete_desc": "Completa todos los partidos de los 12 grupos para ver el cuadro.",
+    "simulation_hint": "Rellena marcadores en la pestaña Simulador para ver los cruces.",
+    "locked_desc_prefix": "Rellena todos los partidos de los 12 grupos en la pestaña",
+    "locked_desc_suffix": "para desbloquear el cuadro visual.",
+    "progress_hint": "Progreso en marcha...",
+    "view_bracket": "Vista de cuadro",
+    "view_list": "Vista de lista",
     "third_place": "Disputa por el 3er Lugar",
     "champion_label": "Campeón del Mundo",
     "champion_sub": "CAMPEÓN MUNDIAL 2026",
     "rounds": {
       "r32": "32 avos",
+      "r32_full": "32 avos de final",
       "r16": "Octavos",
+      "r16_full": "Octavos de final",
       "quarter": "Cuartos",
+      "quarter_full": "Cuartos de final",
       "semi": "Semis",
+      "semi_full": "Semifinales",
       "third": "3º Lugar",
-      "final": "Final"
+      "final": "Final",
+      "final_full": "Gran Final"
     },
     "tbd": "Por definir"
+  },
+  "group_details": {
+    "kicker": "Detalles del",
+    "table_title": "Clasificación",
+    "matches_title": "Partidos"
   },
   "grupos": {
     "no_games": "No se encontraron partidos para este grupo."
@@ -257,6 +284,93 @@
       "gd": "DG",
       "p": "Pts",
       "prob": "Prob."
+    }
+  },
+  "team_details": {
+    "not_found_title": "Selección no encontrada",
+    "back": "Volver",
+    "group_label": "Grupo {{group}}",
+    "vs": "vs",
+    "stats": {
+      "fifa_ranking": "Ranking FIFA",
+      "world_titles": "Títulos mundiales"
+    },
+    "performance": {
+      "title": "Rendimiento actual",
+      "points_short": "PTS",
+      "played_short": "PJ",
+      "wins_short": "V",
+      "goal_diff_short": "DG"
+    },
+    "facts_title": "Curiosidades",
+    "facts": {
+      "capital": "Capital",
+      "population": "Población",
+      "currency": "Moneda",
+      "language": "Idioma"
+    },
+    "history_title": "Historial en la Copa del Mundo",
+    "history": {
+      "titles": "Títulos",
+      "appearances": "Participaciones",
+      "first_appearance": "Primera Copa",
+      "best_result": "Mejor resultado"
+    },
+    "rivalries_title": "Grandes rivalidades",
+    "qualifiers_title": "En las eliminatorias",
+    "matches_title": "Partidos en la Copa",
+    "no_matches": "No se encontraron partidos.",
+    "rivalries": {
+      "BRA": {
+        "ARG": "El Clásico de las Américas, la mayor rivalidad del fútbol sudamericano.",
+        "URU": "El dolor del Maracanazo (1950) aún resuena en la memoria brasileña.",
+        "GER": "El 7-1 de la semifinal de 2014 es el capítulo más emblemático de esta rivalidad."
+      },
+      "ARG": {
+        "BRA": "El Clásico de las Américas reúne décadas de rivalidad intensa.",
+        "ENG": "La Mano de Dios (1986) y la guerra de Malvinas hacen único este duelo.",
+        "URU": "Clásico del Río de la Plata, el derby más antiguo de las Américas."
+      },
+      "GER": {
+        "NED": "La final de 1974 abrió una de las mayores rivalidades del fútbol europeo.",
+        "ENG": "1966, 1990 y 1996 marcaron medio siglo de cruces decisivos.",
+        "BRA": "El 7-1 de 2014 se convirtió en el partido más simbólico de esta rivalidad."
+      },
+      "FRA": {
+        "GER": "La semifinal de 1982 es uno de los partidos más polémicos de la historia de los Mundiales.",
+        "ARG": "La final de 2022 es considerada por muchos la mejor final de todos los tiempos.",
+        "POR": "Semifinales de Mundial y Euro fortalecieron esta rivalidad latina."
+      },
+      "ENG": {
+        "ARG": "La Mano de Dios, en 1986, creó uno de los duelos más controvertidos del deporte.",
+        "GER": "1966, 1990 y 1996 consolidaron este choque entre gigantes europeos.",
+        "URU": "La derrota de 1954 marcó el inicio de un clásico transatlántico."
+      },
+      "ESP": {
+        "POR": "El Derbi Ibérico enfrenta a vecinos históricos cara a cara.",
+        "NED": "La final de 2010 fue física, polémica y definitiva para España.",
+        "GER": "Es un choque recurrente entre potencias de los grandes torneos europeos."
+      },
+      "ITA": {
+        "BRA": "Las finales de 1970 y 1994 unieron para siempre a dos gigantes del fútbol.",
+        "FRA": "La final de 2006 y el cabezazo de Zidane volvieron inolvidable este duelo.",
+        "URU": "La final de 1930 está en el origen de esta rivalidad histórica."
+      },
+      "URU": {
+        "BRA": "El Maracanazo de 1950 sigue siendo la victoria más recordada del fútbol uruguayo.",
+        "ARG": "Clásico del Río de la Plata, una de las rivalidades más antiguas del mundo.",
+        "ITA": "La final de 1930 le dio a Uruguay su primer título mundial."
+      },
+      "NED": {
+        "GER": "La final de 1974 y el peso histórico europeo hacen especial esta rivalidad.",
+        "ESP": "La revancha de la final de 2010 nunca llegó, pero la tensión sigue viva.",
+        "ARG": "Los cruces de 1974 y 2022 mantuvieron viva esta rivalidad."
+      },
+      "POR": {
+        "ESP": "El Derbi Ibérico mezcla lengua compartida, cercanía y rivalidad.",
+        "FRA": "Semifinales recientes y generaciones llenas de estrellas mantienen caliente este duelo.",
+        "ENG": "Los cuartos de 2006 siguen siendo el capítulo más recordado de este enfrentamiento."
+      }
     }
   }
 }

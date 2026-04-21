@@ -45,11 +45,11 @@ export function ChavesTab() {
         className="space-y-4"
       >
         <div>
-          <h2 className="text-lg font-black">Chaves</h2>
+          <h2 className="text-lg font-black">{t('bracket.page_title')}</h2>
           <p className="text-[11px] text-muted-foreground">
             {filledCount > 0
-              ? "Complete todos os jogos dos 12 grupos para ver o chaveamento"
-              : "Preencha placares na aba Simulação para ver os confrontos"}
+              ? t('bracket.incomplete_desc')
+              : t('bracket.simulation_hint')}
           </p>
         </div>
 
@@ -97,9 +97,9 @@ export function ChavesTab() {
             </div>
           </motion.div>
 
-          <p className="text-sm font-black text-white/80 mb-1">Fase de Grupos incompleta</p>
+          <p className="text-sm font-black text-white/80 mb-1">{t('bracket.incomplete_title')}</p>
           <p className="text-[11px] text-white/40 max-w-xs mx-auto leading-relaxed">
-            Preencha todos os jogos dos 12 grupos na aba <span className="text-[hsl(var(--copa-gold))] font-bold">Simulação</span> para desbloquear o chaveamento visual
+            {t('bracket.locked_desc_prefix')} <span className="text-[hsl(var(--copa-gold))] font-bold">{t('tabs.simulator')}</span> {t('bracket.locked_desc_suffix')}
           </p>
 
           {/* Progress hint */}
@@ -107,7 +107,7 @@ export function ChavesTab() {
             <div className="mt-4 inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.08]">
               <div className="w-2 h-2 rounded-full bg-[hsl(var(--copa-gold))] animate-pulse" />
               <span className="text-[10px] font-bold text-white/50">
-                Progresso em andamento...
+                {t('bracket.progress_hint')}
               </span>
             </div>
           )}
@@ -123,8 +123,8 @@ export function ChavesTab() {
       {/* Header with view toggle */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-black">Chaves</h2>
-          <p className="text-[11px] text-muted-foreground">Baseado na sua simulação</p>
+          <h2 className="text-lg font-black">{t('bracket.page_title')}</h2>
+          <p className="text-[11px] text-muted-foreground">{t('bracket.page_subtitle')}</p>
         </div>
         <div className="flex items-center gap-2">
           <ShareBracket bracketRef={bracketRef} />
@@ -137,7 +137,7 @@ export function ChavesTab() {
                   ? "bg-[hsl(var(--copa-gold)/0.15)] text-[hsl(var(--copa-gold))] shadow-[0_0_8px_-2px_hsl(44_80%_46%/0.2)]"
                   : "text-white/40 hover:text-white/60"
               )}
-              title="Chaveamento"
+              title={t('bracket.view_bracket')}
             >
               <GitBranch className="w-4 h-4" />
             </button>
@@ -149,7 +149,7 @@ export function ChavesTab() {
                   ? "bg-[hsl(var(--copa-gold)/0.15)] text-[hsl(var(--copa-gold))] shadow-[0_0_8px_-2px_hsl(44_80%_46%/0.2)]"
                   : "text-white/40 hover:text-white/60"
               )}
-              title="Lista"
+              title={t('bracket.view_list')}
             >
               <LayoutGrid className="w-4 h-4" />
             </button>
@@ -185,14 +185,15 @@ function ListView({
   data: KnockoutData;
   onMatchClick?: (round: KnockoutRound, matchIdx: number, match: KnockoutMatchFull) => void;
 }) {
+  const { t } = useTranslation('copa');
   const navigate = useNavigate();
   const rounds = [
-    { key: "r32" as KnockoutRound, label: "32 avos de Final", matches: data.r32 },
-    { key: "r16" as KnockoutRound, label: "Oitavas de Final", matches: data.r16 },
-    { key: "quarter" as KnockoutRound, label: "Quartas de Final", matches: data.quarter },
-    { key: "semi" as KnockoutRound, label: "Semifinais", matches: data.semi },
+    { key: "r32" as KnockoutRound, label: t('bracket.rounds.r32_full'), matches: data.r32 },
+    { key: "r16" as KnockoutRound, label: t('bracket.rounds.r16_full'), matches: data.r16 },
+    { key: "quarter" as KnockoutRound, label: t('bracket.rounds.quarter_full'), matches: data.quarter },
+    { key: "semi" as KnockoutRound, label: t('bracket.rounds.semi_full'), matches: data.semi },
     { key: "third" as KnockoutRound, label: t('bracket.third_place'), matches: data.third },
-    { key: "final" as KnockoutRound, label: "Grande Final", matches: data.final },
+    { key: "final" as KnockoutRound, label: t('bracket.rounds.final_full'), matches: data.final },
   ];
 
   return (
@@ -259,14 +260,14 @@ function ListView({
                     ) : (
                       <>
                         <div className="w-6 h-6 rounded-full bg-white/[0.04] border border-dashed border-white/[0.1]" />
-                        <span className="text-sm font-medium text-white/30 flex-1">A definir</span>
+                        <span className="text-sm font-medium text-white/30 flex-1">{t('bracket.tbd')}</span>
                       </>
                     )}
                   </div>
 
                   <div className="flex items-center px-4">
                     <div className="flex-1 border-t border-white/[0.06]" />
-                    <span className="text-[9px] font-bold text-white/20 px-2 uppercase">vs</span>
+                    <span className="text-[9px] font-bold text-white/20 px-2 uppercase">{t('team_details.vs')}</span>
                     <div className="flex-1 border-t border-white/[0.06]" />
                   </div>
 
@@ -290,7 +291,7 @@ function ListView({
                     ) : (
                       <>
                         <div className="w-6 h-6 rounded-full bg-white/[0.04] border border-dashed border-white/[0.1]" />
-                        <span className="text-sm font-medium text-white/30 flex-1">A definir</span>
+                        <span className="text-sm font-medium text-white/30 flex-1">{t('bracket.tbd')}</span>
                       </>
                     )}
                   </div>

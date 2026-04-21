@@ -15,6 +15,7 @@
 
 import { useEffect, useState } from "react";
 import { RealtimeNewsItem } from "./useRealtimeNews";
+import { sanitizeExternalUrl } from "@/lib/security";
 
 // ── Cache ─────────────────────────────────────────────────────────────────────
 const CACHE_TTL_MS = 15 * 60 * 1000; // 15 min — keeps us well under free limits
@@ -116,12 +117,17 @@ function mapRssItem(item: Rss2JsonItem, source: string): RealtimeNewsItem {
   const publishedAt = item.pubDate
     ? new Date(item.pubDate).toISOString()
     : new Date().toISOString();
+  const safeUrl = sanitizeExternalUrl(item.link || null);
+  const fallbackId = `${source}-${publishedAt}-${title}`
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 
   return {
-    id: item.guid || item.link || `${source}-${publishedAt}-${Math.random()}`,
+    id: item.guid || safeUrl || fallbackId,
     title,
     description: description || undefined,
-    url: item.link || "#",
+    url: safeUrl ?? "#",
     url_to_image: imageUrl,
     published_at: publishedAt,
     source_name: source,
@@ -152,6 +158,11 @@ async function fetchFeed(cfg: FeedConfig): Promise<RealtimeNewsItem[]> {
     }
     items = json.items.map((it) => mapRssItem(it, cfg.source));
     _feedCache.set(cfg.rssUrl, { items, expiresAt: Date.now() + CACHE_TTL_MS });
+  } catch (error) {
+    if (cached) {
+      return cached.items;
+    }
+    throw error;
   } finally {
     window.clearTimeout(tid);
   }

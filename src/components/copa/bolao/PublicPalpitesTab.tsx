@@ -9,6 +9,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Flag } from "@/components/Flag";
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import { getPublicProfilesByIds } from "@/services/profile/profile.service";
 
 type PublicPalpite = {
@@ -30,6 +31,7 @@ type PublicPalpite = {
 };
 
 export function PublicPalpitesTab({ bolaoId }: { bolaoId: string }) {
+    const { t } = useTranslation("bolao");
     const [palpites, setPalpites] = useState<PublicPalpite[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -117,11 +119,11 @@ export function PublicPalpitesTab({ bolaoId }: { bolaoId: string }) {
     }, [bolaoId]);
 
     if (loading) {
-        return <div className="text-center text-gray-400 py-10 font-bold uppercase tracking-widest text-xs">Carregando palpites...</div>;
+        return <div className="text-center text-gray-400 py-10 font-bold uppercase tracking-widest text-xs">{t("public_picks.loading")}</div>;
     }
 
     if (palpites.length === 0) {
-        return <div className="text-center text-gray-400 py-10 font-bold uppercase tracking-widest text-xs">Os palpites dos membros aparecerão aqui quando a primeira partida começar!</div>;
+        return <div className="text-center text-gray-400 py-10 font-bold uppercase tracking-widest text-xs">{t("public_picks.empty")}</div>;
     }
 
     return (
@@ -133,8 +135,8 @@ export function PublicPalpitesTab({ bolaoId }: { bolaoId: string }) {
                             <AvatarImage src={p.profile?.avatar_url || undefined} />
                             <AvatarFallback className="bg-white/10 text-xs font-bold text-gray-500 uppercase">{p.profile?.name?.substring(0, 2) || 'US'}</AvatarFallback>
                         </Avatar>
-                        <span className="font-bold text-sm tracking-widest uppercase text-gray-400">{p.profile?.name || 'Membro Oculto'}</span>
-                        {p.is_exact && <span className="ml-auto px-2 py-1 rounded bg-emerald-500/20 text-emerald-400 text-[9px] font-black uppercase">Cravou!</span>}
+                        <span className="font-bold text-sm tracking-widest uppercase text-gray-400">{p.profile?.name || t("public_picks.hidden_member")}</span>
+                        {p.is_exact && <span className="ml-auto px-2 py-1 rounded bg-emerald-500/20 text-emerald-400 text-[9px] font-black uppercase">{t("public_picks.exact_badge")}</span>}
                     </div>
 
                     <div className="flex items-center justify-between px-2 bg-black/40 py-4 rounded-xl border border-white/5">
@@ -145,7 +147,7 @@ export function PublicPalpitesTab({ bolaoId }: { bolaoId: string }) {
 
                         <div className="flex gap-4 items-center">
                             <div className="text-3xl font-black text-white">{p.home_score}</div>
-                            <div className="text-gray-600 font-bold text-xs uppercase tracking-widest mt-1">VS</div>
+                            <div className="text-gray-600 font-bold text-xs uppercase tracking-widest mt-1">{t("public_picks.versus")}</div>
                             <div className="text-3xl font-black text-white">{p.away_score}</div>
                         </div>
 

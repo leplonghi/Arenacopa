@@ -1,5 +1,5 @@
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { Home, Trophy, Bell, BookOpen, ChevronLeft, User, Users2, Newspaper } from "lucide-react";
+import { Trophy, Bell, ChevronLeft, User, Users2, Menu } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useState } from "react";
@@ -8,6 +8,14 @@ import { NotificationsSheet } from "@/components/NotificationsSheet";
 import { OnboardingModal } from "@/components/OnboardingModal";
 import { PWABanner } from "@/components/PWABanner";
 import { FabWithPending } from "@/components/FabWithPending";
+import { MobileMenuSheet } from "@/components/MobileMenuSheet";
+import { BrandWordmark } from "@/components/BrandWordmark";
+import {
+  ChampionshipBadgeIcon,
+  CupTrophyIcon,
+  HomeArenaIcon,
+  NewsPulseIcon,
+} from "@/components/AppNavIcons";
 import {
   Sidebar,
   SidebarContent,
@@ -29,13 +37,15 @@ import { appNavigationItems, isNavigationItemActive, type AppNavIconKey } from "
 const logoUrl = "/logo.png?v=20260316";
 
 const navIconMap: Record<AppNavIconKey, React.ComponentType<{ className?: string; strokeWidth?: number }>> = {
-  home: Home,
-  championships: Trophy,
+  home: HomeArenaIcon,
+  copa: CupTrophyIcon,
+  championships: ChampionshipBadgeIcon,
   bolao: Trophy,
-  news: Newspaper,
-  guia: BookOpen,
+  news: NewsPulseIcon,
+  guia: NewsPulseIcon,
   groups: Users2,
   profile: User,
+  menu: Menu,
 };
 
 function Header({ className }: { className?: string }) {
@@ -63,6 +73,7 @@ function Header({ className }: { className?: string }) {
   }, [user]);
 
   const { t } = useTranslation('common');
+  const brandName = t('brand.name');
 
   const { data: rawNotifications = [] } = useQuery({
     queryKey: ["notifications", user?.id],
@@ -112,11 +123,12 @@ function Header({ className }: { className?: string }) {
         ) : (
           <div className="flex items-center gap-3 md:hidden">
             <div className="w-12 h-12 flex items-center justify-center p-1">
-              <img src={logoUrl} alt="ArenaCup" className="h-10 w-10 object-contain" />
+              <img src={logoUrl} alt={brandName} className="h-10 w-10 object-contain" />
             </div>
-            <span className="font-display font-extrabold text-xl tracking-tighter drop-shadow-[0_0_8px_rgba(34,197,94,0.3)]">
-              Arena<span className="text-primary italic">Cup</span>
-            </span>
+            <BrandWordmark
+              label={brandName}
+              className="font-display font-extrabold text-xl tracking-tighter text-white drop-shadow-[0_0_8px_rgba(34,197,94,0.3)]"
+            />
           </div>
         )}
 
@@ -183,12 +195,28 @@ function BottomTabs({ className }: { className?: string }) {
 
   return (
     <nav className={cn("fixed bottom-0 inset-x-0 z-30 overflow-visible backdrop-blur-xl border-t border-white/[0.1] safe-bottom shadow-[0_-4px_30px_rgba(0,0,0,0.6)] bg-[#03100a]/65", className)}>
-      <div className="mx-auto grid h-[72px] max-w-md grid-cols-5 items-center px-1 overflow-visible">
+      <div
+        className="mx-auto grid h-[72px] max-w-md items-center px-1 overflow-visible"
+        style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}
+      >
         {tabs.map((tab) => {
           if (tab.isFab) {
             return <FabWithPending key={tab.path} isActive={isNavigationItemActive(location.pathname, tab)} />;
           }
           const Icon = navIconMap[tab.iconKey];
+          if (tab.path === "#menu") {
+            return (
+              <MobileMenuSheet key={tab.path}>
+                <button className="flex h-full min-w-0 flex-col items-center justify-center gap-1.5 rounded-[22px] px-1 py-2 text-center transition-colors text-muted-foreground outline-none">
+                  <span className="relative flex h-8 w-8 items-center justify-center transition-all duration-300 scale-[0.96]">
+                    <span className="absolute inset-0 rounded-[14px] border transition-all duration-300 border-transparent bg-transparent" />
+                    <Icon className="relative z-10 h-[22px] w-[22px]" strokeWidth={1.72} />
+                  </span>
+                  <span className="text-[10px] leading-none font-medium">{t(tab.labelKey)}</span>
+                </button>
+              </MobileMenuSheet>
+            );
+          }
           return (
             <NavLink
               key={tab.path}
@@ -196,14 +224,29 @@ function BottomTabs({ className }: { className?: string }) {
               end={tab.path === "/"}
               className={({ isActive }) =>
                 cn(
-                  "flex h-full min-w-0 flex-col items-center justify-center gap-1 rounded-[22px] px-1 py-2 text-center transition-colors",
+                  "flex h-full min-w-0 flex-col items-center justify-center gap-1.5 rounded-[22px] px-1 py-2 text-center transition-colors",
                   isActive ? "text-primary" : "text-muted-foreground"
                 )
               }
             >
               {({ isActive }) => (
                 <>
-                  <Icon className="w-5 h-5" strokeWidth={isActive ? 2.5 : 1.8} />
+                  <span
+                    className={cn(
+                      "relative flex h-8 w-8 items-center justify-center transition-all duration-300",
+                      isActive ? "scale-100" : "scale-[0.96]"
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "absolute inset-0 rounded-[14px] border transition-all duration-300",
+                        isActive
+                          ? "border-primary/30 bg-primary/10 shadow-[0_0_18px_rgba(34,197,94,0.16)]"
+                          : "border-transparent bg-transparent"
+                      )}
+                    />
+                    <Icon className="relative z-10 h-[22px] w-[22px]" strokeWidth={isActive ? 2.05 : 1.72} />
+                  </span>
                   <span className={cn("text-[10px] leading-none", isActive ? "font-bold" : "font-medium")}>{t(tab.labelKey)}</span>
                 </>
               )}
@@ -217,6 +260,7 @@ function BottomTabs({ className }: { className?: string }) {
 
 function AppSidebar({ className }: { className?: string }) {
   const { t } = useTranslation('common');
+  const brandName = t('brand.name');
   const location = useLocation();
   const tabs = appNavigationItems.filter((item) => item.desktop);
 
@@ -227,14 +271,15 @@ function AppSidebar({ className }: { className?: string }) {
           <div className="p-4 flex items-center justify-center group-data-[collapsible=icon]:p-2">
             <div className="flex items-center gap-3 group-data-[collapsible=icon]:hidden">
               <div className="w-10 h-10 flex items-center justify-center">
-                <img src={logoUrl} alt="ArenaCup" className="h-8 w-8 object-contain" />
+                <img src={logoUrl} alt={brandName} className="h-8 w-8 object-contain" />
               </div>
-              <span className="font-black text-xl tracking-tight drop-shadow-[0_0_8px_rgba(34,197,94,0.3)]">
-                Arena<span className="text-primary">Cup</span>
-              </span>
+              <BrandWordmark
+                label={brandName}
+                className="font-black text-xl tracking-tight text-white drop-shadow-[0_0_8px_rgba(34,197,94,0.3)]"
+              />
             </div>
             <div className="hidden group-data-[collapsible=icon]:flex w-full items-center justify-center">
-              <img src={logoUrl} alt="ArenaCup" className="h-8 w-8 object-contain" />
+              <img src={logoUrl} alt={brandName} className="h-8 w-8 object-contain" />
             </div>
           </div>
           <SidebarGroupContent className="mt-4">
@@ -290,7 +335,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             <footer className="w-full border-t border-white/10 py-8 px-4 mt-12 shrink-0">
               <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between md:gap-4 text-xs text-muted-foreground gap-4">
                 <div className="flex items-center gap-2">
-                  <img src={logoUrl} alt="ArenaCup" className="h-4 w-4 opacity-50" />
+                  <img src={logoUrl} alt={t('brand.name')} className="h-4 w-4 opacity-50" />
                   <span>{t('footer.rights')}</span>
                 </div>
                 <div className="flex gap-6">

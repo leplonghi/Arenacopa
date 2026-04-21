@@ -24,6 +24,8 @@
     },
     "modal": {
       "seats": "Seats",
+      "capacity": "Capacity",
+      "opened": "Opened",
       "safety": "Safety",
       "transport": "Transport",
       "transportDesc": "Offers an efficient network for fans and tourists.",

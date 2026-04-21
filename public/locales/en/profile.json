@@ -8,14 +8,29 @@
     "preferences": "Preferences",
     "language": "Language",
     "language_choose": "Choose your language",
+    "language_auto": "Automatic language",
+    "language_following_system": "The app follows your device language.",
+    "language_system": "System language detected: {{language}}.",
+    "language_names": {
+        "ptBR": "Portuguese",
+        "en": "English",
+        "es": "Spanish"
+    },
     "nickname": "Nickname",
     "nationality": "Nationality",
     "nationality_placeholder": "Ex: Brazilian",
+    "default_user_name": "User",
     "my_team": "My Team",
     "edit_team": "Edit",
     "quick_switch": "Quick Switch",
+    "favorite_team": {
+        "select_aria": "Choose {{team}} as your favorite team",
+        "open_selector_aria": "Open the full team selector"
+    },
     "fun_mode": "Party Mode",
     "fun_mode_desc": "Enable party animations, goal confetti, and funny comments.",
+    "fun_mode_enable": "Enable party mode",
+    "fun_mode_disable": "Disable party mode",
     "notifications_title": "Notifications",
     "browser_notifications_unsupported": "Your browser does not support notifications.",
     "notifications_denied_title": "Permission denied",
@@ -50,9 +65,33 @@
     "stat_exact_scores": "Exact scores",
     "stat_titles": "Titles",
     "achievements_title": "Unlocked achievements",
+    "achievements": {
+        "locked": "Locked",
+        "first_prediction": {
+            "title": "First Shot",
+            "desc": "Made your first prediction"
+        },
+        "exact_score": {
+            "title": "Bullseye",
+            "desc": "Hit 1 exact score"
+        },
+        "pool_creator": {
+            "title": "Natural Leader",
+            "desc": "Created a pool"
+        },
+        "combo_three": {
+            "title": "Hat-trick",
+            "desc": "Hit 3 exact scores"
+        },
+        "champion": {
+            "title": "Champion",
+            "desc": "Won an entire pool"
+        }
+    },
     "premium_title": "Cup Premium",
     "premium_card_title": "Unlock ArenaCUP",
     "premium_card_desc": "Unlimited pools, no ads and an exclusive badge.",
+    "premium_open_aria": "Open the Arena CUP Premium page",
     "support_title": "Support ArenaCUP",
     "support_desc": "The app is free. If you enjoyed it, consider supporting development.",
     "support_action": "Send support",
@@ -61,5 +100,85 @@
     "help_title": "Help and information",
     "help_rules": "Rules and FAQ",
     "help_terms": "Terms of Use",
-    "help_privacy": "Privacy Policy"
+    "help_privacy": "Privacy Policy",
+    "menu": {
+        "kicker": "Settings",
+        "title": "Menu",
+        "profile_title": "My profile",
+        "profile_desc": "Favorite team, preferences",
+        "rules_title": "Rules and regulations",
+        "notifications_title": "Notifications",
+        "notifications_desc": "Alerts, push and preferences",
+        "settings_title": "Settings",
+        "settings_desc": "Account, language and preferences",
+        "privacy_title": "Privacy and terms",
+        "privacy_desc": "Policies and platform usage",
+        "help_title": "Help and FAQ",
+        "help_desc": "Rules, common questions and quick guidance",
+        "logout": "Log out"
+    },
+    "delete_account": {
+        "title": "Delete Account",
+        "brand_label": "ArenaCup 2026",
+        "mail": {
+            "subject": "Account deletion request",
+            "body": "Hello, I would like to request the deletion of my account and all my data from ArenaCup."
+        },
+        "confirm": {
+            "warning": "This action is permanent and cannot be undone.",
+            "list_intro": "The following will be permanently deleted:",
+            "connected_as": "Signed in as",
+            "cancel": "Cancel",
+            "cta": "Delete my account",
+            "items": {
+                "account": "Your account access",
+                "profile": "Profile and photo",
+                "predictions": "All your predictions",
+                "memberships": "Pool memberships",
+                "champion": "Champion prediction",
+                "tokens": "Notification tokens"
+            }
+        },
+        "not_logged_in": {
+            "intro": "To delete your account and all your data, open the app and follow these steps:",
+            "email_prefix": "Prefer to request it by email?",
+            "cta": "Log in to delete",
+            "steps": {
+                "login": "Open ArenaCup and sign in",
+                "settings_prefix": "Go to",
+                "settings_path": "Profile → Settings",
+                "delete_prefix": "Tap",
+                "delete_label": "Delete account",
+                "confirm": "Confirm the action"
+            }
+        },
+        "reauth": {
+            "desc": "For security, confirm your password to continue.",
+            "password_placeholder": "Your password",
+            "back": "Back",
+            "confirm": "Confirm deletion"
+        },
+        "deleting": {
+            "title": "Deleting your data...",
+            "desc": "This may take a few seconds. Do not close the page."
+        },
+        "done": {
+            "title": "Account deleted successfully",
+            "desc": "All your data has been permanently removed from ArenaCup.",
+            "cta": "Back to start"
+        },
+        "error": {
+            "title": "We couldn't delete the account",
+            "retry": "Try again"
+        },
+        "errors": {
+            "incorrect_password": "Incorrect password. Check it and try again. If you forgot your password, reset it before deleting the account.",
+            "recent_login": "For security, log out and sign in again before deleting the account.",
+            "generic": "There was an error deleting your account. Please try again or contact: {{email}}"
+        },
+        "footer": {
+            "prefix": "For questions about data protection, please review our",
+            "link": "Privacy Policy"
+        }
+    }
 }

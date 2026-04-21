@@ -70,22 +70,26 @@ const derivableMarketSlugs = new Set([
     "both_score",
 ]);
 
-function getMarketShortLabel(slug: BolaoMarket["slug"], fallbackTitle: string) {
+function getMarketShortLabel(
+    slug: BolaoMarket["slug"],
+    fallbackTitle: string,
+    t: (key: string) => string
+) {
     switch (slug) {
         case "exact_score":
-            return "Placar";
+            return t("palpites.market_short.exact_score");
         case "match_winner":
-            return "Vencedor";
+            return t("palpites.market_short.match_winner");
         case "home_goals":
-            return "Gols casa";
+            return t("palpites.market_short.home_goals");
         case "away_goals":
-            return "Gols fora";
+            return t("palpites.market_short.away_goals");
         case "total_goals":
-            return "Total de gols";
+            return t("palpites.market_short.total_goals");
         case "both_score":
-            return "Ambos marcam";
+            return t("palpites.market_short.both_score");
         case "first_team_to_score":
-            return "Primeiro gol";
+            return t("palpites.market_short.first_team_to_score");
         default:
             return fallbackTitle;
     }
@@ -125,9 +129,10 @@ export function JogosTab({
     predictions?: BolaoPrediction[];
     bolao?: Pick<BolaoData, "scoring_mode"> | null;
 }) {
-    const { t } = useTranslation('bolao');
+    const { t, i18n } = useTranslation('bolao');
     const { user } = useAuth();
     const { toast } = useToast();
+    const currentLanguage = i18n.resolvedLanguage || i18n.language;
     const [matches, setMatches] = useState<JogosTabMatch[]>([]);
     const [savedPalpites, setSavedPalpites] = useState<Record<string, EditablePalpite>>({});
     const [draftPalpites, setDraftPalpites] = useState<Record<string, Partial<EditablePalpite>>>({});
@@ -390,7 +395,7 @@ export function JogosTab({
                 title: t('palpites.saved'),
                 description: hasScoreInput
                     ? `${homeTeam} ${hs} x ${as} ${awayTeam}`
-                    : `Mercado de ${homeTeam} x ${awayTeam} atualizado.`,
+                    : t("palpites.market_updated_desc", { home: homeTeam, away: awayTeam }),
             });
         } catch (error) {
             console.error(error);
@@ -500,8 +505,8 @@ export function JogosTab({
             } else if (method === 'whatsapp') {
                 if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
                     await navigator.share({
-                        title: `Meu Palpite`,
-                        text: `Olha meu palpite no Arena CUP!`,
+                        title: t("palpites.share_native_title"),
+                        text: t("palpites.share_native_text"),
                         files: [file]
                     });
                 } else {
@@ -528,7 +533,7 @@ export function JogosTab({
 
     const filteredMatches = matches.filter(m => {
         if (filterTeam !== "all" && m.home_team_code !== filterTeam && m.away_team_code !== filterTeam) return false;
-        if (filterStage !== "all" && m.stage !== filterStage && new Date(m.match_date).toLocaleDateString("pt-BR") !== filterStage) return false;
+        if (filterStage !== "all" && m.stage !== filterStage && new Date(m.match_date).toLocaleDateString(currentLanguage) !== filterStage) return false;
         return true;
     });
     const enrichedMatches = useMemo(() => {
@@ -618,39 +623,36 @@ export function JogosTab({
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                     <div>
                         <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">
-                            {t('palpites.header_kicker', { defaultValue: 'Sua rodada agora' })}
+                            {t('palpites.header_kicker')}
                         </p>
                         <h3 className="mt-2 text-xl font-black tracking-tight text-white sm:text-2xl">
                             {pendingMatchesCount > 0
-                                ? t('palpites.pending_title', {
-                                      defaultValue: 'Faltam {{count}} jogos para fechar',
-                                      count: pendingMatchesCount,
-                                  })
-                                : t('palpites.pending_title_done', { defaultValue: 'Tudo salvo nesta lista' })}
+                                ? t('palpites.pending_title', { count: pendingMatchesCount })
+                                : t('palpites.pending_title_done')}
                         </h3>
                         <p className="mt-2 max-w-2xl text-sm text-zinc-300">
                             {pendingMatchesCount > 0
-                                ? t('palpites.pending_desc', { defaultValue: 'Comece pelos jogos destacados. Os abertos e pendentes aparecem primeiro para você resolver rápido.' })
-                                : t('palpites.pending_desc_done', { defaultValue: 'Agora você pode revisar palpites salvos, compartilhar seus bilhetes e acompanhar os jogos fechados.' })}
+                                ? t('palpites.pending_desc')
+                                : t('palpites.pending_desc_done')}
                         </p>
                     </div>
 
                     <div className="grid grid-cols-3 gap-2 sm:min-w-[300px]">
                         <div className="rounded-2xl border border-white/10 bg-black/20 px-3 py-3 text-center">
                             <p className="text-[10px] font-black uppercase tracking-[0.16em] text-zinc-500">
-                                {t('palpites.stats_pending', { defaultValue: 'Pendentes' })}
+                                {t('palpites.stats_pending')}
                             </p>
                             <p className="mt-1 text-2xl font-black text-white">{pendingMatchesCount}</p>
                         </div>
                         <div className="rounded-2xl border border-white/10 bg-black/20 px-3 py-3 text-center">
                             <p className="text-[10px] font-black uppercase tracking-[0.16em] text-zinc-500">
-                                {t('palpites.stats_saved', { defaultValue: 'Salvos' })}
+                                {t('palpites.stats_saved')}
                             </p>
                             <p className="mt-1 text-2xl font-black text-white">{completedMatchesCount}</p>
                         </div>
                         <div className="rounded-2xl border border-white/10 bg-black/20 px-3 py-3 text-center">
                             <p className="text-[10px] font-black uppercase tracking-[0.16em] text-zinc-500">
-                                {t('palpites.stats_closed', { defaultValue: 'Fechados' })}
+                                {t('palpites.stats_closed')}
                             </p>
                             <p className="mt-1 text-2xl font-black text-white">{lockedMatchesCount}</p>
                         </div>
@@ -664,7 +666,7 @@ export function JogosTab({
                     onChange={e => setFilterTeam(e.target.value)}
                     className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-3 text-xs font-bold text-white outline-none focus:border-primary/50"
                 >
-                    <option value="all" className="bg-zinc-900">{t('palpites.filter_all_teams', { defaultValue: 'Todas as seleções' })}</option>
+                    <option value="all" className="bg-zinc-900">{t('palpites.filter_all_teams')}</option>
                     {uniqueTeams.map(t => <option key={t} value={t} className="bg-zinc-900">{t}</option>)}
                 </select>
                 <select 
@@ -672,7 +674,7 @@ export function JogosTab({
                     onChange={e => setFilterStage(e.target.value)}
                     className="flex-1 bg-white/5 border border-white/10 rounded-xl px-3 py-3 text-xs font-bold text-white outline-none focus:border-primary/50"
                 >
-                    <option value="all" className="bg-zinc-900">{t('palpites.filter_all_stages', { defaultValue: 'Cronograma (Todos)' })}</option>
+                    <option value="all" className="bg-zinc-900">{t('palpites.filter_all_stages')}</option>
                     {uniqueStages.map(s => <option key={s} value={s} className="bg-zinc-900">{s}</option>)}
                 </select>
             </div>
@@ -686,12 +688,12 @@ export function JogosTab({
                         {isStarted && <div className="absolute inset-0 bg-black/50 z-10 backdrop-blur-sm pointer-events-none flex flex-col items-center justify-center">
                             <Lock className="w-8 h-8 text-gray-500 mb-2" />
                             <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">
-                                {t('palpites.closed_label', { defaultValue: 'Palpites encerrados' })}
+                                {t('palpites.closed_label')}
                             </span>
                             {m.status === 'finished' && p.id && (
                                 <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="mt-4 flex flex-col items-center">
                                     <span className="text-4xl font-black text-white">{p.points}</span>
-                                    <span className="text-[10px] text-primary uppercase font-bold tracking-widest">{p.is_exact ? "Exato 🎯" : "Pts"}</span>
+                                                    <span className="text-[10px] text-primary uppercase font-bold tracking-widest">{p.is_exact ? t('palpites.exact_badge') : t('ranking.points_abbr')}</span>
                                 </motion.div>
                             )}
                         </div>}
@@ -714,7 +716,7 @@ export function JogosTab({
 
                         <div className="flex justify-between items-center mb-6">
                             <div className="px-3 py-1 rounded-full bg-white/5 text-[9px] font-bold uppercase tracking-widest text-gray-500">
-                                {new Date(m.match_date).toLocaleDateString('pt-BR')} • {new Date(m.match_date).toLocaleTimeString('pt-BR', { hour: "2-digit", minute: "2-digit" })}
+                                {new Date(m.match_date).toLocaleDateString(currentLanguage)} • {new Date(m.match_date).toLocaleTimeString(currentLanguage, { hour: "2-digit", minute: "2-digit" })}
                             </div>
                             <div className="px-3 py-1 rounded-full bg-white/5 text-[9px] font-bold uppercase tracking-widest text-gray-500">{m.stage}</div>
                         </div>
@@ -723,14 +725,14 @@ export function JogosTab({
                             <div className="mb-4 flex flex-wrap gap-2">
                                 {marketsForMatch.slice(0, 4).map((market) => (
                                     <div key={market.id} className="inline-flex items-center gap-1.5 rounded-full border border-primary/15 bg-primary/10 px-3 py-1 text-[9px] font-black uppercase tracking-[0.16em] text-primary">
-                                        <span>{getMarketShortLabel(market.slug, market.title)}</span>
+                                        <span>{getMarketShortLabel(market.slug, market.title, t)}</span>
                                         <TooltipProvider delayDuration={120}>
                                             <Tooltip>
                                                 <TooltipTrigger asChild>
                                                     <button
                                                         type="button"
                                                         className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-white/10 text-primary/80"
-                                                        aria-label={`Entender mercado ${market.title}`}
+                                                        aria-label={t('palpites.market_help_aria', { title: market.title })}
                                                     >
                                                         <CircleHelp className="h-3 w-3" />
                                                     </button>
@@ -745,7 +747,7 @@ export function JogosTab({
                                 ))}
                                 {marketsForMatch.length > 4 && (
                                     <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[9px] font-black uppercase tracking-[0.16em] text-zinc-400">
-                                        +{marketsForMatch.length - 4} mercados
+                                        {t("palpites.more_markets", { count: marketsForMatch.length - 4 })}
                                     </span>
                                 )}
                             </div>
@@ -754,16 +756,16 @@ export function JogosTab({
                         {isPending && (
                             <div className="mb-4 rounded-2xl border border-primary/20 bg-primary/10 px-4 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-primary">
                                 {isHighlighted
-                                    ? t('palpites.highlighted_pending', { defaultValue: 'Este jogo está pendente para você.' })
-                                    : t('palpites.queue_pending', { defaultValue: 'Resolva este jogo antes do próximo prazo.' })}
+                                    ? t('palpites.highlighted_pending')
+                                    : t('palpites.queue_pending')}
                             </div>
                         )}
 
                             {bolao?.scoring_mode === 'exclusive' ? (
                                 <div className="mt-4 mb-2">
                                     <div className="flex items-center justify-between mb-2">
-                                        <p className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-1">🎟️ Assentos de Cinema</p>
-                                        <p className="text-[9px] text-zinc-500 uppercase tracking-wider">Escolha um placar livre</p>
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-1">🎟️ {t("palpites.exclusive_seats_title")}</p>
+                                        <p className="text-[9px] text-zinc-500 uppercase tracking-wider">{t('palpites.exclusive_pick_label')}</p>
                                     </div>
                                     <div className="grid grid-cols-5 gap-1.5 p-3 rounded-2xl bg-black/20 border border-white/5">
                                         {[0,1,2,3,4].flatMap(homeG => [0,1,2,3,4].map(awayG => {
@@ -801,7 +803,7 @@ export function JogosTab({
                                             type="text"
                                             maxLength={2}
                                             inputMode="numeric"
-                                            aria-label={`Palpite de gols para ${m.home_team_code}`}
+                                            aria-label={t("palpites.score_input_aria", { team: m.home_team_code })}
                                             value={p.home}
                                             onChange={e => updateScore(m.id, 'home', e.target.value)}
                                             className="w-14 h-16 bg-white/5 border border-white/10 rounded-2xl text-center text-3xl font-black text-white outline-none focus:border-primary/50"
@@ -812,7 +814,7 @@ export function JogosTab({
                                             type="text"
                                             maxLength={2}
                                             inputMode="numeric"
-                                            aria-label={`Palpite de gols para ${m.away_team_code}`}
+                                            aria-label={t("palpites.score_input_aria", { team: m.away_team_code })}
                                             value={p.away}
                                             onChange={e => updateScore(m.id, 'away', e.target.value)}
                                             className="w-14 h-16 bg-white/5 border border-white/10 rounded-2xl text-center text-3xl font-black text-white outline-none focus:border-primary/50"
@@ -831,8 +833,8 @@ export function JogosTab({
                             <div className="mt-5 rounded-[24px] border border-white/5 bg-black/10 p-4">
                                 <div className="mb-3 flex items-center justify-between gap-3">
                                     <div>
-                                        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">Mercado extra da partida</p>
-                                        <p className="mt-1 text-sm font-bold text-white">{t('palpites.first_scorer_title', { defaultValue: 'Quem marca primeiro?' })}</p>
+                                        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">{t('palpites.extra_market_label')}</p>
+                                        <p className="mt-1 text-sm font-bold text-white">{t('palpites.first_scorer_title')}</p>
                                     </div>
                                     <TooltipProvider delayDuration={120}>
                                         <Tooltip>
@@ -840,10 +842,10 @@ export function JogosTab({
                                                 <button
                                                     type="button"
                                                     className="inline-flex h-9 items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 text-[10px] font-black uppercase tracking-[0.16em] text-zinc-300"
-                                                    aria-label={`Entender mercado ${firstScorerMarket.title}`}
+                                                    aria-label={t('palpites.market_help_aria', { title: firstScorerMarket.title })}
                                                 >
                                                     <CircleHelp className="h-3.5 w-3.5 text-primary" />
-                                                    {t('palpites.how_it_scores', { defaultValue: 'Como pontua' })}
+                                                    {t('palpites.how_it_scores')}
                                                 </button>
                                             </TooltipTrigger>
                                             <TooltipContent className="max-w-[240px] rounded-2xl border-white/10 bg-zinc-950 px-4 py-3 text-left text-xs text-zinc-200">
@@ -858,7 +860,7 @@ export function JogosTab({
                                     {[
                                         { value: m.home_team_code, label: m.home_team_code },
                                         { value: m.away_team_code, label: m.away_team_code },
-                                        { value: "none", label: t('palpites.no_goals', { defaultValue: 'Sem gols' }) },
+                                        { value: "none", label: t('palpites.no_goals') },
                                     ].map((option) => {
                                         const isSelected = currentFirstScorer === option.value;
                                         return (
@@ -881,7 +883,7 @@ export function JogosTab({
 
                                 {savedFirstScorer && (
                                     <p className="mt-3 text-xs text-zinc-400">
-                                        {t('palpites.saved_label', { defaultValue: 'Salvo:' })} <span className="font-black text-white">{savedFirstScorer === "none" ? t('palpites.no_goals', { defaultValue: 'Sem gols' }) : savedFirstScorer}</span>
+                                        {t('palpites.saved_label')} <span className="font-black text-white">{savedFirstScorer === "none" ? t('palpites.no_goals') : savedFirstScorer}</span>
                                     </p>
                                 )}
                             </div>
@@ -895,16 +897,16 @@ export function JogosTab({
                                     className="flex-1 mt-6 py-4 rounded-xl font-black uppercase text-[10px] tracking-widest transition-all hover:scale-[1.02] active:scale-95 bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white disabled:opacity-50 disabled:hover:scale-100"
                                 >
                                     {savingMatchId === m.id
-                                        ? t('palpites.saving_cta', { defaultValue: 'Salvando...' })
+                                        ? t('palpites.saving_cta')
                                         : hasSavedPrediction && !isDirty
-                                            ? t('palpites.saved_cta', { defaultValue: 'Palpite salvo' })
-                                            : t('palpites.save_cta', { defaultValue: 'Salvar palpite' })}
+                                            ? t('palpites.saved_cta')
+                                            : t('palpites.save_cta')}
                                 </button>
                                 <button
                                     onClick={() => openShareModal(m.id, m.home_team_code, m.away_team_code)}
                                     disabled={!hasSavedPrediction}
                                     className="mt-6 inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-5 text-white transition-colors hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
-                                    aria-label={`Compartilhar palpite de ${m.home_team_code} contra ${m.away_team_code}`}
+                                    aria-label={t('palpites.share_prediction_aria', { home: m.home_team_code, away: m.away_team_code })}
                                 >
                                     <Share2 className="h-4 w-4" />
                                 </button>
@@ -917,18 +919,18 @@ export function JogosTab({
             <Dialog open={shareModalOpen} onOpenChange={setShareModalOpen}>
                 <DialogContent className="bg-[#050505] border-white/10 rounded-[40px] p-8 max-w-sm text-center shadow-2xl">
                     <DialogHeader>
-                        <DialogTitle className="text-2xl font-black tracking-tighter mx-auto uppercase">Compartilhar Palpite</DialogTitle>
+                        <DialogTitle className="text-2xl font-black tracking-tighter mx-auto uppercase">{t('palpites.share_title')}</DialogTitle>
                     </DialogHeader>
 
                     <div className="flex flex-col gap-3 mt-6">
                         <button disabled={isGenerating} onClick={() => handleShare('whatsapp')} className="w-full flex items-center justify-center gap-3 py-4 bg-[#25D366] text-white rounded-2xl font-black uppercase text-[11px] tracking-widest disabled:opacity-50 hover:bg-[#1EBE5C] transition">
-                            <MessageCircle className="w-5 h-5" /> Compartilhar no Zap
+                            <MessageCircle className="w-5 h-5" /> {t('palpites.share_whatsapp')}
                         </button>
                         <button disabled={isGenerating} onClick={() => handleShare('copy')} className="w-full flex items-center justify-center gap-3 py-4 bg-white/5 text-white rounded-2xl font-black uppercase text-[11px] tracking-widest hover:bg-white/10 transition disabled:opacity-50">
-                            <Copy className="w-5 h-5" /> Copiar Imagem
+                            <Copy className="w-5 h-5" /> {t('palpites.copy_image')}
                         </button>
                         <button disabled={isGenerating} onClick={() => handleShare('download')} className="w-full flex items-center justify-center gap-3 py-4 bg-white/5 text-white rounded-2xl font-black uppercase text-[11px] tracking-widest hover:bg-white/10 transition disabled:opacity-50 border border-white/5">
-                            <Download className="w-5 h-5" /> Salvar na Galeria
+                            <Download className="w-5 h-5" /> {t('palpites.save_gallery')}
                         </button>
                     </div>
 

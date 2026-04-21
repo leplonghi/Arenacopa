@@ -2,12 +2,14 @@
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { db } from "@/integrations/firebase/client";
-import { collection, query, where, getDocs, limit, getCountFromServer, setDoc, doc } from "firebase/firestore";
+import { setDoc, doc, getDoc } from "firebase/firestore";
 import { useAuth } from "@/contexts/AuthContext";
 import { motion } from "framer-motion";
 import { Loader2, Target } from "lucide-react";
+import { BolaoAvatar } from "@/components/BolaoAvatar";
 import { useToast } from "@/hooks/use-toast";
 import { useTranslation } from "react-i18next";
+import { resolvePublicBolaoInvite } from "@/services/public-invite/public-invite.service";
 
 type PublicInviteBolao = {
     id: string;
@@ -15,6 +17,7 @@ type PublicInviteBolao = {
     description: string | null;
     avatar_url: string | null;
     category: string | null;
+    is_paid: boolean;
     memberCount: number;
 };
 
@@ -28,50 +31,39 @@ export default function PublicInvite() {
 
     const [bolao, setBolao] = useState<PublicInviteBolao | null>(null);
     const [loading, setLoading] = useState(true);
+    const accessLabel =
+        bolao?.category === "public"
+            ? t("wizard.details_step.public_title")
+            : bolao?.category === "private"
+                ? t("wizard.details_step.private_title")
+                : t("invite.access_open");
 
     const loadBolao = useCallback(async () => {
-        if (!inviteCode) return;
+        if (!inviteCode) {
+            setLoading(false);
+            return;
+        }
 
         const code = inviteCode.toUpperCase();
         try {
-            const boloesRef = collection(db, 'boloes');
-            const q = query(boloesRef, where('invite_code', '==', code), limit(1));
-            const querySnapshot = await getDocs(q);
+            const resolvedBolao = await resolvePublicBolaoInvite(code);
 
-            if (querySnapshot.empty) {
+            if (!resolvedBolao) {
                 toast({ title: t('invite.bolao_not_found'), variant: "destructive" });
                 navigate('/');
                 return;
             }
 
-            const docSnap = querySnapshot.docs[0];
-            const data = docSnap.data();
-            const bolaoId = docSnap.id;
-
-            // Get member count
-            const membersRef = collection(db, 'bolao_members');
-            const membersCountSnap = await getCountFromServer(query(membersRef, where('bolao_id', '==', bolaoId)));
-            const memberCount = membersCountSnap.data().count;
-
             if (user) {
-                const memberRef = collection(db, 'bolao_members');
-                const mq = query(memberRef, where('bolao_id', '==', bolaoId), where('user_id', '==', user.id), limit(1));
-                const memberSnap = await getDocs(mq);
+                const memberSnap = await getDoc(doc(db, "bolao_members", `${user.id}_${resolvedBolao.id}`));
 
-                if (!memberSnap.empty) {
-                    navigate(`/boloes/${bolaoId}`);
+                if (memberSnap.exists()) {
+                    navigate(`/boloes/${resolvedBolao.id}`);
                     return;
                 }
             }
 
-            setBolao({
-                id: bolaoId,
-                name: data.name,
-                description: data.description || null,
-                avatar_url: data.avatar_url || null,
-                category: data.category || null,
-                memberCount
-            });
+            setBolao(resolvedBolao);
         } catch (error) {
             console.error("Error loading bolao:", error);
             toast({ title: t('invite.load_error'), variant: "destructive" });
@@ -98,7 +90,7 @@ export default function PublicInvite() {
                 bolao_id: bolao.id,
                 user_id: user.id,
                 role: "member",
-                payment_status: "exempt",
+                payment_status: bolao.is_paid ? "pending" : "exempt",
                 invite_code: inviteCode?.toUpperCase() || null,
                 joined_at: new Date().toISOString()
             });
@@ -134,29 +126,33 @@ export default function PublicInvite() {
                 <div className="bg-white/[0.03] backdrop-blur-3xl border border-white/10 rounded-[60px] p-10 text-center shadow-2xl relative overflow-hidden">
                     <div className="absolute top-0 left-0 w-full h-[6px] bg-gradient-to-r from-transparent via-primary to-transparent" />
 
-                    <div className="text-[60px] mb-6 inline-block bg-white/5 p-4 rounded-3xl border border-white/10">{bolao.avatar_url || '🏆'}</div>
-                    <h3 className="text-[12px] font-black uppercase tracking-[0.3em] text-primary mb-2">Vem pra Arena</h3>
+                    <BolaoAvatar
+                        avatarUrl={bolao.avatar_url}
+                        alt={bolao.name}
+                        className="mb-6 inline-flex h-[108px] w-[108px] items-center justify-center rounded-3xl border border-white/10 bg-white/5 p-4 text-[60px]"
+                    />
+                    <h3 className="text-[12px] font-black uppercase tracking-[0.3em] text-primary mb-2">{t('invite.kicker')}</h3>
                     <h1 className="text-4xl font-black text-white tracking-tighter mb-4">{bolao.name}</h1>
                     {bolao.description && <p className="text-sm text-gray-400 font-medium mb-8 px-4">{bolao.description}</p>}
 
                     <div className="flex justify-center gap-6 mb-8">
                         <div className="text-center">
                             <span className="block text-2xl font-black text-white">{bolao.memberCount}</span>
-                            <span className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Membros</span>
+                            <span className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">{t('invite.members_label')}</span>
                         </div>
                         <div className="w-[1px] bg-white/10" />
                         <div className="text-center">
-                            <span className="block text-2xl font-black text-white uppercase">{bolao.category || "Aberto"}</span>
-                            <span className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">Acesso</span>
+                            <span className="block text-2xl font-black text-white uppercase">{accessLabel}</span>
+                            <span className="text-[10px] text-gray-500 uppercase tracking-widest font-bold">{t('invite.access_label')}</span>
                         </div>
                     </div>
 
                     <button onClick={handleJoin} className="w-full bg-primary text-black font-black uppercase tracking-widest text-xs py-5 rounded-2xl hover:scale-105 transition flex items-center justify-center gap-2">
-                        <Target className="w-5 h-5" /> Entrar no Bolão
+                        <Target className="w-5 h-5" /> {t('invite.join_cta')}
                     </button>
 
                     {!user && (
-                        <p className="mt-6 text-xs text-gray-500 font-medium">Faça o login ou instale o app para participar gratuitamente.</p>
+                        <p className="mt-6 text-xs text-gray-500 font-medium">{t('invite.login_hint')}</p>
                     )}
                 </div>
             </motion.div>

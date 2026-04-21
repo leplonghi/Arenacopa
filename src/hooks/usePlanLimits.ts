@@ -50,9 +50,8 @@ export function usePlanLimits(): PlanLimits {
       try {
         const snap = await getCountFromServer(
           query(
-            collection(db, "grupo_members"),
-            where("user_id", "==", user.id),
-            where("role", "==", "admin"),
+            collection(db, "grupos"),
+            where("creator_id", "==", user.id),
           ),
         );
         if (!cancelled) setAdminGroupCount(snap.data().count);

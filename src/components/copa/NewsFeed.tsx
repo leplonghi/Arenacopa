@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { staggerItem, staggerContainer } from "./animations";
 import { Eye, ArrowRight, TrendingUp, Newspaper, Clock } from "lucide-react";
 import { useRealtimeNews } from "@/hooks/useRealtimeNews";
+import { normalizeLanguage } from "@/i18n/language";
 import { openSafeExternalUrl, sanitizeExternalUrl } from "@/lib/security";
 
 interface NewsItemDisplay {
@@ -19,7 +20,8 @@ interface NewsItemDisplay {
 }
 
 export function NewsFeed() {
-    const { t } = useTranslation('bolao');
+    const { t, i18n } = useTranslation('bolao');
+    const language = normalizeLanguage(i18n.resolvedLanguage || i18n.language);
     const { news: realtimeNews, isLoading: loading } = useRealtimeNews({
         limitCount: 6,
         championshipId: "wc2026",
@@ -29,10 +31,10 @@ export function NewsFeed() {
             realtimeNews.map((item) => ({
                 id: item.id,
                 title: item.title,
-                category: item.source_name || item.source_country || item.category || item.country_filter || "Geral",
+                category: item.source_name || item.source_country || item.category || item.country_filter || t("news.general_category"),
                 time: item.published_at && !Number.isNaN(new Date(item.published_at).getTime())
-                    ? new Date(item.published_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })
-                    : "Recent",
+                    ? new Date(item.published_at).toLocaleDateString(language, { day: "2-digit", month: "short" })
+                    : t("news.recent"),
                 image: item.image_url || item.url_to_image || "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=800",
                 url: sanitizeExternalUrl(item.url) || "#",
                 views: item.views
@@ -41,7 +43,7 @@ export function NewsFeed() {
                 content: item.summary || item.content || item.description || undefined,
                 source: item.source_name || undefined,
             })) satisfies NewsItemDisplay[],
-        [realtimeNews]
+        [language, realtimeNews, t]
     );
 
     if (loading) {
@@ -128,7 +130,7 @@ export function NewsFeed() {
                                 <div className="flex items-center justify-between mt-4">
                                     <div className="flex items-center gap-1.5 text-[9px] text-zinc-500 font-medium">
                                         <Eye className="w-3 h-3 text-zinc-600" />
-                                        {item.views} <span className="opacity-60 whitespace-nowrap">readers</span>
+                                        {item.views} <span className="opacity-60 whitespace-nowrap">{t("news.readers")}</span>
                                     </div>
                                     <div className="w-6 h-6 rounded-full bg-white/5 flex items-center justify-center group-hover:bg-copa-gold transition-all duration-300">
                                         <ArrowRight className="w-3 h-3 text-zinc-500 group-hover:text-zinc-950" />

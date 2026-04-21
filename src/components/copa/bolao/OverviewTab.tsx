@@ -38,11 +38,11 @@ function getScopeIcon(scope: BolaoMarket["scope"]) {
     }
 }
 
-function formatActivityTime(value?: string) {
-    if (!value) return "agora";
+function formatActivityTime(value: string | undefined, locale: string, nowLabel: string) {
+    if (!value) return nowLabel;
     const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return "agora";
-    return date.toLocaleString("pt-BR", {
+    if (Number.isNaN(date.getTime())) return nowLabel;
+    return date.toLocaleString(locale, {
         day: "2-digit",
         month: "2-digit",
         hour: "2-digit",
@@ -51,7 +51,7 @@ function formatActivityTime(value?: string) {
 }
 
 export function OverviewTab({ bolao, members, palpites, markets, marketPredictions, activityFeed, userId, onShare }: OverviewTabProps) {
-    const { t } = useTranslation('bolao');
+    const { t, i18n } = useTranslation('bolao');
     const dateLocale = useDateLocale();
     const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
     const navigate = useNavigate();
@@ -125,7 +125,7 @@ export function OverviewTab({ bolao, members, palpites, markets, marketPredictio
                     icon={<Users className="w-5 h-5 text-emerald-400" />}
                     value={members.length}
                     label={t('overview.members_stat')}
-                    subLabel="MEMBERS"
+                    subLabel={t("overview.stats_members_sub")}
                     color="emerald"
                     delay={0.1}
                 />
@@ -133,7 +133,7 @@ export function OverviewTab({ bolao, members, palpites, markets, marketPredictio
                     icon={<BarChart3 className="w-5 h-5 text-amber-400" />}
                     value={markets.length > 0 ? markets.length : myPalpites.length}
                     label={t('overview.palpites_stat')}
-                    subLabel={markets.length > 0 ? "MARKETS" : "PREDICTIONS"}
+                    subLabel={markets.length > 0 ? t("overview.stats_markets_sub") : t("overview.stats_predictions_sub")}
                     color="amber"
                     delay={0.2}
                 />
@@ -141,7 +141,7 @@ export function OverviewTab({ bolao, members, palpites, markets, marketPredictio
                     icon={<TrendingUp className="w-5 h-5 text-blue-400" />}
                     value={`${progress}%`}
                     label={t('overview.progress_stat')}
-                    subLabel="COMPLETE"
+                    subLabel={t("overview.stats_complete_sub")}
                     color="blue"
                     delay={0.3}
                 />
@@ -184,7 +184,7 @@ export function OverviewTab({ bolao, members, palpites, markets, marketPredictio
                         <span className="text-[8px] font-black text-gray-600 uppercase tracking-widest">{t('overview.kickoff')}</span>
                         <div className="flex items-center gap-2">
                             <div className="px-2 py-0.5 rounded-md bg-emerald-500/10 border border-emerald-500/20">
-                                <span className="text-[9px] font-black text-emerald-500 tracking-tighter uppercase">{progress}% READY</span>
+                                <span className="text-[9px] font-black text-emerald-500 tracking-tighter uppercase">{t("overview.ready_badge", { progress })}</span>
                             </div>
                         </div>
                         <span className="text-[8px] font-black text-gray-600 uppercase tracking-widest">{t('overview.final')}</span>
@@ -366,7 +366,7 @@ export function OverviewTab({ bolao, members, palpites, markets, marketPredictio
                                             {item.description && <p className="mt-1 text-xs leading-relaxed text-zinc-400">{item.description}</p>}
                                         </div>
                                         <span className="shrink-0 text-[10px] font-black uppercase tracking-[0.16em] text-zinc-500">
-                                            {formatActivityTime(item.created_at)}
+                                            {formatActivityTime(item.created_at, i18n.resolvedLanguage || i18n.language, t("overview.activity_now"))}
                                         </span>
                                     </div>
                                     {item.actor_name && (
@@ -440,7 +440,7 @@ export function OverviewTab({ bolao, members, palpites, markets, marketPredictio
             <motion.div variants={staggerItem} className="px-6 pb-8">
                 <div className="h-px w-full bg-white/5 mb-6" />
                 <p className="text-[10px] text-gray-600 leading-relaxed text-center font-bold font-mono tracking-tight">
-                    ARENACUP PROTOCOL V2.5 <span className="mx-2">·</span>
+                    {t("overview.protocol_label")} V2.5 <span className="mx-2">·</span>
                     {t('overview.disclaimer').toUpperCase()}
                 </p>
             </motion.div>

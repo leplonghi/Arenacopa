@@ -12,6 +12,7 @@ import {
   type UpdateData,
 } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { getDefaultProfileName } from "@/i18n/language";
 import type {
   PreferredLanguage,
   ProfileRecord,
@@ -22,6 +23,7 @@ import type {
 const MAX_AVATAR_SIZE_BYTES = 5 * 1024 * 1024;
 const ALLOWED_AVATAR_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
 const ALLOWED_AVATAR_EXTENSIONS = new Set(["jpg", "jpeg", "png", "webp", "gif"]);
+const DEFAULT_PROFILE_NAME = getDefaultProfileName();
 
 function buildPublicProfilePayload(input: {
   userId: string;
@@ -77,7 +79,7 @@ export async function ensureProfile(user: EnsureProfileUser) {
     user.user_metadata?.full_name ||
     user.user_metadata?.name ||
     user.email?.split("@")[0] ||
-    "Torcedor";
+    DEFAULT_PROFILE_NAME;
   const createdAt = new Date().toISOString();
 
   if (!docSnap.exists()) {
@@ -105,7 +107,7 @@ export async function updateProfile(userId: string, updates: ProfileUpdateInput)
   if (!existingProfile.exists()) {
     const createdProfile = {
       user_id: userId,
-      name: "Torcedor",
+      name: DEFAULT_PROFILE_NAME,
       avatar_url: null,
       created_at: new Date().toISOString(),
       ...updates,

@@ -2,8 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Loader2, Plus, Users2, X, Crown, CheckCircle2 } from "lucide-react";
 import {
-  collection, query, where, getDocs, addDoc,
-  doc, setDoc, getDoc, orderBy, limit, getCountFromServer,
+  collection, query, where, getDocs, doc, setDoc, getDoc, limit, writeBatch,
 } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { useMonetization } from "@/contexts/MonetizationContext";
@@ -47,27 +46,44 @@ export default function Grupos() {
   const [newCategory, setNewCategory] = useState<"private" | "public">("private");
 
   const loadGrupos = useCallback(async () => {
-    if (!user) return;
+    if (!user) {
+      setGrupos([]);
+      setLoading(false);
+      return;
+    }
+
     setLoading(true);
     try {
       const memSnap = await getDocs(query(collection(db, "grupo_members"), where("user_id", "==", user.id)));
-      const grupoIds = memSnap.docs.map(d => d.data().grupo_id as string);
+      const grupoIds = Array.from(new Set(memSnap.docs.map(d => d.data().grupo_id as string)));
       if (grupoIds.length === 0) { setGrupos([]); setLoading(false); return; }
 
-      const results: Grupo[] = [];
-      for (const gid of grupoIds) {
-        const gDoc = await getDoc(doc(db, "grupos", gid));
-        if (!gDoc.exists()) continue;
-        const data = gDoc.data();
-        const bolaoSnap = await getDocs(query(collection(db, "boloes"), where("grupo_id", "==", gid), limit(20)));
-        results.push({
-          id: gDoc.id, name: data.name, emoji: data.emoji,
-          description: data.description ?? null, creator_id: data.creator_id,
-          invite_code: data.invite_code, category: data.category,
-          member_count: data.member_count ?? 1, bolao_count: bolaoSnap.size,
-        });
-      }
-      setGrupos(results);
+      const resultEntries = await Promise.all(
+        grupoIds.map(async (gid) => {
+          const [gDoc, bolaoCountSnap, memberCountSnap] = await Promise.all([
+            getDoc(doc(db, "grupos", gid)),
+            getCountFromServer(query(collection(db, "boloes"), where("grupo_id", "==", gid))),
+            getCountFromServer(query(collection(db, "grupo_members"), where("grupo_id", "==", gid))),
+          ]);
+
+          if (!gDoc.exists()) return null;
+
+          const data = gDoc.data();
+          return {
+            id: gDoc.id,
+            name: data.name,
+            emoji: data.emoji,
+            description: data.description ?? null,
+            creator_id: data.creator_id,
+            invite_code: data.invite_code,
+            category: data.category,
+            member_count: memberCountSnap.data().count,
+            bolao_count: bolaoCountSnap.data().count,
+          } satisfies Grupo;
+        }),
+      );
+
+      setGrupos(resultEntries.filter((grupo): grupo is Grupo => grupo !== null));
     } catch (e) { console.error(e); }
     finally { setLoading(false); }
   }, [user]);
@@ -81,19 +97,34 @@ export default function Grupos() {
     setCreating(true);
     try {
       const code = Math.random().toString(36).substring(2, 8).toUpperCase();
-      const grupoRef = await addDoc(collection(db, "grupos"), {
-        name: newName.trim(), emoji: newEmoji, description: newDesc.trim() || null,
-        creator_id: user.id, invite_code: code, category: newCategory,
-        member_count: 1, created_at: new Date().toISOString(),
+      const now = new Date().toISOString();
+      const grupoRef = doc(collection(db, "grupos"));
+      const batch = writeBatch(db);
+
+      batch.set(grupoRef, {
+        name: newName.trim(),
+        emoji: newEmoji,
+        description: newDesc.trim() || null,
+        creator_id: user.id,
+        invite_code: code,
+        category: newCategory,
+        member_count: 1,
+        created_at: now,
       });
-      await setDoc(doc(db, "grupo_members", `${user.id}_${grupoRef.id}`), {
-        grupo_id: grupoRef.id, user_id: user.id, role: "admin",
-        joined_at: new Date().toISOString(),
+
+      batch.set(doc(db, "grupo_members", `${user.id}_${grupoRef.id}`), {
+        grupo_id: grupoRef.id,
+        user_id: user.id,
+        role: "admin",
+        joined_at: now,
       });
+
+      await batch.commit();
       toast({ title: t('grupos.created'), className: "bg-emerald-500 text-white font-black" });
       setShowCreate(false); setNewName(""); setNewDesc("");
       navigate(`/grupos/${grupoRef.id}`);
     } catch (e) {
+      console.error("Erro ao criar grupo:", e);
       toast({ title: t('grupos.create_error'), variant: "destructive" });
     } finally { setCreating(false); }
   };
@@ -111,11 +142,13 @@ export default function Grupos() {
       if (existing.exists()) { toast({ title: t('grupos.already_member') }); return; }
       await setDoc(doc(db, "grupo_members", memberId), {
         grupo_id: gDoc.id, user_id: user.id, role: "member", joined_at: new Date().toISOString(),
+        invite_code: code,
       });
       toast({ title: t('grupos.joined'), className: "bg-emerald-500 text-white font-black" });
       setShowJoin(false); setJoinCode("");
       navigate(`/grupos/${gDoc.id}`);
     } catch (e) {
+      console.error("Erro ao entrar no grupo:", e);
       toast({ title: t('grupos.invalid_code'), description: t('grupos.invalid_code_desc'), variant: "destructive" });
     } finally { setJoining(false); }
   };
@@ -126,21 +159,21 @@ export default function Grupos() {
       <div className="mx-auto flex min-h-[70vh] max-w-lg items-center px-4 py-10 text-white">
         <div className="surface-card-strong w-full rounded-[32px] p-6">
           <div className="mb-4 inline-flex rounded-full bg-primary/15 p-3 text-primary"><Crown className="h-6 w-6" /></div>
-          <h1 className="text-2xl font-black">Limite de grupos atingido</h1>
-          <p className="mt-2 text-sm text-zinc-400">O plano gratuito permite criar 1 grupo. O Copa Pass libera grupos ilimitados.</p>
+          <h1 className="text-2xl font-black">{t('grupos.limit_title')}</h1>
+          <p className="mt-2 text-sm text-zinc-400">{t('grupos.limit_desc')}</p>
           <div className="surface-card-soft mt-5 space-y-3 rounded-2xl p-4 text-sm">
-            <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-primary" /> Grupos ilimitados</div>
-            <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-primary" /> Bolões ilimitados</div>
-            <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-primary" /> Badge Torcedor Oficial</div>
+            <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-primary" /> {t('grupos.limit_feature_groups')}</div>
+            <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-primary" /> {t('grupos.limit_feature_pools')}</div>
+            <div className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-primary" /> {t('grupos.limit_feature_badge')}</div>
           </div>
           <div className="mt-6 grid gap-3">
             <button onClick={() => void purchasePremium()} disabled={isPurchasing || !canStartCheckout}
               className="inline-flex h-14 items-center justify-center gap-2 rounded-2xl bg-primary px-5 text-[11px] font-black uppercase tracking-[0.18em] text-black disabled:opacity-60">
               {isPurchasing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Crown className="h-4 w-4" />}
-              {isPurchasing ? "Aguarde..." : canStartCheckout ? "Copa Pass — R$ 19,90" : "Em preparação"}
+              {isPurchasing ? t('grupos.limit_waiting') : canStartCheckout ? t('grupos.limit_cta') : t('grupos.limit_unavailable')}
             </button>
             {!canStartCheckout && <p className="text-center text-xs text-zinc-500">{PREMIUM_CHECKOUT_UNAVAILABLE_MESSAGE}</p>}
-            <button onClick={() => setShowPaywall(false)} className="surface-input h-12 rounded-2xl bg-transparent text-sm font-bold text-zinc-300">Voltar</button>
+            <button onClick={() => setShowPaywall(false)} className="surface-input h-12 rounded-2xl bg-transparent text-sm font-bold text-zinc-300">{t('grupos.back')}</button>
           </div>
         </div>
       </div>
@@ -151,36 +184,36 @@ export default function Grupos() {
     <div className="mx-auto max-w-3xl px-4 pb-28 pt-6 text-white">
       <div className="mb-6 flex items-center justify-between gap-3">
         <div>
-          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">Comunidade</p>
-          <h1 className="mt-1 text-3xl font-black">Grupos</h1>
-          <p className="mt-1 text-sm text-zinc-400">Reúna bolões em um grupo e dispute o ranking geral</p>
+          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">{t('grupos.kicker')}</p>
+          <h1 className="mt-1 text-3xl font-black">{t('grupos.title')}</h1>
+          <p className="mt-1 text-sm text-zinc-400">{t('grupos.subtitle')}</p>
         </div>
         <button onClick={() => setShowCreate(true)}
           className="inline-flex items-center gap-2 rounded-2xl bg-primary px-4 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-black">
-          <Plus className="h-4 w-4" /> Criar
+          <Plus className="h-4 w-4" /> {t('grupos.create_button')}
         </button>
       </div>
 
       <button onClick={() => setShowJoin(v => !v)}
         className="mb-6 w-full rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-left text-sm font-bold hover:bg-white/10 transition-colors">
-        Entrar com código de convite
+        {t('grupos.join_with_code')}
       </button>
       {showJoin && (
         <div className="mb-6 flex gap-2">
           <input value={joinCode} onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-            placeholder="CÓDIGO" maxLength={6}
+            placeholder={t('grupos.code_placeholder')} maxLength={6}
             className="surface-input flex-1 rounded-2xl px-4 py-3 text-base font-black uppercase tracking-widest" />
           <button onClick={handleJoin} disabled={joining || joinCode.length < 6}
             className="rounded-2xl bg-primary px-5 py-3 text-[11px] font-black uppercase tracking-widest text-black disabled:opacity-60">
-            {joining ? <Loader2 className="h-4 w-4 animate-spin" /> : "Entrar"}
+            {joining ? <Loader2 className="h-4 w-4 animate-spin" /> : t('grupos.join_action')}
           </button>
         </div>
       )}
 
       {loading && <div className="flex justify-center py-12"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>}
       {!loading && grupos.length === 0 && (
-        <EmptyState icon="👥" title="Nenhum grupo ainda"
-          description="Crie seu primeiro grupo ou entre com um código de convite." />
+        <EmptyState icon="👥" title={t('grupos.empty_title')}
+          description={t('grupos.empty_desc')} />
       )}
       {!loading && grupos.length > 0 && (
         <div className="space-y-3">
@@ -193,8 +226,8 @@ export default function Grupos() {
                   <p className="font-black">{g.name}</p>
                   {g.description && <p className="text-xs text-zinc-400">{g.description}</p>}
                   <div className="mt-1 flex gap-3 text-xs text-zinc-500">
-                    <span>{g.member_count} membros</span>
-                    <span>{g.bolao_count} bolões</span>
+                    <span>{t('grupos.members_count', { count: g.member_count })}</span>
+                    <span>{t('grupos.pools_count', { count: g.bolao_count })}</span>
                   </div>
                 </div>
               </div>
@@ -209,7 +242,7 @@ export default function Grupos() {
         <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/60 backdrop-blur-sm" onClick={() => setShowCreate(false)}>
           <div className="w-full max-w-lg rounded-t-[32px] bg-[#0f1f14] p-6 pb-10 text-white space-y-4" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-black">Criar Grupo</h2>
+              <h2 className="text-xl font-black">{t('grupos.create_modal_title')}</h2>
               <button onClick={() => setShowCreate(false)} className="rounded-full bg-white/10 p-2"><X className="h-4 w-4" /></button>
             </div>
             <div className="flex gap-2">{EMOJIS_G.map(e => (
@@ -218,13 +251,38 @@ export default function Grupos() {
                 {e}
               </button>
             ))}</div>
-            <input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="Nome do grupo *"
+            <input value={newName} onChange={(e) => setNewName(e.target.value)} placeholder={t('grupos.name_placeholder')}
               className="w-full rounded-2xl bg-white/10 px-4 py-3 text-base font-black placeholder:font-normal placeholder:text-zinc-500 outline-none" />
-            <textarea value={newDesc} onChange={(e) => setNewDesc(e.target.value)} placeholder="Descrição (opcional)"
+            <textarea value={newDesc} onChange={(e) => setNewDesc(e.target.value)} placeholder={t('grupos.description_placeholder')}
               className="w-full rounded-2xl bg-white/10 px-4 py-3 text-sm outline-none min-h-[60px]" />
+            <div className="space-y-2">
+              <p className="text-xs font-black uppercase tracking-[0.16em] text-zinc-400">{t('grupos.access_title')}</p>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => setNewCategory("private")}
+                  className={cn(
+                    "rounded-2xl border px-4 py-3 text-left transition-all",
+                    newCategory === "private" ? "border-primary bg-primary/10" : "border-white/10 bg-white/5"
+                  )}
+                >
+                  <p className="text-sm font-black">{t('grupos.private_title')}</p>
+                  <p className="mt-1 text-xs text-zinc-400">{t('grupos.private_desc')}</p>
+                </button>
+                <button
+                  onClick={() => setNewCategory("public")}
+                  className={cn(
+                    "rounded-2xl border px-4 py-3 text-left transition-all",
+                    newCategory === "public" ? "border-primary bg-primary/10" : "border-white/10 bg-white/5"
+                  )}
+                >
+                  <p className="text-sm font-black">{t('grupos.public_title')}</p>
+                  <p className="mt-1 text-xs text-zinc-400">{t('grupos.public_desc')}</p>
+                </button>
+              </div>
+            </div>
             <button onClick={handleCreate} disabled={creating || newName.trim().length < 2}
               className="w-full rounded-2xl bg-primary py-4 text-[11px] font-black uppercase tracking-widest text-black disabled:opacity-60">
-              {creating ? <span className="inline-flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" />Criando...</span> : "Criar grupo"}
+              {creating ? <span className="inline-flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" />{t('grupos.creating')}</span> : t('grupos.create_group')}
             </button>
           </div>
         </div>

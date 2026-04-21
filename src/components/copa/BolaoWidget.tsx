@@ -43,7 +43,7 @@ export function BolaoWidget() {
                         <div>
                             <div className="flex items-center gap-2 mb-1.5">
                                 <ShieldCheck className="w-3 h-3 text-primary animate-pulse" />
-                                <span className="text-[10px] text-primary font-black uppercase tracking-[0.2em]">{t('widget.status_live', 'ARENA ATIVA')}</span>
+                                <span className="text-[10px] text-primary font-black uppercase tracking-[0.2em]">{t('widget.status_live')}</span>
                             </div>
                             <h3 className="text-2xl font-black text-white tracking-tighter leading-none group-hover:text-primary transition-colors">{bolao.name}</h3>
                         </div>
@@ -58,7 +58,7 @@ export function BolaoWidget() {
                         <div className="flex flex-col">
                             <div className="flex items-baseline gap-1.5">
                                 <span className="text-5xl font-black text-white tracking-tighter tabular-nums leading-none">{bolao.myRank}</span>
-                                <span className="text-xs font-black text-gray-600 uppercase tracking-tighter">POSIÇÃO</span>
+                                <span className="text-xs font-black text-gray-600 uppercase tracking-tighter">{t('widget.position')}</span>
                             </div>
                             <div className="h-1 w-12 bg-primary/20 rounded-full mt-3 overflow-hidden">
                                 <motion.div
@@ -74,7 +74,7 @@ export function BolaoWidget() {
                     <div className="flex flex-col items-end justify-between">
                         <div className="text-right">
                             <div className="text-4xl font-black text-white tracking-tighter tabular-nums leading-none">{bolao.myPoints}</div>
-                            <div className="text-[10px] text-gray-600 font-bold uppercase tracking-widest mt-1">PONTOS TOTAIS</div>
+                            <div className="text-[10px] text-gray-600 font-bold uppercase tracking-widest mt-1">{t('widget.total_points')}</div>
                         </div>
 
                         <div className={cn(
@@ -88,17 +88,17 @@ export function BolaoWidget() {
                             {bolao.myDelta > 0 ? (
                                 <>
                                     <TrendingUp className="w-4 h-4" strokeWidth={3} />
-                                    <span>SUBIU {bolao.myDelta}</span>
+                                    <span>{t('widget.up', { count: bolao.myDelta })}</span>
                                 </>
                             ) : bolao.myDelta < 0 ? (
                                 <>
                                     <TrendingDown className="w-4 h-4" strokeWidth={3} />
-                                    <span>CAIU {Math.abs(bolao.myDelta)}</span>
+                                    <span>{t('widget.down', { count: Math.abs(bolao.myDelta) })}</span>
                                 </>
                             ) : (
                                 <>
                                     <Minus className="w-4 h-4" strokeWidth={3} />
-                                    <span>ESTÁVEL</span>
+                                    <span>{t('widget.stable')}</span>
                                 </>
                             )}
                         </div>

@@ -1,5 +1,6 @@
 import React, { forwardRef, useEffect, useState } from "react";
 import * as htmlToImage from "html-to-image";
+import { BolaoAvatar } from "@/components/BolaoAvatar";
 import { Flag } from "@/components/Flag";
 import { useTranslation } from "react-i18next";
 import { useToast } from "@/hooks/use-toast";
@@ -89,12 +90,16 @@ export const ShareCardGenerator = forwardRef<HTMLDivElement, ShareCardProps>(({ 
                 {/* Content switch */}
                 {type === 'join_bolao' && (
                     <div className="flex flex-col items-center text-center z-10 w-full max-w-2xl bg-white/[0.03] backdrop-blur-xl border border-white/10 rounded-[60px] p-20 shadow-[0_0_100px_rgba(34,197,94,0.1)]">
-                        <div className="text-[100px] mb-8">{data.avatar_url || '🏆'}</div>
-                        <h3 className="text-[32px] font-black uppercase tracking-[0.3em] text-primary mb-4">Vem pro Bolão</h3>
+                        <BolaoAvatar
+                            avatarUrl={data.avatar_url}
+                            alt={data.name || t('share_card.join_title')}
+                            className="mb-8 flex h-[168px] w-[168px] items-center justify-center rounded-[40px] border border-white/10 bg-white/5 text-[100px]"
+                        />
+                        <h3 className="text-[32px] font-black uppercase tracking-[0.3em] text-primary mb-4">{t('share_card.join_title')}</h3>
                         <h1 className="text-[80px] font-black leading-[0.9] text-white tracking-tighter mb-8">{data.name}</h1>
-                        <p className="text-[32px] font-medium text-gray-400 mb-12">{data.description || 'Entre na arena e prove quem manda.'}</p>
+                        <p className="text-[32px] font-medium text-gray-400 mb-12">{data.description || t('share_card.join_fallback_desc')}</p>
                         <div className="px-16 py-8 rounded-3xl bg-white/10 border border-white/20 inline-block">
-                            <span className="text-[24px] uppercase tracking-widest text-gray-400 font-black block mb-2">CÓDIGO SECRETO</span>
+                            <span className="text-[24px] uppercase tracking-widest text-gray-400 font-black block mb-2">{t('share_card.secret_code')}</span>
                             <span className="text-[64px] font-mono text-white tracking-[0.2em]">{data.invite_code}</span>
                         </div>
                         <div className="mt-16 text-[24px] text-gray-500 font-bold uppercase tracking-widest">Acesse: arenacopa.app/b/{data.invite_code}</div>
@@ -103,7 +108,7 @@ export const ShareCardGenerator = forwardRef<HTMLDivElement, ShareCardProps>(({ 
 
                 {type === 'my_palpite' && (
                     <div className="flex flex-col items-center text-center z-10 w-full max-w-4xl pt-20">
-                        <div className="px-12 py-4 bg-primary text-black rounded-full font-black text-[32px] uppercase tracking-widest mb-16 shadow-[0_0_50px_rgba(34,197,94,0.5)]">MEU PALPITE ESTÁ LANÇADO!</div>
+                        <div className="px-12 py-4 bg-primary text-black rounded-full font-black text-[32px] uppercase tracking-widest mb-16 shadow-[0_0_50px_rgba(34,197,94,0.5)]">{t('share_card.prediction_title')}</div>
 
                         <div className="flex items-center justify-between w-full bg-white/[0.03] border border-white/10 rounded-[60px] p-24 backdrop-blur-2xl">
                             <div className="flex flex-col items-center gap-8">
@@ -113,7 +118,7 @@ export const ShareCardGenerator = forwardRef<HTMLDivElement, ShareCardProps>(({ 
 
                             <div className="flex gap-16 items-center">
                                 <div className="text-[120px] font-black text-white bg-white/5 px-12 py-8 rounded-[40px]">{data.homeScore}</div>
-                                <div className="text-[40px] text-gray-600 font-bold uppercase">VS</div>
+                                <div className="text-[40px] text-gray-600 font-bold uppercase">{t('share_card.versus')}</div>
                                 <div className="text-[120px] font-black text-white bg-white/5 px-12 py-8 rounded-[40px]">{data.awayScore}</div>
                             </div>
 
@@ -125,7 +130,7 @@ export const ShareCardGenerator = forwardRef<HTMLDivElement, ShareCardProps>(({ 
 
                         <div className="mt-16 text-[32px] font-black text-white flex items-center gap-4">
                             <div className="w-16 h-16 bg-primary rounded-xl flex items-center justify-center text-black">🎯</div>
-                            Arena CUP 2026
+                            {t('share_card.brand_label')}
                         </div>
                     </div>
                 )}

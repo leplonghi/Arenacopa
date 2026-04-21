@@ -3,5 +3,14 @@
     "not_found": "Recurso não encontrado.",
     "unauthorized": "Você precisa estar logado.",
     "network": "Erro de conexão.",
-    "validation": "Verifique os dados informados."
+    "validation": "Verifique os dados informados.",
+    "page_not_found": "Ops! Página não encontrada",
+    "back_home": "Voltar ao início",
+    "error_boundary": {
+        "badge": "Recuperação de erro",
+        "title": "Algo saiu do ritmo da partida",
+        "description": "A tela encontrou um erro inesperado. Você pode tentar carregar novamente ou voltar para o início sem perder o restante do app.",
+        "retry": "Tentar novamente",
+        "go_home": "Voltar ao início"
+    }
 }

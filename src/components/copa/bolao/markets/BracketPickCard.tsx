@@ -60,6 +60,7 @@ function BracketMatch({
     onPick: (teamCode: string) => void;
     disabled?: boolean;
 }) {
+    const { t } = useTranslation("bolao");
     const options = [home, away].filter((item): item is string => Boolean(item));
 
     return (
@@ -88,7 +89,7 @@ function BracketMatch({
                 })}
                 {options.length === 0 && (
                     <div className="rounded-[18px] border border-dashed border-white/10 bg-white/5 px-4 py-3 text-sm text-zinc-500">
-                        Aguardando classificados
+                        {t("bracket_pick.waiting_classifieds")}
                     </div>
                 )}
             </div>
@@ -169,7 +170,7 @@ export function BracketPickCard({
                     <div>
                         <p className="text-sm font-black text-white">{t('bracket_pick.unlocks_with')}</p>
                         <p className="mt-1 text-xs leading-relaxed text-zinc-400">
-                            Para montar a chave visual, primeiro salve o mercado de semifinalistas na aba de fase. Depois o bracket usa essas quatro seleções como base.
+                            {t("bracket_pick.unlocks_desc")}
                         </p>
                     </div>
                 </div>
@@ -182,20 +183,20 @@ export function BracketPickCard({
             <div className="rounded-[24px] border border-white/10 bg-black/10 p-4">
                 <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">{t('bracket_pick.your_bracket')}</p>
                 <p className="mt-2 text-sm text-zinc-400">
-                    Escolha os vencedores das semifinais e depois crave o campeão na final. O bracket usa seus semifinalistas já salvos.
+                    {t("bracket_pick.your_bracket_desc")}
                 </p>
 
                 <div className="mt-5 grid gap-4 lg:grid-cols-[1fr_auto_1fr]">
                     <div className="space-y-4">
                         <BracketMatch
-                            label="Semifinal 1"
+                            label={t("bracket_pick.semifinal_label", { number: 1 })}
                             home={draft.semifinalists[0] ?? null}
                             away={draft.semifinalists[1] ?? null}
                             selectedWinner={draftFinalists[0] ?? ""}
                             onPick={(winner) => updateWinner(draft, setDraft, 0, winner)}
                         />
                         <BracketMatch
-                            label="Semifinal 2"
+                            label={t("bracket_pick.semifinal_label", { number: 2 })}
                             home={draft.semifinalists[2] ?? null}
                             away={draft.semifinalists[3] ?? null}
                             selectedWinner={draftFinalists[1] ?? ""}
@@ -233,7 +234,7 @@ export function BracketPickCard({
                                 })
                             ) : (
                                 <div className="rounded-[18px] border border-dashed border-white/10 bg-white/5 px-4 py-3 text-sm text-zinc-500">
-                                    Defina os vencedores das semifinais para liberar a final.
+                                    {t("bracket_pick.final_locked_desc")}
                                 </div>
                             )}
                         </div>
@@ -266,20 +267,20 @@ export function BracketPickCard({
                 <div className="rounded-[24px] border border-amber-500/20 bg-amber-500/5 p-4">
                     <p className="text-[10px] font-black uppercase tracking-[0.18em] text-amber-300">{t('bracket_pick.official_result')}</p>
                     <p className="mt-2 text-sm text-zinc-400">
-                        Como criador, feche a semifinal e a final oficiais aqui para distribuir os pontos deste mercado especial.
+                        {t("bracket_pick.official_result_desc")}
                     </p>
 
                     <div className="mt-5 grid gap-4 lg:grid-cols-[1fr_auto_1fr]">
                         <div className="space-y-4">
                             <BracketMatch
-                                label="Semifinal 1"
+                                label={t("bracket_pick.semifinal_label", { number: 1 })}
                                 home={resolutionDraft.semifinalists[0] ?? null}
                                 away={resolutionDraft.semifinalists[1] ?? null}
                                 selectedWinner={resolutionFinalists[0] ?? ""}
                                 onPick={(winner) => updateWinner(resolutionDraft, setResolutionDraft, 0, winner)}
                             />
                             <BracketMatch
-                                label="Semifinal 2"
+                                label={t("bracket_pick.semifinal_label", { number: 2 })}
                                 home={resolutionDraft.semifinalists[2] ?? null}
                                 away={resolutionDraft.semifinalists[3] ?? null}
                                 selectedWinner={resolutionFinalists[1] ?? ""}
@@ -317,7 +318,7 @@ export function BracketPickCard({
                                     })
                                 ) : (
                                     <div className="rounded-[18px] border border-dashed border-white/10 bg-white/5 px-4 py-3 text-sm text-zinc-500">
-                                        Defina os vencedores das semifinais para resolver a final.
+                                        {t("bracket_pick.official_final_locked_desc")}
                                     </div>
                                 )}
                             </div>

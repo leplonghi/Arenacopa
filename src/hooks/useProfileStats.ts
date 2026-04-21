@@ -16,10 +16,18 @@ export function useProfileStats(userId: string | undefined) {
       if (!userId) return null;
 
       try {
-        // 1. Get average points and total points from all rankings
         const rankingsRef = collection(db, "bolao_rankings");
         const rankingsQuery = query(rankingsRef, where("user_id", "==", userId));
-        const rankingsSnapshot = await getDocs(rankingsQuery);
+        const predictionsRef = collection(db, "bolao_palpites");
+        const predictionsQuery = query(predictionsRef, where("user_id", "==", userId));
+        const boloesRef = collection(db, "boloes");
+        const createdQuery = query(boloesRef, where("creator_id", "==", userId));
+
+        const [rankingsSnapshot, predictionsCountSnapshot, createdCountSnapshot] = await Promise.all([
+          getDocs(rankingsQuery),
+          getCountFromServer(predictionsQuery),
+          getCountFromServer(createdQuery),
+        ]);
         
         const rankings = rankingsSnapshot.docs.map(doc => doc.data());
 
@@ -43,16 +51,8 @@ export function useProfileStats(userId: string | undefined) {
           titlesCount = titleResults.reduce((acc, val) => acc + val, 0);
         }
 
-        // 3. Get total predictions
-        const predictionsRef = collection(db, "bolao_palpites");
-        const predictionsQuery = query(predictionsRef, where("user_id", "==", userId));
-        const predictionsCountSnapshot = await getCountFromServer(predictionsQuery);
         const totalPredictions = predictionsCountSnapshot.data().count;
 
-        // 4. Get created boloes count
-        const boloesRef = collection(db, "boloes");
-        const createdQuery = query(boloesRef, where("creator_id", "==", userId));
-        const createdCountSnapshot = await getCountFromServer(createdQuery);
         const createdCount = createdCountSnapshot.data().count;
 
         return {

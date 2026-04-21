@@ -73,9 +73,12 @@
   "cta_predict": "Make Predictions",
   "live_card": {
     "loading": "Loading...",
+    "competition_fallback": "Official competition",
+    "live_badge": "Live",
     "live_label": "Live now",
     "follow_btn": "Follow in Pool",
-    "next_game": "Next Match"
+    "next_game": "Next Match",
+    "open_match_center": "Open competition"
   },
   "action_of_day": {
     "pending_title": "Pending picks",

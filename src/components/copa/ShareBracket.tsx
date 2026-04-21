@@ -1,9 +1,10 @@
-import { useState, useCallback, useRef } from "react";
+import { useState, useCallback } from "react";
 import { toPng } from "html-to-image";
 import { Share2, MessageCircle, Download, Loader2, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
+import { openWhatsAppShare } from "@/lib/security";
 
 interface ShareBracketProps {
   bracketRef: React.RefObject<HTMLDivElement>;
@@ -54,8 +55,8 @@ export function ShareBracket({ bracketRef }: ShareBracketProps) {
     if (navigator.share && navigator.canShare?.({ files: [file] })) {
       try {
         await navigator.share({
-          title: "Meu chaveamento – Copa 2026",
-          text: "Confira minha simulação do chaveamento da Copa 2026! ⚽🏆",
+          title: t('share_bracket.native_title'),
+          text: t('share_bracket.native_text'),
           files: [file],
         });
         setIsOpen(false);
@@ -79,8 +80,11 @@ export function ShareBracket({ bracketRef }: ShareBracketProps) {
     a.click();
     URL.revokeObjectURL(url);
 
-    const text = encodeURIComponent("Confira minha simulação do chaveamento da Copa 2026! ⚽🏆");
-    window.open(`https://wa.me/?text=${text}`, "_blank");
+    const opened = openWhatsAppShare(t('share_bracket.native_text'));
+    if (!opened) {
+      toast.error(t('share_bracket.share_error'));
+      return;
+    }
     toast.success(t('share_bracket.downloaded'));
     setIsOpen(false);
   }, [generateImage, t]);
@@ -93,7 +97,7 @@ export function ShareBracket({ bracketRef }: ShareBracketProps) {
           "p-1.5 rounded-md transition-colors",
           isOpen ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
         )}
-        title="Compartilhar"
+        title={t('share_bracket.title')}
       >
         <Share2 className="w-4 h-4" />
       </button>
@@ -101,7 +105,7 @@ export function ShareBracket({ bracketRef }: ShareBracketProps) {
       {isOpen && (
         <div className="absolute right-0 top-full mt-2 z-30 glass-card p-3 rounded-xl space-y-2 min-w-[180px] shadow-xl border border-border/40">
           <div className="flex items-center justify-between mb-1">
-            <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">Compartilhar</span>
+            <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">{t('share_bracket.title')}</span>
             <button onClick={() => setIsOpen(false)} className="text-muted-foreground hover:text-foreground">
               <X className="w-3.5 h-3.5" />
             </button>
@@ -110,7 +114,7 @@ export function ShareBracket({ bracketRef }: ShareBracketProps) {
           {isGenerating && (
             <div className="flex items-center justify-center py-3 gap-2 text-muted-foreground">
               <Loader2 className="w-4 h-4 animate-spin" />
-              <span className="text-xs">Gerando imagem...</span>
+              <span className="text-xs">{t('share_bracket.generating')}</span>
             </div>
           )}
 
@@ -120,7 +124,7 @@ export function ShareBracket({ bracketRef }: ShareBracketProps) {
             className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-xs font-bold hover:bg-secondary transition-colors disabled:opacity-50"
           >
             <Share2 className="w-4 h-4 text-primary" />
-            Compartilhar
+            {t('share_bracket.share')}
           </button>
 
           <button
@@ -129,7 +133,7 @@ export function ShareBracket({ bracketRef }: ShareBracketProps) {
             className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-xs font-bold hover:bg-secondary transition-colors disabled:opacity-50"
           >
             <MessageCircle className="w-4 h-4 text-copa-green" />
-            WhatsApp
+            {t('share_bracket.whatsapp')}
           </button>
 
           <button
@@ -138,7 +142,7 @@ export function ShareBracket({ bracketRef }: ShareBracketProps) {
             className="flex items-center gap-2 w-full px-3 py-2 rounded-lg text-xs font-bold hover:bg-secondary transition-colors disabled:opacity-50"
           >
             <Download className="w-4 h-4 text-muted-foreground" />
-            Baixar imagem
+            {t('share_bracket.download')}
           </button>
         </div>
       )}

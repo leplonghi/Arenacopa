@@ -185,7 +185,7 @@ export function RealtimeRankingTab({ bolaoId, rules }: { bolaoId: string; rules?
                                     {(rankings[1].profile?.name || t('ranking.default_user')).split(" ")[0]}
                                 </span>
                                 <span className="text-lg font-black text-white font-display leading-none">
-                                    {rankings[1].total_points}<span className="text-[10px] ml-0.5 text-zinc-600">PTS</span>
+                                    {rankings[1].total_points}<span className="text-[10px] ml-0.5 text-zinc-600">{t('ranking.points_abbr')}</span>
                                 </span>
                             </div>
                             <div className="w-full h-24 bg-gradient-to-t from-zinc-800/40 via-zinc-800/10 to-transparent backdrop-blur-xl rounded-t-3xl border-x border-t border-white/5 flex items-center justify-center shadow-inner pt-4">
@@ -228,7 +228,7 @@ export function RealtimeRankingTab({ bolaoId, rules }: { bolaoId: string; rules?
                                     {(rankings[0].profile?.name || t('ranking.default_user')).split(" ")[0]}
                                 </span>
                                 <span className="text-3xl font-black text-white font-display tracking-tight leading-none">
-                                    {rankings[0].total_points}<span className="text-[12px] ml-1 text-zinc-500 font-sans tracking-normal font-bold">PTS</span>
+                                    {rankings[0].total_points}<span className="text-[12px] ml-1 text-zinc-500 font-sans tracking-normal font-bold">{t('ranking.points_abbr')}</span>
                                 </span>
                             </div>
                             
@@ -262,7 +262,7 @@ export function RealtimeRankingTab({ bolaoId, rules }: { bolaoId: string; rules?
                                     {(rankings[2].profile?.name || t('ranking.default_user')).split(" ")[0]}
                                 </span>
                                 <span className="text-lg font-black text-white font-display leading-none">
-                                    {rankings[2].total_points}<span className="text-[10px] ml-0.5 text-zinc-600">PTS</span>
+                                    {rankings[2].total_points}<span className="text-[10px] ml-0.5 text-zinc-600">{t('ranking.points_abbr')}</span>
                                 </span>
                             </div>
                             <div className="w-full h-16 bg-gradient-to-t from-amber-900/40 via-amber-900/10 to-transparent backdrop-blur-xl rounded-t-3xl border-x border-t border-white/5 flex items-center justify-center shadow-inner pt-2">
@@ -359,23 +359,23 @@ export function RealtimeRankingTab({ bolaoId, rules }: { bolaoId: string; rules?
                                         "text-base font-black truncate tracking-tight transition-colors font-display",
                                         isTop3 || isMe ? "text-white" : "text-zinc-400 group-hover:text-white"
                                     )}>
-                                        {name} {isMe && <span className="text-[10px] text-copa-green-light ml-1 opacity-80">(VOCÊ)</span>}
+                                        {name} {isMe && <span className="text-[10px] text-copa-green-light ml-1 opacity-80">({t("ranking.you_badge")})</span>}
                                     </span>
                                     {i === 0 && (
                                         <div className="flex items-center gap-1.5 bg-copa-gold/20 px-2 py-0.5 rounded-full border border-copa-gold/30">
                                             <Crown className="w-2.5 h-2.5 text-copa-gold shrink-0" />
-                                            <span className="text-[8px] font-black text-copa-gold uppercase tracking-tighter">LEADER</span>
+                                            <span className="text-[8px] font-black text-copa-gold uppercase tracking-tighter">{t("ranking.leader_badge")}</span>
                                         </div>
                                     )}
                                 </div>
                                 <div className="flex items-center gap-4">
                                     <div className="flex items-center gap-1.5 text-[10px] text-zinc-500 font-bold uppercase tracking-widest group-hover:text-zinc-400 transition-colors">
                                         <Target className="w-3.5 h-3.5 text-emerald-500/70" />
-                                        {r.exact_matches} <span className="text-[9px] opacity-60 font-sans tracking-normal font-medium">EXATOS</span>
+                                        {r.exact_matches} <span className="text-[9px] opacity-60 font-sans tracking-normal font-medium">{t("ranking.exact_badge")}</span>
                                     </div>
                                     <div className="flex items-center gap-1.5 text-[10px] text-zinc-500 font-bold uppercase tracking-widest group-hover:text-zinc-400 transition-colors">
                                         <Check className="w-3.5 h-3.5 text-amber-500/70" />
-                                        {r.correct_results} <span className="text-[9px] opacity-60 font-sans tracking-normal font-medium">ACERTOS</span>
+                                        {r.correct_results} <span className="text-[9px] opacity-60 font-sans tracking-normal font-medium">{t("ranking.correct_badge")}</span>
                                     </div>
                                 </div>
                                 {breakdownItems.length > 0 && (
@@ -423,23 +423,23 @@ export function RealtimeRankingTab({ bolaoId, rules }: { bolaoId: string; rules?
                         const myPos = rankings.findIndex(r => r.user_id === user?.id) + 1;
                         let text = `🏆 RANKING DO BOLÃO 🏆\n\n${topText}\n\n`;
                         if (myPos > 0 && myPos > 3) {
-                            text += `Atualmente tô em ${myPos}º lugar 👀\n`;
+                            text += t("ranking.share_my_position", { position: myPos }) + "\n";
                         } else if (myPos > 0 && myPos <= 3) {
-                            text += `Tô no pódio em ${myPos}º lugar! Chora inveja! 😎\n`;
+                            text += t("ranking.share_podium", { position: myPos }) + "\n";
                         }
-                        text += `\nVem conferir como tá a tabela completa:\n`;
+                        text += `\n${t("ranking.share_cta")}\n`;
                         const url = window.location.href;
                         
                         try {
                             if (navigator.share) {
                                 await navigator.share({
-                                    title: 'Ranking do Bolão',
+                                    title: t("ranking.share_title"),
                                     text: text,
                                     url: url
                                 });
                             } else {
                                 await navigator.clipboard.writeText(text + url);
-                                toast({ title: 'Copiado para área de transferência!', className: "bg-emerald-500 text-white font-black border-none" });
+                                toast({ title: t("ranking.share_copied"), className: "bg-emerald-500 text-white font-black border-none" });
                             }
                         } catch (e) {
                             console.error(e);
@@ -448,7 +448,7 @@ export function RealtimeRankingTab({ bolaoId, rules }: { bolaoId: string; rules?
                     className="flex w-full sm:w-auto items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-copa-gold via-yellow-400 to-amber-500 text-black px-8 py-5 font-black uppercase tracking-[0.2em] transition-all shadow-[0_10px_40px_rgba(234,179,8,0.3)] hover:shadow-[0_15px_60px_rgba(234,179,8,0.5)] transform-3d"
                 >
                     <Share2 className="w-5 h-5 flex-shrink-0" />
-                    <span className="truncate">Zoar a Galera</span>
+                    <span className="truncate">{t("ranking.share_action")}</span>
                 </motion.button>
             </div>
 

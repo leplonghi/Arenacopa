@@ -44,6 +44,7 @@ const allCities: (HostCity & { countryName: string; countryFlag: string })[] = h
 );
 
 export function EstadiosSection({ onViewOnMap }: { onViewOnMap?: (cityId: string) => void }) {
+    const { t } = useTranslation("sedes");
     const [countryFilter, setCountryFilter] = useState<CountryFilter>("all");
     const [sortField, setSortField] = useState<SortField>("capacity");
     const [sortAsc, setSortAsc] = useState(false);
@@ -112,16 +113,16 @@ export function EstadiosSection({ onViewOnMap }: { onViewOnMap?: (cityId: string
                         <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/30 shadow-lg shadow-emerald-500/20">
                             <Building2 className="w-6 h-6 text-emerald-400" />
                         </div>
-                        <h2 className="text-3xl font-black text-white uppercase tracking-tighter">
-                            Arenas da Copa <span className="text-emerald-400">2026</span>
+                            <h2 className="text-3xl font-black text-white uppercase tracking-tighter">
+                            {t("stadiums.hero_title")} <span className="text-emerald-400">2026</span>
                         </h2>
                     </motion.div>
 
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 w-full">
-                        <StatBox label="Estádios" value="16" sub="Sedes Oficiais" accent="emerald" />
-                        <StatBox label="Capacidade" value={`${(totalCapacity / 1000000).toFixed(1)}M`} sub="Total Geral" accent="emerald" />
-                        <StatBox label="Média" value={`${Math.round(avgCapacity / 1000)}k`} sub="Por Arena" accent="emerald" />
-                        <StatBox label="Jogos" value={String(totalMatches)} sub="Total Confirmado" accent="emerald" />
+                        <StatBox label={t("stadiums.stats.stadiums")} value="16" sub={t("stadiums.stats.official_hosts")} accent="emerald" />
+                        <StatBox label={t("stadiums.stats.capacity")} value={`${(totalCapacity / 1000000).toFixed(1)}M`} sub={t("stadiums.stats.total_overall")} accent="emerald" />
+                        <StatBox label={t("stadiums.stats.average")} value={`${Math.round(avgCapacity / 1000)}k`} sub={t("stadiums.stats.per_arena")} accent="emerald" />
+                        <StatBox label={t("stadiums.stats.matches")} value={String(totalMatches)} sub={t("stadiums.stats.total_confirmed")} accent="emerald" />
                     </div>
                 </div>
             </div>
@@ -131,8 +132,8 @@ export function EstadiosSection({ onViewOnMap }: { onViewOnMap?: (cityId: string
                 {/* Country Filter */}
                 <div className="flex gap-2 p-1.5 bg-white/5 rounded-2xl border border-white/10 backdrop-blur-xl">
                     {([
-                        { id: "all" as CountryFilter, label: "Todos", flag: "🌎" },
-                        { id: "USA" as CountryFilter, label: "EUA", flag: "🇺🇸" },
+                        { id: "all" as CountryFilter, label: t("stadiums.filters.all"), flag: "🌎" },
+                        { id: "USA" as CountryFilter, label: t("stadiums.filters.usa"), flag: "🇺🇸" },
                         { id: "MEX" as CountryFilter, label: "MÉX", flag: "🇲🇽" },
                         { id: "CAN" as CountryFilter, label: "CAN", flag: "🇨🇦" },
                     ]).map(f => (
@@ -155,8 +156,8 @@ export function EstadiosSection({ onViewOnMap }: { onViewOnMap?: (cityId: string
                 {/* Sort */}
                 <div className="flex flex-wrap gap-2 w-full sm:w-auto">
                     {([
-                        { id: "capacity" as SortField, label: "Capacidade" },
-                        { id: "matches" as SortField, label: "Partidas" },
+                        { id: "capacity" as SortField, label: t("stadiums.stats.capacity") },
+                        { id: "matches" as SortField, label: t("stadiums.stats.matches") },
                     ]).map(s => (
                         <button
                             key={s.id}
@@ -224,12 +225,12 @@ export function EstadiosSection({ onViewOnMap }: { onViewOnMap?: (cityId: string
 
                                     <div className="grid grid-cols-3 gap-3">
                                         <div className="bg-black/40 rounded-xl p-3 backdrop-blur-md border border-white/10 group-hover:border-emerald-500/20 transition-colors">
-                                            <p className="text-[8px] uppercase text-white/40 font-black tracking-widest mb-1">Capacidade</p>
+                                            <p className="text-[8px] uppercase text-white/40 font-black tracking-widest mb-1">{t("stadiums.stats.capacity")}</p>
                                             <p className="text-sm font-black text-white">{Math.round(city.stadiumCapacity / 1000)}k</p>
                                         </div>
                                         {city.wcMatches && (
                                             <div className="bg-emerald-500/10 rounded-xl p-3 backdrop-blur-md border border-emerald-500/20 group-hover:bg-emerald-500/20 transition-all">
-                                                <p className="text-[8px] uppercase text-emerald-400/70 font-black tracking-widest mb-1">Partidas</p>
+                                                <p className="text-[8px] uppercase text-emerald-400/70 font-black tracking-widest mb-1">{t("stadiums.stats.matches")}</p>
                                                 <p className="text-sm font-black text-emerald-400">{city.wcMatches}</p>
                                             </div>
                                         )}
@@ -254,9 +255,9 @@ export function EstadiosSection({ onViewOnMap }: { onViewOnMap?: (cityId: string
                     <div>
                         <h3 className="text-2xl font-black text-white flex items-center gap-3">
                             <Star className="w-6 h-6 text-emerald-400" />
-                            Elite das Arenas
+                            {t("stadiums.elite_title")}
                         </h3>
-                        <p className="text-xs text-white/40 font-bold mt-1">Comparativo de capacidade dos maiores estádios da Copa 2026</p>
+                        <p className="text-xs text-white/40 font-bold mt-1">{t("stadiums.elite_desc")}</p>
                     </div>
                 </div>
 
@@ -442,7 +443,7 @@ export function StadiumDetailModal({
                                 <Users className="w-6 h-6 text-emerald-400" />
                             </div>
                             <div>
-                                <p className="text-[9px] text-white/40 uppercase font-black tracking-widest mb-1">Capacidade</p>
+                                <p className="text-[9px] text-white/40 uppercase font-black tracking-widest mb-1">{t("stadiums.modal.capacity")}</p>
                                 <p className="text-xl font-black text-white leading-none">{city.stadiumCapacity.toLocaleString()}</p>
                             </div>
                         </div>
@@ -451,7 +452,7 @@ export function StadiumDetailModal({
                                 <Calendar className="w-6 h-6 text-white/60" />
                             </div>
                             <div>
-                                <p className="text-[9px] text-white/40 uppercase font-black tracking-widest mb-1">Inauguração</p>
+                                <p className="text-[9px] text-white/40 uppercase font-black tracking-widest mb-1">{t("stadiums.modal.opened")}</p>
                                 <p className="text-xl font-black text-white leading-none">{city.stadiumYearBuilt}</p>
                             </div>
                         </div>
@@ -460,8 +461,8 @@ export function StadiumDetailModal({
                     <div className="space-y-10">
                         <section>
                             <div className="flex items-center gap-3 mb-4">
-                                <div className="w-1 h-5 bg-emerald-500 rounded-full" />
-                                <h3 className="text-xs font-black text-white uppercase tracking-[0.2em]">Catedral do Futebol</h3>
+                        <div className="w-1 h-5 bg-emerald-500 rounded-full" />
+                                <h3 className="text-xs font-black text-white uppercase tracking-[0.2em]">{t("stadiums.detail.football_cathedral")}</h3>
                             </div>
                             <p className="text-sm text-white/60 leading-loose antialiased font-medium">
                                 {city.description} Uma obra prima da arquitetura que simboliza a paixão pelo esporte em <span className="text-white font-bold">{city.name}</span>. O palco perfeito para receber as maiores estrelas do futebol mundial no maior evento da história em 2026.
@@ -473,17 +474,17 @@ export function StadiumDetailModal({
                             <div className="bg-black/40 rounded-[2rem] p-6 border border-emerald-500/10 hover:border-emerald-500/30 transition-all group">
                                 <h3 className="text-[10px] font-black text-emerald-400/70 uppercase tracking-widest mb-6 flex items-center gap-2">
                                     <Construction className="w-3.5 h-3.5" />
-                                    Engenharia
+                                    {t("stadiums.detail.engineering")}
                                 </h3>
                                 <div className="space-y-6">
                                     {city.stadiumCost && (
                                         <div className="flex justify-between items-end border-b border-white/5 pb-2">
-                                            <p className="text-[10px] text-white/30 uppercase font-bold">Investimento</p>
+                                            <p className="text-[10px] text-white/30 uppercase font-bold">{t("stadiums.detail.investment")}</p>
                                             <p className="text-xs font-black text-white">{city.stadiumCost}</p>
                                         </div>
                                     )}
                                     <div className="flex justify-between items-end border-b border-white/5 pb-2">
-                                        <p className="text-[10px] text-white/30 uppercase font-bold">Altitude</p>
+                                        <p className="text-[10px] text-white/30 uppercase font-bold">{t("stadiums.detail.altitude")}</p>
                                         <p className="text-xs font-black text-white">{city.altitude || 0}m</p>
                                     </div>
                                 </div>
@@ -492,18 +493,18 @@ export function StadiumDetailModal({
                             <div className="bg-emerald-500/[0.03] rounded-[2rem] p-6 border border-emerald-500/20 hover:border-emerald-500/40 transition-all group">
                                 <h3 className="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-6 flex items-center gap-2">
                                     <Trophy className="w-3.5 h-3.5" />
-                                    Copa 2026
+                                    {t("stadiums.detail.world_cup_2026")}
                                 </h3>
                                 <div className="space-y-6">
                                     {city.wcMatches && (
                                         <div className="flex justify-between items-end border-b border-emerald-500/10 pb-2">
-                                            <p className="text-[10px] text-emerald-400/50 uppercase font-black">Jogos Confirmados</p>
+                                            <p className="text-[10px] text-emerald-400/50 uppercase font-black">{t("stadiums.detail.confirmed_matches")}</p>
                                             <p className="text-lg font-black text-emerald-400 leading-none">{city.wcMatches}</p>
                                         </div>
                                     )}
                                     <div className="flex justify-between items-end border-b border-emerald-500/10 pb-2">
-                                        <p className="text-[10px] text-emerald-400/50 uppercase font-black">Gramado</p>
-                                        <p className="text-xs font-black text-white">Tecnologia Híbrida</p>
+                                        <p className="text-[10px] text-emerald-400/50 uppercase font-black">{t("stadiums.detail.pitch")}</p>
+                                        <p className="text-xs font-black text-white">{t("stadiums.detail.hybrid_technology")}</p>
                                     </div>
                                 </div>
                             </div>
@@ -513,7 +514,7 @@ export function StadiumDetailModal({
                         <section>
                             <div className="flex items-center gap-3 mb-6">
                                 <div className="w-1 h-5 bg-white/20 rounded-full" />
-                                <h3 className="text-xs font-black text-white uppercase tracking-[0.2em]">Curiosidades</h3>
+                                <h3 className="text-xs font-black text-white uppercase tracking-[0.2em]">{t("ui.curiosity")}</h3>
                             </div>
                             <div className="grid grid-cols-1 gap-3">
                                 {city.curiosities.map((c, i) => (
@@ -541,13 +542,13 @@ export function StadiumDetailModal({
                             className="flex-1 py-4.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 rounded-[1.5rem] text-[10px] uppercase font-black tracking-widest transition-all flex items-center justify-center gap-3 border border-emerald-500/20"
                         >
                             <Navigation className="w-4 h-4" />
-                            Rotas
+                            {t("stadiums.detail.routes")}
                         </button>
                         <button
                             onClick={() => handleShare(`ArenaCup - ${city.stadiumName}`, `Conheça o ${city.stadiumName}, palco de jogos em ${city.name} na Copa 2026! `)}
                             className="flex-1 py-4.5 bg-white/5 hover:bg-white/10 text-white rounded-[1.5rem] text-[10px] uppercase font-black tracking-widest transition-all flex items-center justify-center gap-3 border border-white/10"
                         >
-                            Compartilhar
+                            {t("actions.share")}
                         </button>
                         {onViewOnMap && (
                             <button
@@ -558,7 +559,7 @@ export function StadiumDetailModal({
                                 className="flex-[2] py-4.5 bg-white/5 hover:bg-white/10 text-white rounded-[1.5rem] text-[10px] uppercase font-black tracking-widest transition-all flex items-center justify-center gap-3 border border-white/10"
                             >
                                 <MapPin className="w-4 h-4 text-emerald-400" />
-                                Ver no Mapa
+                                {t("ui.map.hostCity")}
                             </button>
                         )}
                     </div>

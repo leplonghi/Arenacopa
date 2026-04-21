@@ -1,14 +1,12 @@
 import { useState, useRef, useEffect } from "react";
 import {
   collection,
-  query,
   orderBy,
   getDocs,
   getDoc,
   doc,
+  query,
   writeBatch,
-  where,
-  limit,
 } from "firebase/firestore";
 import { Haptics, ImpactStyle } from "@capacitor/haptics";
 import { db } from "@/integrations/firebase/client";
@@ -58,19 +56,9 @@ export function useCreateBolao() {
     try { await Haptics.impact({ style }); } catch { /* no-op on web */ }
   };
 
-  const generateUniqueInviteCode = async () => {
-    for (let attempt = 0; attempt < 6; attempt += 1) {
-      const candidate = Math.random().toString(36).substring(2, 8).toUpperCase();
-      const existing = await getDocs(
-        query(collection(db, "boloes"), where("invite_code", "==", candidate), limit(1))
-      );
-
-      if (existing.empty) {
-        return candidate;
-      }
-    }
-
-    throw new Error("Não foi possível gerar um código de convite único.");
+  const generateInviteCodeFromBolaoId = (bolaoId: string) => {
+    const normalized = bolaoId.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+    return normalized.slice(-8);
   };
 
   const createBolao = async (params: CreateBolaoParams): Promise<CreateBolaoResult | null> => {
@@ -82,9 +70,9 @@ export function useCreateBolao() {
     let phase = "prepare";
     try {
       phase = "generate_invite";
-      const inviteCodeVal = await generateUniqueInviteCode();
       const boloesRef = collection(db, "boloes");
       const bolaoDoc = doc(boloesRef);
+      const inviteCodeVal = generateInviteCodeFromBolaoId(bolaoDoc.id);
       
       phase = "data_setup";
       const insertData = {

@@ -8,14 +8,29 @@
     "preferences": "Preferências",
     "language": "Idioma",
     "language_choose": "Escolha seu idioma",
+    "language_auto": "Idioma automático",
+    "language_following_system": "O app acompanha o idioma do seu aparelho.",
+    "language_system": "Idioma detectado no sistema: {{language}}.",
+    "language_names": {
+        "ptBR": "Português",
+        "en": "English",
+        "es": "Español"
+    },
     "nickname": "Apelido",
     "nationality": "Nacionalidade",
     "nationality_placeholder": "Ex: Brasileiro",
+    "default_user_name": "Usuário",
     "my_team": "Meu Time",
     "edit_team": "Editar",
     "quick_switch": "Troca Rápida",
+    "favorite_team": {
+        "select_aria": "Escolher {{team}} como time favorito",
+        "open_selector_aria": "Abrir seletor completo de times"
+    },
     "fun_mode": "Modo Festa",
     "fun_mode_desc": "Ative animações de festa, confetes nos gols e comentários engraçados.",
+    "fun_mode_enable": "Ativar modo festa",
+    "fun_mode_disable": "Desativar modo festa",
     "notifications_title": "Notificações",
     "browser_notifications_unsupported": "Seu navegador não suporta notificações.",
     "notifications_denied_title": "Permissão negada",
@@ -50,9 +65,33 @@
     "stat_exact_scores": "Placares Exatos",
     "stat_titles": "Títulos",
     "achievements_title": "Conquistas Desbloqueadas",
+    "achievements": {
+        "locked": "Bloqueado",
+        "first_prediction": {
+            "title": "Chute Inicial",
+            "desc": "Deu seu primeiro palpite"
+        },
+        "exact_score": {
+            "title": "Na Mosca",
+            "desc": "Acertou 1 placar exato"
+        },
+        "pool_creator": {
+            "title": "Líder Nato",
+            "desc": "Criou um bolão"
+        },
+        "combo_three": {
+            "title": "Hat-trick",
+            "desc": "Acertou 3 placares exatos"
+        },
+        "champion": {
+            "title": "Campeão",
+            "desc": "Venceu um bolão inteiro"
+        }
+    },
     "premium_title": "Copa Premium",
     "premium_card_title": "Desbloqueie o ArenaCUP",
     "premium_card_desc": "Bolões ilimitados, sem anúncios e badge exclusivo.",
+    "premium_open_aria": "Abrir página do Arena CUP Premium",
     "support_title": "Apoie o ArenaCUP",
     "support_desc": "O app é grátis. Se curtiu, considere apoiar o desenvolvimento.",
     "support_action": "Fazer PIX",
@@ -61,5 +100,85 @@
     "help_title": "Ajuda e informações",
     "help_rules": "Regras e FAQ",
     "help_terms": "Termos de Uso",
-    "help_privacy": "Política de Privacidade"
+    "help_privacy": "Política de Privacidade",
+    "menu": {
+        "kicker": "Configurações",
+        "title": "Menu",
+        "profile_title": "Meu perfil",
+        "profile_desc": "Time favorito, preferências",
+        "rules_title": "Regras e regulamento",
+        "notifications_title": "Notificações",
+        "notifications_desc": "Alertas, push e preferências",
+        "settings_title": "Configurações",
+        "settings_desc": "Conta, idioma e preferências",
+        "privacy_title": "Privacidade e termos",
+        "privacy_desc": "Políticas e uso da plataforma",
+        "help_title": "Ajuda e FAQ",
+        "help_desc": "Regras, dúvidas e orientação rápida",
+        "logout": "Sair"
+    },
+    "delete_account": {
+        "title": "Excluir Conta",
+        "brand_label": "ArenaCup 2026",
+        "mail": {
+            "subject": "Solicitação de exclusão de conta",
+            "body": "Olá, gostaria de solicitar a exclusão da minha conta e de todos os meus dados do ArenaCup."
+        },
+        "confirm": {
+            "warning": "Esta ação é permanente e não pode ser desfeita.",
+            "list_intro": "O seguinte será excluído permanentemente:",
+            "connected_as": "Conectado como",
+            "cancel": "Cancelar",
+            "cta": "Excluir minha conta",
+            "items": {
+                "account": "Sua conta de acesso",
+                "profile": "Perfil e foto",
+                "predictions": "Todos os seus palpites",
+                "memberships": "Participação em bolões",
+                "champion": "Previsão de campeão",
+                "tokens": "Tokens de notificação"
+            }
+        },
+        "not_logged_in": {
+            "intro": "Para excluir sua conta e todos os seus dados, acesse o app e siga os passos abaixo:",
+            "email_prefix": "Prefere solicitar por e-mail?",
+            "cta": "Fazer login para excluir",
+            "steps": {
+                "login": "Abra o ArenaCup e faça login",
+                "settings_prefix": "Acesse",
+                "settings_path": "Perfil → Configurações",
+                "delete_prefix": "Toque em",
+                "delete_label": "Excluir conta",
+                "confirm": "Confirme a ação"
+            }
+        },
+        "reauth": {
+            "desc": "Por segurança, confirme sua senha para continuar.",
+            "password_placeholder": "Sua senha",
+            "back": "Voltar",
+            "confirm": "Confirmar exclusão"
+        },
+        "deleting": {
+            "title": "Excluindo seus dados...",
+            "desc": "Isso pode levar alguns segundos. Não feche a página."
+        },
+        "done": {
+            "title": "Conta excluída com sucesso",
+            "desc": "Todos os seus dados foram removidos permanentemente do ArenaCup.",
+            "cta": "Voltar ao início"
+        },
+        "error": {
+            "title": "Não foi possível excluir a conta",
+            "retry": "Tentar novamente"
+        },
+        "errors": {
+            "incorrect_password": "Senha incorreta. Verifique e tente novamente. Se esqueceu sua senha, redefina-a antes de excluir a conta.",
+            "recent_login": "Por segurança, faça logout e login novamente antes de excluir a conta.",
+            "generic": "Ocorreu um erro ao excluir sua conta. Tente novamente ou entre em contato: {{email}}"
+        },
+        "footer": {
+            "prefix": "Para dúvidas sobre proteção de dados, consulte nossa",
+            "link": "Política de Privacidade"
+        }
+    }
 }

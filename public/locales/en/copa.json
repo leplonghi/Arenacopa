@@ -72,7 +72,7 @@
       "create_first": "Create First Simulation",
       "groups_count": "{{count}} Groups",
       "games_count": "{{filled}}/{{total}} Games",
-      "groups_count_plural": "{{count}} grupos"
+      "groups_count_plural": "{{count}} groups"
     },
     "editor": {
       "selected_groups": "{{count}} groups selected",
@@ -210,6 +210,13 @@
     "downloaded": "Image downloaded! Attach in WhatsApp",
     "btn_label": "Share"
   },
+  "bracket_modal": {
+    "edit_score": "Edit score",
+    "goals_label": "Goals",
+    "penalties_title": "Penalties (draw in regular time)",
+    "penalties_error": "Penalties cannot end tied",
+    "save_score": "Save score"
+  },
   "calendario": {
     "empty_title": "No games here yet",
     "empty_desc": "The calendar will appear once matches are loaded.",
@@ -227,18 +234,38 @@
     "day_label": "Day {{current}}/{{total}}"
   },
   "bracket": {
+    "page_title": "Bracket",
+    "page_subtitle": "Based on your simulation",
+    "incomplete_title": "Group stage incomplete",
+    "incomplete_desc": "Complete all matches from the 12 groups to see the bracket.",
+    "simulation_hint": "Fill in scores in the Simulator tab to reveal the matchups.",
+    "locked_desc_prefix": "Fill in all matches from the 12 groups in the",
+    "locked_desc_suffix": "tab to unlock the visual bracket.",
+    "progress_hint": "Progress in motion...",
+    "view_bracket": "Bracket view",
+    "view_list": "List view",
     "third_place": "Third Place Match",
     "champion_label": "World Champion",
     "champion_sub": "2026 WORLD CHAMPION",
     "rounds": {
       "r32": "Round of 32",
+      "r32_full": "Round of 32",
       "r16": "Round of 16",
+      "r16_full": "Round of 16",
       "quarter": "Quarter",
+      "quarter_full": "Quarterfinals",
       "semi": "Semi",
+      "semi_full": "Semifinals",
       "third": "3rd Place",
-      "final": "Final"
+      "final": "Final",
+      "final_full": "Grand Final"
     },
     "tbd": "TBD"
+  },
+  "group_details": {
+    "kicker": "Details for",
+    "table_title": "Standings",
+    "matches_title": "Matches"
   },
   "grupos": {
     "no_games": "No games found for this group."
@@ -257,6 +284,93 @@
       "teams": "Teams",
       "travel": "Travel",
       "tickets": "Tickets"
+    }
+  },
+  "team_details": {
+    "not_found_title": "Team not found",
+    "back": "Back",
+    "group_label": "Group {{group}}",
+    "vs": "vs",
+    "stats": {
+      "fifa_ranking": "FIFA Ranking",
+      "world_titles": "World Titles"
+    },
+    "performance": {
+      "title": "Current Form",
+      "points_short": "PTS",
+      "played_short": "P",
+      "wins_short": "W",
+      "goal_diff_short": "GD"
+    },
+    "facts_title": "Fast Facts",
+    "facts": {
+      "capital": "Capital",
+      "population": "Population",
+      "currency": "Currency",
+      "language": "Language"
+    },
+    "history_title": "World Cup History",
+    "history": {
+      "titles": "Titles",
+      "appearances": "Appearances",
+      "first_appearance": "First World Cup",
+      "best_result": "Best result"
+    },
+    "rivalries_title": "Great Rivalries",
+    "qualifiers_title": "In Qualifying",
+    "matches_title": "World Cup Matches",
+    "no_matches": "No matches found.",
+    "rivalries": {
+      "BRA": {
+        "ARG": "El Clásico of the Americas, the biggest rivalry in South American football.",
+        "URU": "The pain of the Maracanazo (1950) still echoes in Brazilian memory.",
+        "GER": "The 7-1 in the 2014 World Cup semifinal is the defining chapter of this rivalry."
+      },
+      "ARG": {
+        "BRA": "El Clásico of the Americas carries decades of intense rivalry.",
+        "ENG": "The Hand of God (1986) and the Falklands war make this duel unique.",
+        "URU": "Clásico del Río de la Plata, the oldest derby in the Americas."
+      },
+      "GER": {
+        "NED": "The 1974 final opened one of Europe's greatest football rivalries.",
+        "ENG": "1966, 1990 and 1996 shaped half a century of decisive meetings.",
+        "BRA": "The 7-1 in 2014 became the most symbolic match in this rivalry."
+      },
+      "FRA": {
+        "GER": "The 1982 semifinal is one of the most controversial matches in World Cup history.",
+        "ARG": "The 2022 final is considered by many the greatest final ever.",
+        "POR": "World Cup and Euro semifinals strengthened this growing Latin rivalry."
+      },
+      "ENG": {
+        "ARG": "The Hand of God in 1986 created one of sport's most controversial rivalries.",
+        "GER": "1966, 1990 and 1996 cemented this clash between European giants.",
+        "URU": "The 1954 defeat marked the beginning of a transatlantic classic."
+      },
+      "ESP": {
+        "POR": "The Iberian Derby pits historic neighbors against each other.",
+        "NED": "The 2010 final was physical, controversial and defining for Spain.",
+        "GER": "It is a recurring clash between powers of major European tournaments."
+      },
+      "ITA": {
+        "BRA": "The 1970 and 1994 finals linked two football superpowers forever.",
+        "FRA": "The 2006 final and Zidane's headbutt made this duel unforgettable.",
+        "URU": "The 1930 final sits at the origin of this historic rivalry."
+      },
+      "URU": {
+        "BRA": "The Maracanazo in 1950 remains Uruguay's most famous football victory.",
+        "ARG": "Clásico del Río de la Plata, one of the oldest rivalries in world football.",
+        "ITA": "The 1930 final gave Uruguay its first world title."
+      },
+      "NED": {
+        "GER": "The 1974 final and Europe's historical weight make this rivalry special.",
+        "ESP": "The rematch to the 2010 final never came, but the tension remains.",
+        "ARG": "Showdowns in 1974 and 2022 kept this rivalry alive."
+      },
+      "POR": {
+        "ESP": "The Iberian Derby blends shared language, proximity and rivalry.",
+        "FRA": "Recent semifinals and star-filled generations keep this duel hot.",
+        "ENG": "The 2006 quarterfinal remains the most memorable chapter of this matchup."
+      }
     }
   }
 }

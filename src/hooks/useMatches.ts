@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { db } from "@/integrations/firebase/client";
 import { collection, query, orderBy, getDocs } from "firebase/firestore";
-import { type Match, type MatchPhase, matches as mockMatches } from "@/data/mockData";
+import { type Match, type MatchPhase } from "@/data/mockData";
 
 type MatchRow = {
     id: string;
@@ -50,7 +50,7 @@ async function fetchMatches(): Promise<Match[]> {
         group: m.group_id ?? undefined,
     })) as Match[];
 
-    return matches.length > 0 ? matches : mockMatches;
+    return matches;
 }
 
 export function useMatches() {

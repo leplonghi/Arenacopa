@@ -128,7 +128,7 @@ export function RankingTab({ members, palpites, extraBets = [], scoringRules }: 
                                     {(ranking[1].profile?.name || t('ranking.default_user')).split(" ")[0]}
                                 </span>
                                 <span className="text-lg font-black text-white font-display leading-none">
-                                    {ranking[1].points}<span className="text-[10px] ml-0.5 text-zinc-600">PTS</span>
+                                    {ranking[1].points}<span className="text-[10px] ml-0.5 text-zinc-600">{t('ranking.points_abbr')}</span>
                                 </span>
                             </div>
                             <div className="w-full h-24 bg-gradient-to-t from-zinc-800/40 via-zinc-800/10 to-transparent backdrop-blur-xl rounded-t-3xl border-x border-t border-white/5 flex items-center justify-center shadow-inner pt-4">
@@ -171,7 +171,7 @@ export function RankingTab({ members, palpites, extraBets = [], scoringRules }: 
                                     {(ranking[0].profile?.name || t('ranking.default_user')).split(" ")[0]}
                                 </span>
                                 <span className="text-3xl font-black text-white font-display tracking-tight leading-none">
-                                    {ranking[0].points}<span className="text-[12px] ml-1 text-zinc-500 font-sans tracking-normal font-bold">PTS</span>
+                                    {ranking[0].points}<span className="text-[12px] ml-1 text-zinc-500 font-sans tracking-normal font-bold">{t('ranking.points_abbr')}</span>
                                 </span>
                             </div>
                             
@@ -205,7 +205,7 @@ export function RankingTab({ members, palpites, extraBets = [], scoringRules }: 
                                     {(ranking[2].profile?.name || t('ranking.default_user')).split(" ")[0]}
                                 </span>
                                 <span className="text-lg font-black text-white font-display leading-none">
-                                    {ranking[2].points}<span className="text-[10px] ml-0.5 text-zinc-600">PTS</span>
+                                    {ranking[2].points}<span className="text-[10px] ml-0.5 text-zinc-600">{t('ranking.points_abbr')}</span>
                                 </span>
                             </div>
                             <div className="w-full h-16 bg-gradient-to-t from-amber-900/40 via-amber-900/10 to-transparent backdrop-blur-xl rounded-t-3xl border-x border-t border-white/5 flex items-center justify-center shadow-inner pt-2">
@@ -279,24 +279,24 @@ export function RankingTab({ members, palpites, extraBets = [], scoringRules }: 
                                         "text-base font-black truncate tracking-tight transition-colors font-display",
                                         isTop3 || isMe ? "text-white" : "text-zinc-400 group-hover:text-white"
                                     )}>
-                                        {name} {isMe && <span className="text-[10px] text-copa-green-light ml-1 opacity-80">(VOCÊ)</span>}
+                                        {name} {isMe && <span className="text-[10px] text-copa-green-light ml-1 opacity-80">({t("ranking.you_badge")})</span>}
                                     </span>
                                     {i === 0 && (
                                         <div className="flex items-center gap-1.5 bg-copa-gold/20 px-2 py-0.5 rounded-full border border-copa-gold/30">
                                             <Crown className="w-2.5 h-2.5 text-copa-gold shrink-0" />
-                                            <span className="text-[8px] font-black text-copa-gold uppercase tracking-tighter">LEADER</span>
+                                            <span className="text-[8px] font-black text-copa-gold uppercase tracking-tighter">{t('ranking.leader_badge')}</span>
                                         </div>
                                     )}
                                 </div>
                                 <div className="flex items-center gap-4">
                                     <div className="flex items-center gap-1.5 text-[10px] text-zinc-500 font-bold uppercase tracking-widest group-hover:text-zinc-400 transition-colors">
                                         <TrendingUp className="w-3 h-3 text-emerald-500/80" />
-                                        {r.palpiteCount} <span className="text-[9px] opacity-50 font-sans tracking-normal font-medium">PALPITES</span>
+                                        {r.palpiteCount} <span className="text-[9px] opacity-50 font-sans tracking-normal font-medium">{t('ranking.guesses_label')}</span>
                                     </div>
                                     {r.exactCount > 0 && (
                                         <div className="flex items-center gap-1.5 text-[10px] text-emerald-400 font-black">
                                             <Target className="w-3.5 h-3.5 group-hover:animate-pulse" />
-                                            {r.exactCount} <span className="text-[9px] opacity-60 font-sans tracking-normal font-medium">EXATOS</span>
+                                            {r.exactCount} <span className="text-[9px] opacity-60 font-sans tracking-normal font-medium">{t('ranking.exact_scores_label')}</span>
                                         </div>
                                     )}
                                 </div>
@@ -346,13 +346,15 @@ export function RankingTab({ members, palpites, extraBets = [], scoringRules }: 
 }
 
 function LegendItem({ icon, label, points, color, bg, border }: { icon: React.ReactNode; label: string; points: number; color: string; bg: string; border: string }) {
+    const { t } = useTranslation("bolao");
+
     return (
         <div className={cn("group rounded-3xl p-6 border transition-all hover:scale-105 hover:shadow-2xl flex flex-col items-center text-center", bg, border)}>
             <div className={cn("mb-4 transform group-hover:rotate-12 transition-transform", color)}>{icon}</div>
             <span className="text-[9px] font-black text-zinc-500 uppercase tracking-widest mb-2 leading-tight px-2">{label}</span>
             <div className="flex items-baseline gap-1">
                 <span className={cn("text-2xl font-black", color)}>{points}</span>
-                <span className="text-[10px] font-black text-zinc-600">PTS</span>
+                <span className="text-[10px] font-black text-zinc-600">{t("ranking.points_abbr")}</span>
             </div>
         </div>
     );

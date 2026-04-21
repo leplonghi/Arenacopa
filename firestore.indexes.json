@@ -41,6 +41,23 @@
       ]
     },
     {
+      "collectionGroup": "bolao_palpites",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "bolao_id", "order": "ASCENDING" },
+        { "fieldPath": "match_id", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "bolao_palpites",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "user_id", "order": "ASCENDING" },
+        { "fieldPath": "bolao_id", "order": "ASCENDING" },
+        { "fieldPath": "match_id", "order": "ASCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "bolao_predictions",
       "queryScope": "COLLECTION",
       "fields": [
@@ -53,6 +70,14 @@
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "championship_id", "order": "ASCENDING" },
+        { "fieldPath": "match_date", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "matches",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "status", "order": "ASCENDING" },
         { "fieldPath": "match_date", "order": "ASCENDING" }
       ]
     },
@@ -120,6 +145,22 @@
       "fields": [
         { "fieldPath": "source_id", "order": "ASCENDING" },
         { "fieldPath": "started_at", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "premium_subscriptions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "user_id", "order": "ASCENDING" },
+        { "fieldPath": "created_at", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "boloes",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "championship_id", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
       ]
     }
   ],

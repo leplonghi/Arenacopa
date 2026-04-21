@@ -1,7 +1,6 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { BarChart2, Compass, Hash, Loader2, Plus, Search, Trophy, User, UserPlus, Users, Users2, X, Zap } from "lucide-react";
-import RankingPage from "./Ranking";
 
 import { db } from "@/integrations/firebase/client";
 import {
@@ -20,10 +19,12 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { useChampionship } from "@/contexts/ChampionshipContext";
+import { BolaoAvatar } from "@/components/BolaoAvatar";
 import { EmptyState } from "@/components/EmptyState";
 import { DEMO_MODE_STORAGE_KEY, BOLOES_INTRO_SEEN_KEY } from "@/lib/constants";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslation } from "react-i18next";
+import { BolaoEntryGuidance } from "@/features/boloes/shared/BolaoEntryGuidance";
 
 type BolaoRow = {
   id: string;
@@ -35,6 +36,7 @@ type BolaoRow = {
   avatar_url?: string | null;
   category?: "public" | "private";
   status?: string;
+  is_paid?: boolean;
   memberCount: number;
   isCreator: boolean;
   championship_id?: string | null;
@@ -43,6 +45,8 @@ type BolaoRow = {
 type PublicBolaoRow = BolaoRow & {
   leader_score: number;
 };
+
+const RankingPage = lazy(() => import("./Ranking"));
 
 const statusWhitelist = ["open", "active"];
 
@@ -105,6 +109,7 @@ export default function Boloes() {
           avatar_url: null,
           category: "private",
           status: "active",
+          is_paid: false,
           memberCount: 12,
           isCreator: true,
         },
@@ -118,6 +123,7 @@ export default function Boloes() {
           avatar_url: null,
           category: "public",
           status: "open",
+          is_paid: false,
           memberCount: 27,
           isCreator: false,
         },
@@ -169,6 +175,7 @@ export default function Boloes() {
               avatar_url: data.avatar_url,
               category: data.category,
               status: data.status,
+              is_paid: data.is_paid ?? false,
               memberCount: countSnap.data().count,
               isCreator: data.creator_id === user.id,
               championship_id: data.championship_id ?? null,
@@ -252,6 +259,7 @@ export default function Boloes() {
             avatar_url: b.avatar_url,
             category: b.category,
             status: b.status,
+            is_paid: b.is_paid ?? false,
             memberCount: countSnap.data().count,
             isCreator: false,
             leader_score: leaderScore,
@@ -279,7 +287,7 @@ export default function Boloes() {
     loadData();
   }, [loadData]);
 
-  const completeJoin = async (bolaoId: string, inviteCode?: string | null) => {
+  const completeJoin = async (bolaoId: string, options?: { inviteCode?: string | null; isPaid?: boolean }) => {
     if (!user) return;
     try {
       const memberId = `${user.id}_${bolaoId}`;
@@ -287,8 +295,8 @@ export default function Boloes() {
         bolao_id: bolaoId,
         user_id: user.id,
         role: "member",
-        payment_status: "exempt",
-        invite_code: inviteCode ?? null,
+        payment_status: options?.isPaid ? "pending" : "exempt",
+        invite_code: options?.inviteCode ?? null,
         created_at: new Date().toISOString(),
         joined_at: new Date().toISOString(),
       });
@@ -344,7 +352,10 @@ export default function Boloes() {
         return;
       }
 
-      await completeJoin(bolaoDoc.id, normalizedCode);
+      await completeJoin(bolaoDoc.id, {
+        inviteCode: normalizedCode,
+        isPaid: bolaoData.is_paid ?? false,
+      });
       setJoinCode("");
       setShowJoin(false);
     } catch (error) {
@@ -369,7 +380,11 @@ export default function Boloes() {
   const handleJoinPublicBolao = async (bolaoId: string) => {
     setJoiningPublicBolaoId(bolaoId);
     try {
-      const joined = await completeJoin(bolaoId);
+      const targetBolao = publicBoloes.find((bolao) => bolao.id === bolaoId);
+      const joined = await completeJoin(bolaoId, {
+        inviteCode: targetBolao?.invite_code ?? null,
+        isPaid: targetBolao?.is_paid ?? false,
+      });
       if (joined) {
         navigate(`/boloes/${bolaoId}`);
       }
@@ -456,10 +471,16 @@ export default function Boloes() {
             className="inline-flex items-center gap-2 rounded-2xl bg-primary px-6 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-black shadow-lg shadow-primary/25 transition-transform hover:scale-105 active:scale-95"
           >
             <Plus className="h-4 w-4 shrink-0" />
-            {t('page.create')}
+            Criar bolão sem grupo
           </Link>
         </div>
       </div>
+
+      {activeView === "boloes" && (
+        <div className="mb-6">
+          <BolaoEntryGuidance />
+        </div>
+      )}
 
       {activeView === "boloes" && spotlightBolao && (
         <Link
@@ -468,9 +489,11 @@ export default function Boloes() {
         >
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="flex items-start gap-4">
-              <div className="surface-card-soft flex h-14 w-14 items-center justify-center rounded-[22px] text-2xl">
-                {spotlightBolao.avatar_url || "🏆"}
-              </div>
+              <BolaoAvatar
+                avatarUrl={spotlightBolao.avatar_url}
+                alt={spotlightBolao.name}
+                className="surface-card-soft flex h-14 w-14 items-center justify-center rounded-[22px] text-2xl"
+              />
               <div>
                 <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">
                   {t("page.continue_kicker", { defaultValue: "Continuar agora" })}
@@ -560,9 +583,19 @@ export default function Boloes() {
 
       {/* ── Ranking View ─────────────────────────────────────── */}
       {activeView === "ranking" && (
-        <div className="-mx-4">
-          <RankingPage />
-        </div>
+        <Suspense
+          fallback={
+            <div className="space-y-4 px-4">
+              <Skeleton className="h-20 rounded-3xl bg-white/10" />
+              <Skeleton className="h-32 rounded-3xl bg-white/10" />
+              <Skeleton className="h-[420px] rounded-3xl bg-white/10" />
+            </div>
+          }
+        >
+          <div className="-mx-4">
+            <RankingPage />
+          </div>
+        </Suspense>
       )}
 
       {/* ── Bolões View ──────────────────────────────────────── */}
@@ -683,9 +716,11 @@ export default function Boloes() {
                     <div className="flex items-start justify-between gap-4">
                       <div>
                         <div className="flex items-center gap-3">
-                          <div className="surface-card-soft flex h-12 w-12 items-center justify-center rounded-2xl text-xl">
-                            {b.avatar_url || "🏆"}
-                          </div>
+                          <BolaoAvatar
+                            avatarUrl={b.avatar_url}
+                            alt={b.name}
+                            className="surface-card-soft flex h-12 w-12 items-center justify-center rounded-2xl text-xl"
+                          />
                           <div>
                             <h3 className="text-lg font-black">{b.name}</h3>
                             <p className="text-sm text-zinc-400">{b.description || t("page.no_description")}</p>
@@ -699,7 +734,7 @@ export default function Boloes() {
                       <div className="flex items-center gap-2">
                         <MembersFacepile count={b.memberCount} />
                         <span className="text-sm text-zinc-500">•</span>
-                        <span className="text-sm font-black text-primary">{b.leader_score} <span className="text-zinc-500 font-medium">pts</span></span>
+                        <span className="text-sm font-black text-primary">{b.leader_score} <span className="text-zinc-500 font-medium">{t('ranking.points_abbr')}</span></span>
                       </div>
 
                       <button
@@ -747,9 +782,12 @@ function BolaoCard({ bolao, href }: { bolao: BolaoRow; href: string }) {
     >
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-3">
-          <div className="surface-card-soft flex h-12 w-12 items-center justify-center rounded-2xl text-xl">
-            {bolao.avatar_url || "⚽"}
-          </div>
+          <BolaoAvatar
+            avatarUrl={bolao.avatar_url}
+            fallback="⚽"
+            alt={bolao.name}
+            className="surface-card-soft flex h-12 w-12 items-center justify-center rounded-2xl text-xl"
+          />
           <div>
             <h3 className="text-lg font-black">{bolao.name}</h3>
             <p className="text-sm text-zinc-400">{bolao.description || t("page.no_description")}</p>

@@ -22,6 +22,7 @@ import { useChampionship } from "@/contexts/ChampionshipContext";
 import { getSiteUrl } from "@/utils/site-url";
 import { getTeam } from "@/data/mockData";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 // ─── Types ────────────────────────────────────────────────────
 type MatchRow = {
@@ -44,10 +45,11 @@ function MatchItem({
   selected: boolean;
   onSelect: () => void;
 }) {
+  const { t, i18n } = useTranslation("bolao");
   const home = getTeam(match.home_team_code);
   const away = getTeam(match.away_team_code);
   const date = new Date(match.match_date);
-  const timeStr = date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  const timeStr = date.toLocaleTimeString(i18n.language, { hour: "2-digit", minute: "2-digit" });
   const isLive = match.status === "live" || match.status === "in_progress";
 
   return (
@@ -70,11 +72,11 @@ function MatchItem({
         {/* VS / Live */}
         <div className="flex flex-col items-center gap-0.5 shrink-0">
           {isLive ? (
-            <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400 animate-pulse">● AO VIVO</span>
+            <span className="text-[10px] font-black uppercase tracking-widest text-emerald-400 animate-pulse">{t("express.live_badge")}</span>
           ) : (
             <>
               <span className="text-[10px] font-semibold text-zinc-500 uppercase tracking-widest">{timeStr}</span>
-              <span className="text-sm font-black text-zinc-400">VS</span>
+              <span className="text-sm font-black text-zinc-400">{t("express.versus")}</span>
             </>
           )}
         </div>
@@ -88,7 +90,7 @@ function MatchItem({
 
       {selected && (
         <div className="mt-3 flex items-center justify-center gap-1.5 rounded-xl bg-primary/15 py-1.5">
-          <span className="text-[10px] font-black uppercase tracking-[0.14em] text-primary">Jogo selecionado ✓</span>
+          <span className="text-[10px] font-black uppercase tracking-[0.14em] text-primary">{t("express.match_selected")}</span>
         </div>
       )}
     </button>
@@ -97,6 +99,7 @@ function MatchItem({
 
 // ─── Main page ────────────────────────────────────────────────
 export default function BolaoRapido() {
+  const { t } = useTranslation("bolao");
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
@@ -184,14 +187,18 @@ export default function BolaoRapido() {
     const home = getTeam(selectedMatch.home_team_code);
     const away = getTeam(selectedMatch.away_team_code);
     const inviteUrl = `${getSiteUrl()}/b/${inviteCode}`;
-    const msg = `🔥 Vamos palpitar? Jogo: ${home?.name ?? "Casa"} x ${away?.name ?? "Fora"}. Código: ${inviteCode}`;
+    const msg = t("express.share_message", {
+      home: home?.name ?? t("express.home_fallback"),
+      away: away?.name ?? t("express.away_fallback"),
+      code: inviteCode,
+    });
 
     const handleShare = async () => {
       try {
-        await Share.share({ title: "Arena Copa — Bolão do Jogo", text: msg, url: inviteUrl });
+        await Share.share({ title: t("express.share_title"), text: msg, url: inviteUrl });
       } catch {
         await navigator.clipboard.writeText(inviteUrl);
-        toast({ title: "Link copiado!" });
+        toast({ title: t("bolao_detail.link_copied") });
       }
     };
 
@@ -199,21 +206,21 @@ export default function BolaoRapido() {
       <div className="mx-auto max-w-md px-4 py-10 text-white">
         <div className="surface-card-strong rounded-[32px] p-8 text-center">
           <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-primary/15 text-5xl">⚽</div>
-          <p className="text-[11px] font-black uppercase tracking-[0.22em] text-primary">Bolão criado!</p>
+          <p className="text-[11px] font-black uppercase tracking-[0.22em] text-primary">{t("express.created_title")}</p>
           <h1 className="mt-1 text-2xl font-black">{name}</h1>
           <div className="mt-2 flex items-center justify-center gap-3">
             <span className="text-3xl">{home?.flag ?? "🏳️"}</span>
-            <span className="text-sm font-black text-zinc-400">VS</span>
+            <span className="text-sm font-black text-zinc-400">{t("express.versus")}</span>
             <span className="text-3xl">{away?.flag ?? "🏳️"}</span>
           </div>
 
           <div className="surface-card-soft mt-5 rounded-2xl p-4">
-            <p className="text-xs text-zinc-400 mb-1">Código de convite</p>
+            <p className="text-xs text-zinc-400 mb-1">{t("wizard.success.invite_code")}</p>
             <p className="text-3xl font-black tracking-widest text-primary">{inviteCode}</p>
           </div>
 
           <p className="mt-4 text-sm text-zinc-400">
-            Manda o link pros amigos. Cada um escolhe o placar que acha que vai acontecer. O app calcula o resto.
+            {t("express.created_desc")}
           </p>
 
           <div className="mt-5 grid gap-3">
@@ -221,19 +228,19 @@ export default function BolaoRapido() {
               onClick={() => window.open(`https://wa.me/?text=${encodeURIComponent(`${msg} ${inviteUrl}`)}`, "_blank")}
               className="rounded-2xl bg-[#25D366] px-5 py-4 text-[11px] font-black uppercase tracking-[0.18em] text-white"
             >
-              Convocar no WhatsApp
+              {t("wizard.success.whatsapp")}
             </button>
             <button
               onClick={handleShare}
               className="surface-card-soft inline-flex items-center justify-center gap-2 rounded-2xl px-5 py-4 text-[11px] font-black uppercase tracking-[0.18em]"
             >
-              <Share2 className="h-4 w-4" /> Mais opções
+              <Share2 className="h-4 w-4" /> {t("wizard.success.more_options")}
             </button>
             <button
               onClick={() => navigate(`/boloes/${createdBolaoId}`)}
               className="mt-1 w-full rounded-[24px] bg-primary px-6 py-4 text-[11px] font-black uppercase tracking-[0.2em] text-black"
             >
-              Ver meu bolão →
+              {t("wizard.success.view_bolao")}
             </button>
           </div>
         </div>
@@ -247,7 +254,7 @@ export default function BolaoRapido() {
       {/* Header */}
       <div className="mb-6 flex items-center gap-3">
         <button
-          aria-label="Voltar"
+          aria-label={t("wizard.back")}
           onClick={() => navigate(-1)}
           className="surface-card-soft flex h-11 w-11 items-center justify-center rounded-[18px]"
         >
@@ -256,15 +263,15 @@ export default function BolaoRapido() {
         <div>
           <div className="flex items-center gap-2">
             <Zap className="h-4 w-4 text-primary" />
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Bolão Rápido</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">{t("express.title")}</p>
           </div>
-          <h1 className="text-2xl font-black leading-tight">Qual jogo de hoje?</h1>
+          <h1 className="text-2xl font-black leading-tight">{t("express.pick_match_title")}</h1>
         </div>
       </div>
 
       {/* Instruction */}
       <p className="mb-5 text-sm text-zinc-400">
-        Escolha um jogo, manda o link pros amigos, cada um chuta o placar. O app calcula tudo e entrega o resultado pronto.
+        {t("express.pick_match_desc")}
       </p>
 
       {/* Match list */}
@@ -277,9 +284,9 @@ export default function BolaoRapido() {
       ) : matches.length === 0 ? (
         <div className="rounded-2xl border border-white/[0.08] bg-white/[0.03] p-8 text-center">
           <p className="text-3xl mb-3">📅</p>
-          <p className="font-black text-white">Nenhum jogo nos próximos dias</p>
+          <p className="font-black text-white">{t("express.no_matches_soon")}</p>
           <p className="mt-1 text-sm text-zinc-400">
-            Tente criar um bolão completo pelo botão "Criar bolão".
+            {t("express.no_matches_desc")}
           </p>
         </div>
       ) : (
@@ -299,11 +306,11 @@ export default function BolaoRapido() {
       {selectedMatchId && (
         <div className="mt-6 space-y-3">
           <div>
-            <p className="mb-2 text-sm font-bold text-zinc-200">Nome do bolão</p>
+            <p className="mb-2 text-sm font-bold text-zinc-200">{t("wizard.name_step.name_label")}</p>
             <input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Ex: Flamengo x Vasco"
+              placeholder={t("express.name_placeholder")}
               maxLength={40}
               className="surface-input w-full rounded-[20px] px-5 py-4 text-lg font-black placeholder:text-zinc-500"
             />
@@ -315,13 +322,13 @@ export default function BolaoRapido() {
             className="w-full rounded-[20px] bg-primary px-6 py-5 text-[11px] font-black uppercase tracking-[0.2em] text-black disabled:opacity-60 flex items-center justify-center gap-2"
           >
             {creating ? (
-              <><Loader2 className="h-4 w-4 animate-spin" /> Criando...</>
+              <><Loader2 className="h-4 w-4 animate-spin" /> {t("wizard.creating")}</>
             ) : (
-              <><Zap className="h-4 w-4" /> Criar e compartilhar</>
+              <><Zap className="h-4 w-4" /> {t("express.create_and_share")}</>
             )}
           </button>
           <p className="text-center text-xs text-zinc-500">
-            Só placar. Sem configurações. Zero complicação.
+            {t("express.footer_hint")}
           </p>
         </div>
       )}

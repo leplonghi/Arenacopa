@@ -1,15 +1,16 @@
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Trophy } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 // Simplified stages focused on macro progress
-const simpleStages = [
-    { label: "Fase de Grupos", active: true },
-    { label: "Mata-mata", active: false },
-    { label: "Final", active: false },
-];
-
 export function TournamentStageTracker() {
+    const { t } = useTranslation("copa");
+    const simpleStages = [
+        { label: t("tournament_progress.stages.groups"), active: true },
+        { label: t("tournament_progress.stages.knockout"), active: false },
+        { label: t("tournament_progress.stages.final"), active: false },
+    ];
     // Current Progress percentage (approximate for visual)
     const progress = 33;
 
@@ -18,13 +19,13 @@ export function TournamentStageTracker() {
             <div className="max-w-md mx-auto space-y-2">
                 {/* Header with Title and "Live" indicator */}
                 <div className="flex items-center justify-between px-1">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Progresso do Torneio</span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">{t("tournament_progress.title")}</span>
                     <div className="flex items-center gap-1.5 bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20">
                         <span className="relative flex h-1.5 w-1.5">
                             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
                             <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary"></span>
                         </span>
-                        <span className="text-[9px] font-bold text-primary">Em andamento</span>
+                        <span className="text-[9px] font-bold text-primary">{t("tournament_progress.live")}</span>
                     </div>
                 </div>
 

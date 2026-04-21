@@ -24,6 +24,8 @@
     },
     "modal": {
       "seats": "Asientos",
+      "capacity": "Capacidad",
+      "opened": "Inauguración",
       "safety": "Seguridad",
       "transport": "Transporte",
       "transportDesc": "Ofrece una red eficiente para aficionados y turistas.",
@@ -200,7 +202,7 @@
     },
     "usa-dal": {
       "name": "Dallas",
-      "description": "Metrópolis texana que albergará el mayor número de partidos (9 juegos).",
+      "description": "Metrópolis texana que albergará el mayor número de partidos (9 partidos).",
       "highlights": [
         "Estadio AT&T",
         "Texas BBQ",

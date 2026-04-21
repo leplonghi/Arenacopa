@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { hostCountries } from "@/data/guiaData";
+import { useTranslation } from "react-i18next";
 
 /**
  * MapaTab — Mapa interativo Leaflet com as 16 cidades-sede da Copa 2026.
@@ -13,12 +14,18 @@ const COUNTRY_COLORS: Record<string, string> = {
 };
 
 export function MapaTab() {
+    const { t } = useTranslation("sedes");
     const mapRef = useRef<HTMLDivElement>(null);
     const mapInstanceRef = useRef<unknown>(null);
 
     const allCities = hostCountries.flatMap((c) => c.cities);
 
     useEffect(() => {
+        let scriptElement: HTMLScriptElement | null = null;
+        const handleLeafletLoad = () => {
+            initMap();
+        };
+
         // Load Leaflet CSS
         if (!document.getElementById("leaflet-css")) {
             const link = document.createElement("link");
@@ -123,15 +130,20 @@ export function MapaTab() {
             const script = document.createElement("script");
             script.id = "leaflet-js";
             script.src = "https://unpkg.com/leaflet@1.9.4/dist/leaflet.js";
-            script.onload = initMap;
+            script.addEventListener("load", handleLeafletLoad, { once: true });
             document.head.appendChild(script);
+            scriptElement = script;
         } else {
             // Script tag exists but not loaded yet — wait
             const el = document.getElementById("leaflet-js") as HTMLScriptElement;
-            el.addEventListener("load", initMap);
+            el.addEventListener("load", handleLeafletLoad, { once: true });
+            scriptElement = el;
         }
 
         return () => {
+            if (scriptElement) {
+                scriptElement.removeEventListener("load", handleLeafletLoad);
+            }
             if (mapInstanceRef.current) {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 (mapInstanceRef.current as any).remove();
@@ -154,7 +166,7 @@ export function MapaTab() {
                         <span className="text-[11px] font-black uppercase tracking-widest text-gray-400">{code}</span>
                     </div>
                 ))}
-                <span className="ml-auto text-[10px] text-gray-600 font-medium">Toque em um ponto para detalhes</span>
+                <span className="ml-auto text-[10px] text-gray-600 font-medium">{t("ui.map.tapToExplore")}</span>
             </div>
 
             {/* Map container */}

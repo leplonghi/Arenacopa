@@ -43,7 +43,7 @@ const Perfil = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { t } = useTranslation('profile');
-  const { language, changeLanguage } = useLanguage();
+  const { language, systemLanguage } = useLanguage();
   const [profile, setProfile] = useState<ProfileRecord | null>(null);
 
   const [isEditing, setIsEditing] = useState(false);
@@ -101,8 +101,13 @@ const Perfil = () => {
   /* Safe access to team with fallback */
   const favoriteTeam = profile?.favorite_team || localStorage.getItem("favorite_team") || "BRA";
   const team = getTeam(favoriteTeam) || getTeam("BRA") || teams[0];
-  const displayName = profile?.name || user?.email?.split("@")[0] || "Usuário";
+  const displayName = profile?.name || user?.email?.split("@")[0] || t('default_user_name');
   const initials = displayName.slice(0, 2).toUpperCase();
+  const languageLabels = {
+    "pt-BR": t('language_names.ptBR'),
+    en: t('language_names.en'),
+    es: t('language_names.es'),
+  } as const;
 
   if (loading) {
     return (
@@ -369,11 +374,11 @@ const Perfil = () => {
           <p className="text-[11px] text-gray-300 font-bold uppercase tracking-[0.12em] px-1">{t('achievements_title')}</p>
           <div className="grid grid-cols-3 gap-3 pb-2">
             {[
-              { id: "primeiro_palpite", title: "Chute Inicial", desc: "Deu seu primeiro palpite", icon: <Goal className="w-6 h-6 text-primary" />, color: "primary", unlocked: (stats?.totalPredictions || 0) > 0 },
-              { id: "placar_exato", title: "Na Mosca", desc: "Acertou 1 placar exato", icon: <Target className="w-6 h-6 text-blue-400" />, color: "blue-500", unlocked: (stats?.exactScores || 0) > 0 },
-              { id: "criador_bolao", title: "Líder nato", desc: "Criou um bolão", icon: <Crown className="w-6 h-6 text-amber-500" />, color: "amber-500", unlocked: (stats?.createdBoloes || 0) > 0 },
-              { id: "combo_3", title: "Hat-trick", desc: "Acertou 3 exatos totais", icon: <Zap className="w-6 h-6 text-violet-400" />, color: "violet-400", unlocked: (stats?.exactScores || 0) >= 3 },
-              { id: "campeao", title: "Campeão", desc: "Venceu um bolão inteiro", icon: <Trophy className="w-6 h-6 text-emerald-400" />, color: "emerald-400", unlocked: (stats?.titles || 0) > 0 },
+              { id: "primeiro_palpite", title: t('achievements.first_prediction.title'), desc: t('achievements.first_prediction.desc'), icon: <Goal className="w-6 h-6 text-primary" />, color: "primary", unlocked: (stats?.totalPredictions || 0) > 0 },
+              { id: "placar_exato", title: t('achievements.exact_score.title'), desc: t('achievements.exact_score.desc'), icon: <Target className="w-6 h-6 text-blue-400" />, color: "blue-500", unlocked: (stats?.exactScores || 0) > 0 },
+              { id: "criador_bolao", title: t('achievements.pool_creator.title'), desc: t('achievements.pool_creator.desc'), icon: <Crown className="w-6 h-6 text-amber-500" />, color: "amber-500", unlocked: (stats?.createdBoloes || 0) > 0 },
+              { id: "combo_3", title: t('achievements.combo_three.title'), desc: t('achievements.combo_three.desc'), icon: <Zap className="w-6 h-6 text-violet-400" />, color: "violet-400", unlocked: (stats?.exactScores || 0) >= 3 },
+              { id: "campeao", title: t('achievements.champion.title'), desc: t('achievements.champion.desc'), icon: <Trophy className="w-6 h-6 text-emerald-400" />, color: "emerald-400", unlocked: (stats?.titles || 0) > 0 },
             ].map(ach => (
               <div
                 key={ach.id}
@@ -391,7 +396,7 @@ const Perfil = () => {
                   {ach.icon}
                 </div>
                 <span className="text-xs font-black text-white mb-1 leading-tight">{ach.title}</span>
-                <span className="text-[10px] text-gray-400 font-medium leading-tight">{ach.unlocked ? ach.desc : "Bloqueado"}</span>
+                <span className="text-[10px] text-gray-400 font-medium leading-tight">{ach.unlocked ? ach.desc : t('achievements.locked')}</span>
               </div>
             ))}
             {/* spacer for scroll */}
@@ -428,22 +433,22 @@ const Perfil = () => {
           <div className="pt-3">
             <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground block mb-2">{t('quick_switch')}</span>
             <div className="flex gap-2">
-              {teams.slice(0, 4).map(t => (
+              {teams.slice(0, 4).map((teamOption) => (
                 <button
-                  key={t.code}
-                  onClick={() => setFavoriteTeam(t.code)}
-                  aria-label={`Escolher ${t.name} como time favorito`}
+                  key={teamOption.code}
+                  onClick={() => setFavoriteTeam(teamOption.code)}
+                  aria-label={t('favorite_team.select_aria', { team: teamOption.name })}
                   className={cn(
                     "w-11 h-11 rounded-full overflow-hidden transition-all",
-                    favoriteTeam === t.code && "ring-2 ring-primary"
+                    favoriteTeam === teamOption.code && "ring-2 ring-primary"
                   )}
                 >
-                  <Flag code={t.code} size="md" className="w-11 h-11" />
+                  <Flag code={teamOption.code} size="md" className="w-11 h-11" />
                 </button>
               ))}
               <button
                 onClick={() => setShowTeamPicker(true)}
-                aria-label="Abrir seletor completo de times"
+                aria-label={t('favorite_team.open_selector_aria')}
                 className="w-11 h-11 rounded-full bg-secondary flex items-center justify-center text-lg text-muted-foreground"
               >
                 +
@@ -455,20 +460,20 @@ const Perfil = () => {
         {showTeamPicker && (
           <div className="glass-card mt-2 p-3 max-h-60 overflow-y-auto">
             <div className="grid grid-cols-5 gap-1.5">
-              {teams.map(t => (
+              {teams.map((teamOption) => (
                 <button
-                  key={t.code}
+                  key={teamOption.code}
                   onClick={() => {
-                    setFavoriteTeam(t.code);
+                    setFavoriteTeam(teamOption.code);
                     setShowTeamPicker(false);
                   }}
                   className={cn(
                     "flex flex-col items-center gap-0.5 p-2 rounded-lg transition-colors",
-                    favoriteTeam === t.code ? "bg-primary/20 ring-1 ring-primary" : "hover:bg-secondary"
+                    favoriteTeam === teamOption.code ? "bg-primary/20 ring-1 ring-primary" : "hover:bg-secondary"
                   )}
                 >
-                  <Flag code={t.code} size="sm" />
-                  <span className="text-[10px] font-bold">{t.code}</span>
+                  <Flag code={teamOption.code} size="sm" />
+                  <span className="text-[10px] font-bold">{teamOption.code}</span>
                 </button>
               ))}
             </div>
@@ -482,29 +487,19 @@ const Perfil = () => {
           <Languages className="w-3.5 h-3.5 text-primary" />
           <h3 className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">{t('language')}</h3>
         </div>
-        <div className="glass-card p-4">
-          <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground mb-3">{t('language_choose')}</p>
-          <div className="grid grid-cols-3 gap-2">
-            {[
-              { code: 'pt-BR' as const, name: 'Português', flag: 'BRA' },
-              { code: 'en' as const, name: 'English', flag: 'USA' },
-              { code: 'es' as const, name: 'Español', flag: 'ESP' }
-            ].map(lang => (
-              <button
-                key={lang.code}
-                onClick={() => changeLanguage(lang.code)}
-                className={cn(
-                  "flex flex-col items-center gap-2 p-3 rounded-xl transition-all border",
-                  language === lang.code
-                    ? "bg-primary/20 border-primary ring-1 ring-primary"
-                    : "bg-secondary/40 border-border/50 hover:bg-secondary"
-                )}
-              >
-                <Flag code={lang.flag} size="sm" />
-                <span className="text-[11px] font-bold">{lang.name}</span>
-              </button>
-            ))}
+        <div className="glass-card p-4 space-y-3">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground mb-2">{t('language_auto')}</p>
+              <p className="text-sm font-semibold text-white">{t('language_following_system')}</p>
+            </div>
+            <div className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-[11px] font-black text-primary">
+              {languageLabels[language]}
+            </div>
           </div>
+          <p className="text-xs leading-relaxed text-muted-foreground">
+            {t('language_system', { language: languageLabels[systemLanguage] })}
+          </p>
         </div>
       </section>
 
@@ -528,7 +523,7 @@ const Perfil = () => {
             }
           }}
           aria-pressed={Boolean(profile?.fun_mode)}
-          aria-label={profile?.fun_mode ? "Desativar modo diversão" : "Ativar modo diversão"}
+          aria-label={profile?.fun_mode ? t('fun_mode_disable') : t('fun_mode_enable')}
           className={cn(
             "w-12 h-7 rounded-full transition-colors relative shrink-0",
             profile?.fun_mode ? "bg-background/30" : "bg-background/10"
@@ -549,7 +544,7 @@ const Perfil = () => {
         </div>
         <button
           type="button"
-          aria-label="Abrir página do Arena CUP Premium"
+          aria-label={t('premium_open_aria')}
           onClick={() => navigate('/premium')}
           className="relative glass-card p-5 border-copa-gold/30 hover:border-copa-gold/60 transition-colors overflow-hidden group cursor-pointer w-full text-left"
         >

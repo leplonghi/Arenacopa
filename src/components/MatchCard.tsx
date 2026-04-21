@@ -1,4 +1,4 @@
-import { getTeam, formatMatchTime, getStadium, type Match } from "@/data/mockData";
+import { teams, formatMatchTime, getStadium, type Match } from "@/data/mockData";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { StatusBadge } from "./StatusBadge";
@@ -34,8 +34,20 @@ const cardVariants = {
 };
 
 export function MatchCard({ match, prediction, compact = false, variant = "default", className, index = 0, onClick }: MatchCardProps) {
-  const home = getTeam(match.homeTeam);
-  const away = getTeam(match.awayTeam);
+  const home = teams.find((team) => team.code === match.homeTeam) ?? {
+    code: match.homeTeam || "TBD",
+    name: match.homeTeam || "A definir",
+    flag: "🏳️",
+    group: match.group || "",
+    confederation: "",
+  };
+  const away = teams.find((team) => team.code === match.awayTeam) ?? {
+    code: match.awayTeam || "TBD",
+    name: match.awayTeam || "A definir",
+    flag: "🏳️",
+    group: match.group || "",
+    confederation: "",
+  };
   const stadium = getStadium(match.stadium);
   const navigate = useNavigate();
   const { t } = useTranslation('copa');

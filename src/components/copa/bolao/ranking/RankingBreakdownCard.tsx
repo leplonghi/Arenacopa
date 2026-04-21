@@ -1,4 +1,5 @@
 import { Layers3, Sparkles, Swords, Trophy } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 
 export type RankingBreakdown = {
@@ -51,6 +52,7 @@ export function RankingBreakdownCard({
         special: string;
     };
 }) {
+    const { t } = useTranslation("ranking");
     const items = [
         { key: "match", label: labels.match, value: breakdown.match },
         { key: "phase", label: labels.phase, value: breakdown.phase },
@@ -75,7 +77,7 @@ export function RankingBreakdownCard({
                             </div>
                             <p className="text-[10px] font-black uppercase tracking-[0.16em] text-zinc-500">{item.label}</p>
                             <p className="mt-2 text-2xl font-black text-white">{item.value}</p>
-                            <p className={cn("text-xs font-bold", config.color)}>pts</p>
+                            <p className={cn("text-xs font-bold", config.color)}>{t("common.points_short")}</p>
                         </div>
                     );
                 })}
