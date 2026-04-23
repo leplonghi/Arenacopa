@@ -224,7 +224,7 @@ export interface MemberData {
     user_id: string;
     role: string;
     joined_at: string;
-    payment_status?: 'pending' | 'paid' | 'exempt';
+    payment_status?: 'pending' | 'paid' | 'exempt' | 'confirmed' | 'waived';
     profile: { name: string; avatar_url: string | null } | null;
 }
 

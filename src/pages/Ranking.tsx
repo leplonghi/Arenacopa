@@ -1,12 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
-import { Award, Crown, Medal, Trophy } from "lucide-react";
+import { Award, ShieldCheck, Trophy, Users } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { db } from "@/integrations/firebase/client";
-import { collection, query, orderBy, limit, getDocs, where, documentId } from "firebase/firestore";
+import { collection, query, orderBy, getDocs, where, documentId } from "firebase/firestore";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "@/components/EmptyState";
 import { useTranslation } from "react-i18next";
 import { getPublicProfilesByIds } from "@/services/profile/profile.service";
+import { ArenaMetric, ArenaPanel, ArenaSectionHeader, ArenaTabPill } from "@/components/arena/ArenaPrimitives";
+import { getArenaLevel } from "@/lib/profile-level";
+import { RankingPodium } from "@/components/ranking/RankingPodium";
+import { RankingListRow } from "@/components/ranking/RankingListRow";
+import { RewardProgressCard } from "@/components/ranking/RewardProgressCard";
 
 type UserStanding = {
   userId: string;
@@ -199,97 +204,123 @@ export default function Ranking() {
   }
 
   const podium = displayRows.slice(0, 3);
+  const myLevel = getArenaLevel(myPosition?.points);
 
   return (
-    <div className="mx-auto max-w-5xl px-4 pb-28 pt-6 text-white">
-      <div className="mb-6">
-        <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">{t('page_label')}</p>
-        <h1 className="mt-1 text-3xl font-black">{t('page_title')}</h1>
-        <p className="mt-2 text-sm text-zinc-400">{t('page_desc')}</p>
-      </div>
+    <div className="arena-screen">
+      <ArenaPanel tone="strong" className="relative overflow-hidden p-5 md:p-6">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,193,7,0.1),transparent_34%),radial-gradient(circle_at_bottom_right,rgba(145,255,59,0.1),transparent_28%)]" />
+        <ArenaSectionHeader
+          eyebrow={t('page_label')}
+          title={t('page_title')}
+          action={
+            <div className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 font-display text-lg font-bold uppercase text-zinc-200">
+              Temporada 2026
+            </div>
+          }
+        />
 
-      {/* Bolão filter pills */}
-      {userBoloes.length > 0 && (
-        <div className="mb-6 flex flex-wrap gap-2 pb-1">
-          <button
-            onClick={() => setSelectedBolaoId(null)}
-            className={`rounded-full px-4 py-2 text-xs font-black uppercase tracking-[0.14em] transition-colors ${
-              selectedBolaoId === null ? "bg-primary text-black" : "bg-white/10 text-zinc-400 hover:bg-white/20"
-            }`}
-          >
-            {t('filter_global')}
+        <div className="mt-5 flex flex-wrap gap-2">
+          <button onClick={() => setSelectedBolaoId(null)}>
+            <ArenaTabPill active={selectedBolaoId === null}>{t('filter_global')}</ArenaTabPill>
           </button>
           {userBoloes.map((b) => (
-            <button
-              key={b.id}
-              onClick={() => setSelectedBolaoId(b.id)}
-              className={`max-w-[160px] truncate rounded-full px-4 py-2 text-xs font-black uppercase tracking-[0.14em] transition-colors ${
-                selectedBolaoId === b.id ? "bg-primary text-black" : "bg-white/10 text-zinc-400 hover:bg-white/20"
-              }`}
-            >
-              {b.name}
+            <button key={b.id} onClick={() => setSelectedBolaoId(b.id)}>
+              <ArenaTabPill active={selectedBolaoId === b.id} className="max-w-[12rem] truncate">
+                {b.name}
+              </ArenaTabPill>
             </button>
           ))}
         </div>
-      )}
 
-      {myPosition && (
-        <div className="mb-6 rounded-[28px] border border-primary/30 bg-primary/10 p-5">
-          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">{t('my_position')}</p>
-          <div className="mt-3 flex items-center justify-between gap-4">
-            <div>
-              <h2 className="text-2xl font-black">#{myPosition.rank}</h2>
-              <p className="text-sm text-zinc-300">{myPosition.name}</p>
-            </div>
-            <div className="rounded-full bg-primary px-4 py-2 text-sm font-black text-black">
-              {myPosition.points} pts
-            </div>
-          </div>
-        </div>
-      )}
+        <div className="relative mt-7 grid gap-5 xl:grid-cols-[minmax(0,1.65fr)_minmax(300px,0.9fr)]">
+          <RankingPodium entries={podium} currentUserId={user?.id} />
 
-      <div className="mb-6 grid gap-4 md:grid-cols-3">
-        {podium.map((row, index) => (
-          <div key={row.userId} className="surface-card p-5">
-            <div className="mb-3 inline-flex rounded-full bg-primary/15 p-3 text-primary">
-              {index === 0 ? <Crown className="h-5 w-5" /> : index === 1 ? <Trophy className="h-5 w-5" /> : <Medal className="h-5 w-5" />}
-            </div>
-            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">
-              {index === 0 ? t('leader') : index === 1 ? t('vice_leader') : t('top3')}
-            </p>
-            <h2 className="mt-2 text-xl font-black">{row.name}</h2>
-            <p className="mt-1 text-sm text-zinc-400">{row.favoriteTeam ? t('favorite_team', { team: row.favoriteTeam }) : t('no_favorite_team')}</p>
-            <div className="mt-4 inline-flex rounded-full bg-white/10 px-4 py-2 text-sm font-black">
-              {row.points} pts
-            </div>
-          </div>
-        ))}
-      </div>
+          <div className="space-y-4">
+            <ArenaPanel className="p-5">
+              <p className="arena-kicker text-primary">Recorte da temporada</p>
+              <h3 className="mt-2 font-display text-[2rem] font-semibold uppercase leading-[0.92] text-white">
+                Competição global com foco no seu progresso
+              </h3>
+              <p className="mt-2 text-sm leading-6 text-zinc-400">
+                Acompanhe o topo, compare sua posição e veja quanto falta para alcançar a próxima recompensa.
+              </p>
 
-      <div className="surface-card-strong rounded-[32px] p-4 md:p-6">
-        <div className="mb-4 flex items-center gap-2">
-          <Award className="h-4 w-4 text-primary" />
-          <h2 className="text-sm font-black uppercase tracking-[0.18em] text-primary">{t('overall_title')}</h2>
-        </div>
-
-        <div className="space-y-3">
-          {displayRows.map((row, index) => (
-            <div
-              key={row.userId}
-              className="surface-card-soft flex items-center justify-between gap-4 rounded-2xl px-4 py-4"
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-10 text-center text-lg font-black text-primary">#{index + 1}</div>
-                <div>
-                  <div className="font-black">{row.name}</div>
-                  <div className="text-sm text-zinc-400">{row.favoriteTeam ? t('favorite_team_short', { team: row.favoriteTeam }) : t('no_favorite_team_short')}</div>
-                </div>
+              <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                <ArenaMetric
+                  label="Competidores"
+                  value={displayRows.length.toLocaleString("pt-BR")}
+                  icon={<Users className="h-5 w-5" />}
+                />
+                <ArenaMetric
+                  label="Seu nível"
+                  value={`N${myLevel.level}`}
+                  accent={!!myPosition}
+                  icon={<ShieldCheck className="h-5 w-5" />}
+                />
               </div>
-              <div className="rounded-full bg-white/10 px-4 py-2 text-sm font-black">{row.points} pts</div>
-            </div>
-          ))}
+            </ArenaPanel>
+
+            {myPosition ? (
+              <ArenaPanel className="p-5">
+                <p className="arena-kicker text-primary">Sua corrida</p>
+                <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                  <ArenaMetric
+                    label={t('my_position')}
+                    value={`${myPosition.rank}º`}
+                    accent
+                    icon={<Trophy className="h-5 w-5" />}
+                  />
+                  <ArenaMetric
+                    label="Pontos atuais"
+                    value={myPosition.points.toLocaleString("pt-BR")}
+                    icon={<Award className="h-5 w-5" />}
+                  />
+                </div>
+              </ArenaPanel>
+            ) : null}
+          </div>
         </div>
-      </div>
+      </ArenaPanel>
+
+      <ArenaPanel className="mt-6 p-4 md:p-5">
+        <div className="mb-4 flex items-end justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <Award className="h-4 w-4 text-primary" />
+            <h2 className="font-display text-2xl font-black uppercase tracking-[0.08em] text-white">
+              {t('overall_title')}
+            </h2>
+          </div>
+          <div className="hidden text-[11px] font-black uppercase tracking-[0.16em] text-zinc-500 md:block">
+            posição • jogador • pontos
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          {displayRows.map((row, index) => {
+            const rowLevel = getArenaLevel(row.points).level;
+            const isCurrentUser = row.userId === user?.id;
+
+            return (
+              <RankingListRow
+                key={row.userId}
+                row={row}
+                rank={index + 1}
+                level={rowLevel}
+                isCurrentUser={isCurrentUser}
+              />
+            );
+          })}
+        </div>
+      </ArenaPanel>
+
+      {myPosition ? (
+        <div className="mt-6 grid gap-4 md:grid-cols-3">
+          <ArenaMetric label={t('my_position')} value={`${myPosition.rank}º`} accent icon={<Trophy className="h-6 w-6" />} />
+          <ArenaMetric label="Entre jogadores" value={displayRows.length.toLocaleString("pt-BR")} icon={<Users className="h-6 w-6" />} />
+          <RewardProgressCard current={myPosition.points} target={5000} rewardLabel="Baú épico" rewardValue="5.000 pts" />
+        </div>
+      ) : null}
     </div>
   );
 }

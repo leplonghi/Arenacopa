@@ -32,9 +32,21 @@ import { cn } from "@/lib/utils";
 import { EmptyState } from "@/components/EmptyState";
 import { saveBolaoPrediction } from "@/services/boloes/bolao-prediction.service";
 import { BolaoEditPanel } from "@/features/boloes/edit/BolaoEditPanel";
+import { AdmissionInbox } from "@/features/social/AdmissionInbox";
+import { approveBolaoJoin, rejectBolaoJoin } from "@/services/groups/group-access.service";
+import { trackSocialEvent } from "@/lib/analytics/social.telemetry";
 import type { BolaoActivity, BolaoData, BolaoMarket, BolaoOnboardingState, BolaoPrediction, MemberData, Palpite } from "@/types/bolao";
+import { ArenaMetric, ArenaPanel, ArenaTabPill } from "@/components/arena/ArenaPrimitives";
 
 type BolaoDetailTab = "palpites" | "ranking" | "pessoas" | "resumo";
+
+type PoolJoinRequestRow = {
+  id: string;
+  user_id: string;
+  display_name: string;
+  created_at: string | null;
+  updated_at: string | null;
+};
 
 const JogosTab = lazy(() =>
   import("@/components/copa/bolao/JogosTab").then((module) => ({ default: module.JogosTab }))
@@ -129,6 +141,7 @@ export default function BolaoDetail() {
   const [bolao, setBolao] = useState<BolaoData | null>(null);
   const [members, setMembers] = useState<MemberData[]>([]);
   const [memberCount, setMemberCount] = useState(0);
+  const [joinRequests, setJoinRequests] = useState<PoolJoinRequestRow[]>([]);
   const [myPalpites, setMyPalpites] = useState<Palpite[]>([]);
   const [bolaoMarkets, setBolaoMarkets] = useState<BolaoMarket[]>([]);
   const [myMarketPredictions, setMyMarketPredictions] = useState<BolaoPrediction[]>([]);
@@ -157,7 +170,12 @@ export default function BolaoDetail() {
 
   const isCreator = bolao?.creator_id === user?.id;
   const myMember = members.find(m => m.user_id === user?.id);
-  const isPaid = myMember?.payment_status === 'paid' || myMember?.payment_status === 'exempt' || isCreator;
+  const isPaid =
+    myMember?.payment_status === 'paid' ||
+    myMember?.payment_status === 'exempt' ||
+    myMember?.payment_status === 'confirmed' ||
+    myMember?.payment_status === 'waived' ||
+    isCreator;
   const championMarket = bolaoMarkets.find((market) => market.slug === "champion");
   const matchMarkets = bolaoMarkets.filter((market) => market.scope === "match");
   const phaseMarkets = bolaoMarkets.filter((market) => market.scope === "phase");
@@ -245,27 +263,91 @@ export default function BolaoDetail() {
     };
   }, [matchMarkets, phaseMarkets, predictionMarketIds, savedLegacyMatchIds, specialMarkets, tournamentMarkets]);
 
+  const joinRequestItems = useMemo(
+    () =>
+      joinRequests.map((request) => ({
+        id: request.id,
+        title: request.display_name,
+        subtitle: "Quer entrar neste bolão.",
+        meta: request.updated_at
+          ? `Atualizado em ${new Date(request.updated_at).toLocaleString("pt-BR")}`
+          : request.created_at
+            ? `Solicitado em ${new Date(request.created_at).toLocaleString("pt-BR")}`
+            : null,
+        status: "Pendente",
+        primaryActionLabel: "Aprovar",
+        secondaryActionLabel: "Recusar",
+        onPrimaryAction: () =>
+          void (async () => {
+            try {
+              await approveBolaoJoin({
+                payload: {
+                  bolao_id: bolao?.id || "",
+                  request_id: request.id,
+                },
+              });
+              const latencyMinutes = request.created_at
+                ? Math.max(Math.round((Date.now() - new Date(request.created_at).getTime()) / 60000), 0)
+                : null;
+              trackSocialEvent("approval_completed", { kind: "bolao" });
+              if (latencyMinutes != null) {
+                trackSocialEvent("approval_latency", {
+                  kind: "bolao",
+                  latency_minutes: latencyMinutes,
+                });
+              }
+              toast({ title: "Solicitação aprovada" });
+            } catch {
+              toast({
+                title: "Não foi possível aprovar",
+                variant: "destructive",
+              });
+            }
+          })(),
+        onSecondaryAction: () =>
+          void (async () => {
+            try {
+              await rejectBolaoJoin({
+                payload: {
+                  bolao_id: bolao?.id || "",
+                  request_id: request.id,
+                },
+              });
+              toast({ title: "Solicitação recusada" });
+            } catch {
+              toast({
+                title: "Não foi possível recusar",
+                variant: "destructive",
+              });
+            }
+          })(),
+      })),
+    [bolao?.id, joinRequests, toast],
+  );
+
   const loadBolao = useCallback(async () => {
     if (!id || !user) return;
     if (mountedRef.current) setLoading(true);
 
     try {
-      // Check membership, bolao info, member count, and champion prediction in parallel
+      // Keep the bolao and membership reads as the only critical path. Optional
+      // documents can be missing or temporarily denied by rules without making
+      // the whole bolao look like it does not exist.
       const membershipRef = doc(db, "bolao_members", `${user.id}_${id}`);
       const bolaoRef = doc(db, "boloes", id);
-      const champRef = doc(db, "bolao_champion_predictions", `${user.id}_${id}`);
-      const membersQuery = query(collection(db, "bolao_members"), where("bolao_id", "==", id));
 
-      const [membershipSnap, bolaoSnap, champSnap, countSnap] = await Promise.all([
+      const [membershipSnap, bolaoSnap] = await Promise.all([
         getDoc(membershipRef),
         getDoc(bolaoRef),
-        getDoc(champRef),
-        getCountFromServer(membersQuery),
       ]);
 
       if (!mountedRef.current) return; // component unmounted while fetching
 
-      if (!membershipSnap.exists()) {
+      const membershipStatus = membershipSnap.exists()
+        ? String(membershipSnap.data().membership_status || "active")
+        : null;
+
+      if (!membershipSnap.exists() || ["left", "removed", "withdrawn_by_owner"].includes(String(membershipStatus))) {
         toast({ title: t('bolao_detail.not_member') });
         navigate("/boloes");
         return;
@@ -300,9 +382,21 @@ export default function BolaoDetail() {
         integrity: bData.integrity,
       } as BolaoData);
 
-      setMemberCount(countSnap.data().count);
+      const membersQuery = query(collection(db, "bolao_members"), where("bolao_id", "==", id));
+      const countResult = await getCountFromServer(membersQuery).catch((error) => {
+        console.warn("Could not load bolao member count:", error);
+        return null;
+      });
+      if (mountedRef.current && countResult) {
+        setMemberCount(countResult.data().count);
+      }
 
-      if (champSnap.exists()) {
+      const champRef = doc(db, "bolao_champion_predictions", `${user.id}_${id}`);
+      const champSnap = await getDoc(champRef).catch((error) => {
+        console.warn("Could not load legacy champion prediction:", error);
+        return null;
+      });
+      if (mountedRef.current && champSnap?.exists()) {
         const champData = champSnap.data();
         setMyChampion(champData.team_code);
         setChampionSelection(champData.team_code);
@@ -322,7 +416,7 @@ export default function BolaoDetail() {
   }, [id, navigate, t, toast, user]);
 
   useEffect(() => {
-    if (!id || !user) return;
+    if (!id || !user || !bolao) return;
     loadBolao();
   }, [id, user, loadBolao]);
 
@@ -335,8 +429,13 @@ export default function BolaoDetail() {
 
     const unsubscribeMembers = onSnapshot(qMembers, async (snapshot) => {
       const membersList: MemberData[] = [];
-      
-      const profileIds = Array.from(new Set(snapshot.docs.map(doc => doc.data().user_id)));
+
+      const activeMemberDocs = snapshot.docs.filter((memberDoc) => {
+        const membershipStatus = String(memberDoc.data().membership_status || "active");
+        return !["left", "removed", "withdrawn_by_owner"].includes(membershipStatus);
+      });
+
+      const profileIds = Array.from(new Set(activeMemberDocs.map(doc => doc.data().user_id)));
       
       // Fetch profiles in chunks
       const publicProfiles = await getPublicProfilesByIds(profileIds);
@@ -348,7 +447,7 @@ export default function BolaoDetail() {
         };
       });
 
-      snapshot.docs.forEach(doc => {
+      activeMemberDocs.forEach(doc => {
         const data = doc.data();
         membersList.push({
           id: doc.id,
@@ -363,7 +462,44 @@ export default function BolaoDetail() {
 
       setMembers(membersList);
       setMemberCount(membersList.length);
+    }, (error) => {
+      console.error("Bolao members subscription error:", error);
     });
+
+    let unsubscribeRequests: (() => void) | null = null;
+    if (isCreator) {
+      const requestsRef = collection(db, "bolao_join_requests");
+      const qRequests = query(requestsRef, where("bolao_id", "==", id));
+      unsubscribeRequests = onSnapshot(qRequests, async (snapshot) => {
+        const pendingDocs = snapshot.docs.filter(
+          (requestDoc) => String(requestDoc.data().request_status || "pending") === "pending",
+        );
+        const profileIds = Array.from(new Set(pendingDocs.map((requestDoc) => String(requestDoc.data().user_id))));
+        const profiles = await getPublicProfilesByIds(profileIds);
+
+        if (!mountedRef.current) {
+          return;
+        }
+
+        setJoinRequests(
+          pendingDocs.map((requestDoc) => {
+            const userId = String(requestDoc.data().user_id);
+            const profile = profiles.get(userId);
+            return {
+              id: requestDoc.id,
+              user_id: userId,
+              display_name: profile?.nickname || profile?.name || userId,
+              created_at: (requestDoc.data().created_at as string | null) ?? null,
+              updated_at: (requestDoc.data().updated_at as string | null) ?? null,
+            };
+          }),
+        );
+      }, (error) => {
+        console.error("Bolao join requests subscription error:", error);
+      });
+    } else {
+      setJoinRequests([]);
+    }
 
     // Listen to MY palpites
     const palpitesRef = collection(db, "bolao_palpites");
@@ -372,6 +508,8 @@ export default function BolaoDetail() {
     const unsubscribePalpites = onSnapshot(qPalpites, (snapshot) => {
       const pList = snapshot.docs.map(d => ({ id: d.id, ...d.data() })) as Palpite[];
       setMyPalpites(pList);
+    }, (error) => {
+      console.error("My bolao palpites subscription error:", error);
     });
 
     const marketsRef = collection(db, "bolao_markets");
@@ -383,6 +521,8 @@ export default function BolaoDetail() {
         .sort((a, b) => a.order_index - b.order_index);
 
       setBolaoMarkets(marketList);
+    }, (error) => {
+      console.error("Bolao markets subscription error:", error);
     });
 
     const predictionsRef = collection(db, "bolao_predictions");
@@ -395,6 +535,8 @@ export default function BolaoDetail() {
       })) as BolaoPrediction[];
 
       setMyMarketPredictions(predictionList);
+    }, (error) => {
+      console.error("My bolao predictions subscription error:", error);
     });
 
     const qAllPredictions = query(predictionsRef, where("bolao_id", "==", id));
@@ -405,6 +547,8 @@ export default function BolaoDetail() {
       })) as BolaoPrediction[];
 
       setAllMarketPredictions(predictionList);
+    }, (error) => {
+      console.error("All bolao predictions subscription error:", error);
     });
 
     const activityRef = collection(db, "bolao_activity");
@@ -436,6 +580,8 @@ export default function BolaoDetail() {
       const nextState = { id: snapshot.id, ...data } as BolaoOnboardingState;
       setOnboardingState(nextState);
       setShowBolaoIntro(!nextState.seen_intro);
+    }, (error) => {
+      console.error("Bolao onboarding subscription error:", error);
     });
 
     return () => {
@@ -446,8 +592,9 @@ export default function BolaoDetail() {
       unsubscribeAllPredictions();
       unsubscribeActivity();
       unsubscribeOnboarding();
+      unsubscribeRequests?.();
     };
-  }, [id, user]);
+  }, [bolao, id, isCreator, user]);
 
   useEffect(() => {
     if (!championMarket) return;
@@ -631,8 +778,12 @@ export default function BolaoDetail() {
   if (loading) return <BolaoDetailSkeleton t={t} />;
   if (!bolao) return <EmptyState icon="🏆" title={t('bolao_detail.not_found_title')} description={t('bolao_detail.not_found_desc')} />;
 
+  const completionPercent = pendingOverview.totalOpen > 0
+    ? Math.round((pendingOverview.completed / pendingOverview.totalOpen) * 100)
+    : 100;
+
   return (
-    <div className="mx-auto max-w-6xl px-4 pb-28 pt-6 text-white">
+    <div className="arena-screen max-w-6xl pb-28 pt-6 text-white">
       <Suspense fallback={null}>
         <BolaoIntroModal
           open={showBolaoIntro && Boolean(bolao)}
@@ -647,159 +798,172 @@ export default function BolaoDetail() {
         />
       </Suspense>
 
-      <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
-        <div className="flex items-start gap-3">
-          <button
-            aria-label={t('bolao_detail.back_button_aria')}
-            onClick={() => navigate("/boloes")}
-            className="surface-card-soft flex h-12 w-12 items-center justify-center rounded-[20px]"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </button>
+      <ArenaPanel tone="strong" className="mb-6 overflow-hidden p-5 sm:p-6">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_82%_18%,rgba(255,196,0,0.18),transparent_22%),radial-gradient(circle_at_15%_0%,rgba(145,255,59,0.12),transparent_28%)]" />
+        <div className="relative">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="flex items-start gap-3">
+              <button
+                aria-label={t('bolao_detail.back_button_aria')}
+                onClick={() => navigate("/boloes")}
+                className="surface-card-soft flex h-12 w-12 items-center justify-center rounded-[20px]"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </button>
 
-          <div>
-                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">
-              {bolao.category === "public" ? t('bolao_detail.category_public') : t('bolao_detail.category_private')}
-            </p>
-            <div className="mt-2 flex items-start gap-4">
-              <BolaoAvatar
-                avatarUrl={bolao.avatar_url}
-                alt={bolao.name}
-                className="surface-card-soft flex h-16 w-16 shrink-0 items-center justify-center rounded-[24px] text-3xl"
-              />
-              <div className="flex-1">
-                <div className="group relative pr-8">
-                  <h1 className="text-3xl font-black leading-tight sm:text-4xl">{bolao.name}</h1>
-                  {bolao.description && <p className="mt-1.5 max-w-2xl text-sm leading-relaxed text-zinc-400">{bolao.description}</p>}
+              <div className="flex items-start gap-4">
+                <BolaoAvatar
+                  avatarUrl={bolao.avatar_url}
+                  alt={bolao.name}
+                  className="surface-card-soft flex h-20 w-20 shrink-0 items-center justify-center rounded-[28px] text-4xl"
+                />
+                <div className="min-w-0">
+                  <p className="arena-kicker text-primary">
+                    {bolao.category === "public" ? t('bolao_detail.category_public') : t('bolao_detail.category_private')}
+                  </p>
+                  <div className="group relative mt-2 pr-8">
+                    <h1 className="font-display text-[3rem] font-black uppercase leading-[0.9] tracking-[0.02em] text-white sm:text-[3.8rem]">
+                      {bolao.name}
+                    </h1>
+                    {bolao.description ? (
+                      <p className="mt-3 max-w-2xl text-sm leading-relaxed text-zinc-300 sm:text-base">
+                        {bolao.description}
+                      </p>
+                    ) : null}
 
-                  {isCreator && (
-                    <button
-                      onClick={() => setShowEditPanel(true)}
-                      className="absolute right-0 top-1 rounded-lg p-2 text-zinc-500 opacity-100 transition-opacity hover:bg-white/5 hover:text-white sm:opacity-0 sm:group-hover:opacity-100"
-                      title="Editar bolão"
-                    >
-                       <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></svg>
-                    </button>
-                  )}
+                    {isCreator && (
+                      <button
+                        onClick={() => setShowEditPanel(true)}
+                        className="absolute right-0 top-1 rounded-lg p-2 text-zinc-500 opacity-100 transition-opacity hover:bg-white/5 hover:text-white sm:opacity-0 sm:group-hover:opacity-100"
+                        title="Editar bolão"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></svg>
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          {championMarket && !myChampion && (
-            <button
-              onClick={() => setChampionOpen(true)}
-              className="inline-flex h-12 items-center gap-2 rounded-[20px] bg-primary px-4 text-[11px] font-black uppercase tracking-[0.18em] text-black"
-            >
-              <Crown className="h-4 w-4" />
-              {t('bolao_detail.bet_champion_btn')}
-            </button>
-          )}
+            <div className="flex flex-wrap items-center gap-2">
+              {championMarket && !myChampion && (
+                <button
+                  onClick={() => setChampionOpen(true)}
+                  className="arena-button-gold px-4 py-3 text-sm"
+                >
+                  <Crown className="h-4 w-4" />
+                  {t('bolao_detail.bet_champion_btn')}
+                </button>
+              )}
 
-          {championMarket && myChampion && (
-            <div className="inline-flex h-12 items-center gap-2 rounded-[20px] border border-primary/30 bg-primary/10 px-4 text-[11px] font-black uppercase tracking-[0.18em] text-primary">
-              <Trophy className="h-4 w-4" />
-              {t('bolao_detail.my_champion_label', { champion: myChampion })}
+              {championMarket && myChampion && (
+                <div className="arena-badge rounded-[18px] px-4 py-3 text-[11px]">
+                  <Trophy className="h-4 w-4" />
+                  {t('bolao_detail.my_champion_label', { champion: myChampion })}
+                </div>
+              )}
+
+              <button
+                onClick={handleShareInvite}
+                className="arena-button-green px-4 py-3 text-sm"
+              >
+                <Share2 className="h-4 w-4" />
+                Compartilhar
+              </button>
+
+              <button
+                aria-label={t('bolao_detail.info_button_aria')}
+                onClick={() => setInfoOpen(true)}
+                className="surface-card-soft flex h-12 w-12 items-center justify-center rounded-[20px]"
+              >
+                <Info className="h-5 w-5" />
+              </button>
             </div>
-          )}
-
-          <button
-            aria-label={t('bolao_detail.info_button_aria')}
-            onClick={() => setInfoOpen(true)}
-            className="surface-card-soft flex h-12 w-12 items-center justify-center rounded-[20px]"
-          >
-            <Info className="h-5 w-5" />
-          </button>
-        </div>
-      </div>
-
-      <div className="mb-6 flex flex-wrap gap-2 text-sm text-zinc-300">
-        <div className="surface-chip rounded-xl px-4 py-2 flex items-center gap-2 border border-white/5 bg-white/5">
-          <Users className="h-4 w-4 text-primary" />
-          <span className="font-bold text-white">{memberCount}</span>
-          <span className="text-xs">{t('bolao_detail.members_label')}</span>
-        </div>
-        <div className="surface-chip rounded-xl px-4 py-2 flex items-center gap-2 border border-white/5 bg-white/5">
-          <Share2 className="h-4 w-4 text-primary" />
-          <span className="font-black tracking-widest text-white">{bolao.invite_code}</span>
-        </div>
-        
-        {isCreator && (
-          <button 
-            onClick={() => setActiveTab('resumo')}
-            className="surface-chip rounded-xl px-4 py-2 flex items-center gap-2 border border-orange-500/30 bg-orange-500/10 hover:bg-orange-500/20 transition-colors"
-          >
-            <Crown className="h-4 w-4 text-orange-500" />
-            <span className="font-black text-orange-500 uppercase tracking-wider text-[10px]">{t('bolao_detail.admin_badge')}</span>
-          </button>
-        )}
-        {formatLabel && (
-          <div className="surface-chip rounded-full px-4 py-2">
-            <Trophy className="h-4 w-4 text-primary" />
-            {t('bolao_detail.format_label', { format: formatLabel })}
-          </div>
-        )}
-        {bolaoMarkets.length > 0 && (
-          <div className="surface-chip rounded-full px-4 py-2">
-            <Info className="h-4 w-4 text-primary" />
-            {t('bolao_detail.active_markets_count', { count: bolaoMarkets.length })}
-          </div>
-        )}
-      </div>
-
-      <div className="mb-6 rounded-[32px] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(255,198,0,0.16),transparent_35%),linear-gradient(135deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02))] p-5">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-          <div className="max-w-2xl">
-            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-primary">
-              {t("bolao_detail.next_play_kicker", { defaultValue: "Próxima jogada" })}
-            </p>
-            <h2 className="mt-2 text-2xl font-black tracking-tight text-white sm:text-3xl">
-              {pendingOverview.totalPending > 0
-                ? t("bolao_detail.pending_title", {
-                    defaultValue: "Você ainda tem {{count}} pendências abertas",
-                    count: pendingOverview.totalPending,
-                  })
-                : t("bolao_detail.caught_up_title", {
-                    defaultValue: "Você está em dia neste bolão",
-                  })}
-            </h2>
-            <p className="mt-2 text-sm leading-relaxed text-zinc-300">
-              {pendingOverview.totalPending > 0
-                ? pendingOverview.summary || t("bolao_detail.pending_desc_fallback", { defaultValue: "Abra seus palpites e feche tudo antes do próximo prazo." })
-                : t("bolao_detail.caught_up_desc", {
-                    defaultValue: "Agora você pode acompanhar o ranking, a galera e os mercados resolvidos sem correr contra o relógio.",
-                  })}
-            </p>
           </div>
 
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-stretch">
-            <div className="rounded-[24px] border border-white/10 bg-black/20 px-4 py-3 text-left sm:min-w-[150px] sm:text-right">
-              <p className="text-[10px] font-black uppercase tracking-[0.18em] text-zinc-500">
-                {t("bolao_detail.progress_label", { defaultValue: "Progresso" })}
-              </p>
-              <p className="mt-1 text-2xl font-black text-white">
-                {pendingOverview.totalOpen > 0 ? `${pendingOverview.completed}/${pendingOverview.totalOpen}` : "0/0"}
-              </p>
-              <p className="text-xs text-zinc-400">
-                {pendingOverview.totalPending > 0
-                  ? t("bolao_detail.progress_pending", {
-                      defaultValue: "Faltam {{count}} para fechar",
-                      count: pendingOverview.totalPending,
-                    })
-                  : t("bolao_detail.progress_done", { defaultValue: "Tudo salvo por enquanto" })}
-              </p>
+          <div className="mt-5 flex flex-wrap gap-2 text-sm text-zinc-300">
+            <div className="arena-badge">
+              <Users className="h-3.5 w-3.5" />
+              {memberCount} {t('bolao_detail.members_label')}
             </div>
+            <div className="arena-badge">
+              <Share2 className="h-3.5 w-3.5" />
+              código {bolao.invite_code}
+            </div>
+            {formatLabel ? (
+              <div className="arena-badge">
+                <Trophy className="h-3.5 w-3.5" />
+                {t('bolao_detail.format_label', { format: formatLabel })}
+              </div>
+            ) : null}
+            {bolaoMarkets.length > 0 ? (
+              <div className="arena-badge">
+                <Info className="h-3.5 w-3.5" />
+                {t('bolao_detail.active_markets_count', { count: bolaoMarkets.length })}
+              </div>
+            ) : null}
+            {isCreator ? (
+              <button onClick={() => setActiveTab('resumo')} className="arena-badge border-orange-400/30 text-orange-300">
+                <Crown className="h-3.5 w-3.5" />
+                {t('bolao_detail.admin_badge')}
+              </button>
+            ) : null}
+          </div>
+        </div>
+      </ArenaPanel>
+
+      <div className="mb-6 grid gap-3 lg:grid-cols-[1.2fr_0.8fr]">
+        <ArenaPanel className="p-5">
+          <p className="arena-kicker text-primary">
+            {t("bolao_detail.next_play_kicker", { defaultValue: "Próxima jogada" })}
+          </p>
+          <h2 className="mt-2 font-display text-[2.5rem] font-black uppercase leading-[0.92] tracking-[0.02em] text-white sm:text-[3.2rem]">
+            {pendingOverview.totalPending > 0
+              ? t("bolao_detail.pending_title", {
+                  defaultValue: "Você ainda tem {{count}} pendências abertas",
+                  count: pendingOverview.totalPending,
+                })
+              : t("bolao_detail.caught_up_title", {
+                  defaultValue: "Você está em dia neste bolão",
+                })}
+          </h2>
+          <p className="mt-3 max-w-2xl text-sm leading-relaxed text-zinc-300">
+            {pendingOverview.totalPending > 0
+              ? pendingOverview.summary || t("bolao_detail.pending_desc_fallback", { defaultValue: "Abra seus palpites e feche tudo antes do próximo prazo." })
+              : t("bolao_detail.caught_up_desc", {
+                  defaultValue: "Agora você pode acompanhar o ranking, a galera e os mercados resolvidos sem correr contra o relógio.",
+                })}
+          </p>
+          <div className="mt-5">
             <button
               onClick={() => setActiveTab(pendingOverview.totalPending > 0 ? "palpites" : "ranking")}
-              className="rounded-[24px] bg-primary px-5 py-4 text-[11px] font-black uppercase tracking-[0.18em] text-black transition-transform hover:scale-[1.02] active:scale-[0.99]"
+              className={pendingOverview.totalPending > 0 ? "arena-button-gold" : "arena-button-green"}
             >
               {pendingOverview.totalPending > 0
                 ? t("bolao_detail.go_to_predictions", { defaultValue: "Palpitar agora" })
                 : t("bolao_detail.go_to_ranking", { defaultValue: "Ver ranking" })}
             </button>
           </div>
+        </ArenaPanel>
+
+        <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+          <ArenaMetric
+            label={t("bolao_detail.progress_label", { defaultValue: "Progresso" })}
+            value={pendingOverview.totalOpen > 0 ? `${pendingOverview.completed}/${pendingOverview.totalOpen}` : "0/0"}
+            accent
+            icon={<Trophy className="h-5 w-5" />}
+          />
+          <ArenaMetric
+            label="Pendências"
+            value={pendingOverview.totalPending}
+            icon={<Info className="h-5 w-5" />}
+          />
+          <ArenaMetric
+            label="Cobertura"
+            value={`${completionPercent}%`}
+            icon={<Users className="h-5 w-5" />}
+            className="sm:col-span-3 lg:col-span-1"
+          />
         </div>
       </div>
 
@@ -808,19 +972,22 @@ export default function BolaoDetail() {
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={cn(
-              "min-h-[52px] rounded-2xl px-4 py-3 text-[11px] font-black uppercase tracking-[0.14em] transition-all",
-              activeTab === tab.id
-                ? "bg-white text-black shadow-[0_0_20px_rgba(255,255,255,0.3)]"
-                : "surface-card-soft text-zinc-400 hover:text-white"
-            )}
+            className="text-left"
           >
-            {tab.label}
+            <ArenaTabPill
+              active={activeTab === tab.id}
+              className={cn(
+                "flex min-h-[58px] w-full rounded-[22px] px-4 py-3 text-[11px] tracking-[0.16em]",
+                activeTab !== tab.id && "hover:border-white/20 hover:bg-white/[0.06] hover:text-white",
+              )}
+            >
+              {tab.label}
+            </ArenaTabPill>
           </button>
         ))}
       </div>
 
-      <div className="surface-card-strong rounded-[32px] p-4 md:p-6">
+      <ArenaPanel tone="strong" className="p-4 md:p-6">
         <Suspense fallback={null}>
           {activeTourTab && <BolaoTour tab={activeTourTab} onDismiss={dismissTour} />}
       </Suspense>
@@ -900,7 +1067,16 @@ export default function BolaoDetail() {
         {/* ── Pessoas: Rivais + Membros ── */}
         {activeTab === "pessoas" && (
           <Suspense fallback={<DetailSectionFallback />}>
-            <div>
+            <div className="space-y-4">
+              {isCreator ? (
+                <AdmissionInbox
+                  title="Solicitações para entrar"
+                  description="Quem pediu acesso a este bolão aparece aqui, sem se perder no resto da tela."
+                  emptyTitle="Nenhuma solicitação pendente"
+                  emptyDescription="Quando alguém pedir entrada, ela aparece aqui."
+                  items={joinRequestItems}
+                />
+              ) : null}
               <div className="mb-4 flex gap-2">
                 <button onClick={() => setGaleraView("rivais")}
                   className={cn("rounded-2xl px-4 py-2 text-sm font-black transition-all", galeraView === "rivais" ? "bg-white text-black" : "surface-card-soft text-zinc-400")}>
@@ -942,7 +1118,7 @@ export default function BolaoDetail() {
             </div>
           </Suspense>
         )}
-      </div>
+      </ArenaPanel>
 
       <Dialog open={championOpen} onOpenChange={setChampionOpen}>
         <DialogContent className="surface-dialog sm:max-w-[425px]">

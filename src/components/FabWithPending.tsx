@@ -14,40 +14,35 @@ export function FabWithPending({
   const { t } = useTranslation("bolao");
 
   const fabButton = (
-    <div className="relative flex h-full flex-col items-center justify-center gap-1 py-2">
-      {/* ── Ball container — protrudes upward ── */}
+    <div className="relative flex h-full flex-col items-center justify-end gap-1 py-2">
       <div
         className={cn(
-          "absolute -top-[24px] left-1/2 flex items-center justify-center rounded-full transition-all duration-300 -translate-x-1/2",
+          "absolute -top-[32px] left-1/2 flex items-center justify-center rounded-full transition-all duration-300 -translate-x-1/2",
           isActive
-            ? "shadow-[0_4px_25px_rgba(34,197,94,0.6)]"
-            : "shadow-[0_4px_15px_rgba(34,197,94,0.4)]"
+            ? "shadow-[0_10px_34px_rgba(91,255,66,0.58)]"
+            : "shadow-[0_10px_24px_rgba(91,255,66,0.38)]"
         )}
-        style={{ width: 68, height: 68 }}
+        style={{ width: 82, height: 82 }}
       >
-        <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-[#1A4D2E] via-[#22c55e] to-emerald-400 p-[3px] animate-pulse-slow shadow-lg">
+        <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle_at_30%_30%,rgba(255,255,255,0.4),transparent_22%),linear-gradient(160deg,#cbff44_0%,#00d84d_48%,#0b381f_100%)] p-[3px] shadow-lg">
           <div className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-[#07160d]">
             <img
               src={realBallImageUrl}
               alt={t("nav.bolao", { defaultValue: "Bolões" })}
               className={cn(
                 "h-full w-full object-cover object-center transition-all duration-300",
-                isActive ? "scale-[1.34] brightness-125" : "scale-[1.28] brightness-110"
+                isActive ? "scale-[1.24] brightness-125" : "scale-[1.18] brightness-110"
               )}
             />
-            {isActive && <div className="absolute inset-0 bg-white/5 rounded-full" />}
+            <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.18),transparent_48%)]" />
           </div>
         </div>
-
       </div>
 
-      {/* Spacer to match icon height from other nav items */}
-      <div className="invisible h-8 w-8" />
-
-      {/* Navigation Label - Matches Layout.tsx logic exactly */}
+      <div className="invisible h-10 w-10" />
       <span className={cn(
-        "text-[10px] leading-none transition-colors",
-        isActive ? "text-primary font-bold" : "text-muted-foreground font-medium"
+        "font-display text-[13px] leading-none transition-colors",
+        isActive ? "text-primary font-black" : "font-semibold text-zinc-300"
       )}>
         {t('nav.bolao', { defaultValue: 'Bolões' })}
       </span>

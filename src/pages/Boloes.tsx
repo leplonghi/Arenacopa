@@ -1,375 +1,212 @@
-import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { BarChart2, Compass, Hash, Loader2, Plus, Search, Trophy, User, UserPlus, Users, Users2, X, Zap } from "lucide-react";
-
+import { Loader2, Plus, Search, Trophy } from "lucide-react";
+import { collection, doc, documentId, getDocs, query, where, orderBy, limit } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
-import {
-  collection,
-  query,
-  where,
-  getDocs,
-  orderBy,
-  limit,
-  doc,
-  getDoc,
-  setDoc,
-  getCountFromServer,
-  documentId
-} from "firebase/firestore";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { useChampionship } from "@/contexts/ChampionshipContext";
-import { BolaoAvatar } from "@/components/BolaoAvatar";
 import { EmptyState } from "@/components/EmptyState";
-import { DEMO_MODE_STORAGE_KEY, BOLOES_INTRO_SEEN_KEY } from "@/lib/constants";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useTranslation } from "react-i18next";
+import { BolaoAvatar } from "@/components/BolaoAvatar";
+import { AdmissionInbox } from "@/features/social/AdmissionInbox";
 import { BolaoEntryGuidance } from "@/features/boloes/shared/BolaoEntryGuidance";
+import { joinViaInvite } from "@/services/groups/group-access.service";
+import { trackSocialEvent } from "@/lib/analytics/social.telemetry";
+import { ArenaPanel } from "@/components/arena/ArenaPrimitives";
 
-type BolaoRow = {
+type BolaoCard = {
   id: string;
   name: string;
   description: string | null;
-  creator_id: string;
   invite_code: string;
-  created_at: string;
-  avatar_url?: string | null;
-  category?: "public" | "private";
-  status?: string;
-  is_paid?: boolean;
-  memberCount: number;
-  isCreator: boolean;
-  championship_id?: string | null;
+  avatar_url: string | null;
+  category: "public" | "private";
+  is_paid: boolean;
+  status: string;
 };
 
-type PublicBolaoRow = BolaoRow & {
-  leader_score: number;
+type RequestCard = {
+  id: string;
+  bolaoId: string;
+  bolaoName: string;
+  requestStatus: string;
+  updatedAt: string | null;
 };
 
-const RankingPage = lazy(() => import("./Ranking"));
-
-const statusWhitelist = ["open", "active"];
-
-function chunkValues<T>(values: T[], chunkSize: number) {
-  const chunks: T[][] = [];
-  for (let index = 0; index < values.length; index += chunkSize) {
-    chunks.push(values.slice(index, index + chunkSize));
+function chunk<T>(values: T[], size: number) {
+  const groups: T[][] = [];
+  for (let index = 0; index < values.length; index += size) {
+    groups.push(values.slice(index, index + size));
   }
-  return chunks;
+  return groups;
 }
 
 export default function Boloes() {
-  const { user, session } = useAuth();
+  const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { t } = useTranslation(['bolao', 'common']);
-  const { current: championship, isWorldCup } = useChampionship();
-  const [activeView, setActiveView] = useState<"boloes" | "ranking">("boloes");
-
-  const [boloes, setBoloes] = useState<BolaoRow[]>([]);
-  const [publicBoloes, setPublicBoloes] = useState<PublicBolaoRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [myBoloes, setMyBoloes] = useState<BolaoCard[]>([]);
+  const [pendingRequests, setPendingRequests] = useState<RequestCard[]>([]);
+  const [discoverBoloes, setDiscoverBoloes] = useState<BolaoCard[]>([]);
   const [joinCode, setJoinCode] = useState("");
   const [joining, setJoining] = useState(false);
-  const [joiningPublicBolaoId, setJoiningPublicBolaoId] = useState<string | null>(null);
-  const [showJoin, setShowJoin] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [publicBoloesUnavailable, setPublicBoloesUnavailable] = useState(false);
-  const [showIntroBanner, setShowIntroBanner] = useState(() =>
-    !localStorage.getItem(BOLOES_INTRO_SEEN_KEY)
-  );
-  const dismissBanner = () => {
-    localStorage.setItem(BOLOES_INTRO_SEEN_KEY, "true");
-    setShowIntroBanner(false);
-  };
-
-  // Demo mode is DEV-only (gate matches AuthContext)
-  const isDemoMode = import.meta.env.DEV && localStorage.getItem(DEMO_MODE_STORAGE_KEY) === "true";
-  // Mounted ref — prevents setState calls after navigation away mid-fetch
-  const mountedRef = useRef(true);
-  useEffect(() => {
-    mountedRef.current = true;
-    return () => { mountedRef.current = false; };
-  }, []);
 
   const loadData = useCallback(async () => {
-    if (!user) return;
-    setLoading(true);
-    setPublicBoloesUnavailable(false);
-
-    if (isDemoMode || !session) {
-      setBoloes([
-        {
-          id: "demo-bolao-1",
-          name: t("page.demo_1_name"),
-          description: t("page.demo_1_desc"),
-          creator_id: user.id,
-          invite_code: "DEMO26",
-          created_at: new Date().toISOString(),
-          avatar_url: null,
-          category: "private",
-          status: "active",
-          is_paid: false,
-          memberCount: 12,
-          isCreator: true,
-        },
-        {
-          id: "demo-bolao-2",
-          name: t("page.demo_2_name"),
-          description: t("page.demo_2_desc"),
-          creator_id: "demo-friend",
-          invite_code: "ARENA7",
-          created_at: new Date(Date.now() - 86_400_000).toISOString(),
-          avatar_url: null,
-          category: "public",
-          status: "open",
-          is_paid: false,
-          memberCount: 27,
-          isCreator: false,
-        },
-      ]);
-      setPublicBoloes([]);
+    if (!user?.id) {
+      setMyBoloes([]);
+      setPendingRequests([]);
+      setDiscoverBoloes([]);
       setLoading(false);
       return;
     }
 
-    let membershipIds: string[] = [];
-
+    setLoading(true);
     try {
-      // 1. Get user's memberships
-      const membersRef = collection(db, "bolao_members");
-      const qMembers = query(membersRef, where("user_id", "==", user.id));
-      const memberSnap = await getDocs(qMembers);
-      
-      membershipIds = memberSnap.docs.map(doc => doc.data().bolao_id);
+      const membershipSnapshot = await getDocs(
+        query(collection(db, "bolao_members"), where("user_id", "==", user.id)),
+      );
+      const bolaoIds = Array.from(
+        new Set(
+          membershipSnapshot.docs
+            .filter((docSnapshot) => {
+              const membershipStatus = String(docSnapshot.data().membership_status || "active");
+              return !["left", "removed", "withdrawn_by_owner"].includes(membershipStatus);
+            })
+            .map((docSnapshot) => docSnapshot.data().bolao_id as string),
+        ),
+      );
 
-      if (membershipIds.length > 0) {
-        const boloesRef = collection(db, "boloes");
-        const myBoloesDocs = await Promise.all(
-          chunkValues(membershipIds, 30).map(async (membershipChunk) => {
-            const qMyBoloes = query(
-              boloesRef,
-              where(documentId(), "in", membershipChunk)
-            );
-            const snapshot = await getDocs(qMyBoloes);
-            return snapshot.docs;
-          })
-        );
-        const myBoloesSnap = myBoloesDocs.flat();
+      const myBoloesDocs = await Promise.all(
+        chunk(bolaoIds, 30).map(async (ids) => {
+          if (!ids.length) {
+            return [];
+          }
+          const snapshot = await getDocs(
+            query(collection(db, "boloes"), where(documentId(), "in", ids)),
+          );
+          return snapshot.docs;
+        }),
+      );
 
-        const myBoloesEnriched = await Promise.all(
-          myBoloesSnap.map(async (docElem) => {
-            const data = docElem.data();
-            
-            // Get member count
-            const countQuery = query(collection(db, "bolao_members"), where("bolao_id", "==", docElem.id));
-            const countSnap = await getCountFromServer(countQuery);
-            
-            return {
-              id: docElem.id,
-              name: data.name,
-              description: data.description,
-              creator_id: data.creator_id,
-              invite_code: data.invite_code,
-              created_at: data.created_at,
-              avatar_url: data.avatar_url,
-              category: data.category,
-              status: data.status,
-              is_paid: data.is_paid ?? false,
-              memberCount: countSnap.data().count,
-              isCreator: data.creator_id === user.id,
-              championship_id: data.championship_id ?? null,
-            } as BolaoRow;
-          })
-        );
-        
-        // Filter by active championship.
-        // Legacy bolões (no championship_id) are treated as WC2026 for backwards compatibility.
-        const filteredByChampionship = myBoloesEnriched.filter((b) =>
-          isWorldCup
-            ? !b.championship_id || b.championship_id === "wc2026"
-            : b.championship_id === championship.id
-        );
+      const mine = myBoloesDocs
+        .flat()
+        .map((docSnapshot) => ({
+          id: docSnapshot.id,
+          name: String(docSnapshot.data().name || "Bolão"),
+          description: (docSnapshot.data().description as string | null) ?? null,
+          invite_code: String(docSnapshot.data().invite_code || ""),
+          avatar_url: (docSnapshot.data().avatar_url as string | null) ?? null,
+          category: (docSnapshot.data().category as "public" | "private") || "private",
+          is_paid: Boolean(docSnapshot.data().is_paid),
+          status: String(docSnapshot.data().status || "open"),
+        }))
+        .sort((left, right) => right.id.localeCompare(left.id));
 
-        // Sort by created_at desc
-        setBoloes(filteredByChampionship.sort((a, b) =>
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        ));
-      } else {
-        setBoloes([]);
-      }
+      const requestSnapshot = await getDocs(
+        query(collection(db, "bolao_join_requests"), where("user_id", "==", user.id)),
+      );
+      const pending = requestSnapshot.docs
+        .map((docSnapshot) => ({ id: docSnapshot.id, ...docSnapshot.data() }))
+        .filter((request) => request.request_status === "pending");
+
+      const pendingBolaoDocs = await Promise.all(
+        pending.map(async (request) => {
+          const poolSnapshot = await getDocs(
+            query(collection(db, "boloes"), where(documentId(), "==", request.bolao_id)),
+          );
+          const poolDoc = poolSnapshot.docs[0];
+          return {
+            id: request.id,
+            bolaoId: String(request.bolao_id),
+            bolaoName: poolDoc ? String(poolDoc.data().name || "Bolão") : "Bolão",
+            requestStatus: String(request.request_status || "pending"),
+            updatedAt: (request.updated_at as string | null) ?? null,
+          };
+        }),
+      );
+
+      const publicSnapshot = await getDocs(
+        query(collection(db, "boloes"), where("category", "==", "public"), orderBy("created_at", "desc"), limit(12)),
+      );
+      const discover = publicSnapshot.docs
+        .filter((docSnapshot) => !bolaoIds.includes(docSnapshot.id))
+        .map((docSnapshot) => ({
+          id: docSnapshot.id,
+          name: String(docSnapshot.data().name || "Bolão"),
+          description: (docSnapshot.data().description as string | null) ?? null,
+          invite_code: String(docSnapshot.data().invite_code || ""),
+          avatar_url: (docSnapshot.data().avatar_url as string | null) ?? null,
+          category: "public" as const,
+          is_paid: Boolean(docSnapshot.data().is_paid),
+          status: String(docSnapshot.data().status || "open"),
+        }));
+
+      setMyBoloes(mine);
+      setPendingRequests(pendingBolaoDocs);
+      setDiscoverBoloes(discover);
     } catch (error) {
       console.error(error);
       toast({
-        title: t('page.load_error_title'),
-        description: t('page.load_error_desc'),
+        title: "Não foi possível carregar seus bolões",
+        description: "Tente novamente em alguns instantes.",
         variant: "destructive",
       });
     } finally {
-      if (mountedRef.current) setLoading(false);
+      setLoading(false);
     }
-
-    try {
-      // Busca pública separada para não derrubar a tela inteira
-      // nem depender de índice composto para category + status + created_at.
-      const publicBoloesQuery = query(
-        collection(db, "boloes"),
-        where("category", "==", "public"),
-        orderBy("created_at", "desc"),
-        limit(20)
-      );
-
-      const publicSnap = await getDocs(publicBoloesQuery);
-      const filteredPublicData = publicSnap.docs.filter((docSnapshot) => {
-        const data = docSnapshot.data();
-        return !membershipIds.includes(docSnapshot.id) && statusWhitelist.includes(data.status);
-      });
-
-      // For each public bolão, fetch member count AND top-ranking in parallel
-      // to avoid 2× sequential roundtrips per item (N+1 → N parallel pairs).
-      const enrichedPublic = await Promise.all(
-        filteredPublicData.map(async (docElem) => {
-          const b = docElem.data();
-
-          const countQuery = query(collection(db, "bolao_members"), where("bolao_id", "==", docElem.id));
-          const rankingQuery = query(
-            collection(db, "bolao_rankings"),
-            where("bolao_id", "==", docElem.id),
-            orderBy("total_points", "desc"),
-            limit(1)
-          );
-
-          const [countSnap, rankingSnap] = await Promise.all([
-            getCountFromServer(countQuery),
-            getDocs(rankingQuery).catch((rankingError) => {
-              console.error("Erro ao carregar ranking público do bolão:", rankingError);
-              return null;
-            }),
-          ]);
-
-          const leaderScore = rankingSnap?.docs[0]?.data()?.total_points ?? 0;
-
-          return {
-            id: docElem.id,
-            name: b.name,
-            description: b.description,
-            creator_id: b.creator_id,
-            invite_code: b.invite_code,
-            created_at: b.created_at,
-            avatar_url: b.avatar_url,
-            category: b.category,
-            status: b.status,
-            is_paid: b.is_paid ?? false,
-            memberCount: countSnap.data().count,
-            isCreator: false,
-            leader_score: leaderScore,
-            championship_id: b.championship_id ?? null,
-          } as PublicBolaoRow;
-        })
-      );
-
-      const filteredPublicByChampionship = enrichedPublic.filter((b) =>
-        isWorldCup
-          ? !b.championship_id || b.championship_id === "wc2026"
-          : b.championship_id === championship.id
-      );
-      if (mountedRef.current) setPublicBoloes(filteredPublicByChampionship);
-    } catch (error) {
-      console.error("Erro ao carregar bolões públicos:", error);
-      if (mountedRef.current) {
-        setPublicBoloes([]);
-        setPublicBoloesUnavailable(true);
-      }
-    }
-  }, [isDemoMode, session, t, toast, user, championship, isWorldCup]);
+  }, [toast, user?.id]);
 
   useEffect(() => {
-    loadData();
+    void loadData();
   }, [loadData]);
 
-  const completeJoin = async (bolaoId: string, options?: { inviteCode?: string | null; isPaid?: boolean }) => {
-    if (!user) return;
-    try {
-      const memberId = `${user.id}_${bolaoId}`;
-      await setDoc(doc(db, "bolao_members", memberId), {
-        bolao_id: bolaoId,
-        user_id: user.id,
-        role: "member",
-        payment_status: options?.isPaid ? "pending" : "exempt",
-        invite_code: options?.inviteCode ?? null,
-        created_at: new Date().toISOString(),
-        joined_at: new Date().toISOString(),
-      });
+  const requestItems = useMemo(
+    () =>
+      pendingRequests.map((request) => ({
+        id: request.id,
+        title: request.bolaoName,
+        subtitle: "Sua entrada está aguardando aprovação do criador.",
+        meta: request.updatedAt ? `Atualizado em ${new Date(request.updatedAt).toLocaleString("pt-BR")}` : null,
+        status: "Pendente",
+      })),
+    [pendingRequests],
+  );
 
-      toast({
-        title: t('page.join_success_title'),
-        description: t('page.join_success_desc'),
-        className: "bg-emerald-500 text-white font-black",
-      });
-
-      await loadData();
-      return true;
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "";
-      if (!message.toLowerCase().includes("duplicate")) {
-        console.error("Error joining bolao:", error);
-        toast({
-          title: t('page.join_error_title'),
-          description: t('page.join_error_desc'),
-          variant: "destructive",
-        });
-      }
-      return false;
+  const handleJoinByCode = async () => {
+    if (!joinCode.trim()) {
+      return;
     }
-  };
-
-  const verifyAndPrepareJoin = async () => {
-    if (!user || !joinCode.trim()) return;
-    setJoining(true);
 
     try {
-      const normalizedCode = joinCode.trim().toUpperCase();
-      
-      const q = query(collection(db, "boloes"), where("invite_code", "==", normalizedCode), limit(1));
-      const querySnap = await getDocs(q);
+      setJoining(true);
+      trackSocialEvent("join_cta_viewed", { source: "pool_code_entry" });
+      const result = await joinViaInvite({
+        payload: {
+          kind: "bolao",
+          invite_code: joinCode.trim().toUpperCase(),
+        },
+      });
 
-      if (querySnap.empty) throw new Error(t("page.invalid_code_desc"));
-      
-      const bolaoDoc = querySnap.docs[0];
-      const bolaoData = bolaoDoc.data();
-
-      if (!statusWhitelist.includes(bolaoData.status)) {
-        throw new Error(t("page.join_closed_error"));
-      }
-
-      // Check if already a member
-      const memberId = `${user.id}_${bolaoDoc.id}`;
-      const memberSnap = await getDoc(doc(db, "bolao_members", memberId));
-
-      if (memberSnap.exists()) {
-        toast({ title: t('page.already_joined') });
-        setJoining(false);
+      if (result.status === "joined" || result.status === "already_member") {
+        trackSocialEvent("join_direct_success", { kind: "bolao" });
+        navigate(`/boloes/${result.bolao_id}`);
         return;
       }
 
-      await completeJoin(bolaoDoc.id, {
-        inviteCode: normalizedCode,
-        isPaid: bolaoData.is_paid ?? false,
+      trackSocialEvent("join_requested", { kind: "bolao" });
+      toast({
+        title: "Solicitação enviada",
+        description: "Agora é só aguardar a aprovação do criador.",
       });
       setJoinCode("");
-      setShowJoin(false);
+      void loadData();
     } catch (error) {
-      const safeMessage =
-        error instanceof Error &&
-        [
-          t("page.invalid_code_desc"),
-          t("page.join_closed_error"),
-        ].includes(error.message)
-          ? error.message
-          : t('page.invalid_code_desc');
       toast({
-        title: t('page.invalid_code_title'),
-        description: safeMessage,
+        title: "Não foi possível entrar",
+        description:
+          error instanceof Error && error.message === "join_requires_group"
+            ? "Esse bolão exige entrada prévia no grupo vinculado."
+            : "Revise o código e tente novamente.",
         variant: "destructive",
       });
     } finally {
@@ -377,459 +214,143 @@ export default function Boloes() {
     }
   };
 
-  const handleJoinPublicBolao = async (bolaoId: string) => {
-    setJoiningPublicBolaoId(bolaoId);
-    try {
-      const targetBolao = publicBoloes.find((bolao) => bolao.id === bolaoId);
-      const joined = await completeJoin(bolaoId, {
-        inviteCode: targetBolao?.invite_code ?? null,
-        isPaid: targetBolao?.is_paid ?? false,
-      });
-      if (joined) {
-        navigate(`/boloes/${bolaoId}`);
-      }
-    } finally {
-      setJoiningPublicBolaoId(null);
-    }
-  };
-
-  const filtered = useMemo(
-    () => boloes.filter((b) => !searchQuery || b.name.toLowerCase().includes(searchQuery.toLowerCase())),
-    [boloes, searchQuery]
-  );
-
-  const myBoloes = filtered.filter((b) => b.isCreator);
-  const joinedBoloes = filtered.filter((b) => !b.isCreator);
-  const activeBoloes = filtered.filter((b) => statusWhitelist.includes(b.status ?? ""));
-  const spotlightBolao = activeBoloes[0] ?? filtered[0] ?? null;
-  const hasAnyBolao = filtered.length > 0;
-  const quickStats = [
-    {
-      label: t("page.stat_participating", { defaultValue: "Participando" }),
-      value: filtered.length,
-    },
-    {
-      label: t("page.stat_created", { defaultValue: "Criados por você" }),
-      value: myBoloes.length,
-    },
-    {
-      label: t("page.stat_public", { defaultValue: "Públicos para explorar" }),
-      value: publicBoloes.length,
-    },
-  ];
-
   return (
-    <div className="mx-auto max-w-5xl px-4 pb-28 pt-6 text-white">
-      {/* ── Bolão Rápido CTA ─────────────────────────────────── */}
-      {activeView === "boloes" && (
-        <Link
-          to="/boloes/rapido"
-          className="mb-5 flex items-center justify-between gap-3 rounded-[24px] border border-primary/30 bg-gradient-to-r from-primary/10 to-transparent px-5 py-4 transition-all hover:bg-primary/15 active:scale-[0.98]"
-        >
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/20 text-primary">
-              <Zap className="h-5 w-5" />
-            </div>
-            <div>
-              <p className="text-sm font-black text-white">⚡ {t('page.rapid_title')}</p>
-              <p className="text-xs text-zinc-400">{t('page.rapid_desc')}</p>
-            </div>
-          </div>
-          <div className="shrink-0 rounded-2xl bg-primary px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.14em] text-black">
-            {t('page.new_badge')}
-          </div>
-        </Link>
-      )}
-
-      <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+    <div className="arena-screen">
+      <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">
-            {t("page.kicker", { defaultValue: "ArenaCopa" })}
-          </p>
-          <h1 className="mt-1 text-3xl font-black">
-            {t("page.title", { defaultValue: "Bolões" })}
-          </h1>
+          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">Bolões</p>
+          <h1 className="mt-1 text-3xl font-black">Tudo em menos passos e menos ruído</h1>
           <p className="mt-2 max-w-2xl text-sm text-zinc-400">
-            {t("page.subtitle", {
-              defaultValue: "Entre, crie e continue seus bolões sem precisar pensar demais.",
-            })}
+            Seus bolões ficam aqui. Entrada, descoberta e criação agora têm caminhos separados e mais claros.
           </p>
         </div>
-
-        <div className="flex flex-wrap gap-2">
-          <button
-            onClick={() => setActiveView((currentView) => currentView === "boloes" ? "ranking" : "boloes")}
-            className="surface-card-soft inline-flex items-center gap-2 rounded-2xl px-4 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-zinc-200"
-          >
-            <BarChart2 className="h-4 w-4" />
-            {activeView === "boloes"
-              ? t("page.view_ranking", { defaultValue: "Ver ranking" })
-              : t("page.view_boloes", { defaultValue: "Voltar aos bolões" })}
-          </button>
-          <Link
-            to="/boloes/criar"
-            className="inline-flex items-center gap-2 rounded-2xl bg-primary px-6 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-black shadow-lg shadow-primary/25 transition-transform hover:scale-105 active:scale-95"
-          >
-            <Plus className="h-4 w-4 shrink-0" />
-            Criar bolão sem grupo
-          </Link>
-        </div>
-      </div>
-
-      {activeView === "boloes" && (
-        <div className="mb-6">
-          <BolaoEntryGuidance />
-        </div>
-      )}
-
-      {activeView === "boloes" && spotlightBolao && (
         <Link
-          to={`/boloes/${spotlightBolao.id}`}
-          className="mb-6 block rounded-[28px] border border-primary/20 bg-gradient-to-br from-primary/12 via-white/[0.03] to-transparent p-5 transition-all hover:border-primary/35 hover:bg-primary/15"
+          to="/boloes/criar"
+          className="inline-flex items-center gap-2 rounded-2xl bg-primary px-4 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-black"
         >
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div className="flex items-start gap-4">
-              <BolaoAvatar
-                avatarUrl={spotlightBolao.avatar_url}
-                alt={spotlightBolao.name}
-                className="surface-card-soft flex h-14 w-14 items-center justify-center rounded-[22px] text-2xl"
-              />
-              <div>
-                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">
-                  {t("page.continue_kicker", { defaultValue: "Continuar agora" })}
-                </p>
-                <h2 className="mt-1 text-xl font-black text-white">{spotlightBolao.name}</h2>
-                <p className="mt-1 max-w-xl text-sm text-zinc-400">
-                  {spotlightBolao.description || t("page.no_description")}
-                </p>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap gap-2">
-              <div className="surface-chip rounded-full px-4 py-2">
-                <Users className="h-4 w-4 text-primary" />
-                {t("page.members_count", { count: spotlightBolao.memberCount })}
-              </div>
-              <div className="surface-chip rounded-full px-4 py-2">
-                <Hash className="h-4 w-4 text-primary" />
-                {spotlightBolao.invite_code}
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-4 flex items-center justify-between border-t border-white/5 pt-4">
-            <p className="text-xs text-zinc-400">
-              {spotlightBolao.isCreator
-                ? t("page.continue_admin", { defaultValue: "Você está administrando este bolão." })
-                : t("page.continue_member", { defaultValue: "Abra para palpitar, acompanhar o ranking e chamar a galera." })}
-            </p>
-            <span className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">
-              {t("page.continue_action", { defaultValue: "Abrir bolão" })}
-            </span>
-          </div>
+          <Plus className="h-4 w-4" />
+          Criar bolão
         </Link>
-      )}
+      </div>
 
-      {activeView === "boloes" && hasAnyBolao && (
-        <div className="mb-6 grid gap-3 sm:grid-cols-3">
-          {quickStats.map((stat) => (
-            <div key={stat.label} className="surface-card-soft rounded-[24px] p-4">
-              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-zinc-500">{stat.label}</p>
-              <p className="mt-2 text-2xl font-black text-white">{stat.value}</p>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* ── First-visit intro banner ─────────────────────────── */}
-      {showIntroBanner && activeView === "boloes" && !hasAnyBolao && (
-        <div className="mb-6 relative rounded-[24px] border border-emerald-500/10 bg-gradient-to-br from-emerald-500/5 to-[transparent] p-5 pr-12 backdrop-blur-md">
-          <button
-            onClick={dismissBanner}
-            aria-label={t('common:common.close')}
-            className="absolute right-4 top-4 rounded-full p-1 text-white/40 hover:text-white transition-colors"
-          >
-            <X className="h-4 w-4" />
-          </button>
-          <div className="flex gap-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-500/15 text-2xl">{championship.emoji ?? "⚽"}</div>
+      <div className="grid gap-6">
+        <ArenaPanel className="p-5">
+          <div className="mb-4 flex items-start justify-between gap-3">
             <div>
-              <p className="text-sm font-black text-white">{t('page.intro_title')}</p>
-              <p className="mt-1 text-xs text-zinc-400 leading-relaxed">
-                {isWorldCup
-                  ? t('page.intro_desc_worldcup')
-                  : t('page.intro_desc_championship', { championship: championship.name })}
-              </p>
-              <div className="mt-3 flex flex-wrap gap-2">
-                <Link
-                  to="/boloes/criar"
-                  onClick={dismissBanner}
-                  className="inline-flex items-center gap-1.5 rounded-2xl bg-emerald-500 px-4 py-2 text-[11px] font-black uppercase tracking-[0.14em] text-black"
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  {t('page.create_cta')}
+              <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">Meus bolões</p>
+              <p className="mt-2 text-sm text-zinc-400">Os bolões em que você já está dentro e pode jogar agora.</p>
+            </div>
+          </div>
+          {loading ? (
+            <div className="flex justify-center py-10"><Loader2 className="h-7 w-7 animate-spin text-primary" /></div>
+          ) : myBoloes.length === 0 ? (
+            <EmptyState icon="⚽" title="Você ainda não participa de nenhum bolão" description="Entre por convite, código ou crie o seu." />
+          ) : (
+            <div className="grid gap-3 md:grid-cols-2">
+              {myBoloes.map((bolao) => (
+                <Link key={bolao.id} to={`/boloes/${bolao.id}`} className="rounded-3xl border border-white/10 bg-[#0c1811] p-4">
+                  <div className="flex items-center gap-3">
+                    <BolaoAvatar
+                      avatarUrl={bolao.avatar_url}
+                      fallback="⚽"
+                      alt={bolao.name}
+                      className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-2xl"
+                    />
+                    <div className="flex-1">
+                      <p className="font-black">{bolao.name}</p>
+                      {bolao.description ? <p className="mt-1 text-sm text-zinc-400">{bolao.description}</p> : null}
+                    </div>
+                    <Trophy className="h-5 w-5 text-zinc-600" />
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-black uppercase tracking-[0.14em]">
+                    <span className="rounded-full bg-white/10 px-3 py-1">{bolao.category === "public" ? "Público" : "Privado"}</span>
+                    {bolao.is_paid ? <span className="rounded-full bg-white/10 px-3 py-1">Pago</span> : null}
+                    <span className="rounded-full bg-white/10 px-3 py-1">{bolao.status}</span>
+                  </div>
                 </Link>
-                <button
-                  onClick={dismissBanner}
-                  className="inline-flex items-center gap-1.5 rounded-2xl bg-white/10 px-4 py-2 text-[11px] font-black uppercase tracking-[0.14em] text-white/70"
-                >
-                  {t('page.understood_cta')}
-                </button>
-              </div>
+              ))}
             </div>
-          </div>
-        </div>
-      )}
+          )}
+        </ArenaPanel>
 
-      {/* ── Ranking View ─────────────────────────────────────── */}
-      {activeView === "ranking" && (
-        <Suspense
-          fallback={
-            <div className="space-y-4 px-4">
-              <Skeleton className="h-20 rounded-3xl bg-white/10" />
-              <Skeleton className="h-32 rounded-3xl bg-white/10" />
-              <Skeleton className="h-[420px] rounded-3xl bg-white/10" />
-            </div>
-          }
-        >
-          <div className="-mx-4">
-            <RankingPage />
-          </div>
-        </Suspense>
-      )}
-
-      {/* ── Bolões View ──────────────────────────────────────── */}
-      {activeView === "boloes" && <>
-      {/* Grupos banner */}
-      <Link to="/grupos" className="mb-6 flex items-center justify-between gap-3 rounded-[24px] border border-primary/20 bg-primary/5 px-5 py-4 transition-all hover:bg-primary/10">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary/15 text-xl">👥</div>
-          <div>
-            <p className="text-sm font-black">{t('page.groups_title')}</p>
-            <p className="text-xs text-zinc-400">{t('page.groups_desc')}</p>
-          </div>
-        </div>
-        <Users2 className="h-5 w-5 text-primary/60 shrink-0" />
-      </Link>
-
-
-      <div className="surface-card mb-6 p-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <p className="text-xs font-black uppercase tracking-[0.18em] text-zinc-400">{t('page.quick_join_kicker')}</p>
-            <h2 className="mt-1 text-lg font-black">{t('page.quick_join_title')}</h2>
-          </div>
-          <button
-            onClick={() => setShowJoin((prev) => !prev)}
-            className="surface-chip rounded-2xl px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em]"
-          >
-            {showJoin ? t('page.close_join') : t('page.use_invite')}
-          </button>
-        </div>
-
-        {(showJoin || !hasAnyBolao) && (
-          <div className="mt-4 flex flex-col gap-3 md:flex-row">
-            <input
-              value={joinCode}
-              onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-              placeholder={t('page.code_placeholder')}
-              className="surface-input flex-1 rounded-2xl px-4 py-3 text-lg font-black uppercase"
-            />
-            <button
-              onClick={verifyAndPrepareJoin}
-              disabled={joining || !joinCode.trim()}
-              className="inline-flex min-w-[180px] items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-black disabled:opacity-60"
-            >
-              {joining ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
-              {joining ? t('page.joining') : t('page.join_action')}
-            </button>
-          </div>
-        )}
-      </div>
-
-      {!loading && boloes.length > 0 && (
-        <div className="relative mb-6">
-          <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
-          <input
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder={t('page.search_placeholder')}
-            className="surface-input w-full rounded-3xl py-4 pl-12 pr-4 text-sm"
+        <div className="grid gap-6 lg:grid-cols-[1.2fr,0.8fr]">
+          <AdmissionInbox
+            title="Convites e solicitações"
+            description="Tudo que depende de aprovação ou está esperando uma resposta fica aqui."
+            emptyTitle="Nada pendente agora"
+            emptyDescription="Quando você pedir entrada em um bolão privado, ele vai aparecer aqui."
+            items={requestItems}
           />
+
+          <ArenaPanel className="p-5">
+            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">Entrar com código</p>
+            <p className="mt-2 text-sm text-zinc-400">
+              Se alguém te mandou um código, aqui é o caminho mais rápido.
+            </p>
+
+            <div className="mt-4 flex gap-2">
+              <input
+                value={joinCode}
+                onChange={(event) => setJoinCode(event.target.value.toUpperCase())}
+                placeholder="Código do bolão"
+                className="flex-1 rounded-2xl border border-white/10 bg-[#0c1811] px-4 py-3 text-sm font-black uppercase tracking-[0.2em] text-white"
+              />
+              <button
+                onClick={() => void handleJoinByCode()}
+                disabled={joining || joinCode.trim().length < 6}
+                className="inline-flex items-center justify-center rounded-2xl bg-primary px-4 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-black disabled:opacity-50"
+              >
+                {joining ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+              </button>
+            </div>
+          </ArenaPanel>
         </div>
-      )}
 
-      {loading ? (
-        <div className="space-y-4">
-          {[1, 2, 3].map((i) => (
-            <Skeleton key={i} className="h-28 rounded-3xl bg-white/10" />
-          ))}
-        </div>
-      ) : boloes.length === 0 && publicBoloes.length === 0 ? (
-        <EmptyState
-          icon="🏆"
-          title={t('page.empty_title')}
-          description={t('page.empty_desc')}
-        />
-      ) : (
-        <div className="space-y-8">
-          {myBoloes.length > 0 && (
-            <section>
-              <div className="mb-3 flex items-center gap-2">
-                <Trophy className="h-4 w-4 text-primary" />
-                <h2 className="text-sm font-black uppercase tracking-[0.18em] text-primary">{t('page.section_created')}</h2>
-              </div>
-              <div className="grid gap-4">
-                {myBoloes.map((b) => (
-                  <BolaoCard key={b.id} bolao={b} href={`/boloes/${b.id}`} />
-                ))}
-              </div>
-            </section>
-          )}
+        <ArenaPanel className="p-5">
+          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">Descobrir</p>
+          <p className="mt-2 text-sm text-zinc-400">
+            Aqui entram só os bolões públicos ou abertos para descoberta, sem misturar com os seus.
+          </p>
 
-          {joinedBoloes.length > 0 && (
-            <section>
-              <div className="mb-3 flex items-center gap-2">
-                <Users className="h-4 w-4 text-primary" />
-                <h2 className="text-sm font-black uppercase tracking-[0.18em] text-primary">{t('page.section_participating')}</h2>
-              </div>
-              <div className="grid gap-4">
-                {joinedBoloes.map((b) => (
-                  <BolaoCard key={b.id} bolao={b} href={`/boloes/${b.id}`} />
-                ))}
-              </div>
-            </section>
-          )}
-
-          {publicBoloes.length > 0 && !searchQuery && (
-            <section>
-              <div className="mb-3 flex items-center gap-2">
-                <Compass className="h-4 w-4 text-primary" />
-                <h2 className="text-sm font-black uppercase tracking-[0.18em] text-primary">{t('page.section_explore')}</h2>
-              </div>
-              <div className="grid gap-4">
-                {publicBoloes.map((b) => (
-                  <article
-                    key={b.id}
-                    className="surface-card-hover p-5"
+          {loading ? (
+            <div className="flex justify-center py-10"><Loader2 className="h-7 w-7 animate-spin text-primary" /></div>
+          ) : discoverBoloes.length === 0 ? (
+            <EmptyState icon="🌍" title="Nenhum bolão público disponível agora" description="Quando aparecer algum bolão aberto, ele vai surgir aqui." />
+          ) : (
+            <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+              {discoverBoloes.map((bolao) => (
+                <div key={bolao.id} className="rounded-3xl border border-white/10 bg-[#0c1811] p-4">
+                  <div className="flex items-center gap-3">
+                    <BolaoAvatar
+                      avatarUrl={bolao.avatar_url}
+                      fallback="⚽"
+                      alt={bolao.name}
+                      className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-2xl"
+                    />
+                    <div>
+                      <p className="font-black">{bolao.name}</p>
+                      {bolao.description ? <p className="mt-1 text-sm text-zinc-400">{bolao.description}</p> : null}
+                    </div>
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-black uppercase tracking-[0.14em]">
+                    <span className="rounded-full bg-white/10 px-3 py-1">Público</span>
+                    {bolao.is_paid ? <span className="rounded-full bg-white/10 px-3 py-1">Pago</span> : null}
+                  </div>
+                  <Link
+                    to={`/b/${bolao.invite_code}`}
+                    className="mt-4 inline-flex w-full items-center justify-center rounded-2xl border border-white/10 px-4 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-white"
                   >
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <div className="flex items-center gap-3">
-                          <BolaoAvatar
-                            avatarUrl={b.avatar_url}
-                            alt={b.name}
-                            className="surface-card-soft flex h-12 w-12 items-center justify-center rounded-2xl text-xl"
-                          />
-                          <div>
-                            <h3 className="text-lg font-black">{b.name}</h3>
-                            <p className="text-sm text-zinc-400">{b.description || t("page.no_description")}</p>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="rounded-full bg-primary/15 px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-primary">{t('page.public_label')}</div>
-                    </div>
-
-                    <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-white/5 pt-4">
-                      <div className="flex items-center gap-2">
-                        <MembersFacepile count={b.memberCount} />
-                        <span className="text-sm text-zinc-500">•</span>
-                        <span className="text-sm font-black text-primary">{b.leader_score} <span className="text-zinc-500 font-medium">{t('ranking.points_abbr')}</span></span>
-                      </div>
-
-                      <button
-                        onClick={() => void handleJoinPublicBolao(b.id)}
-                        disabled={joiningPublicBolaoId === b.id}
-                        className="inline-flex min-w-[150px] items-center justify-center gap-2 rounded-2xl bg-primary px-4 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-black disabled:opacity-60"
-                      >
-                        {joiningPublicBolaoId === b.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <UserPlus className="h-4 w-4" />}
-                        {joiningPublicBolaoId === b.id ? t('page.joining') : t('page.join_now')}
-                      </button>
-                    </div>
-                  </article>
-                ))}
-              </div>
-            </section>
+                    Ver entrada
+                  </Link>
+                </div>
+              ))}
+            </div>
           )}
+        </ArenaPanel>
 
-          {publicBoloesUnavailable && !searchQuery && (
-            <section>
-              <div className="surface-card-soft p-5 text-sm text-zinc-300">
-                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">
-                  {t('page.public_unavailable_title')}
-                </p>
-                <p className="mt-2 text-sm text-zinc-400">
-                  {t('page.public_unavailable_desc')}
-                </p>
-              </div>
-            </section>
-          )}
-        </div>
-      )}
-
-      </> /* end boloes view */}
-    </div>
-  );
-}
-
-function BolaoCard({ bolao, href }: { bolao: BolaoRow; href: string }) {
-  const { t } = useTranslation('bolao');
-
-  return (
-    <Link
-      to={href}
-      className="surface-card-hover p-5"
-    >
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <BolaoAvatar
-            avatarUrl={bolao.avatar_url}
-            fallback="⚽"
-            alt={bolao.name}
-            className="surface-card-soft flex h-12 w-12 items-center justify-center rounded-2xl text-xl"
-          />
-          <div>
-            <h3 className="text-lg font-black">{bolao.name}</h3>
-            <p className="text-sm text-zinc-400">{bolao.description || t("page.no_description")}</p>
-          </div>
-        </div>
-        <div className="surface-chip rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-zinc-300">
-          {bolao.category === "public" ? t('page.public_label') : t('page.private_label')}
-        </div>
-      </div>
-
-      <div className="mt-4 flex items-center justify-between gap-3 border-t border-white/5 pt-4">
-        <MembersFacepile count={bolao.memberCount} />
-        <div className="surface-chip flex items-center gap-1.5 rounded-lg border border-white/5 bg-white/5 px-2.5 py-1.5 text-[10px] font-black uppercase tracking-[0.14em] text-zinc-400">
-          <Hash className="h-3 w-3" />
-          {bolao.invite_code}
-        </div>
-      </div>
-    </Link>
-  );
-}
-
-function MembersFacepile({ count }: { count: number }) {
-  const { t } = useTranslation('bolao');
-  if (count <= 0) return null;
-  // Limit to showing up to 3 generic avatars
-  const displayCount = Math.min(count, 3);
-  const remaining = count - displayCount;
-  
-  // Array of muted pastel colors for the overlapping circles to make them vibrant
-  const bgColors = ["bg-emerald-500/20 text-emerald-500", "bg-blue-500/20 text-blue-500", "bg-purple-500/20 text-purple-500"];
-  
-  return (
-    <div className="flex items-center gap-3">
-      <div className="flex -space-x-2">
-        {Array.from({ length: displayCount }).map((_, i) => (
-          <div key={i} className={`relative z-${30 - i * 10} flex h-7 w-7 items-center justify-center rounded-full border-[2px] border-[#0A0A0B] ${bgColors[i % bgColors.length]}`}>
-            <User className="h-3.5 w-3.5" />
-          </div>
-        ))}
-      </div>
-      <div className="text-xs font-black text-zinc-300">
-        {t('page.members_count', { count })}
+        <ArenaPanel className="p-5">
+          <BolaoEntryGuidance />
+        </ArenaPanel>
       </div>
     </div>
   );

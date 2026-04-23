@@ -2,12 +2,11 @@ import { db } from "@/integrations/firebase/client";
 import { 
   doc, 
   setDoc, 
-  updateDoc, 
-  deleteDoc, 
   getDoc,
   serverTimestamp 
 } from "firebase/firestore";
 import type { MemberData, Palpite } from "@/types/bolao";
+import { leaveBolao, updatePoolMemberPaymentStatus } from "@/services/boloes/bolao-config.service";
 
 export async function saveBolaoPalpite(input: {
   bolaoId: string;
@@ -59,18 +58,27 @@ export async function saveBolaoPalpite(input: {
 }
 
 export async function removeBolaoMember(bolaoId: string, userId: string) {
-  // Strategy: assume member doc ID is userId_bolaoId
-  const memberId = `${userId}_${bolaoId}`;
-  await deleteDoc(doc(db, "bolao_members", memberId));
+  if (!bolaoId || !userId) {
+    throw new Error("validation_failed");
+  }
+
+  return leaveBolao({
+    payload: {
+      bolao_id: bolaoId,
+    },
+  });
 }
 
 export async function updateBolaoMemberPaymentStatus(input: {
   bolaoId: string;
   userId: string;
-  paymentStatus: NonNullable<MemberData["payment_status"]>;
+  paymentStatus: Extract<NonNullable<MemberData["payment_status"]>, "pending" | "paid" | "exempt">;
 }) {
-  const memberId = `${input.userId}_${input.bolaoId}`;
-  const docRef = doc(db, "bolao_members", memberId);
-  await updateDoc(docRef, { payment_status: input.paymentStatus });
+  return updatePoolMemberPaymentStatus({
+    payload: {
+      bolao_id: input.bolaoId,
+      member_id: `${input.userId}_${input.bolaoId}`,
+      payment_status: input.paymentStatus,
+    },
+  });
 }
-

@@ -13,11 +13,19 @@ service cloud.firestore {
     }
 
     function isBolaoMember(bolaoId) {
-      return exists(/databases/$(database)/documents/bolao_members/$(request.auth.uid + '_' + bolaoId));
+      let memberPath = /databases/$(database)/documents/bolao_members/$(request.auth.uid + '_' + bolaoId);
+      return exists(memberPath) && (
+        !("membership_status" in get(memberPath).data) ||
+        get(memberPath).data.membership_status == "active"
+      );
     }
 
     function isBolaoMemberAfter(bolaoId) {
-      return existsAfter(/databases/$(database)/documents/bolao_members/$(request.auth.uid + '_' + bolaoId));
+      let memberPath = /databases/$(database)/documents/bolao_members/$(request.auth.uid + '_' + bolaoId);
+      return existsAfter(memberPath) && (
+        !("membership_status" in getAfter(memberPath).data) ||
+        getAfter(memberPath).data.membership_status == "active"
+      );
     }
 
     function isBolaoCreator(bolaoId) {
@@ -45,7 +53,11 @@ service cloud.firestore {
     }
 
     function isGrupoMember(grupoId) {
-      return exists(/databases/$(database)/documents/grupo_members/$(request.auth.uid + '_' + grupoId));
+      let memberPath = /databases/$(database)/documents/grupo_members/$(request.auth.uid + '_' + grupoId);
+      return exists(memberPath) && (
+        !("membership_status" in get(memberPath).data) ||
+        get(memberPath).data.membership_status == "active"
+      );
     }
 
     function isGrupoCreator(grupoId) {
@@ -187,22 +199,23 @@ service cloud.firestore {
         isOwner(resource.data.user_id) ||
         isBolaoMember(resource.data.bolao_id)
       );
-      allow create: if isSignedIn() && (
+      allow create: if isSignedIn() &&
+        isOwner(request.resource.data.user_id) &&
+        request.resource.data.role == 'admin' &&
         (
-          isOwner(request.resource.data.user_id) &&
-          memberId == request.auth.uid + '_' + request.resource.data.bolao_id &&
-          request.resource.data.role == 'member' &&
-          request.resource.data.payment_status == 'pending' &&
-          canSelfJoinBolao(request.resource.data.bolao_id)
-        ) ||
-        (
-          (isBolaoCreator(request.resource.data.bolao_id) || isBolaoCreatorAfter(request.resource.data.bolao_id)) &&
-          request.resource.data.role in ['member', 'admin'] &&
-          request.resource.data.user_id is string
-        )
-      );
+          isBolaoCreator(request.resource.data.bolao_id) ||
+          isBolaoCreatorAfter(request.resource.data.bolao_id)
+        );
       allow update: if false;
       allow delete: if false;
+    }
+
+    match /bolao_join_requests/{requestId} {
+      allow read: if isSignedIn() && (
+        isOwner(resource.data.user_id) ||
+        isBolaoCreator(resource.data.bolao_id)
+      );
+      allow create, update, delete: if false;
     }
 
     // bolao_markets
@@ -294,7 +307,12 @@ service cloud.firestore {
 
     // bolao_champion_predictions
     match /bolao_champion_predictions/{predId} {
-      allow read: if isSignedIn() && (
+      allow get: if isSignedIn() && (
+        predId.matches(request.auth.uid + "_.*") ||
+        isOwner(resource.data.user_id) ||
+        isBolaoMember(resource.data.bolao_id)
+      );
+      allow list: if isSignedIn() && (
         isOwner(resource.data.user_id) ||
         isBolaoMember(resource.data.bolao_id)
       );
@@ -350,7 +368,7 @@ service cloud.firestore {
     match /grupos/{grupoId} {
       allow read: if isSignedIn();
       allow create: if isSignedIn() && isOwner(request.resource.data.creator_id);
-      allow update, delete: if isSignedIn() && isOwner(resource.data.creator_id);
+      allow update, delete: if false;
     }
 
     // grupo_members
@@ -360,36 +378,31 @@ service cloud.firestore {
         isGrupoMember(resource.data.grupo_id) ||
         isGrupoCreator(resource.data.grupo_id)
       );
-      allow create: if isSignedIn() && (
+      allow create: if isSignedIn() &&
+        isOwner(request.resource.data.user_id) &&
+        request.resource.data.role == 'admin' &&
         (
-          isOwner(request.resource.data.user_id) &&
-          memberId == request.auth.uid + '_' + request.resource.data.grupo_id &&
-          request.resource.data.role == 'member' &&
-          canSelfJoinGrupo(request.resource.data.grupo_id)
-        ) ||
-        (
-          isOwner(request.resource.data.user_id) &&
-          memberId == request.auth.uid + '_' + request.resource.data.grupo_id &&
-          request.resource.data.role == 'admin' &&
-          (
-            isGrupoCreator(request.resource.data.grupo_id) ||
-            isGrupoCreatorAfter(request.resource.data.grupo_id)
-          )
-        ) ||
-        (
-          (
-            isGrupoCreator(request.resource.data.grupo_id) ||
-            isGrupoCreatorAfter(request.resource.data.grupo_id)
-          ) &&
-          request.resource.data.role in ['member', 'admin'] &&
-          request.resource.data.user_id is string
-        )
-      );
-      allow update: if isSignedIn() && isGrupoCreator(resource.data.grupo_id);
-      allow delete: if isSignedIn() && (
+          isGrupoCreator(request.resource.data.grupo_id) ||
+          isGrupoCreatorAfter(request.resource.data.grupo_id)
+        );
+      allow update, delete: if false;
+    }
+
+    match /grupo_join_requests/{requestId} {
+      allow read: if isSignedIn() && (
         isOwner(resource.data.user_id) ||
+        isGrupoMember(resource.data.grupo_id) ||
         isGrupoCreator(resource.data.grupo_id)
       );
+      allow create, update, delete: if false;
+    }
+
+    match /group_audit/{auditId} {
+      allow read, write: if false;
+    }
+
+    match /bolao_audit/{auditId} {
+      allow read, write: if false;
     }
 
     // Deny everything else

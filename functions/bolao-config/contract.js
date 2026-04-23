@@ -59,7 +59,9 @@ function getCompetitiveEligibility({
 }
 
 function getFinancialEligibility({ paymentStatus }) {
-  return paymentStatus === "confirmed" || paymentStatus === "waived";
+  return ["confirmed", "waived", "paid", "exempt"].includes(
+    String(paymentStatus || ""),
+  );
 }
 
 function canRemoveMember({
@@ -75,7 +77,10 @@ function canRemoveMember({
     return { allowed: false, code: "removal_blocked" };
   }
 
-  if (memberHasPrediction || paymentStatus === "confirmed") {
+  if (
+    memberHasPrediction ||
+    ["confirmed", "paid"].includes(String(paymentStatus || ""))
+  ) {
     return { allowed: false, code: "member_protected" };
   }
 

@@ -44,6 +44,7 @@ import { getTeamImageUrl } from "@/lib/team-flags";
 import { tabContentVariants } from "@/components/copa/animations";
 import type { BolaoData } from "@/types/bolao";
 import { useRealtimeNews } from "@/hooks/useRealtimeNews";
+import { ArenaMetric, ArenaPanel, ArenaTabPill } from "@/components/arena/ArenaPrimitives";
 
 // ─── Types ────────────────────────────────────────────────────
 type HubTab = "jogos" | "classificacao" | "noticias" | "boloes";
@@ -1051,6 +1052,18 @@ export default function CampeonatoHub() {
     : championship.status === "upcoming"
     ? "text-amber-400 bg-amber-500/15 border-amber-500/30"
     : "text-zinc-400 bg-white/10 border-white/20";
+  const formatLabel =
+    championship.format === "league"
+      ? t("championships:hub.stats.format_league", { defaultValue: "Liga" })
+      : championship.format === "mixed"
+        ? t("championships:hub.stats.format_cup", { defaultValue: "Copa" })
+        : t("championships:hub.stats.format_tournament", { defaultValue: "Torneio" });
+  const startDate = new Date(`${championship.dateStart}T12:00:00`);
+  const endDate = new Date(`${championship.dateEnd}T12:00:00`);
+  const now = new Date();
+  const countdownTarget = championship.status === "upcoming" ? startDate : endDate;
+  const countdownDays = Math.max(Math.ceil((countdownTarget.getTime() - now.getTime()) / 86400000), 0);
+  const timelineLabel = `${startDate.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })} - ${endDate.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" })}`;
 
   const tabs: { id: HubTab; label: string; icon: React.ReactNode }[] = [
     { id: "jogos",         label: t("championships:hub.tabs.games", { defaultValue: "Jogos" }), icon: <CalendarDays className="w-4 h-4" /> },
@@ -1060,98 +1073,129 @@ export default function CampeonatoHub() {
   ];
 
   return (
-    <div className="min-h-screen pb-24">
-      {/* ── Sticky header ──────────────────────────────────── */}
-      <div
-        className="sticky top-0 z-20 backdrop-blur-xl border-b border-white/[0.08] px-4 pt-[calc(var(--safe-area-top,0px)+0.75rem)] pb-3"
-        style={{ background: `linear-gradient(135deg, ${from}cc, ${to}cc)` }}
-      >
-        <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}
-          className="flex items-center gap-3">
-          <button onClick={() => navigate("/campeonatos")}
-            className="w-8 h-8 rounded-full bg-white/10 border border-white/20 flex items-center justify-center hover:bg-white/20 transition-colors shrink-0">
-            <ArrowLeft className="w-4 h-4 text-white" />
-          </button>
-          <div className="flex items-center gap-2.5 min-w-0">
-            {championship.logoUrl ? (
-              <img src={championship.logoUrl} alt={championship.shortName} className="w-7 h-7 object-contain shrink-0" />
-            ) : (
-              <span className="text-xl shrink-0">{championship.logo}</span>
-            )}
-            <div className="min-w-0">
-              <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/50 leading-none mb-0.5">
-                {championship.confederation ?? championship.country} · {championship.season}
-              </p>
-              <h1 className="text-lg font-extrabold text-white leading-none truncate">{championship.shortName}</h1>
+    <div className="arena-screen pb-24">
+      <div className="mx-auto max-w-6xl px-4 pt-6">
+        <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
+          <ArenaPanel tone="strong" className="overflow-hidden p-5 sm:p-6">
+            <div
+              className="absolute inset-0 opacity-[0.18]"
+              style={{
+                background: `radial-gradient(circle at 78% 24%, ${color}55, transparent 22%), linear-gradient(135deg, ${from}88, transparent 50%)`,
+              }}
+            />
+            <div className="relative grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+              <div>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => navigate("/campeonatos")}
+                    className="surface-card-soft flex h-12 w-12 items-center justify-center rounded-[18px]"
+                  >
+                    <ArrowLeft className="h-5 w-5" />
+                  </button>
+                  <span className={cn("inline-flex items-center gap-1 rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-wider", statusColor)}>
+                    {championship.status === "live" && <Radio className="w-2.5 h-2.5 animate-pulse" />}
+                    {championship.status === "upcoming" && <Clock className="w-2.5 h-2.5" />}
+                    {statusLabel}
+                  </span>
+                </div>
+
+                <div className="mt-5 flex items-start gap-4">
+                  <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-[26px] border border-white/10 bg-black/20 shadow-[0_0_0_1px_rgba(255,255,255,0.04)_inset]">
+                    {championship.logoUrl ? (
+                      <img src={championship.logoUrl} alt={championship.shortName} className="h-14 w-14 object-contain" />
+                    ) : (
+                      <span className="text-5xl">{championship.logo}</span>
+                    )}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="arena-kicker" style={{ color }}>
+                      {championship.confederation ?? championship.country} · {championship.season}
+                    </p>
+                    <h1 className="mt-2 font-display text-[3.1rem] font-black uppercase leading-[0.88] tracking-[0.02em] text-white sm:text-[4rem]">
+                      {championship.name}
+                    </h1>
+                    <p className="mt-3 max-w-2xl text-sm leading-relaxed text-zinc-300 sm:text-base">
+                      {championship.status === "upcoming"
+                        ? `Tudo preparado para a abertura. Veja formato, calendário, notícias e crie seu bolão antes da estreia.`
+                        : `Acompanhe jogos, classificação, notícias e bolões sem sair do contexto deste campeonato.`}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-6 flex flex-wrap gap-3">
+                  <button
+                    onClick={() => setTab("jogos")}
+                    className="arena-button-gold"
+                  >
+                    Ver jogos
+                  </button>
+                  <button
+                    onClick={() => setTab("boloes")}
+                    className="arena-button-green"
+                  >
+                    Ver bolões
+                  </button>
+                </div>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
+                <ArenaMetric
+                  label={championship.status === "upcoming" ? "Faltam" : "Janela"}
+                  value={championship.status === "upcoming" ? `${countdownDays} dias` : timelineLabel}
+                  accent
+                  icon={<Calendar className="h-5 w-5" />}
+                />
+                <ArenaMetric
+                  label={t("championships:hub.stats.teams", { defaultValue: "Times" })}
+                  value={championship.maxTeams}
+                  icon={<Users className="h-5 w-5" />}
+                />
+                <ArenaMetric
+                  label={t("championships:hub.stats.format", { defaultValue: "Formato" })}
+                  value={formatLabel}
+                  icon={<TrendingUp className="h-5 w-5" />}
+                  className="sm:col-span-2 lg:col-span-1"
+                />
+              </div>
             </div>
-          </div>
-          <div className="ml-auto shrink-0">
-            <span className={cn("inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider", statusColor)}>
-              {championship.status === "live" && <Radio className="w-2.5 h-2.5 animate-pulse" />}
-              {championship.status === "upcoming" && <Clock className="w-2.5 h-2.5" />}
-              {statusLabel}
-            </span>
-          </div>
+          </ArenaPanel>
         </motion.div>
-      </div>
 
-      {/* ── Stats row ──────────────────────────────────────── */}
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}
-        className="grid grid-cols-3 divide-x divide-white/[0.06] border-b border-white/[0.06] bg-white/[0.02]">
-        {[
-          { icon: Users, label: t("championships:hub.stats.teams", { defaultValue: "Times" }), value: String(championship.maxTeams) },
-          { icon: Calendar, label: t("championships:hub.stats.start", { defaultValue: "Início" }), value: new Date(championship.dateStart + "T12:00:00").toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }) },
-          {
-            icon: TrendingUp,
-            label: t("championships:hub.stats.format", { defaultValue: "Formato" }),
-            value: championship.format === "league"
-              ? t("championships:hub.stats.format_league", { defaultValue: "Liga" })
-              : championship.format === "mixed"
-                ? t("championships:hub.stats.format_cup", { defaultValue: "Copa" })
-                : t("championships:hub.stats.format_tournament", { defaultValue: "Torneio" }),
-          },
-        ].map(({ icon: Icon, label, value }) => (
-          <div key={label} className="flex flex-col items-center py-3 gap-0.5">
-            <Icon className="w-3.5 h-3.5 text-white/30 mb-0.5" />
-            <span className="text-sm font-bold text-white">{value}</span>
-            <span className="text-[10px] text-white/30 uppercase tracking-wider">{label}</span>
+        <div
+          className="sticky z-10 mt-5 border-b border-white/[0.08] bg-[#07140d]/82 pb-3 pt-1 backdrop-blur-xl"
+          style={{ top: "calc(3.5rem + var(--safe-area-top, 0px))" }}
+        >
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {tabs.map((tabItem) => {
+              const isActive = tab === tabItem.id;
+              return (
+                <button key={tabItem.id} onClick={() => setTab(tabItem.id)} aria-current={isActive ? "page" : undefined}>
+                  <ArenaTabPill
+                    active={isActive}
+                    className={cn(
+                      "flex min-h-[60px] w-full flex-col gap-1 rounded-[22px] px-3 py-3",
+                      !isActive && "hover:border-white/20 hover:bg-white/[0.06] hover:text-white",
+                    )}
+                  >
+                    <span className={cn("transition-transform duration-200", isActive && "scale-110")}>{tabItem.icon}</span>
+                    <span className="text-[10px] tracking-[0.16em]">{tabItem.label}</span>
+                  </ArenaTabPill>
+                </button>
+              );
+            })}
           </div>
-        ))}
-      </motion.div>
-
-      {/* ── Tab bar ────────────────────────────────────────── */}
-      <div className="sticky z-10 border-b border-white/[0.08] bg-[#061a10]/80 backdrop-blur-xl"
-        style={{ top: "calc(3.5rem + var(--safe-area-top, 0px))" }}>
-        <div className="grid grid-cols-2 gap-2 px-3 py-2.5 sm:grid-cols-4">
-          {tabs.map((t) => {
-            const isActive = tab === t.id;
-            return (
-              <button key={t.id} onClick={() => setTab(t.id)} aria-current={isActive ? "page" : undefined}
-                className={cn("relative flex min-h-[60px] flex-col items-center justify-center gap-1 rounded-2xl px-3 py-2 transition-all duration-200",
-                  isActive ? "text-black" : "bg-white/[0.05] text-zinc-400 border border-white/[0.06] hover:bg-white/[0.1] hover:text-zinc-200")}>
-                {isActive && (
-                  <motion.div layoutId="hubActiveTabBg" className="absolute inset-0 rounded-2xl"
-                    style={{ background: `linear-gradient(135deg, ${color}, ${color}bb)`, boxShadow: `0 0 16px ${color}55` }}
-                    transition={{ type: "spring", stiffness: 400, damping: 30 }} />
-                )}
-                <span className={cn("relative z-10 transition-transform duration-200", isActive && "scale-110")}>{t.icon}</span>
-                <span className="relative z-10 text-[10px] font-bold leading-none whitespace-nowrap">{t.label}</span>
-              </button>
-            );
-          })}
         </div>
-      </div>
 
-      {/* ── Tab content ────────────────────────────────────── */}
-      <div className="px-4 pt-3 pb-4">
-        <AnimatePresence mode="wait">
-          <motion.div key={tab} variants={tabContentVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.22, ease: "easeInOut" }}>
-            {tab === "jogos"         && <JogosTab         championshipId={championship.id} color={color} />}
-            {tab === "classificacao" && <ClassificacaoTab championshipId={championship.id} color={color} />}
-            {tab === "noticias"      && <NotíciasTab      championshipId={championship.id} color={color} />}
-            {tab === "boloes"        && <BolõesTab        championshipId={championship.id} championship={championship} color={color} />}
-          </motion.div>
-        </AnimatePresence>
+        <div className="pt-4 pb-4">
+          <AnimatePresence mode="wait">
+            <motion.div key={tab} variants={tabContentVariants} initial="enter" animate="center" exit="exit" transition={{ duration: 0.22, ease: "easeInOut" }}>
+              {tab === "jogos"         && <JogosTab         championshipId={championship.id} color={color} />}
+              {tab === "classificacao" && <ClassificacaoTab championshipId={championship.id} color={color} />}
+              {tab === "noticias"      && <NotíciasTab      championshipId={championship.id} color={color} />}
+              {tab === "boloes"        && <BolõesTab        championshipId={championship.id} championship={championship} color={color} />}
+            </motion.div>
+          </AnimatePresence>
+        </div>
       </div>
     </div>
   );

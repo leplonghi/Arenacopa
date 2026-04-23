@@ -1,389 +1,375 @@
-import { useState, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { MatchCard } from "@/components/MatchCard";
-import { Flag } from "@/components/Flag";
-import {
-    groupStandings,
-    getTeam,
-    groups,
-    type Match
-} from "@/data/mockData";
-import { MatchDetailsModal } from "./MatchDetailsModal";
-import { cn } from "@/lib/utils";
-import { staggerContainer, staggerItem, heroEnter, titleReveal } from "./animations";
-import { Trophy, ChevronRight, Calculator, CalendarDays, TrendingUp } from "lucide-react";
-import { TournamentStageTracker } from "./TournamentStageTracker";
-import { PremiumModal } from "./PremiumModal";
-import { Crown } from "lucide-react";
-import { useMonetization } from "@/contexts/MonetizationContext";
-import { useTranslation } from "react-i18next";
-import { useMatches } from "@/hooks/useMatches";
 import { useNavigate } from "react-router-dom";
-import { EmptyState } from "@/components/EmptyState";
+import {
+  ArrowRight,
+  CalendarDays,
+  Clock3,
+  Globe2,
+  MapPinned,
+  Sparkles,
+  Trophy,
+} from "lucide-react";
+import { Flag } from "@/components/Flag";
+import { MatchDetailsModal } from "./MatchDetailsModal";
+import { ArenaMetric, ArenaPanel, ArenaSectionHeader } from "@/components/arena/ArenaPrimitives";
+import { useMatches } from "@/hooks/useMatches";
+import { getTeam, groupStandings, groups, type Match } from "@/data/mockData";
+import { cn } from "@/lib/utils";
 
-const getQualificationScenario = (teamCode: string, matches: Match[]) => {
-    const group = groups.find(g => groupStandings[g]?.some(t => t.teamCode === teamCode));
-    if (!group) return null;
+const PHASES = [
+  {
+    id: "groups",
+    title: "Fase de grupos",
+    date: "11 jun - 27 jun",
+    active: true,
+  },
+  {
+    id: "round16",
+    title: "Oitavas",
+    date: "28 jun - 03 jul",
+  },
+  {
+    id: "quarters",
+    title: "Quartas",
+    date: "04 jul - 07 jul",
+  },
+  {
+    id: "semis",
+    title: "Semifinais",
+    date: "08 jul - 09 jul",
+  },
+  {
+    id: "final",
+    title: "Final",
+    date: "19 jul",
+  },
+];
 
-    const standings = groupStandings[group];
-    const teamStats = standings.find(t => t.teamCode === teamCode);
-    if (!teamStats) return null;
+function formatCountdownParts(target: Date, nowMs: number) {
+  const diff = Math.max(target.getTime() - nowMs, 0);
+  const days = Math.floor(diff / 86400000);
+  const hours = Math.floor((diff % 86400000) / 3600000);
+  const minutes = Math.floor((diff % 3600000) / 60000);
+  const seconds = Math.floor((diff % 60000) / 1000);
 
-    const teamMatches = matches.filter(m => (m.homeTeam === teamCode || m.awayTeam === teamCode) && m.group === group);
-    const played = teamStats.played;
-    const totalMatches = teamMatches.length;
-    const remaining = totalMatches - played;
-    const maxPoints = teamStats.points + (remaining * 3);
+  return [
+    { label: "Dias", value: String(days).padStart(2, "0") },
+    { label: "Horas", value: String(hours).padStart(2, "0") },
+    { label: "Min", value: String(minutes).padStart(2, "0") },
+    { label: "Seg", value: String(seconds).padStart(2, "0") },
+  ];
+}
 
-    let status: "qualified" | "eliminated" | "contention" = "contention";
-    let messageKey = "";
-    let messageParams = {};
+function FeaturedFixture({
+  match,
+  onOpen,
+}: {
+  match: Match;
+  onOpen: () => void;
+}) {
+  const home = getTeam(match.homeTeam);
+  const away = getTeam(match.awayTeam);
 
-    const sorted = [...standings].sort((a, b) => b.points - a.points || (b.goalsFor - b.goalsAgainst) - (a.goalsFor - a.goalsAgainst));
-    const secondPlace = sorted[1];
+  return (
+    <button
+      onClick={onOpen}
+      className="group relative w-full overflow-hidden rounded-[30px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] p-5 text-left transition hover:bg-white/[0.07]"
+    >
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="arena-kicker text-primary">Jogo em destaque</p>
+          <p className="mt-2 text-sm text-zinc-300">
+            {new Date(match.date).toLocaleDateString("pt-BR", {
+              day: "2-digit",
+              month: "short",
+            })}{" "}
+            •{" "}
+            {new Date(match.date).toLocaleTimeString("pt-BR", {
+              hour: "2-digit",
+              minute: "2-digit",
+            })}
+          </p>
+        </div>
+        <div className="arena-badge">
+          <Clock3 className="h-3.5 w-3.5" />
+          {match.status === "live" ? "Ao vivo" : "Em breve"}
+        </div>
+      </div>
 
-    if (teamStats.points >= 6) {
-        status = "qualified";
-        messageKey = "qualified";
-    } else if (maxPoints < secondPlace.points && remaining === 0) {
-        status = "eliminated";
-        messageKey = "eliminated";
-    } else {
-        const pointsToSafe = 6 - teamStats.points;
-        if (pointsToSafe <= 0) {
-            messageKey = "need_draw";
-        } else {
-            const winsNeeded = Math.ceil(pointsToSafe / 3);
-            if (winsNeeded > remaining) {
-                messageKey = "need_miracle";
-                status = "contention";
-            } else {
-                messageKey = "need_wins";
-                messageParams = { wins: winsNeeded, games: remaining };
-            }
-        }
-    }
+      <div className="mt-5 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+        <div className="flex flex-col items-center gap-3">
+          <div className="flex h-20 w-20 items-center justify-center rounded-[26px] border border-white/10 bg-white/5">
+            <Flag code={home.code} size="lg" />
+          </div>
+          <div className="text-center">
+            <p className="font-display text-2xl font-black uppercase text-white">{home.name}</p>
+            <p className="mt-1 text-sm uppercase tracking-[0.18em] text-zinc-500">{home.code}</p>
+          </div>
+        </div>
 
-    return {
-        status,
-        messageKey,
-        messageParams,
-        currentPoints: teamStats.points,
-        remaining,
-        maxPoints,
-        rank: sorted.findIndex(s => s.teamCode === teamCode) + 1
-    };
-};
+        <div className="flex flex-col items-center">
+          {match.status === "finished" || match.status === "live" ? (
+            <div className="font-display text-[4rem] font-black leading-none tracking-[0.02em] text-white">
+              {match.homeScore ?? 0} <span className="text-white/30">x</span> {match.awayScore ?? 0}
+            </div>
+          ) : (
+            <div className="font-display text-[3.4rem] font-black uppercase tracking-[0.04em] text-white/30">
+              VS
+            </div>
+          )}
+          {match.minute ? <span className="mt-2 text-sm font-black uppercase tracking-[0.18em] text-primary">{match.minute}'</span> : null}
+        </div>
+
+        <div className="flex flex-col items-center gap-3">
+          <div className="flex h-20 w-20 items-center justify-center rounded-[26px] border border-white/10 bg-white/5">
+            <Flag code={away.code} size="lg" />
+          </div>
+          <div className="text-center">
+            <p className="font-display text-2xl font-black uppercase text-white">{away.name}</p>
+            <p className="mt-1 text-sm uppercase tracking-[0.18em] text-zinc-500">{away.code}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-5 flex items-center justify-between border-t border-white/10 pt-4">
+        <p className="text-sm text-zinc-400">Toque para abrir detalhes, palpite e contexto da partida.</p>
+        <ArrowRight className="h-5 w-5 text-white/40 transition group-hover:translate-x-1 group-hover:text-white/80" />
+      </div>
+    </button>
+  );
+}
 
 export function CopaOverview() {
-    const { t } = useTranslation('copa');
-    const navigate = useNavigate();
-    const { data: matches = [], isLoading } = useMatches();
+  const navigate = useNavigate();
+  const { data: matches = [], isLoading } = useMatches();
+  const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
+  const [nowTick, setNowTick] = useState(() => Date.now());
 
-    const todayMatches = useMemo(() => {
-        const today = new Date().toISOString().split('T')[0];
-        return matches.filter(m => m.date.startsWith(today));
-    }, [matches]);
+  const tournamentStart = useMemo(() => new Date("2026-06-11T15:00:00-03:00"), []);
+  const countdownParts = useMemo(() => formatCountdownParts(tournamentStart, nowTick), [tournamentStart, nowTick]);
 
-    const nextMatches = useMemo(() => {
-        const tomorrow = new Date();
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        const tomorrowStr = tomorrow.toISOString().split('T')[0];
-        return matches.filter(m => m.date.startsWith(tomorrowStr));
-    }, [matches]);
+  useEffect(() => {
+    const timer = window.setInterval(() => setNowTick(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
 
-    const upcomingMatches = useMemo(() => {
-        return matches.filter(m => m.status === "scheduled").sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-    }, [matches]);
+  const upcomingMatches = useMemo(
+    () =>
+      matches
+        .filter((match) => match.status === "scheduled")
+        .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()),
+    [matches],
+  );
 
-    const featureMatch = useMemo(() => {
-        return todayMatches.length > 0 ? todayMatches[0] : (nextMatches.length > 0 ? nextMatches[0] : upcomingMatches[0]);
-    }, [todayMatches, nextMatches, upcomingMatches]);
+  const featuredMatch = upcomingMatches[0] ?? matches[0] ?? null;
+  const visibleGroups = groups.slice(0, 4).map((groupId) => ({
+    id: groupId,
+    teams: (groupStandings[groupId] ?? []).slice(0, 4),
+  }));
 
-    const otherMatches = useMemo(() => {
-        return [...todayMatches, ...nextMatches, ...upcomingMatches].filter(m => m.id !== featureMatch?.id).slice(0, 3);
-    }, [todayMatches, nextMatches, upcomingMatches, featureMatch]);
-
-    const [selectedTeam, setSelectedTeam] = useState<string>("BRA");
-    const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
-    const [showPremiumModal, setShowPremiumModal] = useState(false);
-
-    const { isPremium } = useMonetization();
-
-    const handleInteraction = (action: () => void) => {
-        action();
-    };
-
-    const openTab = (tab: "grupos" | "simulacao" | "calendario") => {
-        navigate(`/copa/${tab}`);
-    };
-
-    const scenario = useMemo(() => getQualificationScenario(selectedTeam, matches), [selectedTeam, matches]);
-
-    if (isLoading) {
-        return (
-            <div className="flex justify-center py-20">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            </div>
-        );
-    }
-
+  if (isLoading) {
     return (
-        <motion.div
-            variants={staggerContainer}
-            initial="hidden"
-            animate="visible"
-            className="space-y-6 pb-20 relative"
-        >
-            {/* Dynamic Background */}
-            {featureMatch && (
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 1 }}
-                    className="fixed inset-0 pointer-events-none -z-50 overflow-hidden"
-                >
-                    <div className="absolute top-0 left-0 w-2/3 h-2/3 bg-blue-500/10 blur-[120px] rounded-full mix-blend-screen animate-pulse" style={{ animationDuration: '4s' }} />
-                    <div className="absolute bottom-0 right-0 w-2/3 h-2/3 bg-red-500/10 blur-[120px] rounded-full mix-blend-screen animate-pulse" style={{ animationDuration: '5s' }} />
-                </motion.div>
-            )}
-
-            {/* 1. Tournament Stage Tracker */}
-            <motion.section variants={staggerItem} className="pt-2">
-                <TournamentStageTracker />
-            </motion.section>
-
-            {/* 2. Featured Match */}
-            <section className="px-1">
-                <motion.div variants={titleReveal} className="flex items-center justify-between mb-3 px-1">
-                    <h2 className="text-xs font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                        <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                        {t('overview.featured')}
-                    </h2>
-                </motion.div>
-                {featureMatch ? (
-                    <motion.div variants={heroEnter}>
-                        <MatchCard match={featureMatch} variant="broadcast" onClick={() => handleInteraction(() => setSelectedMatch(featureMatch))} />
-                    </motion.div>
-                ) : (
-                    <div className="glass-card p-6 text-center text-muted-foreground">
-                        <p className="text-sm">{t('overview.no_featured')}</p>
-                    </div>
-                )}
-            </section>
-
-
-            {/* 3. Quick Access to Sub-tabs */}
-            <section className="grid grid-cols-2 md:grid-cols-4 gap-3 px-1">
-                {/* Groups Quick Access */}
-                <motion.div
-                    variants={staggerItem}
-                    onClick={() => openTab("grupos")}
-                    className="glass-card p-4 relative overflow-hidden group cursor-pointer border-l-4 border-l-secondary-foreground/20 hover:border-l-primary transition-colors"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                >
-                    <div className="flex items-center justify-between mb-2">
-                        <h3 className="text-sm font-black leading-none">{t('overview.quick_access.standings_title')}</h3>
-                        <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
-                    </div>
-                    <div className="space-y-2 mt-3">
-                        <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-bold w-4">1</span>
-                            <div className="h-1.5 rounded-full bg-primary w-3/4" />
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-bold w-4">2</span>
-                            <div className="h-1.5 rounded-full bg-primary/60 w-1/2" />
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-bold w-4 text-muted-foreground">3</span>
-                            <div className="h-1.5 rounded-full bg-secondary w-1/3" />
-                        </div>
-                    </div>
-                    <p className="text-[10px] text-muted-foreground mt-3 font-medium">{t('overview.quick_access.standings_desc')}</p>
-                </motion.div>
-
-                {/* Simulator Quick Access */}
-                <motion.div
-                    variants={staggerItem}
-                    onClick={() => openTab("simulacao")}
-                    className="glass-card p-4 relative overflow-hidden group cursor-pointer border-l-4 border-l-secondary-foreground/20 hover:border-l-yellow-500 transition-colors"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                >
-                    <div className="flex items-center justify-between mb-2">
-                        <h3 className="text-sm font-black leading-none">{t('overview.quick_access.simulator_title')}</h3>
-                        <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-yellow-500 transition-colors" />
-                    </div>
-                    <div className="space-y-2 mt-3 flex items-center justify-center py-1">
-                        <Trophy className="w-8 h-8 text-yellow-500/50 group-hover:text-yellow-500 transition-colors animate-pulse" />
-                    </div>
-                    <p className="text-[10px] text-muted-foreground mt-3 font-medium text-center">{t('overview.quick_access.simulator_desc')}</p>
-                </motion.div>
-
-                {/* Calendar Quick Access */}
-                <motion.div
-                    variants={staggerItem}
-                    onClick={() => openTab("calendario")}
-                    className="glass-card p-4 relative overflow-hidden group cursor-pointer border-l-4 border-l-secondary-foreground/20 hover:border-l-blue-400 transition-colors"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                >
-                    <div className="flex items-center justify-between mb-2">
-                        <h3 className="text-sm font-black leading-none">{t('overview.quick_access.calendar_title')}</h3>
-                        <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-blue-400 transition-colors" />
-                    </div>
-                    <div className="space-y-2 mt-3 flex items-center justify-center py-1">
-                        <CalendarDays className="w-8 h-8 text-blue-400/50 group-hover:text-blue-400 transition-colors" />
-                    </div>
-                    <p className="text-[10px] text-muted-foreground mt-3 font-medium text-center">{t('overview.quick_access.calendar_desc')}</p>
-                </motion.div>
-
-                {/* Guia Quick Access */}
-                <motion.div
-                    variants={staggerItem}
-                    onClick={() => navigate("/copa/guia")}
-                    className="glass-card p-4 relative overflow-hidden group cursor-pointer border-l-4 border-l-secondary-foreground/20 hover:border-l-green-400 transition-colors"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                >
-                    <div className="flex items-center justify-between mb-2">
-                        <h3 className="text-sm font-black leading-none">{t('overview.quick_access.guide_title')}</h3>
-                        <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-green-400 transition-colors" />
-                    </div>
-                    <div className="space-y-2 mt-3 flex items-center justify-center py-1">
-                        <span className="text-2xl">🏙️</span>
-                    </div>
-                    <p className="text-[10px] text-muted-foreground mt-3 font-medium text-center">{t('overview.quick_access.guide_desc')}</p>
-                </motion.div>
-            </section>
-
-
-            {/* 4. Other Matches */}
-            <section className="space-y-3 px-1">
-                <motion.div variants={titleReveal} className="flex items-center justify-between px-1">
-                    <h2 className="text-lg font-black flex items-center gap-2">
-                        <CalendarDays className="w-5 h-5 text-primary" />
-                        {t('overview.upcoming_matches')}
-                    </h2>
-                    <button
-                        onClick={() => openTab("calendario")}
-                        className="text-xs font-bold text-primary hover:underline"
-                    >
-                        {t('overview.view_calendar')}
-                    </button>
-                </motion.div>
-                {otherMatches.length > 0 ? (
-                    <div className="space-y-2 md:space-y-0 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-4">
-                        {otherMatches.map((m, i) => (
-                            <motion.div key={m.id} variants={staggerItem} custom={i}>
-                                <MatchCard match={m} index={i} onClick={() => handleInteraction(() => setSelectedMatch(m))} />
-                            </motion.div>
-                        ))}
-                    </div>
-                ) : (
-                    <div className="glass-card rounded-[28px] p-5">
-                        <EmptyState
-                            icon="📅"
-                            title={t('overview.no_upcoming')}
-                            description={t('overview.no_upcoming_desc')}
-                        />
-                    </div>
-                )}
-            </section>
-
-            {/* 5. Qualification Calculator */}
-            <motion.section variants={staggerItem} className="space-y-3 px-1">
-                <div className="flex items-center gap-2 px-1">
-                    <Calculator className="w-5 h-5 text-primary" />
-                    <h2 className="text-lg font-black">{t('overview.calculator.title')}</h2>
-                </div>
-                <div className="glass-card-premium p-5 relative overflow-hidden">
-                    <div className="absolute top-0 right-0 p-10 opacity-5 pointer-events-none">
-                        <TrendingUp className="w-32 h-32" />
-                    </div>
-
-                    <div className="mb-4">
-                        <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground block mb-2">{t('overview.calculator.select_team')}</label>
-                        <select
-                            value={selectedTeam}
-                            onChange={(e) => setSelectedTeam(e.target.value)}
-                            className="w-full bg-secondary text-sm font-bold p-3 rounded-xl border-none focus:ring-2 focus:ring-primary/50 outline-none appearance-none cursor-pointer"
-                        >
-                            {groups.flatMap(g => groupStandings[g]).map(t => (
-                                <option key={t.teamCode} value={t.teamCode}>
-                                    {getTeam(t.teamCode).name}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
-
-                    {scenario && (
-                        <motion.div
-                            key={selectedTeam}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="space-y-3"
-                        >
-                            <div className="flex items-center gap-3">
-                                <Flag code={selectedTeam} size="lg" className="shrink-0" />
-                                <div>
-                                    <div className="flex items-baseline gap-2">
-                                        <span className="text-xl font-black">{scenario.currentPoints}</span>
-                                        <span className="text-[10px] text-muted-foreground uppercase font-bold">{t('overview.calculator.points_abbr', { defaultValue: 'pts' })}</span>
-                                    </div>
-                                    <span className={cn(
-                                        "text-[10px] font-bold px-2 py-0.5 rounded-full inline-block",
-                                        scenario.status === "qualified" ? "bg-green-500/20 text-green-500" :
-                                            scenario.status === "eliminated" ? "bg-red-500/20 text-red-500" :
-                                                "bg-yellow-500/20 text-yellow-500"
-                                    )}>
-                                        {t(`overview.calculator.status.${scenario.status}`)}
-                                    </span>
-                                </div>
-                            </div>
-                            <p className="text-xs font-medium leading-tight text-foreground/80 bg-secondary/30 p-2 rounded-lg border border-white/5">
-                                {t(`overview.calculator.messages.${scenario.messageKey}`, scenario.messageParams)}
-                            </p>
-                        </motion.div>
-                    )}
-                </div>
-            </motion.section>
-
-            {/* Premium CTA */}
-            {!isPremium && (
-                <motion.div variants={staggerItem} className="px-1 pb-4">
-                    <button
-                        onClick={() => setShowPremiumModal(true)}
-                        className="w-full bg-gradient-to-r from-yellow-500/20 to-orange-600/20 hover:from-yellow-500/30 hover:to-orange-600/30 border border-yellow-500/30 rounded-xl p-4 flex items-center justify-between group transition-all"
-                    >
-                        <div className="flex items-center gap-3">
-                            <div className="p-2 bg-yellow-500/20 rounded-full text-yellow-500">
-                                <Crown className="w-5 h-5" />
-                            </div>
-                            <div className="text-left">
-                                <h3 className="text-sm font-bold text-yellow-500">{t('overview.premium_cta.title')}</h3>
-                                <p className="text-[10px] text-muted-foreground">{t('overview.premium_cta.desc')}</p>
-                            </div>
-                        </div>
-                        <ChevronRight className="w-5 h-5 text-yellow-500/50 group-hover:text-yellow-500 transition-colors" />
-                    </button>
-                </motion.div>
-            )}
-
-            <PremiumModal
-                isOpen={showPremiumModal}
-                onClose={() => setShowPremiumModal(false)}
-                onSuccess={() => undefined}
-            />
-
-
-            <MatchDetailsModal
-                match={selectedMatch}
-                isOpen={!!selectedMatch}
-                onClose={() => setSelectedMatch(null)}
-            />
-        </motion.div>
+      <div className="space-y-4 py-2">
+        <div className="h-72 animate-pulse rounded-[34px] bg-white/5" />
+        <div className="h-48 animate-pulse rounded-[30px] bg-white/5" />
+        <div className="h-40 animate-pulse rounded-[30px] bg-white/5" />
+      </div>
     );
+  }
+
+  return (
+    <div className="space-y-5 pb-20">
+      <ArenaPanel tone="strong" className="overflow-hidden p-5 sm:p-6">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_78%_22%,rgba(255,194,0,0.24),transparent_22%),radial-gradient(circle_at_15%_5%,rgba(145,255,59,0.12),transparent_28%)]" />
+        <div className="relative grid gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+          <div>
+            <p className="arena-kicker text-primary">FIFA · 2026</p>
+            <h1 className="mt-2 font-display text-[3.5rem] font-black uppercase leading-[0.88] tracking-[0.02em] text-white sm:text-[4.6rem]">
+              Copa do Mundo 2026
+            </h1>
+            <div className="mt-4">
+              <div className="arena-badge border-amber-400/30 text-amber-300">
+                <Clock3 className="h-3.5 w-3.5" />
+                Em breve
+              </div>
+            </div>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <span className="arena-badge bg-primary/12 border-primary/30 text-primary">48 seleções</span>
+              <span className="arena-badge">16 cidades</span>
+              <span className="arena-badge">3 países-sede</span>
+            </div>
+            <p className="mt-4 max-w-xl text-sm leading-relaxed text-zinc-300 sm:text-base">
+              Acompanhe a preparação completa da Copa: fases, grupos, calendário e entrada nos bolões sem ficar pulando entre telas.
+            </p>
+            <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+              <button
+                onClick={() => navigate("/copa/calendario")}
+                className="arena-button-green"
+              >
+                Ver calendário
+              </button>
+              <button
+                onClick={() => navigate("/boloes/criar", { state: { championship_id: "wc2026" } })}
+                className="arena-button-gold"
+              >
+                Entrar na Copa
+              </button>
+            </div>
+          </div>
+
+          <div className="relative flex min-h-[260px] items-center justify-center">
+            <div className="absolute h-52 w-52 rounded-full bg-amber-400/20 blur-3xl" />
+            <div className="absolute h-40 w-40 rounded-full border border-amber-300/25" />
+            <div className="relative flex h-56 w-56 items-center justify-center rounded-full border border-white/10 bg-[radial-gradient(circle_at_50%_40%,rgba(255,214,102,0.22),rgba(0,0,0,0.15))] shadow-[0_0_80px_rgba(255,186,0,0.18)]">
+              <img
+                src="/images/championships/wc2026.svg?v=20260405b"
+                alt="Copa do Mundo 2026"
+                className="h-36 w-36 object-contain drop-shadow-[0_0_24px_rgba(255,215,0,0.22)]"
+              />
+            </div>
+            <div className="absolute bottom-3 left-3 rounded-[20px] border border-white/10 bg-black/35 px-4 py-3 backdrop-blur-xl">
+              <p className="arena-kicker text-zinc-400">Abertura</p>
+              <p className="font-display text-[1.8rem] font-semibold uppercase leading-none text-white">11 jun</p>
+            </div>
+            <div className="absolute right-3 top-3 rounded-[20px] border border-primary/20 bg-primary/10 px-4 py-3 backdrop-blur-xl">
+              <p className="arena-kicker text-primary">Meta</p>
+              <p className="font-display text-[1.8rem] font-semibold uppercase leading-none text-white">Top ranking</p>
+            </div>
+          </div>
+        </div>
+      </ArenaPanel>
+
+      <ArenaPanel className="p-5">
+        <ArenaSectionHeader eyebrow="Faltam" title="Contagem regressiva" />
+        <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {countdownParts.map((part) => (
+            <div key={part.label} className="rounded-[22px] border border-white/10 bg-black/20 px-4 py-5 text-center">
+              <p className="font-display text-[3rem] font-black uppercase leading-none text-[#ffc107]">
+                {part.value}
+              </p>
+              <p className="mt-2 text-[11px] font-black uppercase tracking-[0.18em] text-zinc-400">
+                {part.label}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <ArenaMetric label="Jogos" value={matches.length || 64} icon={<CalendarDays className="h-5 w-5" />} />
+          <ArenaMetric label="Cidades" value={16} icon={<MapPinned className="h-5 w-5" />} />
+          <ArenaMetric label="Países" value={3} icon={<Globe2 className="h-5 w-5" />} />
+          <ArenaMetric label="Sonho" value="1" icon={<Trophy className="h-5 w-5" />} accent />
+        </div>
+      </ArenaPanel>
+
+      <ArenaPanel className="p-5">
+        <ArenaSectionHeader
+          eyebrow="Fases"
+          title="Caminho do torneio"
+          action={<div className="arena-badge">5 etapas principais</div>}
+        />
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+          {PHASES.map((phase, index) => (
+            <div key={phase.id} className="relative">
+              {index < PHASES.length - 1 ? (
+                <div className="absolute left-[calc(100%-0.35rem)] top-5 hidden h-px w-6 bg-white/10 xl:block" />
+              ) : null}
+              <div
+                className={cn(
+                  "rounded-[24px] border px-4 py-4",
+                  phase.active ? "border-primary/35 bg-primary/10" : "border-white/10 bg-white/[0.04]",
+                )}
+              >
+                <div className="flex items-center gap-2">
+                  <div className={cn("flex h-10 w-10 items-center justify-center rounded-[14px] border", phase.active ? "border-primary/35 bg-primary/15 text-primary" : "border-white/10 bg-black/20 text-zinc-500")}>
+                    <span className="font-display text-lg font-semibold">{index + 1}</span>
+                  </div>
+                  {index < PHASES.length - 1 ? <ArrowRight className="h-4 w-4 text-white/20 xl:hidden" /> : null}
+                </div>
+                <p className={cn("mt-4 font-display text-[1.45rem] font-semibold uppercase leading-none", phase.active ? "text-primary" : "text-white")}>
+                  {phase.title}
+                </p>
+                <p className="mt-2 text-[11px] font-black uppercase tracking-[0.18em] text-zinc-500">
+                  {phase.date}
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </ArenaPanel>
+
+      <ArenaPanel className="p-5">
+        <ArenaSectionHeader
+          eyebrow="Grupos"
+          title="Panorama inicial"
+          action={<button onClick={() => navigate("/copa/grupos")} className="arena-button-green px-4 py-2 text-sm">Ver grupos</button>}
+        />
+        <div className="mt-4 grid gap-3 xl:grid-cols-4">
+          {visibleGroups.map((group) => (
+            <div key={group.id} className="rounded-[26px] border border-white/10 bg-white/[0.03] p-4">
+              <div className="flex items-center justify-between">
+                <p className="font-display text-[1.8rem] font-semibold uppercase text-white">Grupo {group.id}</p>
+                <div className="arena-badge border-primary/25 text-primary">4 seleções</div>
+              </div>
+              <div className="mt-4 space-y-3">
+                {group.teams.map((standing) => {
+                  const team = getTeam(standing.teamCode);
+                  return (
+                    <div key={standing.teamCode} className="flex items-center gap-3">
+                      <Flag code={standing.teamCode} size="sm" />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-base font-bold text-white">{team.name}</p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      </ArenaPanel>
+
+      {featuredMatch ? (
+        <ArenaPanel className="p-4">
+          <FeaturedFixture match={featuredMatch} onOpen={() => setSelectedMatch(featuredMatch)} />
+        </ArenaPanel>
+      ) : null}
+
+      <ArenaPanel className="p-5">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex items-start gap-4">
+            <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[22px] border border-[#ffc107]/35 bg-[#ffc107]/12 text-[#ffc107]">
+              <Sparkles className="h-8 w-8" />
+            </div>
+            <div>
+              <p className="font-display text-[2.1rem] font-semibold uppercase leading-none text-white">
+                Participe e conquiste recompensas
+              </p>
+              <p className="mt-2 max-w-xl text-sm leading-relaxed text-zinc-300">
+                Entre na Copa para palpitar, subir no ranking e transformar cada rodada em progresso real dentro do app.
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <button
+              onClick={() => navigate("/boloes")}
+              className="arena-button-green"
+            >
+              Ver bolões
+            </button>
+            <button
+              onClick={() => navigate("/boloes/criar", { state: { championship_id: "wc2026" } })}
+              className="arena-button-gold"
+            >
+              Entrar na Copa
+            </button>
+          </div>
+        </div>
+      </ArenaPanel>
+
+      <MatchDetailsModal match={selectedMatch} isOpen={Boolean(selectedMatch)} onClose={() => setSelectedMatch(null)} />
+    </div>
+  );
 }

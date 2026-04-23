@@ -7,7 +7,7 @@ import {
   initializeTestEnvironment,
   RulesTestEnvironment,
 } from "@firebase/rules-unit-testing";
-import { doc, setDoc, updateDoc, deleteDoc } from "firebase/firestore";
+import { doc, setDoc, updateDoc, deleteDoc, getDoc } from "firebase/firestore";
 
 let testEnv: RulesTestEnvironment;
 
@@ -77,6 +77,61 @@ describe("bolao firestore rules", () => {
 
     await expect(
       assertFails(deleteDoc(doc(ownerDb, "bolao_members/member-1_bolao-1"))),
+    ).resolves.toBeDefined();
+  });
+
+  it("blocks direct member self-join on bolao_members", async () => {
+    const memberDb = testEnv.authenticatedContext("member-2").firestore();
+
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), "boloes/bolao-2"), {
+        creator_id: "owner-2",
+        category: "public",
+        status: "open",
+        invite_code: "POOL1234",
+      });
+    });
+
+    await expect(
+      assertFails(
+        setDoc(doc(memberDb, "bolao_members/member-2_bolao-2"), {
+          bolao_id: "bolao-2",
+          user_id: "member-2",
+          role: "member",
+          payment_status: "pending",
+        }),
+      ),
+    ).resolves.toBeDefined();
+  });
+
+  it("blocks direct member self-join on grupo_members", async () => {
+    const memberDb = testEnv.authenticatedContext("member-3").firestore();
+
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), "grupos/grupo-1"), {
+        creator_id: "owner-3",
+        category: "public",
+        invite_code: "GRP1234",
+      });
+    });
+
+    await expect(
+      assertFails(
+        setDoc(doc(memberDb, "grupo_members/member-3_grupo-1"), {
+          grupo_id: "grupo-1",
+          user_id: "member-3",
+          role: "member",
+          invite_code: "GRP1234",
+        }),
+      ),
+    ).resolves.toBeDefined();
+  });
+
+  it("allows a user to read their missing deterministic champion prediction", async () => {
+    const memberDb = testEnv.authenticatedContext("member-4").firestore();
+
+    await expect(
+      assertSucceeds(getDoc(doc(memberDb, "bolao_champion_predictions/member-4_bolao-404"))),
     ).resolves.toBeDefined();
   });
 });

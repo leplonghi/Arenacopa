@@ -6,6 +6,7 @@ import { tabContentVariants } from "@/components/copa/animations";
 import { SimulacaoProvider } from "@/contexts/SimulacaoContext";
 import { LayoutGrid, CalendarDays, Trophy, GitBranch, Sparkles, ScrollText } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { ArenaPanel, ArenaTabPill } from "@/components/arena/ArenaPrimitives";
 
 const CalendarioTab = lazy(() => import("@/components/copa/CalendarioTab").then((module) => ({ default: module.CalendarioTab })));
 const GruposTab = lazy(() => import("@/components/copa/GruposTab").then((module) => ({ default: module.GruposTab })));
@@ -18,9 +19,9 @@ type CopaTab = "overview" | "calendario" | "grupos" | "chaves" | "historia" | "s
 const VALID_TABS: CopaTab[] = ["overview", "calendario", "grupos", "chaves", "historia", "simulacao"];
 
 const TabLoadingState = ({ label }: { label?: string }) => (
-  <div className="surface-card rounded-[28px] p-6 text-sm font-bold uppercase tracking-[0.18em] text-zinc-400">
+  <ArenaPanel className="p-6 text-sm font-bold uppercase tracking-[0.18em] text-zinc-400">
     {label ?? "Carregando..."}
-  </div>
+  </ArenaPanel>
 );
 
 const Copa = () => {
@@ -62,72 +63,48 @@ const Copa = () => {
 
   return (
     <SimulacaoProvider>
-      <div>
-        {/* Responsive grid tab bar — no horizontal scroll */}
-        <div className="sticky top-[calc(3.5rem+var(--safe-area-top,0px))] z-20 bg-[#03100a]/80 backdrop-blur-xl border-b border-white/[0.08] shadow-[0_4px_20px_rgba(0,0,0,0.5)] md:top-16">
-          <div className="grid grid-cols-3 gap-2 px-3 py-3">
-            {tabs.map((tabItem) => {
-              const isActive = tab === tabItem.id;
-              return (
-                <button
-                  key={tabItem.id}
-                  id={`tab-${tabItem.id}`}
-                  onClick={() => handleTabChange(tabItem.id)}
-                  aria-current={isActive ? "page" : undefined}
-                  className={cn(
-                    "relative flex min-h-[64px] flex-col items-center justify-center gap-1 rounded-2xl transition-all duration-200",
-                    "px-2 py-2",
-                    isActive
-                      ? "text-primary-foreground"
-                      : tabItem.highlight
-                        ? "bg-amber-500/10 text-amber-400 border border-amber-500/20 hover:bg-amber-500/20"
-                        : "bg-white/[0.05] text-zinc-400 border border-white/[0.06] hover:bg-white/[0.1] hover:text-zinc-200"
-                  )}
-                >
-                  {/* Active background with glow */}
-                  {isActive && (
-                    <motion.div
-                      layoutId="activeTabBg"
+      <div className="arena-screen pb-24">
+        <div className="sticky top-[calc(3.5rem+var(--safe-area-top,0px))] z-20 bg-[#05110b]/85 pb-3 pt-1 backdrop-blur-xl md:top-16">
+          <ArenaPanel className="p-2 sm:p-3">
+            <div className="grid grid-cols-3 gap-2">
+              {tabs.map((tabItem) => {
+                const isActive = tab === tabItem.id;
+                return (
+                  <button
+                    key={tabItem.id}
+                    id={`tab-${tabItem.id}`}
+                    onClick={() => handleTabChange(tabItem.id)}
+                    aria-current={isActive ? "page" : undefined}
+                    className="text-left"
+                  >
+                    <ArenaTabPill
+                      active={isActive}
                       className={cn(
-                        "absolute inset-0 rounded-2xl",
-                        tabItem.highlight
-                          ? "bg-gradient-to-br from-amber-500 to-orange-500 shadow-[0_0_16px_rgba(245,158,11,0.5)]"
-                          : "bg-gradient-to-br from-primary to-primary/70 shadow-[0_0_16px_rgba(34,197,94,0.35)]"
+                        "relative flex min-h-[64px] w-full flex-col items-center justify-center gap-1 rounded-[22px] px-2 py-2 transition-all duration-200",
+                        !isActive && tabItem.highlight && "border-amber-400/25 bg-amber-500/10 text-amber-300 hover:bg-amber-500/18",
+                        !isActive && !tabItem.highlight && "hover:border-white/20 hover:bg-white/[0.06] hover:text-white",
                       )}
-                      transition={{ type: "spring", stiffness: 400, damping: 30 }}
-                    />
-                  )}
-
-                  {/* Pulse ring for highlight tab */}
-                  {tabItem.highlight && !isActive && (
-                    <>
-                      <span
-                        className="absolute inset-0 rounded-2xl animate-ping opacity-10 bg-amber-400 pointer-events-none"
-                        style={{ animationDuration: "2.8s" }}
-                      />
-                      <span className="absolute -top-1.5 -right-1.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-amber-500 text-[7px] font-black text-black shadow-sm shadow-amber-500/50">
-                        ✦
+                    >
+                      {tabItem.highlight && !isActive ? (
+                        <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-amber-400 text-[8px] font-black text-black shadow-[0_0_12px_rgba(255,193,7,0.45)]">
+                          ✦
+                        </span>
+                      ) : null}
+                      <span className={cn("transition-transform duration-200", isActive && "scale-110")}>
+                        {tabItem.icon}
                       </span>
-                    </>
-                  )}
-
-                  {/* Icon */}
-                  <span className={cn("relative z-10 transition-transform duration-200", isActive && "scale-110")}>
-                    {tabItem.icon}
-                  </span>
-
-                  {/* Label — always visible, never clipped */}
-                  <span className="relative z-10 text-[10px] font-bold leading-none whitespace-nowrap">
-                    {tabItem.label}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+                      <span className="text-[10px] font-bold leading-none whitespace-nowrap">
+                        {tabItem.label}
+                      </span>
+                    </ArenaTabPill>
+                  </button>
+                );
+              })}
+            </div>
+          </ArenaPanel>
         </div>
 
-        {/* Tab content */}
-        <div className="px-4 pt-2 pb-4">
+        <div className="pt-2 pb-4">
           <AnimatePresence mode="wait">
             <motion.div
               key={tab}

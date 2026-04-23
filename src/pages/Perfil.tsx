@@ -22,6 +22,10 @@ import { Flag as FlagIcon } from "lucide-react";
 import { getProfile, updateFavoriteTeam, updateProfile, uploadAvatar } from "@/services/profile/profile.service";
 import type { ProfileRecord } from "@/services/profile/profile.types";
 import { setStoredFavoriteTeam } from "@/lib/favorite-team";
+import { ArenaMetric, ArenaPanel, ArenaSectionHeader } from "@/components/arena/ArenaPrimitives";
+import { getArenaLevel } from "@/lib/profile-level";
+import { AchievementRail } from "@/components/profile/AchievementRail";
+import { HistoryStatList } from "@/components/profile/HistoryStatList";
 
 function urlBase64ToUint8Array(base64String: string) {
   const padding = '='.repeat((4 - base64String.length % 4) % 4);
@@ -103,6 +107,21 @@ const Perfil = () => {
   const team = getTeam(favoriteTeam) || getTeam("BRA") || teams[0];
   const displayName = profile?.name || user?.email?.split("@")[0] || t('default_user_name');
   const initials = displayName.slice(0, 2).toUpperCase();
+  const levelInfo = getArenaLevel(stats?.points);
+  const achievements = [
+    { id: "primeiro_palpite", title: t('achievements.first_prediction.title'), description: (stats?.totalPredictions || 0) > 0 ? t('achievements.first_prediction.desc') : t('achievements.locked'), icon: <Goal className="w-6 h-6" />, unlocked: (stats?.totalPredictions || 0) > 0 },
+    { id: "placar_exato", title: t('achievements.exact_score.title'), description: (stats?.exactScores || 0) > 0 ? t('achievements.exact_score.desc') : t('achievements.locked'), icon: <Target className="w-6 h-6 text-blue-400" />, unlocked: (stats?.exactScores || 0) > 0 },
+    { id: "criador_bolao", title: t('achievements.pool_creator.title'), description: (stats?.createdBoloes || 0) > 0 ? t('achievements.pool_creator.desc') : t('achievements.locked'), icon: <Crown className="w-6 h-6 text-amber-500" />, unlocked: (stats?.createdBoloes || 0) > 0 },
+    { id: "combo_3", title: t('achievements.combo_three.title'), description: (stats?.exactScores || 0) >= 3 ? t('achievements.combo_three.desc') : t('achievements.locked'), icon: <Zap className="w-6 h-6 text-violet-400" />, unlocked: (stats?.exactScores || 0) >= 3 },
+    { id: "campeao", title: t('achievements.champion.title'), description: (stats?.titles || 0) > 0 ? t('achievements.champion.desc') : t('achievements.locked'), icon: <Trophy className="w-6 h-6 text-emerald-400" />, unlocked: (stats?.titles || 0) > 0 },
+  ];
+  const historyItems = [
+    { label: "Palpites enviados", value: (stats?.totalPredictions || 0).toLocaleString("pt-BR") },
+    { label: "Placares exatos", value: (stats?.exactScores || 0).toLocaleString("pt-BR") },
+    { label: "Bolões criados", value: (stats?.createdBoloes || 0).toLocaleString("pt-BR") },
+    { label: "Títulos", value: (stats?.titles || 0).toLocaleString("pt-BR") },
+    { label: "Aproveitamento", value: `${stats?.efficiency || 0}%` },
+  ];
   const languageLabels = {
     "pt-BR": t('language_names.ptBR'),
     en: t('language_names.en'),
@@ -118,292 +137,265 @@ const Perfil = () => {
   }
 
   return (
-    <div className="px-4 py-4 space-y-6">
-      {/* Profile header */}
-      <div className="flex flex-col items-center pt-4 pb-2">
-        <div className="w-24 h-24 rounded-full bg-gradient-to-br from-copa-green to-copa-green-light flex items-center justify-center text-3xl font-black mb-3 border-4 border-primary/20 relative group cursor-pointer overflow-hidden">
-          {profile?.avatar_url ? (
-            <img src={profile.avatar_url} alt={displayName} className="w-full h-full rounded-full object-cover" />
-          ) : (
-            initials
-          )}
-
-          <label className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-            <span className="text-[11px] font-bold text-white uppercase tracking-[0.12em]">{t('upload_photo')}</span>
-            <input
-              type="file"
-              accept="image/png,image/jpeg,image/webp,image/gif"
-              className="hidden"
-              onChange={async (e) => {
-                const file = e.target.files?.[0];
-                if (!file || !user) return;
-
-                try {
-                  toast({ title: t('common:common.loading'), description: t('avatar_uploading') });
-                  const publicUrl = await uploadAvatar(user.id, file);
-
-                  setProfile(prev => prev ? { ...prev, avatar_url: publicUrl } : null);
-                  toast({ title: t('bolao:create_bolao.notification.created_title'), description: t('avatar_success') });
-                } catch (error) {
-                  console.error('Error uploading avatar:', error);
-                  toast({ title: t('bolao:common.error_title'), description: t('bolao:common.error_desc'), variant: "destructive" });
-                }
-              }}
-            />
-          </label>
-        </div>
-        <h2 className="text-xl font-black">{displayName}</h2>
-        <span className="text-xs text-muted-foreground">{user?.email}</span>
-
-        <Dialog
-          open={isEditing}
-          onOpenChange={(open) => {
-            setIsEditing(open);
-            if (open && profile) {
-              setEditForm({
-                name: profile.name || "",
-                nickname: profile.nickname || "",
-                bio: profile.bio || "",
-                birth_date: profile.birth_date || "",
-                gender: profile.gender || "",
-                nationality: profile.nationality || ""
-              });
-            }
-          }}
-        >
-          <DialogTrigger asChild>
-            <Button variant="outline" size="sm" className="mt-3 h-7 text-xs gap-1.5">
-              <Settings className="w-3 h-3" />
-              {t('edit')}
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-md w-[95%] rounded-xl">
-            <DialogHeader>
-              <DialogTitle>{t('edit_modal_title')}</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 py-2">
-              <div className="space-y-2">
-                <Label htmlFor="name">{t('full_name')}</Label>
-                <Input
-                  id="name"
-                  value={editForm.name}
-                  onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="nickname">{t('nickname')}</Label>
-                  <Input
-                    id="nickname"
-                    value={editForm.nickname}
-                    onChange={(e) => setEditForm(prev => ({ ...prev, nickname: e.target.value }))}
-                    placeholder={t('nickname_placeholder')}
-                  />
+    <div className="arena-screen space-y-6">
+      <ArenaPanel tone="strong" className="p-6">
+        <div className="grid gap-6 md:grid-cols-[auto,1fr,auto] md:items-start">
+          <div className="relative mx-auto md:mx-0">
+            <label className="arena-glow-ring group relative block h-32 w-32 overflow-hidden rounded-full border-[4px] border-primary/35 bg-[#07150f] cursor-pointer">
+              {profile?.avatar_url ? (
+                <img src={profile.avatar_url} alt={displayName} className="h-full w-full object-cover" />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center text-4xl font-black text-primary">
+                  {initials}
                 </div>
+              )}
+              <span className="absolute inset-0 flex items-center justify-center bg-black/40 text-[11px] font-bold uppercase tracking-[0.12em] text-white opacity-0 transition group-hover:opacity-100">
+                {t('upload_photo')}
+              </span>
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/gif"
+                className="hidden"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file || !user) return;
 
-                <div className="space-y-2">
-                  <Label htmlFor="birth_date">{t('birth_date')}</Label>
-                  <Input
-                    id="birth_date"
-                    type="date"
-                    value={editForm.birth_date}
-                    onChange={(e) => setEditForm(prev => ({ ...prev, birth_date: e.target.value }))}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>{t('gender')}</Label>
-                  <Select
-                    value={editForm.gender}
-                    onValueChange={(value) => setEditForm(prev => ({ ...prev, gender: value }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder={t('gender_placeholder')} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="masculino">{t('gender_male')}</SelectItem>
-                      <SelectItem value="feminino">{t('gender_female')}</SelectItem>
-                      <SelectItem value="outro">{t('gender_other')}</SelectItem>
-                      <SelectItem value="prefiro_nao_dizer">{t('gender_none')}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="nationality">{t('nationality')}</Label>
-                  <div className="relative">
-                    <FlagIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      id="nationality"
-                      className="pl-9"
-                      value={editForm.nationality}
-                      onChange={(e) => setEditForm(prev => ({ ...prev, nationality: e.target.value }))}
-                      placeholder={t('nationality_placeholder')}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="bio">{t('bio')}</Label>
-                <Textarea
-                  id="bio"
-                  value={editForm.bio}
-                  onChange={(e) => setEditForm(prev => ({ ...prev, bio: e.target.value }))}
-                  placeholder={t('bio_placeholder')}
-                  className="resize-none h-20"
-                />
-              </div>
-
-              <Button
-                className="w-full font-bold"
-                onClick={async () => {
                   try {
-                    setLoading(true);
-                    if (!user?.id) throw new Error("No user");
-                    const updateData = {
-                      name: editForm.name,
-                      nickname: editForm.nickname,
-                      bio: editForm.bio,
-                      birth_date: editForm.birth_date || null,
-                      gender: editForm.gender,
-                      nationality: editForm.nationality
-                    };
-                    await updateProfile(user.id, updateData);
-
-                    setProfile(prev => prev ? {
-                      ...prev,
-                      name: editForm.name,
-                      nickname: editForm.nickname,
-                      bio: editForm.bio,
-                      birth_date: editForm.birth_date || null,
-                      gender: editForm.gender,
-                      nationality: editForm.nationality
-                    } : null);
-
-                    toast({ title: t('update_success') });
-                    setIsEditing(false);
+                    toast({ title: t('common:common.loading'), description: t('avatar_uploading') });
+                    const publicUrl = await uploadAvatar(user.id, file);
+                    setProfile(prev => prev ? { ...prev, avatar_url: publicUrl } : null);
+                    toast({ title: t('bolao:create_bolao.notification.created_title'), description: t('avatar_success') });
                   } catch (error) {
-                    console.error("Error updating profile:", error);
-                    toast({
-                      title: t('bolao:common.error_title'),
-                      description: t('bolao:common.error_desc'),
-                      variant: "destructive"
-                    });
-                  } finally {
-                    setLoading(false);
+                    console.error('Error uploading avatar:', error);
+                    toast({ title: t('bolao:common.error_title'), description: t('bolao:common.error_desc'), variant: "destructive" });
                   }
                 }}
-              >
-                {t('save_changes')}
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+              />
+            </label>
+            <span className="absolute -bottom-2 right-0 flex h-11 w-11 items-center justify-center rounded-full border-[3px] border-[#06150f] bg-primary font-display text-xl font-black text-black">
+              {levelInfo.level}
+            </span>
+          </div>
 
-        {/* Info Cards */}
-        <div className="grid grid-cols-2 gap-2 w-full mt-4">
-          <div className="glass-card p-3 flex flex-col gap-1 items-center justify-center text-center">
-            <span className="text-[11px] uppercase font-bold tracking-[0.12em] text-muted-foreground">{t('nickname')}</span>
-            <span className="text-sm font-bold">{profile?.nickname || "-"}</span>
-          </div>
-          <div className="glass-card p-3 flex flex-col gap-1 items-center justify-center text-center">
-            <span className="text-[11px] uppercase font-bold tracking-[0.12em] text-muted-foreground">{t('nationality')}</span>
-            <div className="flex items-center gap-1.5">
-              {profile?.nationality && <FlagIcon className="w-3 h-3 text-primary" />}
-              <span className="text-sm font-bold">{profile?.nationality || "-"}</span>
+          <div className="space-y-3 text-center md:text-left">
+            <p className="arena-kicker text-primary">Perfil</p>
+            <h1 className="font-display text-[3.2rem] font-black uppercase leading-[0.9] text-white">
+              {displayName}
+            </h1>
+            <div className="inline-flex items-center gap-2 rounded-full border border-primary/35 bg-primary/12 px-4 py-2 text-primary">
+              <Star className="h-4 w-4 fill-current" />
+              <span className="font-display text-xl font-black uppercase">
+                Nível {levelInfo.level} • Apostador
+              </span>
             </div>
+            <p className="text-2xl font-black text-zinc-200">
+              {levelInfo.currentXp} / {levelInfo.maxXp} XP
+            </p>
+            <div className="arena-progress max-w-xl">
+              <span style={{ width: `${Math.max(8, Math.min(100, levelInfo.ratio * 100))}%` }} />
+            </div>
+            <p className="text-sm text-zinc-400">{user?.email}</p>
           </div>
-        </div>
-      </div>
 
-      {/* Gamification / Statistics & Achievements */}
-      <section>
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-1.5">
-            <Trophy className="w-4 h-4 text-emerald-400" />
-            <h3 className="text-[11px] font-black uppercase tracking-[0.12em] text-gray-300">{t('performance_title')}</h3>
-          </div>
-        </div>
+          <div className="flex justify-center md:justify-end">
+            <Dialog
+              open={isEditing}
+              onOpenChange={(open) => {
+                setIsEditing(open);
+                if (open && profile) {
+                  setEditForm({
+                    name: profile.name || "",
+                    nickname: profile.nickname || "",
+                    bio: profile.bio || "",
+                    birth_date: profile.birth_date || "",
+                    gender: profile.gender || "",
+                    nationality: profile.nationality || ""
+                  });
+                }
+              }}
+            >
+              <DialogTrigger asChild>
+                <button className="flex h-14 w-14 items-center justify-center rounded-full border border-white/10 bg-white/[0.05] text-zinc-300 transition hover:text-white">
+                  <Settings className="h-6 w-6" />
+                </button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md w-[95%] rounded-xl">
+                <DialogHeader>
+                  <DialogTitle>{t('edit_modal_title')}</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-4 py-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">{t('full_name')}</Label>
+                    <Input
+                      id="name"
+                      value={editForm.name}
+                      onChange={(e) => setEditForm(prev => ({ ...prev, name: e.target.value }))}
+                    />
+                  </div>
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 gap-3 mb-4">
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between backdrop-blur-md">
-            <div>
-              <p className="text-[11px] text-gray-400 font-bold uppercase tracking-[0.12em] mb-1">{t('stat_total_points')}</p>
-              <h4 className="text-2xl font-black text-white leading-none">{stats?.points || 0}</h4>
-            </div>
-            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20">
-              <Star className="w-5 h-5 text-primary" />
-            </div>
-          </div>
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between backdrop-blur-md">
-            <div>
-              <p className="text-[11px] text-gray-400 font-bold uppercase tracking-[0.12em] mb-1">{t('stat_efficiency')}</p>
-              <h4 className="text-2xl font-black text-white leading-none">{stats?.efficiency || 0}%</h4>
-            </div>
-            <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
-              <Target className="w-5 h-5 text-blue-400" />
-            </div>
-          </div>
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between backdrop-blur-md">
-            <div>
-              <p className="text-[11px] text-gray-400 font-bold uppercase tracking-[0.12em] mb-1">{t('stat_exact_scores')}</p>
-              <h4 className="text-2xl font-black text-white leading-none">{stats?.exactScores || 0}</h4>
-            </div>
-            <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
-              <Goal className="w-5 h-5 text-emerald-400" />
-            </div>
-          </div>
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-4 flex items-center justify-between backdrop-blur-md">
-            <div>
-              <p className="text-[11px] text-gray-400 font-bold uppercase tracking-[0.12em] mb-1">{t('stat_titles')}</p>
-              <h4 className="text-2xl font-black text-white leading-none">{stats?.titles || 0}</h4>
-            </div>
-            <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center border border-amber-500/20">
-              <Crown className="w-5 h-5 text-amber-500" />
-            </div>
-          </div>
-        </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="nickname">{t('nickname')}</Label>
+                      <Input
+                        id="nickname"
+                        value={editForm.nickname}
+                        onChange={(e) => setEditForm(prev => ({ ...prev, nickname: e.target.value }))}
+                        placeholder={t('nickname_placeholder')}
+                      />
+                    </div>
 
-        {/* Achievements Horizontal Scroll */}
-        <div className="space-y-2">
-          <p className="text-[11px] text-gray-300 font-bold uppercase tracking-[0.12em] px-1">{t('achievements_title')}</p>
-          <div className="grid grid-cols-3 gap-3 pb-2">
-            {[
-              { id: "primeiro_palpite", title: t('achievements.first_prediction.title'), desc: t('achievements.first_prediction.desc'), icon: <Goal className="w-6 h-6 text-primary" />, color: "primary", unlocked: (stats?.totalPredictions || 0) > 0 },
-              { id: "placar_exato", title: t('achievements.exact_score.title'), desc: t('achievements.exact_score.desc'), icon: <Target className="w-6 h-6 text-blue-400" />, color: "blue-500", unlocked: (stats?.exactScores || 0) > 0 },
-              { id: "criador_bolao", title: t('achievements.pool_creator.title'), desc: t('achievements.pool_creator.desc'), icon: <Crown className="w-6 h-6 text-amber-500" />, color: "amber-500", unlocked: (stats?.createdBoloes || 0) > 0 },
-              { id: "combo_3", title: t('achievements.combo_three.title'), desc: t('achievements.combo_three.desc'), icon: <Zap className="w-6 h-6 text-violet-400" />, color: "violet-400", unlocked: (stats?.exactScores || 0) >= 3 },
-              { id: "campeao", title: t('achievements.champion.title'), desc: t('achievements.champion.desc'), icon: <Trophy className="w-6 h-6 text-emerald-400" />, color: "emerald-400", unlocked: (stats?.titles || 0) > 0 },
-            ].map(ach => (
-              <div
-                key={ach.id}
-                className={cn(
-                  "p-4 rounded-3xl border flex flex-col items-center justify-center text-center transition-all",
-                  ach.unlocked
-                    ? "bg-white/10 border-white/20 shadow-xl"
-                    : "bg-white/[0.02] border-white/5 opacity-50 grayscale"
-                )}
-              >
-                <div className={cn(
-                  "w-12 h-12 rounded-[16px] flex items-center justify-center mb-3",
-                  ach.unlocked ? "bg-primary/20" : "bg-white/5"
-                )}>
-                  {ach.icon}
+                    <div className="space-y-2">
+                      <Label htmlFor="birth_date">{t('birth_date')}</Label>
+                      <Input
+                        id="birth_date"
+                        type="date"
+                        value={editForm.birth_date}
+                        onChange={(e) => setEditForm(prev => ({ ...prev, birth_date: e.target.value }))}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>{t('gender')}</Label>
+                      <Select
+                        value={editForm.gender}
+                        onValueChange={(value) => setEditForm(prev => ({ ...prev, gender: value }))}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder={t('gender_placeholder')} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="masculino">{t('gender_male')}</SelectItem>
+                          <SelectItem value="feminino">{t('gender_female')}</SelectItem>
+                          <SelectItem value="outro">{t('gender_other')}</SelectItem>
+                          <SelectItem value="prefiro_nao_dizer">{t('gender_none')}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="nationality">{t('nationality')}</Label>
+                      <div className="relative">
+                        <FlagIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <Input
+                          id="nationality"
+                          className="pl-9"
+                          value={editForm.nationality}
+                          onChange={(e) => setEditForm(prev => ({ ...prev, nationality: e.target.value }))}
+                          placeholder={t('nationality_placeholder')}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="bio">{t('bio')}</Label>
+                    <Textarea
+                      id="bio"
+                      value={editForm.bio}
+                      onChange={(e) => setEditForm(prev => ({ ...prev, bio: e.target.value }))}
+                      placeholder={t('bio_placeholder')}
+                      className="resize-none h-20"
+                    />
+                  </div>
+
+                  <Button
+                    className="w-full font-bold"
+                    onClick={async () => {
+                      try {
+                        setLoading(true);
+                        if (!user?.id) throw new Error("No user");
+                        const updateData = {
+                          name: editForm.name,
+                          nickname: editForm.nickname,
+                          bio: editForm.bio,
+                          birth_date: editForm.birth_date || null,
+                          gender: editForm.gender,
+                          nationality: editForm.nationality
+                        };
+                        await updateProfile(user.id, updateData);
+
+                        setProfile(prev => prev ? {
+                          ...prev,
+                          name: editForm.name,
+                          nickname: editForm.nickname,
+                          bio: editForm.bio,
+                          birth_date: editForm.birth_date || null,
+                          gender: editForm.gender,
+                          nationality: editForm.nationality
+                        } : null);
+
+                        toast({ title: t('update_success') });
+                        setIsEditing(false);
+                      } catch (error) {
+                        console.error("Error updating profile:", error);
+                        toast({
+                          title: t('bolao:common.error_title'),
+                          description: t('bolao:common.error_desc'),
+                          variant: "destructive"
+                        });
+                      } finally {
+                        setLoading(false);
+                      }
+                    }}
+                  >
+                    {t('save_changes')}
+                  </Button>
                 </div>
-                <span className="text-xs font-black text-white mb-1 leading-tight">{ach.title}</span>
-                <span className="text-[10px] text-gray-400 font-medium leading-tight">{ach.unlocked ? ach.desc : t('achievements.locked')}</span>
-              </div>
-            ))}
-            {/* spacer for scroll */}
-            <div className="snap-center shrink-0 w-2" />
+              </DialogContent>
+            </Dialog>
           </div>
         </div>
-      </section>
+
+        <div className="mt-6 grid gap-3 md:grid-cols-4">
+          <ArenaMetric label={t('stat_total_points')} value={(stats?.points || 0).toLocaleString("pt-BR")} accent />
+          <ArenaMetric label={t('stat_efficiency')} value={`${stats?.efficiency || 0}%`} />
+          <ArenaMetric label={t('stat_titles')} value={stats?.titles || 0} />
+          <ArenaMetric label={t('stat_exact_scores')} value={stats?.exactScores || 0} />
+        </div>
+      </ArenaPanel>
+
+      <ArenaPanel className="p-5">
+        <ArenaSectionHeader
+          eyebrow="Identidade"
+          title="Resumo do perfil"
+        />
+        <div className="mt-4 grid gap-3 md:grid-cols-3">
+          <ArenaMetric label={t('nickname')} value={profile?.nickname || "-"} />
+          <ArenaMetric
+            label={t('nationality')}
+            value={
+              <span className="inline-flex items-center gap-2">
+                {profile?.nationality ? <FlagIcon className="h-4 w-4 text-primary" /> : null}
+                {profile?.nationality || "-"}
+              </span>
+            }
+          />
+          <ArenaMetric label="Palpites" value={(stats?.totalPredictions || 0).toLocaleString("pt-BR")} />
+        </div>
+      </ArenaPanel>
+
+      <ArenaPanel className="p-5">
+        <ArenaSectionHeader
+          eyebrow={t('performance_title')}
+          title={t('achievements_title')}
+          action={<button className="text-sm font-black uppercase tracking-[0.12em] text-primary">Ver todas</button>}
+        />
+        <div className="mt-5">
+          <AchievementRail items={achievements} />
+        </div>
+      </ArenaPanel>
+
+      <ArenaPanel className="p-5">
+        <ArenaSectionHeader
+          eyebrow="Histórico"
+          title="Seu desempenho acumulado"
+        />
+        <div className="mt-5">
+          <HistoryStatList items={historyItems} />
+        </div>
+      </ArenaPanel>
 
       {/* My Team */}
       <section>

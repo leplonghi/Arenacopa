@@ -350,6 +350,132 @@ async function removePoolMember({
   return after;
 }
 
+async function leaveBolao({
+  db,
+  bolaoId,
+  actorId,
+  nowIso,
+}) {
+  const bolaoRef = db.collection("boloes").doc(bolaoId);
+  const bolaoSnapshot = await bolaoRef.get();
+
+  if (!bolaoSnapshot.exists) {
+    throw new Error("not_found");
+  }
+
+  const bolaoData = { id: bolaoSnapshot.id, ...bolaoSnapshot.data() };
+  if (bolaoData.creator_id === actorId) {
+    throw new Error("creator_cannot_leave");
+  }
+
+  const memberRef = db.collection("bolao_members").doc(`${actorId}_${bolaoId}`);
+  const memberSnapshot = await memberRef.get();
+  if (!memberSnapshot.exists) {
+    throw new Error("not_found");
+  }
+
+  const memberData = memberSnapshot.data();
+  if (memberData.bolao_id !== bolaoId) {
+    throw new Error("validation_failed");
+  }
+
+  if (
+    ["left", "withdrawn_by_owner", "removed"].includes(
+      String(memberData.membership_status || "active"),
+    )
+  ) {
+    throw new Error("invalid_state");
+  }
+
+  const lifecycleStatus = bolaoData.lifecycle?.status || "draft";
+  if (
+    ["live", "finished", "archived"].includes(lifecycleStatus) ||
+    Boolean(memberData.has_prediction) ||
+    ["confirmed", "paid"].includes(String(memberData.payment_status || ""))
+  ) {
+    throw new Error("member_protected");
+  }
+
+  const before = { id: memberSnapshot.id, ...memberData };
+  const after = {
+    ...before,
+    membership_status: "left",
+    left_at: admin.firestore.FieldValue.serverTimestamp(),
+    updated_at: admin.firestore.FieldValue.serverTimestamp(),
+  };
+
+  await memberRef.set(after, { merge: true });
+  await writeAuditLog({
+    db,
+    bolaoId,
+    actorId,
+    action: "leave_bolao",
+    before,
+    after: {
+      ...after,
+      left_at: nowIso || null,
+      updated_at: nowIso || null,
+    },
+  });
+
+  return {
+    membership_status: "left",
+  };
+}
+
+async function updatePoolMemberPaymentStatus({
+  db,
+  bolaoId,
+  memberId,
+  actorId,
+  paymentStatus,
+  nowIso,
+}) {
+  await getOwnedBolaoOrThrow({ db, bolaoId, actorId });
+
+  if (!["pending", "paid", "exempt"].includes(String(paymentStatus || ""))) {
+    throw new Error("validation_failed");
+  }
+
+  const memberRef = db.collection("bolao_members").doc(memberId);
+  const memberSnapshot = await memberRef.get();
+
+  if (!memberSnapshot.exists) {
+    throw new Error("not_found");
+  }
+
+  const memberData = memberSnapshot.data();
+  if (memberData.bolao_id !== bolaoId) {
+    throw new Error("validation_failed");
+  }
+
+  const before = { id: memberSnapshot.id, ...memberData };
+  const after = {
+    ...before,
+    payment_status: paymentStatus,
+    updated_at: admin.firestore.FieldValue.serverTimestamp(),
+  };
+
+  await memberRef.set(after, { merge: true });
+  await writeAuditLog({
+    db,
+    bolaoId,
+    actorId,
+    action: "update_pool_member_payment_status",
+    before,
+    after: {
+      ...before,
+      payment_status: paymentStatus,
+      updated_at: nowIso || null,
+    },
+  });
+
+  return {
+    member_id: memberId,
+    payment_status: paymentStatus,
+  };
+}
+
 module.exports = {
   alterPresentation,
   archiveBolao,
@@ -357,9 +483,11 @@ module.exports = {
   duplicateBolao,
   finishBolao,
   getOwnedBolaoOrThrow,
+  leaveBolao,
   publishBolao,
   removePoolMember,
   syncBolaoMarkets,
   updateConfiguration,
+  updatePoolMemberPaymentStatus,
   writeAuditLog,
 };

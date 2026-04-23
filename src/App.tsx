@@ -33,6 +33,7 @@ const Premium = lazy(() => import("./pages/Premium"));
 const PublicInvite = lazy(() => import("./pages/PublicInvite"));
 const PublicGroupInvite = lazy(() => import("./pages/PublicGroupInvite"));
 const Grupos = lazy(() => import("./pages/Grupos"));
+const CriarGrupo = lazy(() => import("./pages/CriarGrupo"));
 const GrupoDetail = lazy(() => import("./pages/GrupoDetail"));
 const Privacidade = lazy(() => import("./pages/Privacidade"));
 const Termos = lazy(() => import("./pages/Termos"));
@@ -222,6 +223,7 @@ const AppRoutes = () => (
     <Route path="/pools/create" element={<ProtectedRoute><LegacyRedirectWithSearch to="/boloes/criar" /></ProtectedRoute>} />
     <Route path="/pools/:id" element={<ProtectedRoute><LegacyPoolDetailRedirect /></ProtectedRoute>} />
     <Route path="/grupos" element={<ProtectedRoute><Layout><Grupos /></Layout></ProtectedRoute>} />
+    <Route path="/grupos/criar" element={<ProtectedRoute><Layout><CriarGrupo /></Layout></ProtectedRoute>} />
     <Route path="/grupos/:grupoId" element={<ProtectedRoute><Layout><GrupoDetail /></Layout></ProtectedRoute>} />
     <Route path="/guia" element={<ProtectedRoute><LegacyRedirect to="/copa/guia" /></ProtectedRoute>} />
     <Route path="/guia/historia" element={<ProtectedRoute><LegacyRedirect to="/copa/historia" /></ProtectedRoute>} />

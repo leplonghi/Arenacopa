@@ -72,3 +72,13 @@ export type RemovePoolMemberPayload = {
   reason_code: string;
   reason_text?: string;
 };
+
+export type LeaveBolaoPayload = {
+  bolao_id: string;
+};
+
+export type UpdatePoolMemberPaymentStatusPayload = {
+  bolao_id: string;
+  member_id: string;
+  payment_status: "pending" | "paid" | "exempt";
+};

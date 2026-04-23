@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { Trophy, Radio, Clock, ChevronRight, Star } from "lucide-react";
+import { Trophy, Radio, Clock, ChevronRight, Star, CalendarDays, Sparkles, Flame } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useChampionship } from "@/contexts/ChampionshipContext";
 import type { Championship, ChampionshipStatus } from "@/types/championship";
@@ -9,6 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { useTranslation } from "react-i18next";
+import { ArenaMetric, ArenaPanel, ArenaSectionHeader } from "@/components/arena/ArenaPrimitives";
 
 // ─── Status badge ────────────────────────────────────────────
 function StatusBadge({ status }: { status: ChampionshipStatus }) {
@@ -334,67 +335,196 @@ export default function Campeonatos() {
     }
   };
 
+  const totalPools = Object.values(bolaoCountsMap).reduce((sum, value) => sum + value, 0);
+  const liveChampionships = leagues.filter((championship) => championship.status === "live");
+  const upcomingChampionships = leagues.filter((championship) => championship.status === "upcoming");
+  const finishedChampionships = leagues.filter((championship) => championship.status === "finished");
+  const featuredLive = liveChampionships[0] ?? leagues[0];
+
   return (
-    <div className="min-h-screen pb-24">
-      {/* Header */}
-      <div className="sticky top-0 z-20 bg-[#03100a]/80 backdrop-blur-xl border-b border-white/[0.08] px-4 pt-[calc(var(--safe-area-top,0px)+0.75rem)] pb-3">
-        <motion.div
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-        >
-          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-zinc-500">
-            {t("header.kicker")}
-          </p>
-          <h1 className="text-2xl font-extrabold text-white tracking-tight leading-none">
-            {t("header.title")}
-          </h1>
+    <div className="arena-screen pb-28">
+      <div className="mx-auto max-w-6xl px-4 pt-6">
+        <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
+          <ArenaPanel tone="strong" className="overflow-hidden p-5 sm:p-6">
+            <div className="grid gap-6 lg:grid-cols-[1.3fr_0.7fr]">
+              <div className="relative">
+                <div className="absolute -right-16 top-0 h-40 w-40 rounded-full bg-primary/12 blur-3xl" />
+                <p className="arena-kicker">Centro de campeonatos</p>
+                <h1 className="mt-2 max-w-xl font-display text-[3.2rem] font-black uppercase leading-[0.88] tracking-[0.02em] text-white sm:text-[4.4rem]">
+                  Escolha a competição e entre no contexto certo.
+                </h1>
+                <p className="mt-4 max-w-2xl text-sm leading-relaxed text-zinc-300 sm:text-base">
+                  A Home aponta a próxima ação. Aqui você escolhe o palco: evento principal, ligas ao vivo e torneios em preparação, cada um com sua própria entrada.
+                </p>
+
+                {featuredLive ? (
+                  <button
+                    onClick={() => handleSelect(featuredLive)}
+                    className="mt-6 flex w-full max-w-xl items-center gap-4 rounded-[28px] border border-white/10 bg-white/[0.04] px-4 py-4 text-left transition hover:bg-white/[0.07]"
+                  >
+                    <div
+                      className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[22px] border border-white/10 bg-black/20"
+                      style={{
+                        boxShadow: `0 0 0 1px ${featuredLive.color}22 inset`,
+                      }}
+                    >
+                      {featuredLive.logoUrl ? (
+                        <img
+                          src={featuredLive.logoUrl}
+                          alt={featuredLive.shortName}
+                          className="h-10 w-10 object-contain"
+                        />
+                      ) : (
+                        <span className="text-3xl">{featuredLive.logo}</span>
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[11px] font-display font-black uppercase tracking-[0.18em] text-primary">
+                        Em destaque agora
+                      </p>
+                      <p className="mt-1 truncate font-display text-2xl font-black uppercase text-white">
+                        {featuredLive.name}
+                      </p>
+                      <p className="mt-1 text-sm text-zinc-400">
+                        {featuredLive.confederation ?? featuredLive.country} · {featuredLive.season}
+                      </p>
+                    </div>
+                    <ChevronRight className="h-5 w-5 shrink-0 text-white/50" />
+                  </button>
+                ) : null}
+
+                <div className="mt-5 flex flex-wrap gap-2">
+                  <span className="arena-badge bg-primary/12 border-primary/30 text-primary">
+                    <Flame className="h-3.5 w-3.5" />
+                    {liveChampionships.length} ao vivo
+                  </span>
+                  <span className="arena-badge">
+                    <Trophy className="h-3.5 w-3.5" />
+                    {totalPools} bolões ativos
+                  </span>
+                  <span className="arena-badge">
+                    <CalendarDays className="h-3.5 w-3.5" />
+                    Copa 2026 em destaque
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
+                <ArenaMetric
+                  label="Ao vivo"
+                  value={liveChampionships.length}
+                  accent
+                  icon={<Flame className="h-5 w-5" />}
+                />
+                <ArenaMetric
+                  label="Bolões ativos"
+                  value={totalPools}
+                  icon={<Trophy className="h-5 w-5" />}
+                />
+                <ArenaMetric
+                  label="Próximo grande evento"
+                  value="Copa 2026"
+                  icon={<CalendarDays className="h-5 w-5" />}
+                  className="sm:col-span-3 lg:col-span-1"
+                />
+              </div>
+            </div>
+          </ArenaPanel>
         </motion.div>
-      </div>
 
-      <div className="px-4 pt-5 space-y-6">
-        {/* ── Copa do Mundo: hero card full-width ── */}
-        <div>
-          <p className="mb-2 text-[10px] font-black uppercase tracking-[0.2em] text-amber-400/70">
-            ⭐ {t("sections.world_cup")}
-          </p>
-          <CopaHeroCard
-            championship={copa}
-            isSelected={current.id === copa.id}
-            bolaoCount={bolaoCountsMap[copa.id] ?? 0}
-            onSelect={() => handleSelect(copa)}
-          />
-        </div>
-
-        {/* ── Ligas & Torneios ── */}
-        <div>
-          <p className="mb-2 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">
-            {t("sections.leagues")}
-          </p>
-          <div className="grid grid-cols-2 gap-3">
-            {leagues.map((champ, i) => (
-              <ChampionshipCard
-                key={champ.id}
-                championship={champ}
-                isSelected={current.id === champ.id}
-                bolaoCount={bolaoCountsMap[champ.id] ?? 0}
-                onSelect={() => handleSelect(champ)}
-                index={i}
+        <div className="mt-6 space-y-6">
+          <div>
+            <ArenaSectionHeader
+              eyebrow={`⭐ ${t("sections.world_cup")}`}
+              title="Evento principal"
+              action={<div className="arena-badge"><Sparkles className="h-3.5 w-3.5" /> prioridade máxima</div>}
+            />
+            <div className="mt-3">
+              <CopaHeroCard
+                championship={copa}
+                isSelected={current.id === copa.id}
+                bolaoCount={bolaoCountsMap[copa.id] ?? 0}
+                onSelect={() => handleSelect(copa)}
               />
-            ))}
+            </div>
           </div>
-        </div>
-      </div>
 
-      {/* Footer tip */}
-      <motion.p
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.5 }}
-        className="mt-6 px-6 text-center text-[11px] text-zinc-600"
-      >
-        {t("footer_tip")}
-      </motion.p>
+          {liveChampionships.length > 0 ? (
+            <div>
+              <ArenaSectionHeader
+                eyebrow="Em jogo"
+                title="Ligas ao vivo"
+                action={<div className="arena-badge bg-emerald-500/15 border-emerald-500/30 text-emerald-400">{liveChampionships.length} agora</div>}
+              />
+              <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-3">
+                {liveChampionships.map((champ, i) => (
+                  <ChampionshipCard
+                    key={champ.id}
+                    championship={champ}
+                    isSelected={current.id === champ.id}
+                    bolaoCount={bolaoCountsMap[champ.id] ?? 0}
+                    onSelect={() => handleSelect(champ)}
+                    index={i}
+                  />
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {upcomingChampionships.length > 0 ? (
+            <div>
+              <ArenaSectionHeader
+                eyebrow="Na agenda"
+                title="Em breve"
+                action={<div className="arena-badge">{upcomingChampionships.length} abrindo</div>}
+              />
+              <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-3">
+                {upcomingChampionships.map((champ, i) => (
+                  <ChampionshipCard
+                    key={champ.id}
+                    championship={champ}
+                    isSelected={current.id === champ.id}
+                    bolaoCount={bolaoCountsMap[champ.id] ?? 0}
+                    onSelect={() => handleSelect(champ)}
+                    index={i + liveChampionships.length}
+                  />
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {finishedChampionships.length > 0 ? (
+            <div>
+              <ArenaSectionHeader
+                eyebrow={t("sections.leagues")}
+                title="Encerrados"
+                action={<div className="arena-badge">{finishedChampionships.length} finalizados</div>}
+              />
+              <div className="mt-3 grid grid-cols-2 gap-3 lg:grid-cols-3">
+                {finishedChampionships.map((champ, i) => (
+                  <ChampionshipCard
+                    key={champ.id}
+                    championship={champ}
+                    isSelected={current.id === champ.id}
+                    bolaoCount={bolaoCountsMap[champ.id] ?? 0}
+                    onSelect={() => handleSelect(champ)}
+                    index={i + liveChampionships.length + upcomingChampionships.length}
+                  />
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </div>
+
+        <motion.p
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
+          className="mt-6 px-2 text-center text-[11px] uppercase tracking-[0.18em] text-zinc-500"
+        >
+          {t("footer_tip")}
+        </motion.p>
+      </div>
     </div>
   );
 }

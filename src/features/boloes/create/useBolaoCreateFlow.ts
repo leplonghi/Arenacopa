@@ -2,11 +2,12 @@ import { useMemo, useState } from "react";
 import { getDefaultMarketIdsForFormat } from "@/services/boloes/bolao-format.service";
 import type { BolaoFormatSlug, MarketTemplateSlug, ScoringRules } from "@/types/bolao";
 
-export type CreateStep = "context" | "rules" | "review";
+export type CreateStep = "context" | "type" | "admission" | "review";
+export type PoolContextMode = "standalone" | "existing_group" | "new_group";
 export type GroupBindingMode = "none" | "linked_discovery" | "group_gated";
-export type JoinMode = "private_invite" | "public_open";
 export type FinanceMode = "free" | "paid_external";
-export type PoolTypeId = "rachao" | "campeonato" | "classico";
+export type PoolTypeId = "rapid" | "complete" | "paid";
+export type AccessMode = "approval" | "public" | "group_gated";
 export type PresetKey = "standard" | "risky" | "conservative";
 
 export const PRESETS: Record<PresetKey, ScoringRules> = {
@@ -16,9 +17,9 @@ export const PRESETS: Record<PresetKey, ScoringRules> = {
 };
 
 type WizardState = {
-  groupBindingMode: GroupBindingMode;
+  contextMode: PoolContextMode;
   selectedGrupoId: string | null;
-  joinMode: JoinMode;
+  accessMode: AccessMode;
   financeMode: FinanceMode;
   entryFee: number | "";
   paymentDetails: string;
@@ -31,31 +32,58 @@ type WizardState = {
   name: string;
   description: string;
   emoji: string;
+  newGroupName: string;
+  newGroupDescription: string;
+  newGroupEmoji: string;
+  newGroupObjective: string;
+  newGroupVisibility: "private" | "public";
+  newGroupAdmissionMode: "approval" | "direct_code_or_invite";
 };
 
 const poolTypeConfig: Record<PoolTypeId, { formatId: BolaoFormatSlug; preset: PresetKey }> = {
-  rachao: { formatId: "classic", preset: "standard" },
-  campeonato: { formatId: "detailed", preset: "standard" },
-  classico: { formatId: "classic", preset: "risky" },
+  rapid: { formatId: "classic", preset: "conservative" },
+  complete: { formatId: "detailed", preset: "standard" },
+  paid: { formatId: "classic", preset: "risky" },
 };
 
 function getInitialMarkets(formatId: BolaoFormatSlug) {
   return getDefaultMarketIdsForFormat(formatId).filter((market) => market !== "champion") as MarketTemplateSlug[];
 }
 
+export function mapWizardStateToBolaoStructure(state: WizardState) {
+  const derivedGroupId = state.contextMode === "new_group" ? null : state.selectedGrupoId;
+  const groupBindingMode: GroupBindingMode =
+    state.accessMode === "group_gated"
+      ? "group_gated"
+      : state.contextMode === "standalone"
+        ? "none"
+        : "linked_discovery";
+
+  return {
+    groupBindingMode,
+    grupoId: derivedGroupId,
+    accessPolicy: {
+      join_mode: state.accessMode === "public" ? "public_open" : "private_invite",
+      visibility: state.accessMode === "public" ? "public" : "private",
+      admission_mode: state.accessMode === "public" ? "direct_open" : "approval",
+    },
+  };
+}
+
 export function useBolaoCreateFlow(initialGrupoId: string | null) {
-  const initialType = poolTypeConfig.rachao;
+  const initialType = poolTypeConfig.complete;
   const [step, setStep] = useState<CreateStep>("context");
   const [draftId, setDraftId] = useState<string | null>(null);
+  const [draftConfigVersion, setDraftConfigVersion] = useState<number | null>(null);
   const [state, setState] = useState<WizardState>({
-    groupBindingMode: initialGrupoId ? "linked_discovery" : "none",
+    contextMode: initialGrupoId ? "existing_group" : "standalone",
     selectedGrupoId: initialGrupoId,
-    joinMode: "private_invite",
+    accessMode: initialGrupoId ? "group_gated" : "approval",
     financeMode: "free",
     entryFee: "",
     paymentDetails: "",
     prizeDistribution: "",
-    selectedTypeId: "rachao",
+    selectedTypeId: "complete",
     formatId: initialType.formatId,
     selectedMarketIds: getInitialMarkets(initialType.formatId),
     scoringRules: PRESETS[initialType.preset],
@@ -63,19 +91,41 @@ export function useBolaoCreateFlow(initialGrupoId: string | null) {
     name: "",
     description: "",
     emoji: "⚽",
+    newGroupName: "",
+    newGroupDescription: "",
+    newGroupEmoji: "👥",
+    newGroupObjective: "friends",
+    newGroupVisibility: "private",
+    newGroupAdmissionMode: "approval",
   });
 
   const canAdvance = useMemo(() => {
     if (step === "context") {
+      if (state.contextMode === "existing_group") {
+        return Boolean(state.selectedGrupoId);
+      }
+
+      if (state.contextMode === "new_group") {
+        return state.newGroupName.trim().length >= 3;
+      }
+
       return true;
     }
 
-    if (step === "rules") {
+    if (step === "type") {
+      if (state.financeMode === "paid_external") {
+        return typeof state.entryFee === "number" && state.entryFee > 0;
+      }
+
       return true;
+    }
+
+    if (step === "admission") {
+      return !(state.accessMode === "group_gated" && state.contextMode === "standalone");
     }
 
     return state.name.trim().length >= 3;
-  }, [state.name, step]);
+  }, [state, step]);
 
   const setSelectedType = (typeId: PoolTypeId) => {
     const config = poolTypeConfig[typeId];
@@ -85,13 +135,16 @@ export function useBolaoCreateFlow(initialGrupoId: string | null) {
       formatId: config.formatId,
       selectedMarketIds: getInitialMarkets(config.formatId),
       scoringRules: PRESETS[config.preset],
+      financeMode: typeId === "paid" ? "paid_external" : current.financeMode,
     }));
   };
 
   return {
     canAdvance,
     draftId,
+    draftConfigVersion,
     setDraftId,
+    setDraftConfigVersion,
     setSelectedType,
     setState,
     setStep,

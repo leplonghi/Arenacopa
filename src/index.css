@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Rajdhani:wght@600;700&family=Teko:wght@500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,7 +6,7 @@
 
 @layer base {
   :root {
-    --background: 155 35% 15%;
+    --background: 158 58% 4%;
     --foreground: 150 10% 92%;
 
     --card: 155 30% 13%;
@@ -15,8 +15,8 @@
     --popover: 155 30% 11%;
     --popover-foreground: 150 10% 92%;
 
-    --primary: 44 80% 46%;
-    --primary-foreground: 155 52% 8%;
+    --primary: 45 100% 52%;
+    --primary-foreground: 156 70% 5%;
 
     --secondary: 150 25% 18%;
     --secondary-foreground: 150 10% 88%;
@@ -46,19 +46,21 @@
     --sidebar-ring: 44 80% 46%;
 
     /* Custom tokens */
-    --copa-green: 145 40% 35%;
-    --copa-green-light: 145 45% 45%;
-    --copa-gold: 44 80% 46%;
-    --copa-gold-light: 44 86% 59%;
+    --copa-green: 103 76% 49%;
+    --copa-green-light: 139 86% 54%;
+    --copa-gold: 45 100% 52%;
+    --copa-gold-light: 51 100% 62%;
     --copa-live: 0 72% 50%;
     --copa-success: 145 60% 40%;
     --copa-surface: 155 28% 14%;
-    --surface-border: rgba(255, 255, 255, 0.1);
-    --surface-border-strong: rgba(255, 255, 255, 0.14);
-    --surface-fill: linear-gradient(180deg, rgba(8, 20, 14, 0.8) 0%, rgba(4, 10, 7, 0.92) 100%);
-    --surface-fill-hover: linear-gradient(180deg, rgba(12, 30, 21, 0.85) 0%, rgba(6, 15, 10, 0.96) 100%);
-    --surface-fill-strong: linear-gradient(180deg, rgba(4, 10, 7, 0.88) 0%, rgba(2, 5, 3, 0.98) 100%);
-    --surface-fill-soft: linear-gradient(180deg, rgba(16, 40, 28, 0.7) 0%, rgba(8, 20, 14, 0.85) 100%);
+    --surface-border: rgba(164, 255, 105, 0.18);
+    --surface-border-strong: rgba(255, 194, 18, 0.28);
+    --surface-fill: linear-gradient(155deg, rgba(5, 31, 22, 0.88) 0%, rgba(2, 11, 9, 0.96) 72%, rgba(1, 5, 4, 0.98) 100%);
+    --surface-fill-hover: linear-gradient(155deg, rgba(8, 46, 30, 0.92) 0%, rgba(3, 18, 13, 0.97) 70%, rgba(2, 8, 6, 0.99) 100%);
+    --surface-fill-strong: linear-gradient(160deg, rgba(4, 25, 18, 0.96) 0%, rgba(1, 9, 7, 0.99) 100%);
+    --surface-fill-soft: linear-gradient(160deg, rgba(9, 43, 30, 0.72) 0%, rgba(3, 17, 12, 0.9) 100%);
+    --arena-neon: 103 83% 54%;
+    --arena-orange: 29 100% 50%;
   }
 }
 
@@ -68,7 +70,7 @@
   }
 
   html {
-    background: #082016;
+    background: #010705;
     overflow-x: hidden;
     max-width: 100vw;
   }
@@ -205,6 +207,83 @@
 
   .text-gradient-gold {
     @apply bg-gradient-to-r from-[hsl(var(--copa-gold))] to-[hsl(var(--copa-gold-light))] bg-clip-text text-transparent;
+  }
+
+  .arena-screen {
+    @apply relative mx-auto w-full max-w-5xl px-4 pb-28 pt-5 text-white sm:px-6 md:pb-14;
+  }
+
+  .arena-panel {
+    background:
+      radial-gradient(circle at 12% 0%, rgba(120, 255, 70, 0.12), transparent 34%),
+      radial-gradient(circle at 100% 0%, rgba(255, 187, 0, 0.1), transparent 30%),
+      var(--surface-fill);
+    @apply relative overflow-hidden rounded-[28px] border backdrop-blur-2xl;
+    border-color: rgba(151, 255, 87, 0.16);
+    box-shadow:
+      0 28px 70px -32px rgba(0, 0, 0, 0.85),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06),
+      inset 0 -1px 0 rgba(151, 255, 87, 0.06);
+  }
+
+  .arena-panel-strong {
+    background:
+      linear-gradient(135deg, rgba(11, 57, 37, 0.94), rgba(2, 13, 10, 0.98)),
+      var(--surface-fill-strong);
+    @apply relative overflow-hidden rounded-[34px] border backdrop-blur-2xl;
+    border-color: rgba(255, 192, 0, 0.26);
+    box-shadow:
+      0 30px 90px -36px rgba(0, 0, 0, 0.95),
+      0 0 42px -30px rgba(255, 201, 0, 0.8),
+      inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  }
+
+  .arena-glow-ring {
+    box-shadow:
+      0 0 0 2px rgba(115, 255, 64, 0.5),
+      0 0 26px rgba(52, 211, 83, 0.5),
+      inset 0 0 18px rgba(255, 255, 255, 0.08);
+  }
+
+  .arena-kicker {
+    @apply font-display text-[15px] font-semibold uppercase tracking-[0.22em] text-zinc-300;
+  }
+
+  .arena-title {
+    @apply font-display font-semibold uppercase tracking-[0.015em] leading-[0.86];
+  }
+
+  .arena-button-gold {
+    @apply inline-flex items-center justify-center gap-2 rounded-[18px] border px-5 py-3 font-display text-[1.35rem] font-semibold uppercase tracking-[0.05em] text-black transition active:scale-[0.98];
+    background: linear-gradient(180deg, #ffe763 0%, #ffc107 46%, #ff9d00 100%);
+    border-color: rgba(255, 239, 88, 0.85);
+    box-shadow:
+      0 16px 34px -16px rgba(255, 174, 0, 0.9),
+      inset 0 1px 0 rgba(255, 255, 255, 0.65);
+  }
+
+  .arena-button-green {
+    @apply inline-flex items-center justify-center gap-2 rounded-[18px] border px-5 py-3 font-display text-[1.2rem] font-semibold uppercase tracking-[0.06em] text-white transition active:scale-[0.98];
+    background: linear-gradient(180deg, rgba(38, 135, 24, 0.95), rgba(10, 87, 21, 0.95));
+    border-color: rgba(126, 255, 54, 0.56);
+    box-shadow: 0 16px 34px -18px rgba(99, 255, 48, 0.72);
+  }
+
+  .arena-badge {
+    @apply inline-flex items-center gap-1.5 rounded-full border px-3 py-1 font-display text-[0.95rem] font-medium uppercase tracking-[0.1em];
+    background: rgba(8, 29, 20, 0.7);
+    border-color: rgba(255, 194, 18, 0.38);
+    color: #ffc107;
+  }
+
+  .arena-progress {
+    @apply h-2 overflow-hidden rounded-full bg-white/10;
+  }
+
+  .arena-progress > span {
+    @apply block h-full rounded-full;
+    background: linear-gradient(90deg, #38d83e, #b6f33d, #ffc107);
+    box-shadow: 0 0 18px rgba(131, 255, 55, 0.42);
   }
 
   .safe-top {

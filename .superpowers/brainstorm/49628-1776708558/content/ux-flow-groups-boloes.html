@@ -1,0 +1,94 @@
+<h2>Fluxo recomendado: grupos e bolões</h2>
+<p class="subtitle">A proposta abaixo transforma grupo em contexto social e deixa bolão independente quando fizer sentido.</p>
+
+<div class="cards">
+  <div class="card" data-choice="grupo-primeiro" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="mockup">
+        <div class="mockup-header">Entrada pela tela de grupos</div>
+        <div class="mockup-body">
+          <div class="mock-nav">Grupos</div>
+          <div class="mock-content" style="display:grid; gap:12px;">
+            <div style="padding:14px; border:1px solid rgba(255,255,255,0.12); border-radius:16px;">
+              <strong>Grupo: Injeção</strong>
+              <p style="margin:8px 0 0;">Convidar participantes</p>
+              <p style="margin:6px 0 0;">Criar bolão neste grupo</p>
+              <p style="margin:6px 0 0;">Vincular bolão existente</p>
+            </div>
+            <div class="placeholder" style="min-height:90px;">Bolões do grupo</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>Grupo como porta de entrada</h3>
+      <p>O grupo vira o lugar de convidar pessoas, compartilhar link e organizar os bolões daquele círculo.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="wizard-bolao" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="mockup">
+        <div class="mockup-header">Novo fluxo de criar bolão</div>
+        <div class="mockup-body">
+          <div style="display:grid; gap:10px;">
+            <div class="mock-input">1. Onde esse bolão vai viver?</div>
+            <div class="mock-input">2. Tipo do bolão</div>
+            <div class="mock-input">3. Nome, emoji e descrição</div>
+            <div class="mock-input">4. Acesso e regras</div>
+            <button class="mock-button">Criar bolão</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>Contexto antes do nome</h3>
+      <p>Primeiro o usuário escolhe se o bolão vai ficar em um grupo, em um grupo novo ou sozinho. Só depois ele dá identidade ao bolão.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="acesso" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="mockup">
+        <div class="mockup-header">Regras de acesso</div>
+        <div class="mockup-body">
+          <div style="display:grid; gap:10px;">
+            <div style="padding:12px; border-radius:14px; background:rgba(255,255,255,0.06);">
+              <strong>Grupo</strong>
+              <p style="margin:6px 0 0;">Público</p>
+              <p style="margin:6px 0 0;">Privado com aprovação</p>
+              <p style="margin:6px 0 0;">Privado por convite</p>
+            </div>
+            <div style="padding:12px; border-radius:14px; background:rgba(255,255,255,0.06);">
+              <strong>Bolão</strong>
+              <p style="margin:6px 0 0;">Sem grupo: público ou convite</p>
+              <p style="margin:6px 0 0;">Com grupo: somente membros do grupo</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>Permissões simples</h3>
+      <p>Grupo decide quem entra na comunidade. Bolão decide o formato da disputa. Quando conectados, não existem dois funis conflitantes.</p>
+    </div>
+  </div>
+</div>
+
+<div class="mockup" style="margin-top:24px;">
+  <div class="mockup-header">Recomendação</div>
+  <div class="mockup-body">
+    <p style="margin:0 0 12px;">O caminho principal do produto fica assim:</p>
+    <div style="display:flex; gap:10px; flex-wrap:wrap;">
+      <div class="mock-button">Criar grupo</div>
+      <div class="mock-button">Convidar pessoas</div>
+      <div class="mock-button">Criar bolão no grupo</div>
+      <div class="mock-button">Competir</div>
+    </div>
+    <p style="margin:16px 0 0;">E, para quem quer algo rápido, continua existindo:</p>
+    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;">
+      <div class="mock-button">Criar bolão sem grupo</div>
+      <div class="mock-button">Compartilhar convite</div>
+    </div>
+  </div>
+</div>

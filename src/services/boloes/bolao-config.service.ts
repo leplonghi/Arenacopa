@@ -1,4 +1,4 @@
-import { auth } from "@/integrations/firebase/client";
+import { postAuthedFunction } from "@/services/backend/functions-http";
 import { mapBolaoConfigDocument } from "@/services/boloes/bolao-config.mapper";
 import type {
   AlterBolaoPresentationPayload,
@@ -6,54 +6,19 @@ import type {
   CreateDraftBolaoPayload,
   DuplicateBolaoPayload,
   FinishBolaoPayload,
+  LeaveBolaoPayload,
   PublishBolaoPayload,
   RemovePoolMemberPayload,
+  UpdatePoolMemberPaymentStatusPayload,
   UpdateBolaoConfigurationPayload,
 } from "@/types/bolao-config";
-
-function getFunctionsBaseUrl() {
-  const projectId = import.meta.env.VITE_FIREBASE_PROJECT_ID;
-  if (!projectId) {
-    throw new Error("Ambiente Firebase incompleto.");
-  }
-
-  return `https://us-central1-${projectId}.cloudfunctions.net`;
-}
-
-async function resolveIdToken(tokenOverride?: string) {
-  if (tokenOverride) {
-    return tokenOverride;
-  }
-
-  const user = auth.currentUser;
-  if (!user) {
-    throw new Error("Autenticação obrigatória.");
-  }
-
-  return user.getIdToken();
-}
 
 async function postBolaoOperation<T>(
   functionName: string,
   payload: Record<string, unknown>,
   tokenOverride?: string,
 ): Promise<T> {
-  const idToken = await resolveIdToken(tokenOverride);
-  const response = await fetch(`${getFunctionsBaseUrl()}/${functionName}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${idToken}`,
-    },
-    body: JSON.stringify(payload),
-  });
-
-  const data = (await response.json().catch(() => ({}))) as { error?: string } & Record<string, unknown>;
-  if (!response.ok) {
-    throw new Error(data.error || `bolao_operation_failed:${functionName}`);
-  }
-
-  return data as T;
+  return postAuthedFunction<T>(functionName, payload, tokenOverride);
 }
 
 export async function createDraftBolao(input: {
@@ -121,4 +86,23 @@ export async function removePoolMember(input: {
     membership_status: string;
     removal_reason_code: string | null;
   }>("removePoolMember", input.payload, input.token);
+}
+
+export async function leaveBolao(input: {
+  token?: string;
+  payload: LeaveBolaoPayload;
+}) {
+  return postBolaoOperation<{
+    membership_status: string;
+  }>("leaveBolao", input.payload, input.token);
+}
+
+export async function updatePoolMemberPaymentStatus(input: {
+  token?: string;
+  payload: UpdatePoolMemberPaymentStatusPayload;
+}) {
+  return postBolaoOperation<{
+    member_id: string;
+    payment_status: string;
+  }>("updatePoolMemberPaymentStatus", input.payload, input.token);
 }

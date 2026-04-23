@@ -6,8 +6,11 @@ import { cn } from "@/lib/utils";
 import { type MemberData } from "@/types/bolao";
 import { motion, AnimatePresence } from "framer-motion";
 import { staggerContainer, staggerItem } from "../animations";
-import { removeBolaoMember, updateBolaoMemberPaymentStatus } from "@/services/boloes/bolao.service";
-import { removePoolMember } from "@/services/boloes/bolao-config.service";
+import {
+    leaveBolao,
+    removePoolMember,
+    updatePoolMemberPaymentStatus,
+} from "@/services/boloes/bolao-config.service";
 
 interface MembrosTabProps {
     members: MemberData[];
@@ -44,7 +47,11 @@ export function MembrosTab({ members, userId, isCreator, bolaoId, isPaid, onRefr
     const handleLeave = async () => {
         if (!confirm(t('members.leave_confirm'))) return;
         try {
-            await removeBolaoMember(bolaoId, userId);
+            await leaveBolao({
+                payload: {
+                    bolao_id: bolaoId,
+                },
+            });
             toast({
                 title: t('members.left_success'),
                 className: "bg-emerald-500 border-emerald-600 text-white font-black uppercase text-[10px] tracking-widest"
@@ -54,6 +61,12 @@ export function MembrosTab({ members, userId, isCreator, bolaoId, isPaid, onRefr
             console.error("Error leaving bolao:", error);
             toast({ title: t('common.error_title'), description: t('common.error_desc'), variant: "destructive" });
         }
+    };
+
+    const normalizePaymentStatus = (status: MemberData["payment_status"]) => {
+        if (status === "confirmed") return "paid";
+        if (status === "waived") return "exempt";
+        return status || "pending";
     };
 
     const handleRemove = async (targetUserId: string) => {
@@ -85,13 +98,16 @@ export function MembrosTab({ members, userId, isCreator, bolaoId, isPaid, onRefr
     const cyclePaymentStatus = async (targetUserId: string, currentStatus: string) => {
         if (!isCreator) return;
 
-        const nextStatus = currentStatus === 'pending' ? 'paid' : currentStatus === 'paid' ? 'exempt' : 'pending';
+        const normalizedStatus = normalizePaymentStatus(currentStatus as MemberData["payment_status"]);
+        const nextStatus = normalizedStatus === 'pending' ? 'paid' : normalizedStatus === 'paid' ? 'exempt' : 'pending';
 
         try {
-            await updateBolaoMemberPaymentStatus({
-                bolaoId,
-                userId: targetUserId,
-                paymentStatus: nextStatus,
+            await updatePoolMemberPaymentStatus({
+                payload: {
+                    bolao_id: bolaoId,
+                    member_id: `${targetUserId}_${bolaoId}`,
+                    payment_status: nextStatus,
+                },
             });
             onRefresh();
         } catch (error) {
@@ -169,7 +185,7 @@ export function MembrosTab({ members, userId, isCreator, bolaoId, isPaid, onRefr
                         {members.map((m) => {
                             const name = m.profile?.name || t('members.default_user');
                             const isMe = m.user_id === userId;
-                            const status = m.payment_status || 'pending';
+                            const status = normalizePaymentStatus(m.payment_status);
                             const statusConfig = STATUS_CONFIG[status as keyof typeof STATUS_CONFIG];
                             const StatusIcon = statusConfig?.icon || Clock;
 

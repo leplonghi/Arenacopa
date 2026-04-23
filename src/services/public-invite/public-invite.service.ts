@@ -1,3 +1,5 @@
+import { postPublicFunction } from "@/services/backend/functions-http";
+
 type PublicInviteKind = "bolao" | "group";
 
 export type PublicBolaoInvitePayload = {
@@ -8,6 +10,14 @@ export type PublicBolaoInvitePayload = {
   category: string | null;
   is_paid: boolean;
   memberCount: number;
+  visibility?: "private" | "public";
+  admission_mode?: "approval" | "direct_code_or_invite" | "direct_open";
+  join_mode?: "private_invite" | "public_open";
+  group_binding_mode?: "none" | "linked_discovery" | "group_gated";
+  grupo_id?: string | null;
+  required_group_id?: string | null;
+  required_group_invite_code?: string | null;
+  can_join_direct?: boolean;
 };
 
 export type PublicGroupInvitePayload = {
@@ -17,40 +27,26 @@ export type PublicGroupInvitePayload = {
   emoji: string;
   category: string | null;
   memberCount: number;
+  visibility?: "private" | "public";
+  admission_mode?: "approval" | "direct_code_or_invite" | "direct_open";
+  featured_bolao_id?: string | null;
+  objective?: string;
+  can_join_direct?: boolean;
 };
 
-function getFunctionsBaseUrl() {
-  const projectId = import.meta.env.VITE_FIREBASE_PROJECT_ID;
-  if (!projectId) {
-    throw new Error("Ambiente Firebase incompleto.");
-  }
-
-  return `https://us-central1-${projectId}.cloudfunctions.net`;
-}
-
 async function resolvePublicInvite<T>(kind: PublicInviteKind, inviteCode: string): Promise<T | null> {
-  const response = await fetch(`${getFunctionsBaseUrl()}/resolvePublicInvite`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
+  try {
+    const payload = await postPublicFunction<{ found?: boolean; data?: T }>("resolvePublicInvite", {
       kind,
       inviteCode,
-    }),
-  });
-
-  if (response.status === 404) {
-    return null;
+    });
+    return payload?.data ?? null;
+  } catch (error) {
+    if (error instanceof Error && error.message === "not_found") {
+      return null;
+    }
+    throw error;
   }
-
-  if (!response.ok) {
-    const payload = await response.json().catch(() => null);
-    throw new Error(payload?.error || "Não foi possível carregar o convite.");
-  }
-
-  const payload = await response.json();
-  return (payload?.data as T | undefined) ?? null;
 }
 
 export function resolvePublicBolaoInvite(inviteCode: string) {

@@ -4,6 +4,7 @@ const https = require("https");
 const NEWS_SOURCES = require("./newsSources");
 const bolaoConfigHandlers = require("./bolao-config/handlers");
 const bolaoConfigRepository = require("./bolao-config/repository");
+const groupAccessRepository = require("./group-access/repository");
 
 admin.initializeApp();
 
@@ -71,7 +72,7 @@ function getRuntimeConfig() {
     };
 }
 
-function mapBolaoOperationError(error) {
+function mapAuthedOperationError(error) {
     const code = error?.message || "internal";
     if (code === "permission_denied") {
         return { status: 403, error: code };
@@ -82,14 +83,29 @@ function mapBolaoOperationError(error) {
     if (["config_conflict"].includes(code)) {
         return { status: 409, error: code };
     }
-    if (["invalid_state", "structure_locked", "member_protected", "removal_blocked", "validation_failed"].includes(code)) {
+    if (["already_member", "existing_request"].includes(code)) {
+        return { status: 409, error: code };
+    }
+    if (
+        [
+            "invalid_state",
+            "structure_locked",
+            "member_protected",
+            "removal_blocked",
+            "validation_failed",
+            "join_requires_group",
+            "creator_cannot_leave",
+            "cannot_remove_creator",
+            "invalid_featured_bolao",
+        ].includes(code)
+    ) {
         return { status: 400, error: code };
     }
 
     return { status: 500, error: "internal" };
 }
 
-function createAuthedBolaoEndpoint(handler) {
+function createAuthedEndpoint(handler) {
     return functions.region("us-central1").https.onRequest(async (req, res) => {
         applyCors(req, res);
 
@@ -117,7 +133,7 @@ function createAuthedBolaoEndpoint(handler) {
 
             return res.status(200).json(payload);
         } catch (error) {
-            const mapped = mapBolaoOperationError(error);
+            const mapped = mapAuthedOperationError(error);
             functions.logger.error("Bolao operation failed", {
                 error: error?.message || error,
                 route: req.path,
@@ -161,10 +177,24 @@ exports.resolvePublicInvite = functions.region("us-central1").https.onRequest(as
 
             const bolaoDoc = bolaoSnapshot.docs[0];
             const bolaoData = bolaoDoc.data();
+            const grupoId = bolaoData.context?.grupo_id || bolaoData.grupo_id || null;
+            const requiredGroupSnapshot = grupoId
+                ? await db.collection("grupos").doc(grupoId).get()
+                : null;
             const membersSnapshot = await db
                 .collection("bolao_members")
                 .where("bolao_id", "==", bolaoDoc.id)
                 .get();
+            const joinMode =
+                bolaoData.access_policy?.join_mode ||
+                (bolaoData.category === "public" ? "public_open" : "private_invite");
+            const admissionMode =
+                bolaoData.access_policy?.admission_mode ||
+                (joinMode === "public_open" ? "direct_open" : "approval");
+            const visibility =
+                bolaoData.access_policy?.visibility ||
+                (bolaoData.category === "public" ? "public" : "private");
+            const groupBindingMode = bolaoData.context?.group_binding_mode || "none";
 
             return res.status(200).json({
                 found: true,
@@ -176,6 +206,19 @@ exports.resolvePublicInvite = functions.region("us-central1").https.onRequest(as
                     category: bolaoData.category || null,
                     is_paid: Boolean(bolaoData.is_paid),
                     memberCount: membersSnapshot.size,
+                    visibility,
+                    admission_mode: admissionMode,
+                    join_mode: joinMode,
+                    group_binding_mode: groupBindingMode,
+                    grupo_id: grupoId,
+                    required_group_id: groupBindingMode === "group_gated" ? grupoId : null,
+                    required_group_invite_code:
+                        groupBindingMode === "group_gated" && requiredGroupSnapshot?.exists
+                            ? requiredGroupSnapshot.data().invite_code || null
+                            : null,
+                    can_join_direct:
+                        joinMode === "public_open" &&
+                        ["direct_open", "direct_code_or_invite"].includes(admissionMode),
                 },
             });
         }
@@ -196,6 +239,10 @@ exports.resolvePublicInvite = functions.region("us-central1").https.onRequest(as
             .collection("grupo_members")
             .where("grupo_id", "==", groupDoc.id)
             .get();
+        const visibility = groupData.visibility || (groupData.category === "public" ? "public" : "private");
+        const admissionMode =
+            groupData.admission_mode ||
+            (visibility === "public" ? "direct_code_or_invite" : "approval");
 
         return res.status(200).json({
             found: true,
@@ -206,6 +253,13 @@ exports.resolvePublicInvite = functions.region("us-central1").https.onRequest(as
                 emoji: groupData.emoji || "👥",
                 category: groupData.category || null,
                 memberCount: membersSnapshot.size,
+                visibility,
+                admission_mode: admissionMode,
+                featured_bolao_id: groupData.featured_bolao_id || null,
+                objective: groupData.objective || "friends",
+                can_join_direct:
+                    visibility === "public" &&
+                    ["direct_open", "direct_code_or_invite"].includes(admissionMode),
             },
         });
     } catch (error) {
@@ -2457,7 +2511,7 @@ exports.fetchNewsScheduled = functions.pubsub
         return null;
     });
 
-exports.createBolaoDraft = createAuthedBolaoEndpoint(async ({ auth, nowIso, req }) => {
+exports.createBolaoDraft = createAuthedEndpoint(async ({ auth, nowIso, req }) => {
     const bolaoRef = db.collection("boloes").doc();
     const payload = bolaoConfigHandlers.buildDraftBolaoDocument({
         bolaoId: bolaoRef.id,
@@ -2478,7 +2532,7 @@ exports.createBolaoDraft = createAuthedBolaoEndpoint(async ({ auth, nowIso, req 
     };
 });
 
-exports.updateBolaoConfiguration = createAuthedBolaoEndpoint(async ({ auth, nowIso, req }) => {
+exports.updateBolaoConfiguration = createAuthedEndpoint(async ({ auth, nowIso, req }) => {
     const updated = await bolaoConfigRepository.updateConfiguration({
         db,
         bolaoId: req.body?.bolao_id,
@@ -2494,7 +2548,7 @@ exports.updateBolaoConfiguration = createAuthedBolaoEndpoint(async ({ auth, nowI
     };
 });
 
-exports.publishBolao = createAuthedBolaoEndpoint(async ({ auth, nowIso, req }) => {
+exports.publishBolao = createAuthedEndpoint(async ({ auth, nowIso, req }) => {
     const updated = await bolaoConfigRepository.publishBolao({
         db,
         bolaoId: req.body?.bolao_id,
@@ -2509,7 +2563,7 @@ exports.publishBolao = createAuthedBolaoEndpoint(async ({ auth, nowIso, req }) =
     };
 });
 
-exports.duplicateBolao = createAuthedBolaoEndpoint(async ({ auth, nowIso, req }) => {
+exports.duplicateBolao = createAuthedEndpoint(async ({ auth, nowIso, req }) => {
     const duplicated = await bolaoConfigRepository.duplicateBolao({
         db,
         sourceBolaoId: req.body?.source_bolao_id,
@@ -2525,7 +2579,7 @@ exports.duplicateBolao = createAuthedBolaoEndpoint(async ({ auth, nowIso, req })
     };
 });
 
-exports.alterBolaoPresentation = createAuthedBolaoEndpoint(async ({ auth, nowIso, req }) => {
+exports.alterBolaoPresentation = createAuthedEndpoint(async ({ auth, nowIso, req }) => {
     const updated = await bolaoConfigRepository.alterPresentation({
         db,
         bolaoId: req.body?.bolao_id,
@@ -2540,7 +2594,7 @@ exports.alterBolaoPresentation = createAuthedBolaoEndpoint(async ({ auth, nowIso
     };
 });
 
-exports.finishBolao = createAuthedBolaoEndpoint(async ({ auth, nowIso, req }) => {
+exports.finishBolao = createAuthedEndpoint(async ({ auth, nowIso, req }) => {
     const updated = await bolaoConfigRepository.finishBolao({
         db,
         bolaoId: req.body?.bolao_id,
@@ -2555,7 +2609,7 @@ exports.finishBolao = createAuthedBolaoEndpoint(async ({ auth, nowIso, req }) =>
     };
 });
 
-exports.archiveBolao = createAuthedBolaoEndpoint(async ({ auth, nowIso, req }) => {
+exports.archiveBolao = createAuthedEndpoint(async ({ auth, nowIso, req }) => {
     const updated = await bolaoConfigRepository.archiveBolao({
         db,
         bolaoId: req.body?.bolao_id,
@@ -2570,7 +2624,7 @@ exports.archiveBolao = createAuthedBolaoEndpoint(async ({ auth, nowIso, req }) =
     };
 });
 
-exports.removePoolMember = createAuthedBolaoEndpoint(async ({ auth, nowIso, req }) => {
+exports.removePoolMember = createAuthedEndpoint(async ({ auth, nowIso, req }) => {
     const updated = await bolaoConfigRepository.removePoolMember({
         db,
         bolaoId: req.body?.bolao_id,
@@ -2585,5 +2639,207 @@ exports.removePoolMember = createAuthedBolaoEndpoint(async ({ auth, nowIso, req 
         member_id: updated.id,
         membership_status: updated.membership_status,
         removal_reason_code: updated.removal_reason_code || null,
+    };
+});
+
+exports.leaveBolao = createAuthedEndpoint(async ({ auth, nowIso, req }) => {
+    return bolaoConfigRepository.leaveBolao({
+        db,
+        bolaoId: req.body?.bolao_id,
+        actorId: auth.uid,
+        nowIso,
+    });
+});
+
+exports.updatePoolMemberPaymentStatus = createAuthedEndpoint(async ({ auth, nowIso, req }) => {
+    return bolaoConfigRepository.updatePoolMemberPaymentStatus({
+        db,
+        bolaoId: req.body?.bolao_id,
+        memberId: req.body?.member_id,
+        actorId: auth.uid,
+        paymentStatus: req.body?.payment_status,
+        nowIso,
+    });
+});
+
+exports.createGroup = createAuthedEndpoint(async ({ auth, nowIso, req }) => {
+    const groupRef = db.collection("grupos").doc();
+    const created = await groupAccessRepository.createGroup({
+        db,
+        groupId: groupRef.id,
+        actorId: auth.uid,
+        payload: req.body || {},
+        nowIso,
+    });
+
+    return {
+        group_id: groupRef.id,
+        ...created,
+    };
+});
+
+exports.updateGroupSettings = createAuthedEndpoint(async ({ auth, nowIso, req }) => {
+    const updated = await groupAccessRepository.updateGroupSettings({
+        db,
+        groupId: req.body?.group_id,
+        actorId: auth.uid,
+        patch: req.body?.patch || {},
+        nowIso,
+    });
+
+    return {
+        group_id: updated.id,
+        ...updated,
+    };
+});
+
+exports.requestGroupJoin = createAuthedEndpoint(async ({ auth, nowIso, req }) => {
+    const result = await groupAccessRepository.requestGroupJoin({
+        db,
+        groupId: req.body?.group_id,
+        actorId: auth.uid,
+        nowIso,
+        inviteCode: req.body?.invite_code || null,
+        origin: req.body?.origin || "group_request",
+    });
+
+    return {
+        group_id: result.group?.id || req.body?.group_id,
+        ...result,
+    };
+});
+
+exports.approveGroupJoin = createAuthedEndpoint(async ({ auth, nowIso, req }) => {
+    return groupAccessRepository.approveGroupJoin({
+        db,
+        groupId: req.body?.group_id,
+        requestId: req.body?.request_id,
+        actorId: auth.uid,
+        nowIso,
+        reasonCode: req.body?.reason_code || null,
+    });
+});
+
+exports.rejectGroupJoin = createAuthedEndpoint(async ({ auth, nowIso, req }) => {
+    return groupAccessRepository.rejectGroupJoin({
+        db,
+        groupId: req.body?.group_id,
+        requestId: req.body?.request_id,
+        actorId: auth.uid,
+        nowIso,
+        reasonCode: req.body?.reason_code || null,
+    });
+});
+
+exports.leaveGroup = createAuthedEndpoint(async ({ auth, nowIso, req }) => {
+    return groupAccessRepository.leaveGroup({
+        db,
+        groupId: req.body?.group_id,
+        actorId: auth.uid,
+        nowIso,
+    });
+});
+
+exports.removeGroupMember = createAuthedEndpoint(async ({ auth, nowIso, req }) => {
+    return groupAccessRepository.removeGroupMember({
+        db,
+        groupId: req.body?.group_id,
+        memberId: req.body?.member_id,
+        actorId: auth.uid,
+        nowIso,
+        reasonCode: req.body?.reason_code || null,
+    });
+});
+
+exports.setFeaturedGroupBolao = createAuthedEndpoint(async ({ auth, nowIso, req }) => {
+    return groupAccessRepository.setFeaturedGroupBolao({
+        db,
+        groupId: req.body?.group_id,
+        bolaoId: req.body?.bolao_id || null,
+        actorId: auth.uid,
+        nowIso,
+    });
+});
+
+exports.requestBolaoJoin = createAuthedEndpoint(async ({ auth, nowIso, req }) => {
+    const result = await groupAccessRepository.requestBolaoJoin({
+        db,
+        bolaoId: req.body?.bolao_id,
+        actorId: auth.uid,
+        nowIso,
+        inviteCode: req.body?.invite_code || null,
+        origin: req.body?.origin || "pool_request",
+    });
+
+    return {
+        bolao_id: result.bolao?.id || req.body?.bolao_id,
+        ...result,
+    };
+});
+
+exports.approveBolaoJoin = createAuthedEndpoint(async ({ auth, nowIso, req }) => {
+    return groupAccessRepository.approveBolaoJoin({
+        db,
+        bolaoId: req.body?.bolao_id,
+        requestId: req.body?.request_id,
+        actorId: auth.uid,
+        nowIso,
+        reasonCode: req.body?.reason_code || null,
+    });
+});
+
+exports.rejectBolaoJoin = createAuthedEndpoint(async ({ auth, nowIso, req }) => {
+    return groupAccessRepository.rejectBolaoJoin({
+        db,
+        bolaoId: req.body?.bolao_id,
+        requestId: req.body?.request_id,
+        actorId: auth.uid,
+        nowIso,
+        reasonCode: req.body?.reason_code || null,
+    });
+});
+
+exports.joinViaInvite = createAuthedEndpoint(async ({ auth, nowIso, req }) => {
+    const inviteCode = typeof req.body?.invite_code === "string" ? req.body.invite_code.trim().toUpperCase() : "";
+    const kind = req.body?.kind;
+    if (!inviteCode || !["group", "bolao"].includes(kind)) {
+        throw new Error("validation_failed");
+    }
+
+    if (kind === "group") {
+        const groupSnapshot = await db.collection("grupos").where("invite_code", "==", inviteCode).limit(1).get();
+        if (groupSnapshot.empty) {
+            throw new Error("not_found");
+        }
+        const result = await groupAccessRepository.requestGroupJoin({
+            db,
+            groupId: groupSnapshot.docs[0].id,
+            actorId: auth.uid,
+            nowIso,
+            inviteCode,
+            origin: "invite_link",
+        });
+        return {
+            group_id: groupSnapshot.docs[0].id,
+            ...result,
+        };
+    }
+
+    const bolaoSnapshot = await db.collection("boloes").where("invite_code", "==", inviteCode).limit(1).get();
+    if (bolaoSnapshot.empty) {
+        throw new Error("not_found");
+    }
+
+    const result = await groupAccessRepository.requestBolaoJoin({
+        db,
+        bolaoId: bolaoSnapshot.docs[0].id,
+        actorId: auth.uid,
+        nowIso,
+        inviteCode,
+        origin: "invite_link",
+    });
+    return {
+        bolao_id: bolaoSnapshot.docs[0].id,
+        ...result,
     };
 });

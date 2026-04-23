@@ -14,6 +14,7 @@ import {
   archiveBolao,
   updateBolaoConfiguration,
 } from "@/services/boloes/bolao-config.service";
+import { trackSocialEvent } from "@/lib/analytics/social.telemetry";
 import type { BolaoData } from "@/types/bolao";
 import type { BolaoFormatSlug, MarketTemplateSlug, ScoringRules } from "@/types/bolao";
 
@@ -249,6 +250,12 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated }: Bo
         description: "Pode ter havido conflito de versão ou trava estrutural.",
         variant: "destructive",
       });
+      if (error instanceof Error && error.message === "structure_locked") {
+        trackSocialEvent("edit_blocked_after_lock", {
+          section: key,
+          bolao_id: bolao.id,
+        });
+      }
     } finally {
       setSavingKey(null);
     }
@@ -294,12 +301,21 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated }: Bo
   ) => {
     try {
       setSavingKey(key);
+      trackSocialEvent("edit_blocked_after_lock", {
+        section: key,
+        bolao_id: bolao.id,
+      });
       const duplicated = await duplicateBolao({
         payload: {
           source_bolao_id: bolao.id,
           origin: "published_snapshot",
           overrides,
         },
+      });
+      trackSocialEvent("duplicate_after_lock", {
+        section: key,
+        source_bolao_id: bolao.id,
+        duplicated_bolao_id: duplicated.bolaoId,
       });
 
       toast({

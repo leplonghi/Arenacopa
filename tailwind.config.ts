@@ -150,8 +150,8 @@ export default {
         'score-down': 'score-down 0.2s ease-out forwards'
       },
       fontFamily: {
-        sans: ['"Plus Jakarta Sans"', 'Inter', 'system-ui', 'sans-serif'],
-        display: ['"Space Grotesk"', 'sans-serif'],
+        sans: ['"Manrope"', 'system-ui', 'sans-serif'],
+        display: ['"Teko"', '"Rajdhani"', 'sans-serif'],
       }
     }
   },
