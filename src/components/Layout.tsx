@@ -118,8 +118,8 @@ function Header({ className }: { className?: string }) {
   const title = getTitle();
 
   return (
-    <header className={cn("fixed inset-x-0 top-0 z-30 safe-top", className)}>
-      <div className="mx-auto flex h-[72px] w-full max-w-7xl items-center justify-between px-4">
+    <header className={cn("arena-header-shell fixed inset-x-0 top-0 z-30 safe-top", className)}>
+      <div className="arena-header-inner mx-auto flex h-[72px] w-full max-w-7xl items-center justify-between px-4">
         {isSubpage ? (
           <button
             aria-label={t('actions.back')}
@@ -149,10 +149,10 @@ function Header({ className }: { className?: string }) {
           )}
           {title && (
             <h1 className={cn(
-              "font-bold transition-all",
+              "font-display font-semibold uppercase tracking-[0.04em] text-white transition-all",
               isSubpage
-                ? "text-base absolute left-1/2 -translate-x-1/2 md:relative md:left-0 md:translate-x-0 md:text-lg"
-                : "text-lg hidden md:block"
+                ? "text-[1.2rem] absolute left-1/2 -translate-x-1/2 md:relative md:left-0 md:translate-x-0 md:text-[1.35rem]"
+                : "hidden text-[1.35rem] md:block"
             )}>
               {title}
             </h1>

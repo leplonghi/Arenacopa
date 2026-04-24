@@ -183,7 +183,7 @@ export default function Ranking() {
 
   if (isLoadingDisplay) {
     return (
-      <div className="mx-auto max-w-5xl px-4 py-6">
+      <div className="arena-screen">
         <Skeleton className="mb-4 h-20 rounded-3xl bg-white/10" />
         <Skeleton className="mb-4 h-32 rounded-3xl bg-white/10" />
         <Skeleton className="h-[420px] rounded-3xl bg-white/10" />
@@ -193,12 +193,14 @@ export default function Ranking() {
 
   if (!displayRows.length && !isLoadingDisplay) {
     return (
-      <div className="mx-auto max-w-4xl px-4 py-6">
-        <EmptyState
-          icon="🏆"
-          {...{ title: t('empty_title') }}
-          description={t('empty_desc')}
-        />
+      <div className="arena-screen">
+        <ArenaPanel className="p-8">
+          <EmptyState
+            icon="🏆"
+            {...{ title: t('empty_title') }}
+            description={t('empty_desc')}
+          />
+        </ArenaPanel>
       </div>
     );
   }

@@ -10,7 +10,7 @@ import { AdmissionInbox } from "@/features/social/AdmissionInbox";
 import { joinViaInvite } from "@/services/groups/group-access.service";
 import { getSiteUrl } from "@/utils/site-url";
 import { trackSocialEvent } from "@/lib/analytics/social.telemetry";
-import { ArenaPanel } from "@/components/arena/ArenaPrimitives";
+import { ArenaMetric, ArenaPanel, ArenaSectionHeader } from "@/components/arena/ArenaPrimitives";
 
 type GroupCard = {
   id: string;
@@ -137,6 +137,15 @@ export default function Grupos() {
     [groups],
   );
 
+  const spotlightMetrics = useMemo(
+    () => [
+      { label: "Meus grupos", value: groups.length },
+      { label: "Pendentes", value: pendingRequests.length },
+      { label: "Admin", value: invitationGroups.length },
+    ],
+    [groups.length, invitationGroups.length, pendingRequests.length],
+  );
+
   const handleJoinByCode = async () => {
     if (!joinCode.trim()) {
       return;
@@ -187,49 +196,69 @@ export default function Grupos() {
 
   return (
     <div className="arena-screen">
-      <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">Grupos</p>
-          <h1 className="mt-1 text-3xl font-black">Comunidades mais claras, sem bagunça</h1>
-          <p className="mt-2 max-w-2xl text-sm text-zinc-400">
-            Aqui você organiza a comunidade. Depois decide qual bolão vai viver dentro dela.
-          </p>
+      <ArenaPanel tone="strong" className="mb-7 p-5 sm:p-6">
+        <ArenaSectionHeader
+          eyebrow="Grupos"
+          title="Comunidades organizadas sem ruído"
+          action={
+            <Link
+              to="/grupos/criar"
+              className="inline-flex items-center gap-2 rounded-[18px] bg-primary px-4 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-black transition hover:brightness-105"
+            >
+              <Plus className="h-4 w-4" />
+              Criar grupo
+            </Link>
+          }
+        />
+        <p className="mt-3 max-w-3xl text-sm leading-6 text-zinc-300">
+          Aqui você organiza a comunidade. Depois decide qual bolão vai viver dentro dela, sem misturar governança com participação.
+        </p>
+
+        <div className="mt-5 grid gap-3 sm:grid-cols-3">
+          {spotlightMetrics.map((item, index) => (
+            <ArenaMetric
+              key={item.label}
+              label={item.label}
+              value={item.value}
+              accent={index === 0}
+              className="bg-black/20"
+            />
+          ))}
         </div>
-        <Link
-          to="/grupos/criar"
-          className="inline-flex items-center gap-2 rounded-2xl bg-primary px-4 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-black"
-        >
-          <Plus className="h-4 w-4" />
-          Criar grupo
-        </Link>
-      </div>
+      </ArenaPanel>
 
       <div className="grid gap-6">
         <ArenaPanel className="p-5">
-          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">Meus grupos</p>
-          <p className="mt-2 text-sm text-zinc-400">Os grupos em que você já participa e pode organizar a galera.</p>
+          <ArenaSectionHeader eyebrow="Meus grupos" title="Onde sua comunidade já existe" />
+          <p className="mt-3 text-sm leading-6 text-zinc-400">Os grupos em que você já participa e pode organizar a galera.</p>
 
           {loading ? (
             <div className="flex justify-center py-10"><Loader2 className="h-7 w-7 animate-spin text-primary" /></div>
           ) : groups.length === 0 ? (
-            <EmptyState icon="👥" title="Você ainda não participa de nenhum grupo" description="Crie o seu ou entre com um código." />
+            <EmptyState
+              icon="👥"
+              title="Você ainda não participa de nenhum grupo"
+              description="Crie o seu ou entre com um código."
+              className="mt-4 rounded-[24px] border border-dashed border-white/10 bg-white/[0.03]"
+              glowColor="green"
+            />
           ) : (
             <div className="mt-4 grid gap-3 md:grid-cols-2">
               {groups.map((group) => (
-                <Link key={group.id} to={`/grupos/${group.id}`} className="rounded-3xl border border-white/10 bg-[#0c1811] p-4">
+                <Link key={group.id} to={`/grupos/${group.id}`} className="rounded-[26px] border border-white/10 bg-white/[0.04] p-4 backdrop-blur-xl transition hover:border-primary/20 hover:bg-white/[0.06]">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-2xl">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-[18px] border border-primary/15 bg-primary/10 text-2xl">
                       {group.emoji}
                     </div>
                     <div className="flex-1">
-                      <p className="font-black">{group.name}</p>
-                      {group.description ? <p className="mt-1 text-sm text-zinc-400">{group.description}</p> : null}
+                      <p className="font-display text-[1.4rem] font-semibold uppercase leading-none text-white">{group.name}</p>
+                      {group.description ? <p className="mt-2 text-sm leading-6 text-zinc-400">{group.description}</p> : null}
                     </div>
                     <Users2 className="h-5 w-5 text-zinc-600" />
                   </div>
                   <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-black uppercase tracking-[0.14em]">
-                    <span className="rounded-full bg-white/10 px-3 py-1">{group.visibility === "public" ? "Público" : "Privado"}</span>
-                    <span className="rounded-full bg-white/10 px-3 py-1">{group.role === "admin" ? "Admin" : "Membro"}</span>
+                    <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1">{group.visibility === "public" ? "Público" : "Privado"}</span>
+                    <span className="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-primary">{group.role === "admin" ? "Admin" : "Membro"}</span>
                   </div>
                 </Link>
               ))}
@@ -237,7 +266,7 @@ export default function Grupos() {
           )}
         </ArenaPanel>
 
-        <div className="grid gap-6 lg:grid-cols-[1.2fr,0.8fr]">
+        <div className="grid items-start gap-6 lg:grid-cols-[1.2fr,0.8fr]">
           <AdmissionInbox
             title="Solicitações pendentes"
             description="Tudo que ainda depende de aprovação do grupo fica aqui, separado da navegação principal."
@@ -247,19 +276,19 @@ export default function Grupos() {
           />
 
           <ArenaPanel className="p-5">
-            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">Entrar com código</p>
-            <p className="mt-2 text-sm text-zinc-400">Recebeu um código? Esse é o caminho curto.</p>
+            <ArenaSectionHeader eyebrow="Código" title="Entrar com código" />
+            <p className="mt-3 text-sm leading-6 text-zinc-400">Recebeu um código? Esse é o caminho curto.</p>
             <div className="mt-4 flex gap-2">
               <input
                 value={joinCode}
                 onChange={(event) => setJoinCode(event.target.value.toUpperCase())}
                 placeholder="Código do grupo"
-                className="flex-1 rounded-2xl border border-white/10 bg-[#0c1811] px-4 py-3 text-sm font-black uppercase tracking-[0.2em] text-white"
+                className="flex-1 rounded-[18px] border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-black uppercase tracking-[0.2em] text-white placeholder:text-zinc-500"
               />
               <button
                 onClick={() => void handleJoinByCode()}
                 disabled={joining || joinCode.trim().length < 6}
-                className="inline-flex items-center justify-center rounded-2xl bg-primary px-4 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-black disabled:opacity-50"
+                className="inline-flex items-center justify-center rounded-[18px] bg-primary px-4 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-black transition hover:brightness-105 disabled:opacity-50"
               >
                 {joining ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
               </button>
@@ -268,27 +297,27 @@ export default function Grupos() {
         </div>
 
         <ArenaPanel className="p-5">
-          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">Convites</p>
-          <p className="mt-2 text-sm text-zinc-400">
+          <ArenaSectionHeader eyebrow="Convites" title="Compartilhar sem procurar em menus" />
+          <p className="mt-3 text-sm leading-6 text-zinc-400">
             Se você administra um grupo, compartilhe o link certo sem precisar cavar menus.
           </p>
 
           {invitationGroups.length === 0 ? (
-            <div className="mt-4 rounded-3xl border border-dashed border-white/10 bg-[#0c1811] px-4 py-6">
-              <p className="font-black">Você ainda não administra nenhum grupo</p>
-              <p className="mt-1 text-sm text-zinc-500">Quando criar um grupo, os atalhos de convite aparecem aqui.</p>
+            <div className="mt-5 rounded-[26px] border border-dashed border-white/10 bg-white/[0.03] px-5 py-7">
+              <p className="font-display text-[1.35rem] font-semibold uppercase leading-none text-white">Você ainda não administra nenhum grupo</p>
+              <p className="mt-2 text-sm leading-6 text-zinc-500">Quando criar um grupo, os atalhos de convite aparecem aqui.</p>
             </div>
           ) : (
             <div className="mt-4 grid gap-3 md:grid-cols-2">
               {invitationGroups.map((group) => (
-                <div key={group.id} className="rounded-3xl border border-white/10 bg-[#0c1811] p-4">
+                <div key={group.id} className="rounded-[26px] border border-white/10 bg-white/[0.04] p-4 backdrop-blur-xl">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-2xl">
+                    <div className="flex h-12 w-12 items-center justify-center rounded-[18px] border border-primary/15 bg-primary/10 text-2xl">
                       {group.emoji}
                     </div>
                     <div className="flex-1">
-                      <p className="font-black">{group.name}</p>
-                      <p className="mt-1 text-sm text-zinc-400">
+                      <p className="font-display text-[1.4rem] font-semibold uppercase leading-none text-white">{group.name}</p>
+                      <p className="mt-2 text-sm leading-6 text-zinc-400">
                         {group.visibility === "public" ? "Entrada pública por link ou código." : "Entrada por solicitação e aprovação."}
                       </p>
                     </div>
@@ -296,14 +325,14 @@ export default function Grupos() {
                   <div className="mt-4 flex gap-2">
                     <button
                       onClick={() => void handleCopyInvite(group.invite_code)}
-                      className="inline-flex flex-1 items-center justify-center gap-2 rounded-2xl border border-white/10 px-4 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-white"
+                      className="inline-flex flex-1 items-center justify-center gap-2 rounded-[18px] border border-white/10 bg-white/[0.03] px-4 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-white transition hover:bg-white/[0.06]"
                     >
                       <Copy className="h-4 w-4" />
                       Copiar link
                     </button>
                     <button
                       onClick={() => void handleCopyInvite(group.invite_code)}
-                      className="inline-flex items-center justify-center rounded-2xl bg-primary px-4 py-3 text-black"
+                      className="inline-flex items-center justify-center rounded-[18px] bg-primary px-4 py-3 text-black transition hover:brightness-105"
                     >
                       <Share2 className="h-4 w-4" />
                     </button>
@@ -315,21 +344,22 @@ export default function Grupos() {
         </ArenaPanel>
 
         <ArenaPanel className="p-5">
-          <div className="flex flex-wrap items-center justify-between gap-4">
-            <div>
-              <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">Criar grupo</p>
-              <p className="mt-2 text-sm text-zinc-400">
-                Monte a comunidade primeiro e só depois escolha se ela já nasce com um bolão.
-              </p>
-            </div>
-            <Link
-              to="/grupos/criar"
-              className="inline-flex items-center gap-2 rounded-2xl bg-primary px-4 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-black"
-            >
-              <Plus className="h-4 w-4" />
-              Abrir fluxo
-            </Link>
-          </div>
+          <ArenaSectionHeader
+            eyebrow="Criar grupo"
+            title="Montar a comunidade antes do bolão"
+            action={
+              <Link
+                to="/grupos/criar"
+                className="inline-flex items-center gap-2 rounded-[18px] bg-primary px-4 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-black transition hover:brightness-105"
+              >
+                <Plus className="h-4 w-4" />
+                Abrir fluxo
+              </Link>
+            }
+          />
+          <p className="mt-3 text-sm leading-6 text-zinc-400">
+            Monte a comunidade primeiro e só depois escolha se ela já nasce com um bolão.
+          </p>
         </ArenaPanel>
       </div>
     </div>

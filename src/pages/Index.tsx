@@ -15,7 +15,7 @@ import { useQuery } from "@tanstack/react-query";
 import { usePendingPredictions } from "@/hooks/usePendingPredictions";
 import { getDashboardData, type DashboardBolaoSummary } from "@/services/dashboard/dashboard.service";
 import { useRealtimeNews } from "@/hooks/useRealtimeNews";
-import { ArenaPanel, ArenaSectionHeader } from "@/components/arena/ArenaPrimitives";
+import { ArenaPanel, ArenaSectionHeader, ArenaTabPill } from "@/components/arena/ArenaPrimitives";
 import { getArenaLevel } from "@/lib/profile-level";
 import {
   getStoredFavoriteTeam,
@@ -230,7 +230,7 @@ const Index = () => {
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="relative z-10 mx-auto max-w-2xl space-y-4 px-4 pt-6 sm:px-6"
+        className="arena-screen relative z-10 max-w-5xl space-y-6"
       >
         {featuredMatch ? null : <LiveMatchCard />}
 
@@ -297,270 +297,251 @@ const Index = () => {
         </motion.section>
 
         {/* Real-time News — tabbed Copa 2026 / Meu Time */}
-        <motion.section variants={itemVariants} className="space-y-4">
-          <ArenaSectionHeader
-            title={t('news.title')}
-            eyebrow="Radar"
-            action={
-              <Link to="/noticias" className="text-[11px] text-gray-400 font-black uppercase tracking-[0.12em] hover:text-white transition-colors">
-                {t('news.view_all')} <ChevronRight className="w-3 h-3 inline ml-1" />
-              </Link>
-            }
-          />
+        <motion.section variants={itemVariants}>
+          <ArenaPanel className="p-5">
+            <ArenaSectionHeader
+              title={t('news.title')}
+              eyebrow="Radar"
+              action={
+                <Link to="/noticias" className="text-[11px] text-gray-400 font-black uppercase tracking-[0.12em] hover:text-white transition-colors">
+                  {t('news.view_all')} <ChevronRight className="w-3 h-3 inline ml-1" />
+                </Link>
+              }
+            />
 
-          {/* Tab pills + preferences button */}
-          <div className="flex items-center gap-1.5">
-            <button
-              onClick={() => setNewsTab("copa")}
-              className={cn(
-                "rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] transition-all",
-                newsTab === "copa"
-                  ? "bg-copa-green text-white"
-                  : "border border-white/10 bg-white/5 text-zinc-400 hover:text-white"
-              )}
-            >
-              {t('news.tab_copa')}
-            </button>
-            <button
-              onClick={() => setNewsTab("team")}
-              className={cn(
-                "rounded-full px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] transition-all flex items-center gap-1.5",
-                newsTab === "team"
-                  ? "bg-primary text-black"
-                  : "border border-white/10 bg-white/5 text-zinc-400 hover:text-white"
-              )}
-            >
-              {favoriteTeam ? favoriteTeam.flag : "🏳"} Para você
-            </button>
-            <button
-              onClick={() => setShowNewsPrefPanel(v => !v)}
-              className={cn(
-                "ml-auto rounded-full p-1.5 transition-all",
-                showNewsPrefPanel
-                  ? "bg-primary/20 text-primary border border-primary/30"
-                  : "bg-white/5 text-zinc-500 border border-white/10 hover:text-white"
-              )}
-              title="Personalizar notícias"
-            >
-              <SlidersHorizontal className="w-3.5 h-3.5" />
-            </button>
-          </div>
-
-          {/* News preferences panel */}
-          <AnimatePresence>
-            {showNewsPrefPanel && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                className="overflow-hidden"
+            {/* Tab pills + preferences button */}
+            <div className="mt-4 flex items-center gap-1.5">
+              <button onClick={() => setNewsTab("copa")}>
+                <ArenaTabPill active={newsTab === "copa"} className={cn(newsTab !== "copa" && "hover:border-white/20 hover:bg-white/[0.06] hover:text-white")}>
+                  {t('news.tab_copa')}
+                </ArenaTabPill>
+              </button>
+              <button onClick={() => setNewsTab("team")}>
+                <ArenaTabPill active={newsTab === "team"} className={cn("gap-1.5", newsTab !== "team" && "hover:border-white/20 hover:bg-white/[0.06] hover:text-white")}>
+                  <span>{favoriteTeam ? favoriteTeam.flag : "🏳"}</span>
+                  <span>Para você</span>
+                </ArenaTabPill>
+              </button>
+              <button
+                onClick={() => setShowNewsPrefPanel(v => !v)}
+                className={cn(
+                  "ml-auto rounded-full border p-2 transition-all",
+                  showNewsPrefPanel
+                    ? "border-primary/30 bg-primary/20 text-primary"
+                    : "border-white/10 bg-white/5 text-zinc-500 hover:text-white"
+                )}
+                title="Personalizar notícias"
               >
-                <div className="rounded-[20px] border border-primary/20 bg-primary/5 p-4">
-                  <div className="flex items-center justify-between mb-3">
-                    <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">
-                      Categorias preferidas na Home
-                    </p>
-                    <button onClick={() => setShowNewsPrefPanel(false)} className="rounded-full p-1 hover:bg-white/10">
-                      <X className="w-3.5 h-3.5 text-zinc-500" />
-                    </button>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {NEWS_CATEGORIES.map(cat => (
-                      <button
-                        key={cat.id}
-                        onClick={() => toggleNewsPref(cat.id)}
-                        className={cn(
-                          "flex items-center gap-1 rounded-full px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.12em] transition-all",
-                          homeNewsPrefs.includes(cat.id)
-                            ? "bg-primary text-black"
-                            : "border border-white/10 bg-white/5 text-zinc-400"
-                        )}
-                      >
-                        <span>{cat.emoji}</span>
-                        <span>{cat.label}</span>
-                        {homeNewsPrefs.includes(cat.id) && <Check className="w-3 h-3 ml-0.5" />}
-                      </button>
-                    ))}
-                  </div>
-                  <p className="mt-2 text-[10px] text-zinc-600">
-                    Também aplicado à aba "Para Você" na tela de Notícias.
-                  </p>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Content */}
-          {newsLoading ? (
-            <div className="grid gap-2.5">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="h-20 animate-pulse rounded-[24px] border border-white/5 bg-white/[0.02]" />
-              ))}
+                <SlidersHorizontal className="h-3.5 w-3.5" />
+              </button>
             </div>
-          ) : newsTab === "team" && !favoriteTeamCode ? (
-            <p className="text-center text-xs text-zinc-500 py-6">{t('news.team_no_fav')}</p>
-          ) : newsTab === "team" && teamNews.length === 0 ? (
-            <p className="text-center text-xs text-zinc-500 py-6">
-              {t('news.team_empty', { team: favoriteTeam?.name || favoriteTeamCode })}
-            </p>
-          ) : (
-            <div className="grid gap-3">
-              <AnimatePresence mode="wait">
+
+            {/* News preferences panel */}
+            <AnimatePresence>
+              {showNewsPrefPanel && (
                 <motion.div
-                  key={newsTab}
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -6 }}
-                  transition={{ duration: 0.18 }}
-                  className="grid gap-2.5"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="overflow-hidden"
                 >
-                  {(newsTab === "copa" ? miniNews : teamNews).map((item) => {
-                    const safeUrl = sanitizeExternalUrl(item.url);
-                    const Wrapper = safeUrl ? "a" : "article";
-
-                    return (
-                      <Wrapper
-                        key={item.id}
-                        {...(safeUrl
-                          ? {
-                              href: safeUrl,
-                              target: "_blank",
-                              rel: "noopener noreferrer",
-                            }
-                          : {})}
-                        className="group flex gap-3 p-3 rounded-[18px] bg-white/[0.02] border border-white/5 hover:bg-white/[0.05] transition-all backdrop-blur-md"
-                      >
-                        <div className="w-16 h-12 rounded-[12px] overflow-hidden shrink-0 relative">
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent z-10" />
-                          <img
-                            src={item.imageUrl || "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=300"}
-                            alt={item.title}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                            loading="lazy"
-                          />
-                        </div>
-                        <div className="flex flex-col justify-center flex-1 min-w-0">
-                          <div className="flex items-center gap-1.5 mb-1">
-                            <span className={cn(
-                              "rounded px-1.5 py-0.5 text-[9px] font-black uppercase tracking-[0.14em]",
-                              newsTab === "team"
-                                ? "bg-primary/15 border border-primary/25 text-primary"
-                                : "bg-copa-green/10 border border-copa-green/20 text-copa-green-light"
-                            )}>
-                              {item.label}
-                            </span>
-                            <span className="text-[9px] text-zinc-500 font-bold">
-                              {formatNewsDate(item.publishedAt)}
-                            </span>
-                          </div>
-                          <h3 className="text-[13px] font-bold text-gray-200 leading-snug line-clamp-2 group-hover:text-white transition-colors">
-                            {item.title}
-                          </h3>
-                        </div>
-                      </Wrapper>
-                    );
-                  })}
+                  <div className="mt-4 rounded-[20px] border border-primary/20 bg-primary/5 p-4">
+                    <div className="mb-3 flex items-center justify-between">
+                      <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">
+                        Categorias preferidas na Home
+                      </p>
+                      <button onClick={() => setShowNewsPrefPanel(false)} className="rounded-full p-1 hover:bg-white/10">
+                        <X className="w-3.5 h-3.5 text-zinc-500" />
+                      </button>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {NEWS_CATEGORIES.map(cat => (
+                        <button
+                          key={cat.id}
+                          onClick={() => toggleNewsPref(cat.id)}
+                          className={cn(
+                            "flex items-center gap-1 rounded-full px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.12em] transition-all",
+                            homeNewsPrefs.includes(cat.id)
+                              ? "bg-primary text-black"
+                              : "border border-white/10 bg-white/5 text-zinc-400"
+                          )}
+                        >
+                          <span>{cat.emoji}</span>
+                          <span>{cat.label}</span>
+                          {homeNewsPrefs.includes(cat.id) && <Check className="ml-0.5 h-3 w-3" />}
+                        </button>
+                      ))}
+                    </div>
+                    <p className="mt-2 text-[10px] text-zinc-600">
+                      Também aplicado à aba "Para Você" na tela de Notícias.
+                    </p>
+                  </div>
                 </motion.div>
-              </AnimatePresence>
+              )}
+            </AnimatePresence>
+
+            {/* Content */}
+            <div className="mt-4">
+              {newsLoading ? (
+                <div className="grid gap-2.5">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="h-20 animate-pulse rounded-[24px] border border-white/5 bg-white/[0.02]" />
+                  ))}
+                </div>
+              ) : newsTab === "team" && !favoriteTeamCode ? (
+                <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-6 text-center text-xs text-zinc-500">{t('news.team_no_fav')}</div>
+              ) : newsTab === "team" && teamNews.length === 0 ? (
+                <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-6 text-center text-xs text-zinc-500">
+                  {t('news.team_empty', { team: favoriteTeam?.name || favoriteTeamCode })}
+                </div>
+              ) : (
+                <div className="grid gap-3">
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={newsTab}
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -6 }}
+                      transition={{ duration: 0.18 }}
+                      className="grid gap-2.5"
+                    >
+                      {(newsTab === "copa" ? miniNews : teamNews).map((item) => {
+                        const safeUrl = sanitizeExternalUrl(item.url);
+                        const Wrapper = safeUrl ? "a" : "article";
+
+                        return (
+                          <Wrapper
+                            key={item.id}
+                            {...(safeUrl
+                              ? {
+                                  href: safeUrl,
+                                  target: "_blank",
+                                  rel: "noopener noreferrer",
+                                }
+                              : {})}
+                            className="group flex gap-3 rounded-[18px] border border-white/5 bg-white/[0.02] p-3 transition-all backdrop-blur-md hover:bg-white/[0.05]"
+                          >
+                            <div className="relative h-12 w-16 shrink-0 overflow-hidden rounded-[12px]">
+                              <div className="absolute inset-0 z-10 bg-gradient-to-t from-black/50 to-transparent" />
+                              <img
+                                src={item.imageUrl || "https://images.unsplash.com/photo-1579952363873-27f3bade9f55?q=80&w=300"}
+                                alt={item.title}
+                                className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                                loading="lazy"
+                              />
+                            </div>
+                            <div className="flex min-w-0 flex-1 flex-col justify-center">
+                              <div className="mb-1 flex items-center gap-1.5">
+                                <span className={cn(
+                                  "rounded px-1.5 py-0.5 text-[9px] font-black uppercase tracking-[0.14em]",
+                                  newsTab === "team"
+                                    ? "border border-primary/25 bg-primary/15 text-primary"
+                                    : "border border-copa-green/20 bg-copa-green/10 text-copa-green-light"
+                                )}>
+                                  {item.label}
+                                </span>
+                                <span className="text-[9px] font-bold text-zinc-500">
+                                  {formatNewsDate(item.publishedAt)}
+                                </span>
+                              </div>
+                              <h3 className="line-clamp-2 text-[13px] font-bold leading-snug text-gray-200 transition-colors group-hover:text-white">
+                                {item.title}
+                              </h3>
+                            </div>
+                          </Wrapper>
+                        );
+                      })}
+                    </motion.div>
+                  </AnimatePresence>
+                </div>
+              )}
             </div>
-          )}
+          </ArenaPanel>
         </motion.section>
 
-        {/* Active Leagues - HUD Style Cards */}
-        <motion.section variants={itemVariants} className="space-y-6">
-          <ArenaSectionHeader
-            title={t('my_pools.title')}
-            eyebrow="Seus bolões"
-            action={
-              <Link to="/boloes" className="text-[11px] text-gray-400 font-black uppercase tracking-[0.12em] hover:text-white transition-colors">
-                {t('my_pools.manage')} <ChevronRight className="w-3 h-3 inline ml-1" />
-              </Link>
-            }
-          />
+        <motion.section variants={itemVariants}>
+          <ArenaPanel className="p-5">
+            <ArenaSectionHeader
+              title={t('my_pools.title')}
+              eyebrow="Seus bolões"
+              action={
+                <Link to="/boloes" className="text-[11px] text-gray-400 font-black uppercase tracking-[0.12em] hover:text-white transition-colors">
+                  {t('my_pools.manage')} <ChevronRight className="w-3 h-3 inline ml-1" />
+                </Link>
+              }
+            />
 
-          {loading ? (
-            <div className="grid gap-4">
-              <Skeleton className="h-32 w-full rounded-[40px] bg-white/5" />
-              <Skeleton className="h-32 w-full rounded-[40px] bg-white/5" />
-            </div>
-          ) : myBoloes.length === 0 ? (
-            <Link to="/boloes/criar" className="group block">
-              <div className="rounded-[48px] border-2 border-dashed border-white/10 p-12 flex flex-col items-center text-center gap-8 hover:border-primary/50 hover:bg-primary/5 transition-all backdrop-blur-3xl shadow-2xl">
-                <div className="w-24 h-24 rounded-[32px] bg-primary/10 flex items-center justify-center group-hover:scale-110 group-hover:rotate-12 transition-all duration-700 shadow-2xl border border-primary/20">
-                  <Trophy className="w-12 h-12 text-primary" />
-                </div>
-                <div className="space-y-2">
-                  <h3 className="text-2xl font-black text-white uppercase tracking-tight">{t('my_pools.join_title')}</h3>
-                  <p className="text-sm text-gray-500 font-medium max-w-[280px] leading-relaxed mx-auto">{t('my_pools.join_desc')}</p>
-                </div>
-                <motion.span
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="px-12 py-5 rounded-[24px] bg-white text-black text-[11px] font-black uppercase tracking-[0.3em] shadow-2xl"
-                >
-                  {t('my_pools.start_now')}
-                </motion.span>
+            {loading ? (
+              <div className="mt-5 grid gap-4">
+                <Skeleton className="h-32 w-full rounded-[32px] bg-white/5" />
+                <Skeleton className="h-32 w-full rounded-[32px] bg-white/5" />
               </div>
-            </Link>
-          ) : (
-            <div className="grid gap-5">
-              {myBoloes.map((bolao) => (
-                <Link key={bolao.id} to={`/boloes/${bolao.id}`} className="group relative">
-            <div className="p-[1.5px] rounded-[32px] bg-gradient-to-br from-white/10 to-transparent group-hover:from-primary/50 transition-all duration-500 shadow-2xl">
-                    <div className="bg-white/[0.04] backdrop-blur-xl rounded-[31px] p-6 flex items-center justify-between group-hover:bg-white/[0.07] transition-all overflow-hidden relative border border-white/[0.06]">
-                      {/* Interactive background pulse */}
-                      {(bolao.pendingCount ?? 0) > 0 && <div className="absolute inset-0 bg-copa-orange/10 animate-pulse pointer-events-none" />}
+            ) : myBoloes.length === 0 ? (
+              <Link to="/boloes/criar" className="group mt-5 block">
+                <div className="rounded-[32px] border border-dashed border-white/12 bg-white/[0.03] p-8 text-center transition-all hover:border-primary/45 hover:bg-primary/5">
+                  <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-[24px] border border-primary/20 bg-primary/10 text-primary transition-all duration-500 group-hover:scale-105 group-hover:rotate-6">
+                    <Trophy className="h-10 w-10" />
+                  </div>
+                  <h3 className="mt-5 font-display text-[2rem] font-semibold uppercase text-white">{t('my_pools.join_title')}</h3>
+                  <p className="mx-auto mt-2 max-w-[320px] text-sm leading-6 text-gray-500">{t('my_pools.join_desc')}</p>
+                  <span className="arena-button-gold mt-6 inline-flex">{t('my_pools.start_now')}</span>
+                </div>
+              </Link>
+            ) : (
+              <div className="mt-5 grid gap-5">
+                {myBoloes.map((bolao) => (
+                  <Link key={bolao.id} to={`/boloes/${bolao.id}`} className="group relative">
+                    <div className="rounded-[32px] border border-white/10 bg-white/[0.04] p-6 transition-all hover:border-primary/30 hover:bg-white/[0.06]">
+                      {(bolao.pendingCount ?? 0) > 0 && <div className="pointer-events-none absolute inset-0 rounded-[32px] bg-copa-orange/10 animate-pulse" />}
 
-                      <div className="flex items-center gap-6 relative z-10">
-                        <div className="w-16 h-16 rounded-[24px] bg-white/5 flex items-center justify-center text-3xl shadow-inner relative group-hover:scale-110 group-hover:rotate-6 transition-all duration-700 border border-white/5">
-                          ⚽
-                          <AnimatePresence>
-                            {(bolao.pendingCount ?? 0) > 0 && (
-                              <motion.div
-                                initial={{ scale: 0, rotate: -45 }}
-                                animate={{ scale: 1, rotate: 0 }}
-                                className="absolute -top-2 -right-2 w-7 h-7 bg-copa-orange rounded-xl text-[11px] font-black text-white flex items-center justify-center shadow-2xl border-2 border-[#0b0b0b]"
-                              >
-                                {bolao.pendingCount}
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-                        </div>
-                        <div>
-                          <h3 className="text-xl font-black text-white tracking-tight leading-none group-hover:text-primary transition-colors">{bolao.name}</h3>
-                          <div className="flex items-center gap-5 mt-2.5">
-                            <div className="flex items-center gap-2">
-                              <Users className="w-3.5 h-3.5 text-gray-600" />
-                              <span className="text-[11px] font-black uppercase tracking-[0.12em] text-gray-400">{t('my_pools.members', { count: bolao.memberCount })}</span>
+                      <div className="relative z-10 flex items-center justify-between gap-5">
+                        <div className="flex items-center gap-6">
+                          <div className="relative flex h-16 w-16 items-center justify-center rounded-[24px] border border-white/10 bg-white/5 shadow-inner">
+                            <span className="text-3xl">⚽</span>
+                            <AnimatePresence>
+                              {(bolao.pendingCount ?? 0) > 0 && (
+                                <motion.div
+                                  initial={{ scale: 0, rotate: -45 }}
+                                  animate={{ scale: 1, rotate: 0 }}
+                                  exit={{ scale: 0 }}
+                                  className="absolute -right-2 -top-2 flex h-7 min-w-7 items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-black text-black shadow-[0_0_18px_rgba(255,193,7,0.42)]"
+                                >
+                                  {bolao.pendingCount}
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">
+                              {bolao.pendingCount ? "Palpites pendentes" : "Tudo em dia"}
+                            </p>
+                            <h3 className="mt-2 truncate font-display text-[2rem] font-semibold uppercase text-white">
+                              {bolao.name}
+                            </h3>
+                            <div className="mt-2 flex flex-wrap gap-2 text-[11px] font-black uppercase tracking-[0.14em] text-zinc-500">
+                              <span>{bolao.memberCount ?? 0} participantes</span>
+                              <span>•</span>
+                              <span>{(bolao.myPoints ?? 0).toLocaleString("pt-BR")} pts</span>
+                              <span>•</span>
+                              <span>rank #{bolao.myRank ?? "-"}</span>
                             </div>
-                            {bolao.myRank && bolao.myRank > 0 && (
-                              <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20">
-                                <Crown className="w-3 h-3 text-primary" />
-                                <span className="text-[10px] font-black uppercase tracking-[0.12em] text-primary">{t('my_pools.rank_place', { rank: bolao.myRank })}</span>
-                              </div>
-                            )}
                           </div>
                         </div>
-                      </div>
-
-                      <div className="flex items-center gap-5 relative z-10">
-                        <div className="text-right">
-                          <span className="text-3xl font-black text-white tracking-tighter tabular-nums leading-none block mb-1">{bolao.myPoints}</span>
-                          <span className="text-[11px] font-black uppercase tracking-[0.12em] text-gray-400">{t('quick_panel.points')}</span>
-                        </div>
-                        <div className="w-12 h-12 rounded-[18px] bg-white/5 border border-white/10 flex items-center justify-center text-gray-500 group-hover:bg-primary group-hover:text-black transition-all shadow-xl">
-                          <ChevronRight className="w-6 h-6 stroke-[2.5px]" />
+                        <div className="hidden items-center gap-3 sm:flex">
+                          <div className="rounded-[22px] border border-white/10 bg-black/20 px-4 py-3 text-center">
+                            <p className="text-[10px] font-black uppercase tracking-[0.14em] text-zinc-500">Seu rank</p>
+                            <p className="mt-1 font-display text-[1.9rem] font-semibold text-primary">#{bolao.myRank ?? "-"}</p>
+                          </div>
+                          <ChevronRight className="h-5 w-5 text-white/45 transition-transform group-hover:translate-x-1" />
                         </div>
                       </div>
                     </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          )}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </ArenaPanel>
         </motion.section>
-
-
 
         {/* Floating Strategic CTA */}
         <motion.div

@@ -397,33 +397,32 @@ const Perfil = () => {
         </div>
       </ArenaPanel>
 
-      {/* My Team */}
-      <section>
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex items-center gap-1.5">
-            <Settings className="w-3.5 h-3.5 text-primary" />
-            <h3 className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">{t('my_team')}</h3>
-          </div>
-          <button
-            onClick={() => setShowTeamPicker(!showTeamPicker)}
-            aria-expanded={showTeamPicker}
-            className="text-sm text-primary font-semibold"
-          >
-            {t('edit_team')}
-          </button>
-        </div>
+      <ArenaPanel className="p-5">
+        <ArenaSectionHeader
+          eyebrow={t('my_team')}
+          title="Time favorito"
+          action={
+            <button
+              onClick={() => setShowTeamPicker(!showTeamPicker)}
+              aria-expanded={showTeamPicker}
+              className="text-sm font-black uppercase tracking-[0.12em] text-primary"
+            >
+              {t('edit_team')}
+            </button>
+          }
+        />
 
-        <div className="glass-card p-4">
-          <div className="flex items-center gap-3 pb-3 border-b border-border/30">
-            <Flag code={team.code} size="xl" className="border-2 border-copa-green/30" />
+        <div className="mt-4 rounded-[26px] border border-white/10 bg-white/[0.03] p-4">
+          <div className="flex items-center gap-3 border-b border-white/10 pb-4">
+            <Flag code={team.code} size="xl" className="border-2 border-primary/25" />
             <div>
-              <h4 className="text-base font-black">{team.name}</h4>
-              <span className="text-xs text-muted-foreground">{t('bolao:common.group')} {team.group}</span>
+              <h4 className="font-display text-[1.7rem] font-semibold uppercase text-white">{team.name}</h4>
+              <span className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-400">{t('bolao:common.group')} {team.group}</span>
             </div>
           </div>
 
-          <div className="pt-3">
-            <span className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground block mb-2">{t('quick_switch')}</span>
+          <div className="pt-4">
+            <span className="mb-3 block text-[11px] font-black uppercase tracking-[0.12em] text-zinc-400">{t('quick_switch')}</span>
             <div className="flex gap-2">
               {teams.slice(0, 4).map((teamOption) => (
                 <button
@@ -431,8 +430,8 @@ const Perfil = () => {
                   onClick={() => setFavoriteTeam(teamOption.code)}
                   aria-label={t('favorite_team.select_aria', { team: teamOption.name })}
                   className={cn(
-                    "w-11 h-11 rounded-full overflow-hidden transition-all",
-                    favoriteTeam === teamOption.code && "ring-2 ring-primary"
+                    "flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border transition-all",
+                    favoriteTeam === teamOption.code ? "border-primary shadow-[0_0_18px_rgba(145,255,59,0.22)]" : "border-white/10"
                   )}
                 >
                   <Flag code={teamOption.code} size="md" className="w-11 h-11" />
@@ -441,7 +440,7 @@ const Perfil = () => {
               <button
                 onClick={() => setShowTeamPicker(true)}
                 aria-label={t('favorite_team.open_selector_aria')}
-                className="w-11 h-11 rounded-full bg-secondary flex items-center justify-center text-lg text-muted-foreground"
+                className="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] text-lg text-zinc-300"
               >
                 +
               </button>
@@ -450,7 +449,7 @@ const Perfil = () => {
         </div>
 
         {showTeamPicker && (
-          <div className="glass-card mt-2 p-3 max-h-60 overflow-y-auto">
+          <div className="mt-3 max-h-60 overflow-y-auto rounded-[26px] border border-white/10 bg-white/[0.03] p-3">
             <div className="grid grid-cols-5 gap-1.5">
               {teams.map((teamOption) => (
                 <button
@@ -460,118 +459,106 @@ const Perfil = () => {
                     setShowTeamPicker(false);
                   }}
                   className={cn(
-                    "flex flex-col items-center gap-0.5 p-2 rounded-lg transition-colors",
-                    favoriteTeam === teamOption.code ? "bg-primary/20 ring-1 ring-primary" : "hover:bg-secondary"
+                    "flex flex-col items-center gap-1 rounded-[14px] border p-2 transition-colors",
+                    favoriteTeam === teamOption.code ? "border-primary/40 bg-primary/12" : "border-white/10 hover:bg-white/[0.05]"
                   )}
                 >
                   <Flag code={teamOption.code} size="sm" />
-                  <span className="text-[10px] font-bold">{teamOption.code}</span>
+                  <span className="text-[10px] font-black uppercase tracking-[0.08em] text-white">{teamOption.code}</span>
                 </button>
               ))}
             </div>
           </div>
         )}
-      </section>
+      </ArenaPanel>
 
-      {/* Language Selection */}
-      <section>
-        <div className="flex items-center gap-1.5 mb-3">
-          <Languages className="w-3.5 h-3.5 text-primary" />
-          <h3 className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">{t('language')}</h3>
-        </div>
-        <div className="glass-card p-4 space-y-3">
+      <ArenaPanel className="p-5">
+        <ArenaSectionHeader eyebrow={t('language')} title="Idioma do app" />
+        <div className="mt-4 space-y-3 rounded-[26px] border border-white/10 bg-white/[0.03] p-4">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground mb-2">{t('language_auto')}</p>
+              <p className="mb-2 text-[11px] font-black uppercase tracking-[0.12em] text-zinc-400">{t('language_auto')}</p>
               <p className="text-sm font-semibold text-white">{t('language_following_system')}</p>
             </div>
             <div className="rounded-full border border-primary/30 bg-primary/10 px-3 py-1 text-[11px] font-black text-primary">
               {languageLabels[language]}
             </div>
           </div>
-          <p className="text-xs leading-relaxed text-muted-foreground">
+          <p className="text-xs leading-relaxed text-zinc-400">
             {t('language_system', { language: languageLabels[systemLanguage] })}
           </p>
         </div>
-      </section>
+      </ArenaPanel>
 
-      {/* Fun Mode */}
-      <div className="rounded-xl bg-gradient-to-r from-primary/80 to-primary p-4 flex items-center gap-3">
-        <div className="flex-1">
-          <div className="flex items-center gap-1.5 mb-1">
-            <Sparkles className="w-4 h-4" />
-            <span className="text-sm font-black">{t('fun_mode')}</span>
+      <ArenaPanel className="overflow-hidden p-0">
+        <div className="flex items-center gap-3 bg-[linear-gradient(90deg,rgba(145,255,59,0.86),rgba(112,230,39,0.94))] px-5 py-4 text-black">
+          <div className="flex-1">
+            <div className="mb-1 flex items-center gap-1.5">
+              <Sparkles className="w-4 h-4" />
+              <span className="font-display text-[1.35rem] font-semibold uppercase">{t('fun_mode')}</span>
+            </div>
+            <p className="text-[11px] font-semibold leading-relaxed text-black/75">
+              {t('fun_mode_desc')}
+            </p>
           </div>
-          <p className="text-[11px] text-primary-foreground/80 leading-relaxed">
-            {t('fun_mode_desc')}
-          </p>
+          <button
+            onClick={async () => {
+              const newVal = !profile?.fun_mode;
+              setProfile(prev => prev ? { ...prev, fun_mode: newVal } : null);
+              if (user?.id) {
+                await updateProfile(user.id, { fun_mode: newVal });
+              }
+            }}
+            aria-pressed={Boolean(profile?.fun_mode)}
+            aria-label={profile?.fun_mode ? t('fun_mode_disable') : t('fun_mode_enable')}
+            className={cn(
+              "relative h-8 w-14 shrink-0 rounded-full transition-colors",
+              profile?.fun_mode ? "bg-black/75" : "bg-black/25"
+            )}
+          >
+            <span className={cn(
+              "absolute top-1 h-6 w-6 rounded-full bg-white shadow transition-transform",
+              profile?.fun_mode ? "left-7" : "left-1"
+            )} />
+          </button>
         </div>
-        <button
-          onClick={async () => {
-            const newVal = !profile?.fun_mode;
-            setProfile(prev => prev ? { ...prev, fun_mode: newVal } : null);
-            if (user?.id) {
-              await updateProfile(user.id, { fun_mode: newVal });
-            }
-          }}
-          aria-pressed={Boolean(profile?.fun_mode)}
-          aria-label={profile?.fun_mode ? t('fun_mode_disable') : t('fun_mode_enable')}
-          className={cn(
-            "w-12 h-7 rounded-full transition-colors relative shrink-0",
-            profile?.fun_mode ? "bg-background/30" : "bg-background/10"
-          )}
-        >
-          <span className={cn(
-            "absolute top-1 w-5 h-5 rounded-full bg-foreground shadow transition-transform",
-            profile?.fun_mode ? "left-6" : "left-1"
-          )} />
-        </button>
-      </div>
+      </ArenaPanel>
 
-      {/* Copa Premium */}
-      <section>
-        <div className="flex items-center gap-1.5 mb-3">
-          <Crown className="w-3.5 h-3.5 text-copa-gold" />
-          <h3 className="text-[11px] font-bold uppercase tracking-[0.12em] text-copa-gold">{t('premium_title')}</h3>
-        </div>
+      <ArenaPanel className="p-5">
+        <ArenaSectionHeader eyebrow={t('premium_title')} title="ArenaCup Premium" />
         <button
           type="button"
           aria-label={t('premium_open_aria')}
           onClick={() => navigate('/premium')}
-          className="relative glass-card p-5 border-copa-gold/30 hover:border-copa-gold/60 transition-colors overflow-hidden group cursor-pointer w-full text-left"
+          className="relative mt-4 w-full overflow-hidden rounded-[28px] border border-[#ffc54d]/30 bg-[radial-gradient(circle_at_top_right,rgba(255,197,77,0.12),transparent_32%),linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.03))] p-5 text-left transition-colors hover:border-[#ffc54d]/55"
         >
-          <div className="absolute -right-4 -top-4 w-24 h-24 bg-copa-gold/10 rounded-full blur-2xl group-hover:bg-copa-gold/20 transition-colors"></div>
-          <div className="flex items-center justify-between relative z-10">
+          <div className="flex items-center justify-between gap-4">
             <div>
-              <h4 className="font-black text-lg text-white mb-1">{t('premium_card_title')}</h4>
-              <p className="text-[13px] text-muted-foreground w-4/5">{t('premium_card_desc')}</p>
+              <h4 className="font-display text-[1.7rem] font-semibold uppercase text-white">{t('premium_card_title')}</h4>
+              <p className="mt-1 text-[13px] leading-6 text-zinc-300">{t('premium_card_desc')}</p>
             </div>
-            <div className="w-10 h-10 rounded-full bg-copa-gold/10 flex items-center justify-center shrink-0 border border-copa-gold/30 text-copa-gold group-hover:scale-110 transition-transform">
-              <Star className="w-5 h-5 text-copa-gold" />
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#ffc54d]/30 bg-[#ffc54d]/10 text-[#ffc54d]">
+              <Star className="w-5 h-5 text-[#ffc54d]" />
             </div>
           </div>
         </button>
-      </section>
+      </ArenaPanel>
 
-      {/* Notifications */}
-      <section>
-        <div className="flex items-center gap-1.5 mb-3">
-          <Bell className="w-3.5 h-3.5 text-primary" />
-          <h3 className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">{t('notifications_title')}</h3>
-        </div>
-        <div className="glass-card divide-y divide-border/30">
+      <ArenaPanel className="p-5">
+        <ArenaSectionHeader eyebrow={t('notifications_title')} title="Alertas e avisos" />
+        <div className="mt-4 divide-y divide-white/8 rounded-[28px] border border-white/10 bg-white/[0.03]">
           {[
             { key: "notifications_goals" as const, icon: Goal, label: t('goals_notif'), desc: t('goals_notif_desc') },
             { key: "notifications_news" as const, icon: Newspaper, label: t('news_notif'), desc: t('news_notif_desc') },
             { key: "notifications_match_start" as const, icon: Clock, label: t('match_start_notif'), desc: t('match_start_notif_desc') },
           ].map(n => (
-            <div key={n.key} className="flex items-center gap-3 p-3.5">
-              <div className="w-9 h-9 rounded-xl bg-secondary flex items-center justify-center shrink-0">
-                <n.icon className="w-4 h-4 text-copa-green-light" />
+            <div key={n.key} className="flex items-center gap-3 p-4">
+              <div className="flex h-10 w-10 items-center justify-center rounded-[14px] border border-white/10 bg-white/[0.04] shrink-0">
+                <n.icon className="w-4 h-4 text-primary" />
               </div>
               <div className="flex-1">
-                <span className="text-sm font-bold block">{n.label}</span>
-                <span className="text-[11px] text-muted-foreground">{n.desc}</span>
+                <span className="block text-sm font-bold text-white">{n.label}</span>
+                <span className="text-[11px] text-zinc-400">{n.desc}</span>
               </div>
               <button
                 onClick={async () => {
@@ -638,57 +625,48 @@ const Perfil = () => {
                 aria-pressed={Boolean(profile?.[n.key])}
                 aria-label={`${profile?.[n.key] ? "Desativar" : "Ativar"} ${n.label}`}
                 className={cn(
-                  "w-12 h-7 rounded-full transition-colors relative shrink-0",
-                  profile?.[n.key] ? "bg-primary" : "bg-secondary"
+                  "relative h-7 w-12 shrink-0 rounded-full transition-colors",
+                  profile?.[n.key] ? "bg-primary" : "bg-white/10"
                 )}
               >
                 <span className={cn(
-                  "absolute top-1 w-5 h-5 rounded-full bg-foreground shadow transition-transform",
+                  "absolute top-1 h-5 w-5 rounded-full bg-white shadow transition-transform",
                   profile?.[n.key] ? "left-6" : "left-1"
                 )} />
               </button>
             </div>
           ))}
         </div>
-      </section>
+      </ArenaPanel>
 
-      {/* Apoie o Arena CUP */}
-      <section>
-        <div className="flex items-center gap-1.5 mb-3">
-          <Heart className="w-3.5 h-3.5 text-primary" />
-          <h3 className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">{t('support_title')}</h3>
-        </div>
-        <div className="glass-card p-4 text-center space-y-3">
-          <p className="text-[12px] text-muted-foreground">{t('support_desc')}</p>
+      <ArenaPanel className="p-5">
+        <ArenaSectionHeader eyebrow={t('support_title')} title="Apoie o ArenaCup" />
+        <div className="mt-4 space-y-3 rounded-[28px] border border-white/10 bg-white/[0.03] p-4 text-center">
+          <p className="text-[12px] leading-6 text-zinc-400">{t('support_desc')}</p>
           <button
             onClick={() => {
               navigator.clipboard.writeText("suporte@arenacup.com"); // Reemplazar con clave PIX real
               toast({ title: t('support_copied_title'), description: t('support_copied_desc') });
             }}
-            className="w-full bg-copa-live/10 text-copa-live border border-copa-live/20 font-bold text-sm py-2.5 rounded-xl hover:bg-copa-live/20 transition-colors flex items-center justify-center gap-2"
+            className="arena-button-green w-full justify-center"
           >
             {t('support_action')}
           </button>
         </div>
-      </section>
+      </ArenaPanel>
 
-      {/* Informações Legais */}
-      <section>
-        <div className="flex items-center gap-1.5 mb-3">
-          <BookOpen className="w-3.5 h-3.5 text-primary" />
-          <h3 className="text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground">{t('help_title')}</h3>
+      <ArenaPanel className="p-5">
+        <ArenaSectionHeader eyebrow={t('help_title')} title="Ajuda e informações" />
+        <div className="mt-4 flex flex-col divide-y divide-white/8 rounded-[28px] border border-white/10 bg-white/[0.03]">
+          <button onClick={() => navigate('/regras')} className="p-4 text-left text-sm font-bold text-white hover:bg-white/5 transition-colors">{t('help_rules')}</button>
+          <button onClick={() => navigate('/termos')} className="p-4 text-left text-sm font-bold text-white hover:bg-white/5 transition-colors">{t('help_terms')}</button>
+          <button onClick={() => navigate('/privacidade')} className="p-4 text-left text-sm font-bold text-white hover:bg-white/5 transition-colors">{t('help_privacy')}</button>
         </div>
-        <div className="glass-card divide-y divide-border/30 flex flex-col">
-          <button onClick={() => navigate('/regras')} className="p-4 text-left text-sm font-bold hover:bg-white/5 transition-colors">{t('help_rules')}</button>
-          <button onClick={() => navigate('/termos')} className="p-4 text-left text-sm font-bold hover:bg-white/5 transition-colors">{t('help_terms')}</button>
-          <button onClick={() => navigate('/privacidade')} className="p-4 text-left text-sm font-bold hover:bg-white/5 transition-colors">{t('help_privacy')}</button>
-        </div>
-      </section>
+      </ArenaPanel>
 
-      {/* Logout */}
       <button
         onClick={handleSignOut}
-        className="w-full glass-card p-3.5 flex items-center justify-center gap-2 text-sm font-black text-copa-live uppercase tracking-wider"
+        className="flex w-full items-center justify-center gap-2 rounded-[24px] border border-red-500/20 bg-red-500/10 p-3.5 text-sm font-black uppercase tracking-[0.14em] text-red-300"
       >
         <LogOut className="w-4 h-4" />
         {t('logout')}
