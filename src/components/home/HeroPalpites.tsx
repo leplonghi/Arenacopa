@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Crown, Sparkles, Target } from "lucide-react";
-import { ArenaPanel } from "@/components/arena/ArenaPrimitives";
+import { getArenaAssetSrc } from "@/lib/arena-assets";
 
 export function HeroPalpites({
   pendingCount,
@@ -13,60 +13,63 @@ export function HeroPalpites({
   isPremium: boolean;
   onOpenElite: () => void;
 }) {
+  const headerBgSrc = getArenaAssetSrc("fundo-hero.png");
+
   return (
-    <ArenaPanel tone="strong" className="p-5">
-      <div className="grid gap-5 lg:grid-cols-[1.1fr,0.9fr] lg:items-center">
+    <section
+      className="relative -mx-4 -mt-[calc(4.6rem+var(--safe-area-top,0px))] min-h-[430px] overflow-hidden bg-[#020806] px-5 sm:-mx-6 sm:min-h-[500px] sm:px-8 lg:rounded-b-[36px]"
+      style={{
+        backgroundImage: headerBgSrc
+          ? `linear-gradient(90deg, rgba(1,7,5,0.96) 0%, rgba(1,7,5,0.78) 43%, rgba(1,7,5,0.18) 100%), linear-gradient(180deg, rgba(0,0,0,0.18) 0%, rgba(0,8,6,0.1) 52%, rgba(0,0,0,0.78) 100%), url(${headerBgSrc})`
+          : undefined,
+        backgroundPosition: "right center",
+        backgroundSize: "cover",
+      }}
+    >
+      <div className="absolute inset-x-0 bottom-0 h-32 bg-[linear-gradient(180deg,transparent,rgba(0,0,0,0.72))]" />
+      <div className="absolute inset-x-0 top-0 h-28 bg-[linear-gradient(180deg,rgba(0,0,0,0.38),transparent)]" />
+
+      <div className="relative z-10 flex min-h-[430px] max-w-[560px] flex-col justify-start pb-7 pt-[calc(7rem+var(--safe-area-top,0px))] sm:min-h-[500px] sm:pt-[calc(8rem+var(--safe-area-top,0px))]">
         <div className="space-y-4">
           <div className="flex items-center gap-2">
-            <span className="arena-kicker text-zinc-200">Painel principal</span>
+            <span className="arena-kicker text-zinc-300">Você tem</span>
             {!isPremium ? (
               <button
                 onClick={onOpenElite}
                 className="arena-badge bg-primary/15 border-primary/35 text-primary"
               >
                 <Crown className="h-3.5 w-3.5" />
-                elite
+                pro
               </button>
             ) : (
               <span className="arena-badge">
                 <Sparkles className="h-3.5 w-3.5" />
-                elite ativo
+                pro ativo
               </span>
             )}
           </div>
 
-          <div className="space-y-1">
-            <p className="font-display text-[1.2rem] font-bold uppercase tracking-[0.14em] text-zinc-300">
-              Você tem
-            </p>
-            <div className="flex items-end gap-3">
-              <span className="arena-title text-[6.2rem] text-gradient-gold sm:text-[7rem]">
+          <div>
+            <div className="flex items-end gap-3 sm:gap-5">
+              <span className="arena-title text-[7.5rem] font-extrabold text-gradient-gold drop-shadow-[0_0_34px_rgba(255,193,7,0.52)] sm:text-[10.2rem]">
                 {pendingCount}
               </span>
-              <div className="pb-3">
-                <p className="arena-title text-[2.2rem] text-white sm:text-[2.7rem]">palpites</p>
-                <p className="arena-title text-[2.2rem] text-primary sm:text-[2.7rem]">pendentes!</p>
+              <div className="pb-4">
+                <p className="arena-title text-[2rem] font-extrabold text-white sm:text-[2.75rem]">jogos</p>
+                <p className="arena-title text-[2rem] font-extrabold text-primary sm:text-[2.75rem]">para marcar!</p>
               </div>
             </div>
+            <p className="max-w-[300px] text-sm font-medium leading-5 text-zinc-300 sm:max-w-[360px]">
+              Resolva a rodada e acompanhe tudo com a sua turma.
+            </p>
           </div>
 
-          <Link to={ctaTo} className="arena-button-gold w-full sm:w-auto">
-            <Target className="h-5 w-5" />
-            Palpitar agora
+          <Link to={ctaTo} className="arena-button-gold w-full max-w-[440px] rounded-[20px] py-[1.125rem] text-[1.55rem] shadow-[0_0_32px_rgba(255,193,7,0.45),0_18px_42px_-16px_rgba(255,174,0,0.95)] sm:w-auto sm:px-12">
+            <Target className="h-7 w-7" />
+            Marcar rodada
           </Link>
         </div>
-
-        <div className="relative min-h-[220px] overflow-hidden rounded-[28px] border border-primary/20 bg-[linear-gradient(180deg,rgba(8,23,18,0.28),rgba(8,23,18,0.62))]">
-          <div className="absolute inset-x-[10%] top-[18%] h-[42%] rounded-[50%] border border-white/[0.08]" />
-          <div className="absolute inset-x-[4%] top-[6%] h-[60%] rounded-[50%] border border-white/[0.04]" />
-          <div className="absolute right-[5%] top-1/2 h-44 w-44 -translate-y-1/2 rounded-full bg-[radial-gradient(circle_at_35%_30%,rgba(255,255,255,0.95),rgba(255,227,146,0.75)_10%,rgba(255,198,0,0.36)_26%,rgba(255,163,0,0.12)_46%,transparent_72%)] blur-[2px]" />
-          <div className="absolute right-[14%] top-1/2 h-32 w-32 -translate-y-1/2 rounded-full border border-primary/30 shadow-[0_0_36px_rgba(255,193,7,0.35)]" />
-          <div className="absolute right-[18%] top-1/2 h-24 w-24 -translate-y-1/2 rounded-full border border-white/15 bg-[radial-gradient(circle_at_30%_25%,rgba(255,255,255,0.95),rgba(216,216,216,0.92)_18%,rgba(30,30,30,0.98)_62%)] shadow-[0_0_28px_rgba(255,193,7,0.25)]">
-            <div className="absolute inset-[18%] rounded-full border border-black/50" />
-            <div className="absolute inset-[34%] rounded-full border border-black/45" />
-          </div>
-        </div>
       </div>
-    </ArenaPanel>
+    </section>
   );
 }

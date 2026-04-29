@@ -10,6 +10,7 @@ import { setStoredFavoriteTeam } from "@/lib/favorite-team";
 import { useTranslation } from "react-i18next";
 import { Bell, BellOff } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { BRAND_MARK_SRC } from "@/lib/brand-assets";
 
 type Step = 1 | 2;
 const LEGACY_ONBOARDING_DONE_KEY = "arenacup_onboarding_done";
@@ -40,7 +41,7 @@ function setOnboardingMigrated() {
 }
 
 export function OnboardingModal() {
-    const logoUrl = "/logo.png?v=20260316";
+    const logoUrl = BRAND_MARK_SRC;
     const [isOpen, setIsOpen] = useState(false);
     const [step, setStep] = useState<Step>(1);
     const [selectedTeam, setSelectedTeam] = useState<string>("BRA");

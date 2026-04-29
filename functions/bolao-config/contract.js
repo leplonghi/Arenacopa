@@ -34,6 +34,17 @@ function computeEditableSections({
   hasExternalParticipant,
   hasValidPublicExpectation: publicExpectation,
 }) {
+  if (lifecycleStatus === "deleted") {
+    return {
+      presentation: false,
+      context: false,
+      access_policy: false,
+      competition_rules: false,
+      finance_rules: false,
+      operation: false,
+    };
+  }
+
   const isDraft = lifecycleStatus === "draft";
   const participationEditable =
     !isStructureLocked && !hasExternalParticipant && !publicExpectation;
@@ -73,7 +84,7 @@ function canRemoveMember({
     return { allowed: true, nextStatus: "removed" };
   }
 
-  if (["live", "finished", "archived"].includes(lifecycleStatus)) {
+  if (["live", "finished", "archived", "deleted"].includes(lifecycleStatus)) {
     return { allowed: false, code: "removal_blocked" };
   }
 

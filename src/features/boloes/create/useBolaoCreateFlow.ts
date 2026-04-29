@@ -2,13 +2,20 @@ import { useMemo, useState } from "react";
 import { getDefaultMarketIdsForFormat } from "@/services/boloes/bolao-format.service";
 import type { BolaoFormatSlug, MarketTemplateSlug, ScoringRules } from "@/types/bolao";
 
-export type CreateStep = "context" | "type" | "admission" | "review";
+export type CreateStep = "quick" | "context" | "type" | "admission" | "review";
 export type PoolContextMode = "standalone" | "existing_group" | "new_group";
 export type GroupBindingMode = "none" | "linked_discovery" | "group_gated";
 export type FinanceMode = "free" | "paid_external";
 export type PoolTypeId = "rapid" | "complete" | "paid";
 export type AccessMode = "approval" | "public" | "group_gated";
 export type PresetKey = "standard" | "risky" | "conservative";
+export type SocialAudience = "friends" | "family" | "company_coworkers" | "community";
+export type CreateAudienceMode = "personal" | "business";
+export type CommercialPlanId =
+  | "single_match"
+  | "five_matches"
+  | "short_championship"
+  | "full_cup";
 
 export const PRESETS: Record<PresetKey, ScoringRules> = {
   standard: { exact: 10, winner: 3, draw: 3, participation: 1 },
@@ -17,6 +24,8 @@ export const PRESETS: Record<PresetKey, ScoringRules> = {
 };
 
 type WizardState = {
+  audienceMode: CreateAudienceMode;
+  commercialPlanId: CommercialPlanId;
   contextMode: PoolContextMode;
   selectedGrupoId: string | null;
   accessMode: AccessMode;
@@ -32,6 +41,7 @@ type WizardState = {
   name: string;
   description: string;
   emoji: string;
+  socialAudience: SocialAudience;
   newGroupName: string;
   newGroupDescription: string;
   newGroupEmoji: string;
@@ -71,19 +81,21 @@ export function mapWizardStateToBolaoStructure(state: WizardState) {
 }
 
 export function useBolaoCreateFlow(initialGrupoId: string | null) {
-  const initialType = poolTypeConfig.complete;
-  const [step, setStep] = useState<CreateStep>("context");
+  const initialType = poolTypeConfig.rapid;
+  const [step, setStep] = useState<CreateStep>("quick");
   const [draftId, setDraftId] = useState<string | null>(null);
   const [draftConfigVersion, setDraftConfigVersion] = useState<number | null>(null);
   const [state, setState] = useState<WizardState>({
     contextMode: initialGrupoId ? "existing_group" : "standalone",
+    audienceMode: "personal",
+    commercialPlanId: "single_match",
     selectedGrupoId: initialGrupoId,
     accessMode: initialGrupoId ? "group_gated" : "approval",
     financeMode: "free",
     entryFee: "",
     paymentDetails: "",
     prizeDistribution: "",
-    selectedTypeId: "complete",
+    selectedTypeId: "rapid",
     formatId: initialType.formatId,
     selectedMarketIds: getInitialMarkets(initialType.formatId),
     scoringRules: PRESETS[initialType.preset],
@@ -91,6 +103,7 @@ export function useBolaoCreateFlow(initialGrupoId: string | null) {
     name: "",
     description: "",
     emoji: "⚽",
+    socialAudience: "friends",
     newGroupName: "",
     newGroupDescription: "",
     newGroupEmoji: "👥",
@@ -100,6 +113,18 @@ export function useBolaoCreateFlow(initialGrupoId: string | null) {
   });
 
   const canAdvance = useMemo(() => {
+    if (step === "quick") {
+      if (state.audienceMode === "business") {
+        return true;
+      }
+
+      if (state.contextMode === "new_group" && state.newGroupName.trim().length < 3) {
+        return false;
+      }
+
+      return state.name.trim().length >= 3;
+    }
+
     if (step === "context") {
       if (state.contextMode === "existing_group") {
         return Boolean(state.selectedGrupoId);
@@ -113,10 +138,6 @@ export function useBolaoCreateFlow(initialGrupoId: string | null) {
     }
 
     if (step === "type") {
-      if (state.financeMode === "paid_external") {
-        return typeof state.entryFee === "number" && state.entryFee > 0;
-      }
-
       return true;
     }
 

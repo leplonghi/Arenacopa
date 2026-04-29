@@ -1,9 +1,9 @@
 {
   "welcome": "Bem-vindo,",
   "pending": {
-    "title_one": "Você tem {{count}} palpite pendente",
-    "title_other": "Você tem {{count}} palpites pendentes",
-    "subtitle": "Toque para apostar antes dos jogos"
+    "title_one": "Você tem {{count}} jogo para marcar",
+    "title_other": "Você tem {{count}} jogos para marcar",
+    "subtitle": "Toque para escolher antes da bola rolar"
   },
   "stats": {
     "rank": "Rank",
@@ -39,16 +39,16 @@
   },
   "hero": {
     "kicker": "Dashboard central",
-    "get_elite": "Obter Elite",
-    "elite_member": "Membro Elite",
+    "get_elite": "Ver Pro",
+    "elite_member": "Plano Pro",
     "default_name": "Torcedor"
   },
   "quick_panel": {
     "section_title": "Seu ritmo",
     "view_ranking": "Ver ranking",
     "kicker": "Visão rápida da temporada",
-    "title": "Seu painel competitivo",
-    "description": "Veja sua posição geral, acompanhe a evolução dos seus bolões e entre no ranking completo quando quiser.",
+    "title": "Sua rodada",
+    "description": "Posição, pontos e bolões em um resumo direto.",
     "best_rank": "Melhor rank",
     "points": "Pontos",
     "pools": "Bolões"
@@ -70,7 +70,7 @@
     "team_no_fav": "Defina seu time no perfil para ver notícias personalizadas",
     "live_badge": "Ao vivo"
   },
-  "cta_predict": "Fazer Palpites",
+  "cta_predict": "Abrir bolões",
   "live_card": {
     "loading": "Carregando...",
     "competition_fallback": "Competição oficial",
@@ -81,16 +81,16 @@
     "open_match_center": "Abrir campeonato"
   },
   "action_of_day": {
-    "pending_title": "Palpites pendentes",
-    "pending_desc": "{{count}} jogo(s) esperando seu palpite",
-    "pending_cta": "Palpitar agora",
+    "pending_title": "Jogos para marcar",
+    "pending_desc": "{{count}} jogo(s) esperando sua escolha",
+    "pending_cta": "Marcar agora",
     "no_bolao_title": "Crie seu primeiro bolão",
     "no_bolao_desc": "Dispute com amigos na Copa 2026",
     "no_bolao_cta": "Criar bolão",
     "today_match_title": "Jogo hoje!",
-    "today_match_desc": "Já fez seu palpite para hoje?",
+    "today_match_desc": "Já marcou o jogo de hoje?",
     "today_match_cta": "Ver jogos",
     "ready_title": "Tudo em dia!",
-    "ready_desc": "Seus palpites estão feitos. Boa sorte!"
+    "ready_desc": "Suas escolhas estão prontas. Boa rodada!"
   }
 }

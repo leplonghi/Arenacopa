@@ -111,4 +111,15 @@ describe("Perfil", () => {
 
     expect(screen.getAllByRole("button", { name: "favorite_team.select_aria" }).length).toBeGreaterThan(0);
   });
+
+  it("nao exibe o modo festa nas preferencias do perfil", async () => {
+    renderPerfil();
+
+    await waitFor(() => {
+      expect(screen.getByText("Usuário Teste")).toBeInTheDocument();
+    });
+
+    expect(screen.queryByText("fun_mode")).not.toBeInTheDocument();
+    expect(screen.queryByText("fun_mode_desc")).not.toBeInTheDocument();
+  });
 });

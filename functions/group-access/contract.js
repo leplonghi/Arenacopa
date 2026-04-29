@@ -258,6 +258,10 @@ function getBolaoJoinDecision({
   hasActiveGroupMembership,
   inviteCode,
 }) {
+  if (bolao?.lifecycle?.status === "deleted" || bolao?.status === "deleted") {
+    return { action: "blocked", code: "not_found" };
+  }
+
   if (hasMembership) {
     return { action: "already_member" };
   }

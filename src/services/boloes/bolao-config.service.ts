@@ -1,14 +1,17 @@
 import { postAuthedFunction } from "@/services/backend/functions-http";
-import { mapBolaoConfigDocument } from "@/services/boloes/bolao-config.mapper";
+import { mapBolaoConfigDocument, type BolaoConfigDocument } from "@/services/boloes/bolao-config.mapper";
 import type {
   AlterBolaoPresentationPayload,
   ArchiveBolaoPayload,
   CreateDraftBolaoPayload,
+  CreateAndPublishBolaoPayload,
+  DeleteBolaoPayload,
   DuplicateBolaoPayload,
   FinishBolaoPayload,
   LeaveBolaoPayload,
   PublishBolaoPayload,
   RemovePoolMemberPayload,
+  SubmitPoolMemberPaymentProofPayload,
   UpdatePoolMemberPaymentStatusPayload,
   UpdateBolaoConfigurationPayload,
 } from "@/types/bolao-config";
@@ -25,7 +28,15 @@ export async function createDraftBolao(input: {
   token?: string;
   payload: CreateDraftBolaoPayload;
 }) {
-  const raw = await postBolaoOperation<any>("createBolaoDraft", input.payload, input.token);
+  const raw = await postBolaoOperation<BolaoConfigDocument>("createBolaoDraft", input.payload, input.token);
+  return mapBolaoConfigDocument(raw);
+}
+
+export async function createAndPublishBolao(input: {
+  token?: string;
+  payload: CreateAndPublishBolaoPayload;
+}) {
+  const raw = await postBolaoOperation<BolaoConfigDocument>("createAndPublishBolao", input.payload, input.token);
   return mapBolaoConfigDocument(raw);
 }
 
@@ -33,7 +44,7 @@ export async function updateBolaoConfiguration(input: {
   token?: string;
   payload: UpdateBolaoConfigurationPayload;
 }) {
-  const raw = await postBolaoOperation<any>("updateBolaoConfiguration", input.payload, input.token);
+  const raw = await postBolaoOperation<BolaoConfigDocument>("updateBolaoConfiguration", input.payload, input.token);
   return mapBolaoConfigDocument(raw);
 }
 
@@ -41,7 +52,7 @@ export async function publishBolao(input: {
   token?: string;
   payload: PublishBolaoPayload;
 }) {
-  const raw = await postBolaoOperation<any>("publishBolao", input.payload, input.token);
+  const raw = await postBolaoOperation<BolaoConfigDocument>("publishBolao", input.payload, input.token);
   return mapBolaoConfigDocument(raw);
 }
 
@@ -49,7 +60,7 @@ export async function duplicateBolao(input: {
   token?: string;
   payload: DuplicateBolaoPayload;
 }) {
-  const raw = await postBolaoOperation<any>("duplicateBolao", input.payload, input.token);
+  const raw = await postBolaoOperation<BolaoConfigDocument>("duplicateBolao", input.payload, input.token);
   return mapBolaoConfigDocument(raw);
 }
 
@@ -57,7 +68,7 @@ export async function alterBolaoPresentation(input: {
   token?: string;
   payload: AlterBolaoPresentationPayload;
 }) {
-  const raw = await postBolaoOperation<any>("alterBolaoPresentation", input.payload, input.token);
+  const raw = await postBolaoOperation<BolaoConfigDocument>("alterBolaoPresentation", input.payload, input.token);
   return mapBolaoConfigDocument(raw);
 }
 
@@ -65,7 +76,7 @@ export async function finishBolao(input: {
   token?: string;
   payload: FinishBolaoPayload;
 }) {
-  const raw = await postBolaoOperation<any>("finishBolao", input.payload, input.token);
+  const raw = await postBolaoOperation<BolaoConfigDocument>("finishBolao", input.payload, input.token);
   return mapBolaoConfigDocument(raw);
 }
 
@@ -73,7 +84,15 @@ export async function archiveBolao(input: {
   token?: string;
   payload: ArchiveBolaoPayload;
 }) {
-  const raw = await postBolaoOperation<any>("archiveBolao", input.payload, input.token);
+  const raw = await postBolaoOperation<BolaoConfigDocument>("archiveBolao", input.payload, input.token);
+  return mapBolaoConfigDocument(raw);
+}
+
+export async function deleteBolao(input: {
+  token?: string;
+  payload: DeleteBolaoPayload;
+}) {
+  const raw = await postBolaoOperation<BolaoConfigDocument>("deleteBolao", input.payload, input.token);
   return mapBolaoConfigDocument(raw);
 }
 
@@ -104,5 +123,18 @@ export async function updatePoolMemberPaymentStatus(input: {
   return postBolaoOperation<{
     member_id: string;
     payment_status: string;
+    payment_proof_status?: string;
+    prize_agreement_status?: string;
   }>("updatePoolMemberPaymentStatus", input.payload, input.token);
+}
+
+export async function submitPoolMemberPaymentProof(input: {
+  token?: string;
+  payload: SubmitPoolMemberPaymentProofPayload;
+}) {
+  return postBolaoOperation<{
+    member_id: string;
+    payment_proof_status: string;
+    prize_agreement_status: string;
+  }>("submitPoolMemberPaymentProof", input.payload, input.token);
 }

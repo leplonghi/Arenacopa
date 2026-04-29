@@ -245,7 +245,7 @@ export default function Ranking() {
                 Competição global com foco no seu progresso
               </h3>
               <p className="mt-2 text-sm leading-6 text-zinc-400">
-                Acompanhe o topo, compare sua posição e veja quanto falta para alcançar a próxima recompensa.
+                Acompanhe o topo, compare sua posição e acompanhe sua evolução nos bolões da temporada.
               </p>
 
               <div className="mt-5 grid gap-3 sm:grid-cols-2">
@@ -320,7 +320,7 @@ export default function Ranking() {
         <div className="mt-6 grid gap-4 md:grid-cols-3">
           <ArenaMetric label={t('my_position')} value={`${myPosition.rank}º`} accent icon={<Trophy className="h-6 w-6" />} />
           <ArenaMetric label="Entre jogadores" value={displayRows.length.toLocaleString("pt-BR")} icon={<Users className="h-6 w-6" />} />
-          <RewardProgressCard current={myPosition.points} target={5000} rewardLabel="Baú épico" rewardValue="5.000 pts" />
+          <RewardProgressCard current={myPosition.points} target={5000} rewardLabel="Meta da temporada" rewardValue="5.000 pts" />
         </div>
       ) : null}
     </div>

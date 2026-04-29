@@ -1,9 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
-import { collection, getDocs, orderBy, query } from "firebase/firestore";
+import { useEffect, useState } from "react";
+import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
 import { getChampionshipById, resolveChampionshipId } from "@/data/championships/definitions";
 import { db } from "@/integrations/firebase/client";
 import { normalizeMatchDateValue, normalizeMatchFeedStatus } from "@/lib/match-feed";
-import type { MatchFeedItem, MatchFeedStatus } from "@/types/match-feed";
+import type { MatchFeedItem } from "@/types/match-feed";
 
 type FirestoreMatchRow = {
   championship_id?: string | null;
@@ -24,59 +24,111 @@ type FirestoreMatchRow = {
   group_id?: string | null;
 };
 
-async function fetchDashboardMatches(): Promise<MatchFeedItem[]> {
-  try {
-    const matchesQuery = query(collection(db, "matches"), orderBy("match_date", "asc"));
-    const snapshot = await getDocs(matchesQuery);
+function mapDashboardMatch(docSnapshot: { id: string; data: () => FirestoreMatchRow }) {
+  const data = docSnapshot.data();
+  const rawChampionshipId =
+    typeof data.championship_id === "string" && data.championship_id.trim()
+      ? data.championship_id
+      : null;
+  const championshipId = resolveChampionshipId(rawChampionshipId);
+  const matchDate = normalizeMatchDateValue(data.match_date);
 
-    return snapshot.docs
-      .map((docSnapshot) => {
-        const data = docSnapshot.data() as FirestoreMatchRow;
-        const rawChampionshipId =
-          typeof data.championship_id === "string" && data.championship_id.trim()
-            ? data.championship_id
-            : null;
-        const championshipId = resolveChampionshipId(rawChampionshipId);
-        const matchDate = normalizeMatchDateValue(data.match_date);
-
-        return {
-          id: docSnapshot.id,
-          championshipId,
-          championship: championshipId ? getChampionshipById(championshipId) ?? null : null,
-          homeTeamId: data.home_team_id ?? null,
-          awayTeamId: data.away_team_id ?? null,
-          homeTeamCode: (data.home_team_code || "---").toUpperCase(),
-          awayTeamCode: (data.away_team_code || "---").toUpperCase(),
-          homeTeamName: data.home_team_name || data.home_team_code || "---",
-          awayTeamName: data.away_team_name || data.away_team_code || "---",
-          homeCrest: data.home_crest || null,
-          awayCrest: data.away_crest || null,
-          homeScore: data.home_score ?? null,
-          awayScore: data.away_score ?? null,
-          matchDate,
-          status: normalizeMatchFeedStatus({
-            status: data.status,
-            matchDate,
-            homeScore: data.home_score ?? null,
-            awayScore: data.away_score ?? null,
-          }),
-          stage: data.stage ?? null,
-          round: typeof data.round === "number" ? data.round : null,
-          groupId: data.group_id ?? null,
-        } satisfies MatchFeedItem;
-      })
-      .sort((first, second) => new Date(first.matchDate).getTime() - new Date(second.matchDate).getTime());
-  } catch (error) {
-    console.error("Error loading dashboard matches:", error);
-    return [];
-  }
+  return {
+    id: docSnapshot.id,
+    championshipId,
+    championship: championshipId ? getChampionshipById(championshipId) ?? null : null,
+    homeTeamId: data.home_team_id ?? null,
+    awayTeamId: data.away_team_id ?? null,
+    homeTeamCode: (data.home_team_code || "---").toUpperCase(),
+    awayTeamCode: (data.away_team_code || "---").toUpperCase(),
+    homeTeamName: data.home_team_name || data.home_team_code || "---",
+    awayTeamName: data.away_team_name || data.away_team_code || "---",
+    homeCrest: data.home_crest || null,
+    awayCrest: data.away_crest || null,
+    homeScore: data.home_score ?? null,
+    awayScore: data.away_score ?? null,
+    matchDate,
+    status: normalizeMatchFeedStatus({
+      status: data.status,
+      matchDate,
+      homeScore: data.home_score ?? null,
+      awayScore: data.away_score ?? null,
+    }),
+    stage: data.stage ?? null,
+    round: typeof data.round === "number" ? data.round : null,
+    groupId: data.group_id ?? null,
+  } satisfies MatchFeedItem;
 }
 
 export function useDashboardMatches() {
-  return useQuery({
-    queryKey: ["dashboard-matches-feed"],
-    queryFn: fetchDashboardMatches,
-    staleTime: 30 * 1000,
-    refetchInterval: 30 * 1000,
-  });
+  const [snapshot, setSnapshot] = useState(dashboardMatchesSnapshot);
+
+  useEffect(() => {
+    return subscribeDashboardMatches(() => {
+      setSnapshot(dashboardMatchesSnapshot);
+    });
+  }, []);
+
+  return snapshot;
+}
+
+type DashboardMatchesSnapshot = {
+  data: MatchFeedItem[];
+  isLoading: boolean;
+  error: Error | null;
+};
+
+let dashboardMatchesSnapshot: DashboardMatchesSnapshot = {
+  data: [],
+  isLoading: true,
+  error: null,
+};
+const dashboardMatchesListeners = new Set<() => void>();
+let unsubscribeDashboardMatches: (() => void) | null = null;
+
+function emitDashboardMatchesSnapshot(nextSnapshot: DashboardMatchesSnapshot) {
+  dashboardMatchesSnapshot = nextSnapshot;
+  dashboardMatchesListeners.forEach((listener) => listener());
+}
+
+function startDashboardMatchesSubscription() {
+  if (unsubscribeDashboardMatches) return;
+
+  const matchesQuery = query(collection(db, "matches"), orderBy("match_date", "asc"));
+
+  unsubscribeDashboardMatches = onSnapshot(
+    matchesQuery,
+    (snapshot) => {
+      const matches = snapshot.docs
+        .map(mapDashboardMatch)
+        .sort((first, second) => new Date(first.matchDate).getTime() - new Date(second.matchDate).getTime());
+
+      emitDashboardMatchesSnapshot({
+        data: matches,
+        error: null,
+        isLoading: false,
+      });
+    },
+    (snapshotError) => {
+      console.error("Error loading dashboard matches:", snapshotError);
+      emitDashboardMatchesSnapshot({
+        data: [],
+        error: snapshotError instanceof Error ? snapshotError : new Error("Failed to load matches"),
+        isLoading: false,
+      });
+    }
+  );
+}
+
+function subscribeDashboardMatches(listener: () => void) {
+  dashboardMatchesListeners.add(listener);
+  startDashboardMatchesSubscription();
+
+  return () => {
+    dashboardMatchesListeners.delete(listener);
+    if (dashboardMatchesListeners.size === 0 && unsubscribeDashboardMatches) {
+      unsubscribeDashboardMatches();
+      unsubscribeDashboardMatches = null;
+    }
+  };
 }

@@ -1,4 +1,4 @@
-import { Gift, Star } from "lucide-react";
+import { Flag, Star } from "lucide-react";
 import { ArenaPanel } from "@/components/arena/ArenaPrimitives";
 
 export function RewardProgressCard({
@@ -16,10 +16,10 @@ export function RewardProgressCard({
 
   return (
     <ArenaPanel className="p-5">
-      <p className="arena-kicker text-primary">Próxima recompensa</p>
+      <p className="arena-kicker text-primary">Próximo marco</p>
       <div className="mt-3 flex items-center gap-4">
-        <div className="flex h-16 w-16 items-center justify-center rounded-[20px] border border-primary/20 bg-primary/10 text-primary shadow-[0_0_24px_rgba(145,255,59,0.12)]">
-          <Gift className="h-8 w-8" />
+        <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[22px] border border-primary/30 bg-primary/12 text-primary shadow-[0_0_24px_rgba(145,255,59,0.14)]">
+          <Flag className="h-8 w-8" />
         </div>
         <div className="min-w-0">
           <p className="font-display text-[1.8rem] font-semibold uppercase leading-none text-white">

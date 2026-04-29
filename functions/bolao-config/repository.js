@@ -2,8 +2,10 @@ const admin = require("firebase-admin");
 const { buildBolaoMarkets } = require("./market-sync");
 const {
   buildConfigurationUpdate,
+  buildDeleteBolaoUpdate,
   buildDuplicateDraftDocument,
   buildLifecycleUpdate,
+  buildPaymentProofUpdate,
   buildPresentationUpdate,
   buildPublishUpdate,
   buildRemoveMemberDecision,
@@ -40,12 +42,33 @@ async function syncBolaoMarkets({ db, bolaoId, competitionRules, championshipId 
     matches,
   });
 
-  const batch = db.batch();
-  existingSnapshot.docs.forEach((doc) => batch.delete(doc.ref));
-  markets.forEach((market) => {
+  const maxBatchOperations = 450;
+  let batch = db.batch();
+  let operationCount = 0;
+
+  const commitIfNeeded = async (force = false) => {
+    if (operationCount === 0 || (!force && operationCount < maxBatchOperations)) {
+      return;
+    }
+
+    await batch.commit();
+    batch = db.batch();
+    operationCount = 0;
+  };
+
+  for (const doc of existingSnapshot.docs) {
+    batch.delete(doc.ref);
+    operationCount += 1;
+    await commitIfNeeded();
+  }
+
+  for (const market of markets) {
     batch.set(db.collection("bolao_markets").doc(market.id), market);
-  });
-  await batch.commit();
+    operationCount += 1;
+    await commitIfNeeded();
+  }
+
+  await commitIfNeeded(true);
 
   return markets;
 }
@@ -290,6 +313,30 @@ async function archiveBolao({ db, bolaoId, actorId, nowIso, reason }) {
   return after;
 }
 
+async function deleteBolao({ db, bolaoId, actorId, nowIso, reason }) {
+  const { ref, data } = await getOwnedBolaoOrThrow({ db, bolaoId, actorId });
+  const before = normalizeBolaoDocument(data);
+  const after = buildDeleteBolaoUpdate({
+    current: before,
+    actorId,
+    nowIso,
+    reason,
+  });
+
+  await ref.set(after, { merge: true });
+  await writeAuditLog({
+    db,
+    bolaoId,
+    actorId,
+    action: "delete_bolao",
+    before,
+    after,
+    reason,
+  });
+
+  return after;
+}
+
 async function removePoolMember({
   db,
   bolaoId,
@@ -450,9 +497,14 @@ async function updatePoolMemberPaymentStatus({
   }
 
   const before = { id: memberSnapshot.id, ...memberData };
+  const validated = ["paid", "exempt"].includes(paymentStatus);
   const after = {
     ...before,
     payment_status: paymentStatus,
+    payment_proof_status: validated ? "validated" : memberData.payment_proof_status || "pending",
+    prize_agreement_status: validated ? "validated" : memberData.prize_agreement_status || "pending",
+    payment_reviewed_by: actorId,
+    payment_reviewed_at: admin.firestore.FieldValue.serverTimestamp(),
     updated_at: admin.firestore.FieldValue.serverTimestamp(),
   };
 
@@ -466,6 +518,10 @@ async function updatePoolMemberPaymentStatus({
     after: {
       ...before,
       payment_status: paymentStatus,
+      payment_proof_status: after.payment_proof_status,
+      prize_agreement_status: after.prize_agreement_status,
+      payment_reviewed_by: actorId,
+      payment_reviewed_at: nowIso || null,
       updated_at: nowIso || null,
     },
   });
@@ -473,6 +529,68 @@ async function updatePoolMemberPaymentStatus({
   return {
     member_id: memberId,
     payment_status: paymentStatus,
+    payment_proof_status: after.payment_proof_status,
+    prize_agreement_status: after.prize_agreement_status,
+  };
+}
+
+async function submitPoolMemberPaymentProof({
+  db,
+  bolaoId,
+  actorId,
+  proofText,
+  prizeAgreementAccepted,
+  nowIso,
+}) {
+  const bolaoSnapshot = await db.collection("boloes").doc(bolaoId).get();
+  if (!bolaoSnapshot.exists) {
+    throw new Error("not_found");
+  }
+
+  const bolaoData = bolaoSnapshot.data();
+  if (bolaoData.lifecycle?.status === "deleted" || bolaoData.status === "deleted") {
+    throw new Error("not_found");
+  }
+
+  const memberId = `${actorId}_${bolaoId}`;
+  const memberRef = db.collection("bolao_members").doc(memberId);
+  const memberSnapshot = await memberRef.get();
+
+  if (!memberSnapshot.exists) {
+    throw new Error("not_found");
+  }
+
+  const before = { id: memberSnapshot.id, ...memberSnapshot.data() };
+  const after = buildPaymentProofUpdate({
+    currentMember: before,
+    actorId,
+    bolaoId,
+    proofText,
+    prizeAgreementAccepted,
+    nowIso,
+  });
+
+  await memberRef.set(
+    {
+      ...after,
+      payment_proof_submitted_at: admin.firestore.FieldValue.serverTimestamp(),
+      updated_at: admin.firestore.FieldValue.serverTimestamp(),
+    },
+    { merge: true },
+  );
+  await writeAuditLog({
+    db,
+    bolaoId,
+    actorId,
+    action: "submit_pool_member_payment_proof",
+    before,
+    after,
+  });
+
+  return {
+    member_id: memberId,
+    payment_proof_status: after.payment_proof_status,
+    prize_agreement_status: after.prize_agreement_status,
   };
 }
 
@@ -480,12 +598,14 @@ module.exports = {
   alterPresentation,
   archiveBolao,
   createDraft,
+  deleteBolao,
   duplicateBolao,
   finishBolao,
   getOwnedBolaoOrThrow,
   leaveBolao,
   publishBolao,
   removePoolMember,
+  submitPoolMemberPaymentProof,
   syncBolaoMarkets,
   updateConfiguration,
   updatePoolMemberPaymentStatus,

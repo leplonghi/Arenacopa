@@ -27,10 +27,6 @@
         "select_aria": "Escolher {{team}} como time favorito",
         "open_selector_aria": "Abrir seletor completo de times"
     },
-    "fun_mode": "Modo Festa",
-    "fun_mode_desc": "Ative animações de festa, confetes nos gols e comentários engraçados.",
-    "fun_mode_enable": "Ativar modo festa",
-    "fun_mode_disable": "Desativar modo festa",
     "notifications_title": "Notificações",
     "browser_notifications_unsupported": "Seu navegador não suporta notificações.",
     "notifications_denied_title": "Permissão negada",
@@ -69,7 +65,7 @@
         "locked": "Bloqueado",
         "first_prediction": {
             "title": "Chute Inicial",
-            "desc": "Deu seu primeiro palpite"
+      "desc": "Marcou seu primeiro jogo"
         },
         "exact_score": {
             "title": "Na Mosca",
@@ -133,7 +129,7 @@
             "items": {
                 "account": "Sua conta de acesso",
                 "profile": "Perfil e foto",
-                "predictions": "Todos os seus palpites",
+    "predictions": "Todas as suas escolhas",
                 "memberships": "Participação em bolões",
                 "champion": "Previsão de campeão",
                 "tokens": "Tokens de notificação"

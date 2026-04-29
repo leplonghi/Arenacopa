@@ -91,7 +91,7 @@ function normalizeGroupLabel(groupId: string) {
   const cleaned = groupId
     .replace(/^group[\s_-]*/i, "")
     .replace(/^grupo[\s_-]*/i, "")
-    .replaceAll("_", " ")
+    .replace(/_/g, " ")
     .trim();
 
   if (!cleaned) return groupId;
@@ -145,6 +145,10 @@ export function normalizeMatchFeedStatus({
   }
 
   if (!normalized || SCHEDULED_SOURCE_STATUSES.has(normalized)) {
+    if (Number.isFinite(kickoffTime) && kickoffTime < now - SCORE_FINALIZATION_GRACE_MS) {
+      return "finished";
+    }
+
     return "scheduled";
   }
 
@@ -176,7 +180,7 @@ export function getMatchStageLabel(
   return (
     labelMap[stage as keyof typeof labelMap] ??
     stage
-      .replaceAll("_", " ")
+      .replace(/_/g, " ")
       .toLowerCase()
       .replace(/\b\w/g, (letter) => letter.toUpperCase())
   );

@@ -4,7 +4,7 @@ export const bolaoFormats: BolaoFormatDefinition[] = [
     {
         id: "classic",
         name: "Clássico",
-        description: "Palpites rápidos por jogo com campeão e desempate simples.",
+    description: "Escolhas rápidas por jogo, com campeão e desempate simples.",
         recommendedFor: "Casual",
         icon: "🏆",
         isEnabled: true,

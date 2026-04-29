@@ -1,6 +1,6 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { NavLink } from "react-router-dom";
-import { User, Bell, ShieldQuestion, ShieldAlert, Trophy, Settings, Star } from "lucide-react";
+import { User, Bell, ShieldQuestion, ShieldAlert, Trophy, Star, Users2, Store, PlusCircle, Megaphone } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
@@ -28,6 +28,18 @@ export function MobileMenuSheet({ children }: { children: React.ReactNode }) {
             <MenuLink to="/noticias" icon={<Bell className="w-5 h-5" />} label={t('nav.news', 'Avisos & Notícias')} onClick={() => setOpen(false)} />
             <MenuLink to="/ranking" icon={<Trophy className="w-5 h-5" />} label="Ranking Geral" onClick={() => setOpen(false)} />
             <MenuLink to="/premium" icon={<Star className="w-5 h-5 text-yellow-500" />} label="Arena Premium" onClick={() => setOpen(false)} />
+          </div>
+
+          <div className="grid gap-2">
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-1">Comunidades</h3>
+            <MenuLink to="/comunidades" icon={<Users2 className="w-5 h-5" />} label="Comunidades" onClick={() => setOpen(false)} />
+            <MenuLink to="/comunidades/criar" icon={<PlusCircle className="w-5 h-5" />} label="Criar comunidade" onClick={() => setOpen(false)} />
+          </div>
+
+          <div className="grid gap-2">
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-1">Negócios</h3>
+            <MenuLink to="/negocios" icon={<Store className="w-5 h-5" />} label="ArenaCup para Negócios" onClick={() => setOpen(false)} />
+            <MenuLink to="/negocios/criar" icon={<Megaphone className="w-5 h-5" />} label="Criar campanha" onClick={() => setOpen(false)} />
           </div>
 
           <div className="grid gap-2">

@@ -218,6 +218,36 @@ service cloud.firestore {
       allow create, update, delete: if false;
     }
 
+    // commercial campaign governance — server-owned, with public read only for published campaign pages
+    match /merchants/{merchantId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if false;
+    }
+
+    match /merchant_staff/{staffId} {
+      allow read: if isSignedIn() && resource.data.user_id == request.auth.uid;
+      allow create, update, delete: if false;
+    }
+
+    match /commercial_campaigns/{campaignId} {
+      allow read: if resource.data.status in ["published", "live", "finished"] ||
+        (
+          isSignedIn() &&
+          exists(/databases/$(database)/documents/merchant_staff/$(resource.data.merchant_id + "_" + request.auth.uid))
+        );
+      allow create, update, delete: if false;
+    }
+
+    match /commercial_orders/{orderId} {
+      allow read: if isSignedIn() &&
+        exists(/databases/$(database)/documents/merchant_staff/$(resource.data.merchant_id + "_" + request.auth.uid));
+      allow create, update, delete: if false;
+    }
+
+    match /commercial_audit/{auditId} {
+      allow read, write: if false;
+    }
+
     // bolao_markets
     match /bolao_markets/{marketId} {
       allow read: if isSignedIn() && (

@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { CreateBolaoContextStep } from "@/features/boloes/create/CreateBolaoContextStep";
 import { CreateBolaoRulesStep } from "@/features/boloes/create/CreateBolaoRulesStep";
 import { CreateBolaoAdmissionStep } from "@/features/boloes/create/CreateBolaoAdmissionStep";
+import { CreateBolaoQuickStep } from "@/features/boloes/create/CreateBolaoQuickStep";
 import { CreateBolaoReviewStep } from "@/features/boloes/create/CreateBolaoReviewStep";
 import { useBolaoCreateFlow } from "@/features/boloes/create/useBolaoCreateFlow";
 import { trackSocialEvent } from "@/lib/analytics/social.telemetry";
@@ -29,6 +30,10 @@ export function BolaoCreateWizard() {
       });
     }
   }, []);
+
+  if (flow.step === "quick") {
+    return <CreateBolaoQuickStep flow={flow} />;
+  }
 
   if (flow.step === "context") {
     return <CreateBolaoContextStep flow={flow} />;

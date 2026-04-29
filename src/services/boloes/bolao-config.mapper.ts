@@ -1,8 +1,21 @@
-import type { BolaoConfigState } from "@/types/bolao-config";
+import type { BolaoConfigState, BolaoLifecycleStatus, EditableSections } from "@/types/bolao-config";
 
-export function mapBolaoConfigDocument(input: any): BolaoConfigState {
+export type BolaoConfigDocument = {
+  id?: string;
+  bolao_id?: string;
+  lifecycle?: {
+    status?: BolaoLifecycleStatus;
+  };
+  integrity?: {
+    is_structure_locked?: boolean;
+    config_version?: number | string;
+  };
+  editable_sections?: Partial<Record<keyof EditableSections, boolean>>;
+};
+
+export function mapBolaoConfigDocument(input: BolaoConfigDocument): BolaoConfigState {
   return {
-    bolaoId: input.id ?? input.bolao_id,
+    bolaoId: input.id ?? input.bolao_id ?? "",
     lifecycle: {
       status: input.lifecycle?.status ?? "draft",
     },

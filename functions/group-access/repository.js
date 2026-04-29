@@ -59,6 +59,31 @@ async function getBolaoMembership({ db, bolaoId, userId }) {
   return snapshot.exists ? { id: snapshot.id, ...snapshot.data() } : null;
 }
 
+function getCommercialParticipantLimit(bolao = {}) {
+  const rawLimit = bolao.commercial_context?.participant_limit;
+  const limit = Number(rawLimit || 0);
+  return Number.isFinite(limit) && limit > 0 ? limit : null;
+}
+
+async function assertCommercialParticipantCapacity({ db, bolaoId, bolao }) {
+  const participantLimit = getCommercialParticipantLimit(bolao);
+  if (!participantLimit) return;
+
+  const snapshot = await db
+    .collection("bolao_members")
+    .where("bolao_id", "==", bolaoId)
+    .where("membership_status", "==", "active")
+    .get();
+  const activeExternalCount = snapshot.docs.filter((doc) => {
+    const member = doc.data();
+    return member.user_id !== bolao.creator_id && member.role !== "admin";
+  }).length;
+
+  if (activeExternalCount >= participantLimit) {
+    throw new Error("commercial_participant_limit_reached");
+  }
+}
+
 async function ensureGroupManager({ db, groupId, actorId }) {
   const { ref, data } = await getGroupOrThrow({ db, groupId });
   const membership = await getGroupMembership({ db, groupId, userId: actorId });
@@ -581,6 +606,8 @@ async function requestBolaoJoin({ db, bolaoId, actorId, nowIso, inviteCode, orig
     throw error;
   }
 
+  await assertCommercialParticipantCapacity({ db, bolaoId, bolao });
+
   const requestId = `${bolaoId}_${actorId}`;
   const requestRef = db.collection("bolao_join_requests").doc(requestId);
   const requestSnapshot = await requestRef.get();
@@ -674,6 +701,8 @@ async function approveBolaoJoin({ db, bolaoId, requestId, actorId, nowIso, reaso
     throw new Error("invalid_state");
   }
 
+  await assertCommercialParticipantCapacity({ db, bolaoId, bolao: data });
+
   await db.collection("bolao_members").doc(`${requestData.user_id}_${bolaoId}`).set(
     buildBolaoMembership({
       bolaoId,
@@ -753,6 +782,7 @@ async function rejectBolaoJoin({ db, bolaoId, requestId, actorId, nowIso, reason
 module.exports = {
   approveBolaoJoin,
   approveGroupJoin,
+  assertCommercialParticipantCapacity,
   createGroup,
   ensureGroupManager,
   getBolaoMembership,

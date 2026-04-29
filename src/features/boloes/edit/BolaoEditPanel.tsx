@@ -9,6 +9,7 @@ import { collection, getDocs, query, where } from "firebase/firestore";
 import { getDefaultMarketIdsForFormat, listBolaoFormats } from "@/services/boloes/bolao-format.service";
 import {
   alterBolaoPresentation,
+  deleteBolao,
   duplicateBolao,
   finishBolao,
   archiveBolao,
@@ -55,6 +56,7 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated }: Bo
   const [prizeDistribution, setPrizeDistribution] = useState("");
   const [savingKey, setSavingKey] = useState<string | null>(null);
   const [availableGroups, setAvailableGroups] = useState<Array<{ id: string; name: string }>>([]);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
   useEffect(() => {
     if (!bolao) {
@@ -124,6 +126,12 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated }: Bo
       mounted = false;
     };
   }, [open, user?.id]);
+
+  useEffect(() => {
+    if (!open) {
+      setDeleteConfirmOpen(false);
+    }
+  }, [open]);
 
   if (!bolao) {
     return null;
@@ -292,6 +300,35 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated }: Bo
       });
     } finally {
       setSavingKey(null);
+    }
+  };
+
+  const handleDeleteBolao = async () => {
+    try {
+      setSavingKey("delete");
+      const updated = await deleteBolao({
+        payload: {
+          bolao_id: bolao.id,
+          reason: "owner_deleted_from_edit_panel",
+        },
+      });
+
+      updateLocal(mapConfigStateToLegacyPatch(updated as never));
+      toast({
+        title: "Bolão apagado",
+        description: "O convite foi desativado e o bolão saiu das listas principais.",
+      });
+      onOpenChange(false);
+      navigate("/boloes", { replace: true });
+    } catch {
+      toast({
+        title: "Não foi possível apagar",
+        description: "Tente novamente em alguns instantes.",
+        variant: "destructive",
+      });
+    } finally {
+      setSavingKey(null);
+      setDeleteConfirmOpen(false);
     }
   };
 
@@ -681,11 +718,11 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated }: Bo
               />
             </label>
             <label className="grid gap-2 text-sm md:col-span-2">
-              <span className="text-zinc-300">Rateio ou regra do prêmio</span>
+              <span className="text-zinc-300">Rateio combinado entre participantes</span>
               <textarea
                 value={prizeDistribution}
                 onChange={(event) => setPrizeDistribution(event.target.value)}
-                placeholder="Ex.: 70% para 1º, 30% para 2º"
+                placeholder="Ex.: combinação interna do grupo, se existir"
                 className="min-h-[90px] rounded-2xl border border-white/10 bg-[#122117] px-4 py-3 text-white"
               />
             </label>
@@ -702,18 +739,48 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated }: Bo
           <div className="grid gap-3 rounded-3xl border border-white/10 bg-white/5 p-4 md:grid-cols-2">
             <button
               onClick={() => void handleLifecycleAction("finish")}
-              disabled={savingKey === "finish" || savingKey === "archive"}
+              disabled={savingKey === "finish" || savingKey === "archive" || savingKey === "delete"}
               className="rounded-2xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm font-black text-amber-300 disabled:opacity-50"
             >
               Encerrar bolão
             </button>
             <button
               onClick={() => void handleLifecycleAction("archive")}
-              disabled={savingKey === "finish" || savingKey === "archive"}
+              disabled={savingKey === "finish" || savingKey === "archive" || savingKey === "delete"}
               className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-black text-white disabled:opacity-50"
             >
               Arquivar bolão
             </button>
+          </div>
+
+          <div className="rounded-3xl border border-red-500/20 bg-red-500/10 p-4">
+            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+              <div>
+                <p className="text-sm font-black text-red-200">Zona de risco</p>
+                <p className="mt-1 text-xs leading-5 text-red-100/75">
+                  remove o bolão das listas e desativa o convite. Os registros ficam preservados para auditoria.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!deleteConfirmOpen) {
+                    setDeleteConfirmOpen(true);
+                    return;
+                  }
+                  void handleDeleteBolao();
+                }}
+                disabled={savingKey === "delete"}
+                className="rounded-2xl border border-red-300/30 bg-red-400/15 px-4 py-3 text-sm font-black text-red-100 disabled:opacity-50"
+              >
+                {deleteConfirmOpen ? "Confirmar apagar" : "Apagar bolão"}
+              </button>
+            </div>
+            {deleteConfirmOpen ? (
+              <p className="mt-3 rounded-2xl border border-red-300/20 bg-black/20 px-4 py-3 text-xs text-red-100/85">
+                Essa ação tira o bolão do acesso normal. Clique em confirmar apagar para continuar.
+              </p>
+            ) : null}
           </div>
         </div>
       </DialogContent>

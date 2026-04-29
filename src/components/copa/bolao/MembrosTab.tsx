@@ -1,6 +1,7 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { LogOut, Crown, DollarSign, CheckCircle2, Shield, Clock, AlertCircle, UserMinus } from "lucide-react";
+import { LogOut, Crown, DollarSign, CheckCircle2, Shield, Clock, AlertCircle, UserMinus, Send, BadgeCheck } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { type MemberData } from "@/types/bolao";
@@ -9,6 +10,7 @@ import { staggerContainer, staggerItem } from "../animations";
 import {
     leaveBolao,
     removePoolMember,
+    submitPoolMemberPaymentProof,
     updatePoolMemberPaymentStatus,
 } from "@/services/boloes/bolao-config.service";
 
@@ -25,6 +27,9 @@ export function MembrosTab({ members, userId, isCreator, bolaoId, isPaid, onRefr
     const { t } = useTranslation('bolao');
     const { toast } = useToast();
     const navigate = useNavigate();
+    const [proofTextByUser, setProofTextByUser] = useState<Record<string, string>>({});
+    const [acceptedPrizeByUser, setAcceptedPrizeByUser] = useState<Record<string, boolean>>({});
+    const [submittingProofFor, setSubmittingProofFor] = useState<string | null>(null);
 
     const STATUS_CONFIG = {
         pending: {
@@ -89,7 +94,7 @@ export function MembrosTab({ members, userId, isCreator, bolaoId, isPaid, onRefr
             console.error("Error removing bolao member:", error);
             toast({
                 title: t('common.error_title'),
-                description: "Esse participante pode estar protegido por pagamento confirmado, palpite salvo ou fase atual do bolão.",
+          description: "Esse participante pode estar protegido por pagamento confirmado, escolha salva ou fase atual do bolão.",
                 variant: "destructive",
             });
         }
@@ -112,6 +117,65 @@ export function MembrosTab({ members, userId, isCreator, bolaoId, isPaid, onRefr
             onRefresh();
         } catch (error) {
             toast({ title: t('common.error_title'), description: t('members.error_update'), variant: "destructive" });
+        }
+    };
+
+    const submitPaymentProof = async (targetUserId: string) => {
+        const proofText = (proofTextByUser[targetUserId] || "").trim();
+        if (proofText.length < 3) {
+            toast({
+                title: "Descreva o Pix ou o combinado",
+                description: "Use o ID do Pix, nome de quem pagou ou uma explicação curta.",
+                variant: "destructive",
+            });
+            return;
+        }
+
+        try {
+            setSubmittingProofFor(targetUserId);
+            await submitPoolMemberPaymentProof({
+                payload: {
+                    bolao_id: bolaoId,
+                    proof_text: proofText,
+                    prize_agreement_accepted: Boolean(acceptedPrizeByUser[targetUserId]),
+                },
+            });
+            toast({
+                title: "Comprovante enviado",
+                description: "O administrador do bolão agora pode confirmar o Pix e a premiação.",
+            });
+            onRefresh();
+        } catch (error) {
+            toast({
+                title: t('common.error_title'),
+                description: "Não foi possível enviar o comprovante agora.",
+                variant: "destructive",
+            });
+        } finally {
+            setSubmittingProofFor(null);
+        }
+    };
+
+    const confirmPaymentProof = async (targetUserId: string) => {
+        try {
+            await updatePoolMemberPaymentStatus({
+                payload: {
+                    bolao_id: bolaoId,
+                    member_id: `${targetUserId}_${bolaoId}`,
+                    payment_status: "paid",
+                },
+            });
+            toast({
+                title: "Pix e premiação validados",
+                description: "Esse participante já aparece como pago.",
+            });
+            onRefresh();
+        } catch (error) {
+            toast({
+                title: t('common.error_title'),
+                description: t('members.error_update'),
+                variant: "destructive",
+            });
         }
     };
 
@@ -188,6 +252,8 @@ export function MembrosTab({ members, userId, isCreator, bolaoId, isPaid, onRefr
                             const status = normalizePaymentStatus(m.payment_status);
                             const statusConfig = STATUS_CONFIG[status as keyof typeof STATUS_CONFIG];
                             const StatusIcon = statusConfig?.icon || Clock;
+                            const hasSubmittedProof = m.payment_proof_status === "submitted" || Boolean(m.payment_proof_text);
+                            const isValidated = status === "paid" || status === "exempt" || m.payment_proof_status === "validated";
 
                             return (
                                 <motion.div
@@ -270,6 +336,88 @@ export function MembrosTab({ members, userId, isCreator, bolaoId, isPaid, onRefr
                                             )}
                                         </div>
                                     </div>
+                                    {isPaid && (isMe || isCreator) ? (
+                                        <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-3">
+                                            {hasSubmittedProof ? (
+                                                <div className="space-y-3">
+                                                    <div className="flex items-start gap-2">
+                                                        <BadgeCheck className={cn("mt-0.5 h-4 w-4", isValidated ? "text-emerald-400" : "text-amber-400")} />
+                                                        <div className="min-w-0 flex-1">
+                                                            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-zinc-500">
+                                                                Comprovante e premiação
+                                                            </p>
+                                                            <p className="mt-1 text-sm font-semibold leading-6 text-zinc-200">
+                                                                {m.payment_proof_text}
+                                                            </p>
+                                                            <p className="mt-1 text-[11px] font-bold text-zinc-500">
+                                                                {m.prize_agreement_accepted
+                                                                    ? "Participante aceitou a premiação combinada."
+                                                                    : "Premiação ainda precisa ser aceita pelo participante."}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+
+                                                    {isCreator && !isValidated ? (
+                                                        <button
+                                                            onClick={() => void confirmPaymentProof(m.user_id)}
+                                                            className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-400 px-3 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-black transition hover:brightness-105"
+                                                        >
+                                                            <CheckCircle2 className="h-3.5 w-3.5" />
+                                                            Confirmar Pix e premiação
+                                                        </button>
+                                                    ) : null}
+                                                </div>
+                                            ) : isMe && !isCreator && !isValidated ? (
+                                                <div className="space-y-3">
+                                                    <div>
+                                                        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-amber-300">
+                                                            Falta comprovar o Pix
+                                                        </p>
+                                                        <p className="mt-1 text-xs leading-5 text-zinc-400">
+                                                            Envie uma referência simples para o administrador conferir o pagamento e validar a premiação combinada.
+                                                        </p>
+                                                    </div>
+                                                    <textarea
+                                                        value={proofTextByUser[m.user_id] || ""}
+                                                        onChange={(event) =>
+                                                            setProofTextByUser((current) => ({
+                                                                ...current,
+                                                                [m.user_id]: event.target.value,
+                                                            }))
+                                                        }
+                                                        placeholder="ID do Pix, nome de quem pagou ou resumo do combinado"
+                                                        className="min-h-[82px] w-full rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2 text-sm text-white placeholder:text-zinc-500"
+                                                    />
+                                                    <label className="flex items-start gap-2 text-xs font-semibold leading-5 text-zinc-300">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={Boolean(acceptedPrizeByUser[m.user_id])}
+                                                            onChange={(event) =>
+                                                                setAcceptedPrizeByUser((current) => ({
+                                                                    ...current,
+                                                                    [m.user_id]: event.target.checked,
+                                                                }))
+                                                            }
+                                                            className="mt-1 h-4 w-4 accent-primary"
+                                                        />
+                                                        Eu aceito a premiação combinada para este bolão.
+                                                    </label>
+                                                    <button
+                                                        onClick={() => void submitPaymentProof(m.user_id)}
+                                                        disabled={submittingProofFor === m.user_id}
+                                                        className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-3 py-2 text-[10px] font-black uppercase tracking-[0.16em] text-black transition hover:brightness-105 disabled:opacity-60"
+                                                    >
+                                                        <Send className="h-3.5 w-3.5" />
+                                                        {submittingProofFor === m.user_id ? "Enviando" : "Enviar comprovante"}
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <p className="text-xs font-semibold text-zinc-500">
+                                                    Aguardando comprovante do participante.
+                                                </p>
+                                            )}
+                                        </div>
+                                    ) : null}
                                 </motion.div>
                             );
                         })}

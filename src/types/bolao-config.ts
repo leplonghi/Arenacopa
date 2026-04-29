@@ -1,4 +1,4 @@
-export type BolaoLifecycleStatus = "draft" | "published" | "live" | "finished" | "archived";
+export type BolaoLifecycleStatus = "draft" | "published" | "live" | "finished" | "archived" | "deleted";
 
 export type EditableSections = {
   presentation: boolean;
@@ -26,6 +26,25 @@ export type CreateDraftBolaoPayload = {
   competition_rules?: Record<string, unknown>;
   finance_rules?: Record<string, unknown>;
   championship_id?: string | null;
+};
+
+export type CreateAndPublishBolaoPayload = {
+  championship_id?: string | null;
+  context?: Record<string, unknown>;
+  presentation?: Record<string, unknown>;
+  access_policy?: Record<string, unknown>;
+  competition_rules?: Record<string, unknown>;
+  finance_rules?: Record<string, unknown>;
+  group_creation?: {
+    presentation: {
+      name: string;
+      description?: string;
+      emoji?: string;
+      objective?: string;
+    };
+    visibility: "private" | "public";
+    admission_mode: "approval" | "direct_code_or_invite" | "direct_open";
+  } | null;
 };
 
 export type UpdateBolaoConfigurationPayload = {
@@ -66,6 +85,11 @@ export type ArchiveBolaoPayload = {
   reason?: string;
 };
 
+export type DeleteBolaoPayload = {
+  bolao_id: string;
+  reason?: string;
+};
+
 export type RemovePoolMemberPayload = {
   bolao_id: string;
   member_id: string;
@@ -81,4 +105,10 @@ export type UpdatePoolMemberPaymentStatusPayload = {
   bolao_id: string;
   member_id: string;
   payment_status: "pending" | "paid" | "exempt";
+};
+
+export type SubmitPoolMemberPaymentProofPayload = {
+  bolao_id: string;
+  proof_text: string;
+  prize_agreement_accepted: boolean;
 };

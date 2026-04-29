@@ -7,7 +7,8 @@
     "guia": "Guide",
     "championships": "Championships",
     "news": "News",
-    "groups": "Groups",
+    "discover": "Discover",
+    "groups": "Communities",
     "ranking": "Ranking",
     "profile": "Account",
     "menu": "Menu"
@@ -17,8 +18,8 @@
       "boloes": "Pools",
       "create_bolao": "Create Pool",
       "bolao_detail": "Pool",
-      "groups": "My Groups",
-      "group_detail": "Group",
+      "groups": "Communities",
+      "group_detail": "Community",
       "profile": "Account",
       "menu": "Account"
     }

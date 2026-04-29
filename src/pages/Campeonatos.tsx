@@ -19,6 +19,8 @@ import { useQuery } from "@tanstack/react-query";
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { useTranslation } from "react-i18next";
+import { ArenaAssetSlot } from "@/components/arena/ArenaAssetSlot";
+import { getArenaAssetSrc } from "@/lib/arena-assets";
 
 const COUNTRY_LABELS: Record<string, string> = {
   BR: "Brasil",
@@ -54,12 +56,23 @@ const CHAMPIONSHIP_ORDER = [
   "mls2026",
 ];
 
+const LEAGUE_ASSET_FILENAME_BY_ID: Record<string, string> = {
+  brasileirao2026: "brasileirao-logo.png",
+  libertadores2026: "libertadores-logo.png",
+  premier2526: "premier-league-logo.png",
+  ligue12526: "ligue1-logo.png",
+  laliga2526: "laliga-logo.png",
+  bundesliga2526: "bundesliga-logo.png",
+  saudipro2526: "saudi-league-logo.png",
+  ucl2526: "champions-league-logo.png",
+};
+
 function StatusPill({ status }: { status: ChampionshipStatus }) {
   const { t } = useTranslation("championships");
 
   if (status === "live") {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-[#78ff46]/35 bg-[#1a351a]/88 px-3 py-2 font-display text-[1.05rem] font-semibold uppercase tracking-[0.06em] text-white shadow-[0_0_18px_rgba(95,255,56,0.12)]">
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-[#78ff46]/35 bg-[#1a351a]/88 px-2.5 py-1.5 font-display text-[0.9rem] font-semibold uppercase tracking-[0.06em] text-white shadow-[0_0_18px_rgba(95,255,56,0.12)]">
         <Radio className="h-3.5 w-3.5 text-[#7dff48]" />
         {t("status.live")}
       </span>
@@ -68,7 +81,7 @@ function StatusPill({ status }: { status: ChampionshipStatus }) {
 
   if (status === "upcoming") {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-[#ffc54d]/35 bg-[#34250a]/88 px-3 py-2 font-display text-[1.05rem] font-semibold uppercase tracking-[0.06em] text-[#ffd35c] shadow-[0_0_18px_rgba(255,197,77,0.12)]">
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-[#ffc54d]/35 bg-[#34250a]/88 px-2.5 py-1.5 font-display text-[0.9rem] font-semibold uppercase tracking-[0.06em] text-[#ffd35c] shadow-[0_0_18px_rgba(255,197,77,0.12)]">
         <Clock3 className="h-3.5 w-3.5" />
         {t("status.upcoming")}
       </span>
@@ -76,7 +89,7 @@ function StatusPill({ status }: { status: ChampionshipStatus }) {
   }
 
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-3 py-2 font-display text-[1.05rem] font-semibold uppercase tracking-[0.06em] text-zinc-300">
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-2.5 py-1.5 font-display text-[0.9rem] font-semibold uppercase tracking-[0.06em] text-zinc-300">
       {t("status.finished")}
     </span>
   );
@@ -107,7 +120,6 @@ function FeaturedCompetitionCard({
   onSelect: () => void;
 }) {
   const { t } = useTranslation("championships");
-  const [, to] = championship.gradient;
 
   return (
     <motion.button
@@ -132,30 +144,14 @@ function FeaturedCompetitionCard({
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.02),transparent_40%)]" />
       <div className="absolute inset-y-0 left-[34%] hidden w-px bg-gradient-to-b from-transparent via-[#7dff48]/20 to-transparent md:block" />
 
-      <div className="relative z-10 flex flex-col gap-5 p-5 md:grid md:grid-cols-[190px_minmax(0,1fr)] md:gap-6 md:p-6">
-        <div className="relative flex min-h-[190px] items-end justify-center overflow-hidden rounded-[24px] border border-[#9acb3e]/22 bg-[radial-gradient(circle_at_50%_18%,rgba(255,197,77,0.2),transparent_30%),linear-gradient(180deg,rgba(255,197,77,0.08),rgba(0,0,0,0.04))] p-4">
-          <div className="absolute left-4 top-4 inline-flex items-center gap-1.5 rounded-full border border-[#ffc54d]/35 bg-[#4d3a0d]/80 px-3 py-1.5 text-[#ffd35c]">
+      <div className="relative z-10 grid min-h-[238px] grid-cols-[minmax(0,1fr)_132px] gap-2 p-4 sm:grid-cols-[minmax(0,1fr)_190px] sm:gap-5 sm:p-5">
+        <div className="flex min-w-0 flex-col">
+          <div className="mb-3 inline-flex w-fit items-center gap-1.5 rounded-full border border-[#ffc54d]/35 bg-[#4d3a0d]/80 px-3 py-1.5 text-[#ffd35c]">
             <Star className="h-3.5 w-3.5 fill-current" />
             <span className="font-display text-[1.05rem] font-semibold uppercase tracking-[0.05em]">{t("hero.special_event")}</span>
           </div>
-          {championship.logoUrl ? (
-            <img
-              src={championship.logoUrl}
-              alt={championship.name}
-              className="h-[150px] w-auto object-contain drop-shadow-[0_18px_26px_rgba(255,197,77,0.3)]"
-            />
-          ) : (
-            <span className="text-8xl">{championship.logo}</span>
-          )}
-          <div className="absolute bottom-0 left-0 right-0 flex items-center gap-2 border-t border-[#7dff48]/15 bg-black/28 px-4 py-3 text-[#8de65b]">
-            <Trophy className="h-4 w-4" />
-            <span className="font-sans text-sm font-semibold">{t("hero.pools_other", { count: bolaoCount })}</span>
-          </div>
-        </div>
-
-        <div className="flex min-w-0 flex-col">
-          <div className="mb-3 flex items-start justify-between gap-4">
-            <p className="pt-1 font-display text-[1.55rem] font-semibold uppercase tracking-[0.06em] text-[#89ec5f]">
+          <div className="mb-2 flex items-start justify-between gap-4">
+            <p className="font-display text-[1.1rem] font-semibold uppercase tracking-[0.06em] text-[#89ec5f] sm:text-[1.25rem]">
               {championship.confederation} <span className="text-white/35">•</span> <span className="text-white/68">{championship.season}</span>
             </p>
             <div className="hidden items-center gap-1 text-[#7dff48] md:flex">
@@ -166,19 +162,19 @@ function FeaturedCompetitionCard({
           </div>
 
           <div className="max-w-2xl">
-            <p className="font-sans text-[2.6rem] font-extrabold uppercase leading-[0.92] tracking-[-0.04em] text-white sm:text-[3.2rem]">
+            <p className="font-sans text-[1.9rem] font-bold uppercase leading-[0.92] tracking-[-0.04em] text-white sm:text-[2.65rem]">
               COPA DO MUNDO
             </p>
-            <p className="font-sans text-[2.6rem] font-extrabold uppercase leading-[0.92] tracking-[-0.04em] text-[#58d84f] sm:text-[3.2rem]">
+            <p className="font-sans text-[1.9rem] font-bold uppercase leading-[0.92] tracking-[-0.04em] text-[#58d84f] sm:text-[2.65rem]">
               2026
             </p>
           </div>
 
-          <div className="mt-5 flex flex-wrap items-center gap-3">
+          <div className="mt-3 flex flex-wrap items-center gap-3">
             <StatusPill status={championship.status} />
           </div>
 
-          <div className="mt-5 space-y-2 text-zinc-300">
+          <div className="mt-4 space-y-1.5 text-zinc-300">
             <div className="flex items-center gap-2 text-base">
               <CalendarDays className="h-4 w-4 text-[#8de65b]" />
               <span className="font-sans font-medium">{t("hero.date_range").split("·")[0].trim()}</span>
@@ -189,12 +185,29 @@ function FeaturedCompetitionCard({
             </div>
           </div>
 
-          <div className="mt-6 flex justify-end">
-            <span className="inline-flex items-center gap-2 rounded-[22px] border border-[#ffc54d]/45 px-5 py-3 font-display text-[1.65rem] font-semibold uppercase tracking-[0.04em] text-[#ffc54d] transition group-hover:border-[#ffe263] group-hover:text-[#ffe263]">
+          <div className="mt-auto flex items-center justify-between gap-3 pt-4">
+            <div className="flex min-w-0 items-center gap-2 text-[#8de65b]">
+              <Trophy className="h-4 w-4" />
+              <span className="truncate font-sans text-sm font-semibold">{t("hero.pools_other", { count: bolaoCount })}</span>
+            </div>
+            <span className="inline-flex items-center gap-2 rounded-[16px] border border-[#ffc54d]/45 px-3 py-2 font-display text-[1.05rem] font-semibold uppercase tracking-[0.04em] text-[#ffc54d] transition group-hover:border-[#ffe263] group-hover:text-[#ffe263] sm:px-4 sm:text-[1.2rem]">
               {t("hero.enter")}
               <ChevronRight className="h-5 w-5" />
             </span>
           </div>
+        </div>
+
+        <div className="relative flex items-center justify-end overflow-visible">
+          <div className="absolute inset-y-0 -right-8 w-[220px] bg-[radial-gradient(circle_at_50%_50%,rgba(255,197,77,0.32),transparent_54%)] blur-xl sm:-right-12 sm:w-[300px]" />
+          <ArenaAssetSlot
+            name="wc2026-trophy.png"
+            label="Troféu Copa do Mundo 2026"
+            src={getArenaAssetSrc("wc2026-trophy.png") ?? championship.logoUrl}
+            variant="cutout"
+            className="relative h-[190px] w-[130px] border-amber-300/20 bg-transparent shadow-none sm:h-[235px] sm:w-[172px]"
+            imgClassName="p-0 object-contain drop-shadow-[0_24px_34px_rgba(255,197,77,0.44)]"
+            fallbackClassName="scale-75"
+          />
         </div>
       </div>
     </motion.button>
@@ -207,16 +220,19 @@ function CompetitionTile({
   isSelected,
   onSelect,
   index,
+  assetName,
 }: {
   championship: Championship;
   bolaoCount: number;
   isSelected: boolean;
   onSelect: () => void;
   index: number;
+  assetName?: string;
 }) {
   const { t } = useTranslation("championships");
   const display = getDisplayName(championship);
   const accent = championship.color;
+  const assetSrc = assetName ? getArenaAssetSrc(assetName) : null;
 
   return (
     <motion.button
@@ -225,7 +241,7 @@ function CompetitionTile({
       transition={{ delay: 0.05 + index * 0.035, duration: 0.3, ease: "easeOut" }}
       onClick={onSelect}
       className={cn(
-        "group relative min-h-[228px] overflow-hidden rounded-[28px] border text-left transition-all duration-300",
+        "group relative min-h-[132px] overflow-hidden rounded-[22px] border text-left transition-all duration-300 sm:min-h-[148px]",
         isSelected
           ? "border-white/28 shadow-[0_0_0_1px_rgba(255,255,255,0.08)_inset,0_18px_44px_-24px_rgba(0,0,0,0.92)]"
           : "border-white/12 hover:border-white/22 hover:translate-y-[-1px]"
@@ -243,42 +259,58 @@ function CompetitionTile({
     >
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.02),transparent_42%)]" />
 
-      <div className="relative z-10 flex h-full flex-col p-4">
-        <div className="mb-5 flex items-start justify-between gap-3">
-          <div className="flex h-[78px] w-[78px] items-center justify-center overflow-hidden rounded-[20px] bg-black/12">
-            {championship.logoUrl ? (
+      <div className="relative z-10 grid h-full grid-cols-[minmax(0,1fr)_104px] gap-2 p-3.5 sm:grid-cols-[minmax(0,1fr)_118px]">
+        <div className="flex min-w-0 flex-col">
+          <div className="mb-2">
+            <StatusPill status={championship.status} />
+          </div>
+
+          <div className="min-w-0">
+            <p className="truncate font-display text-[0.92rem] font-semibold uppercase tracking-[0.06em] text-white/58">
+              {(championship.confederation ?? championship.country ?? "").toUpperCase()} <span className="text-white/28">•</span> {championship.season}
+            </p>
+            <h2 className="mt-1 line-clamp-2 font-sans text-[1.45rem] font-bold leading-[0.95] tracking-[-0.04em] text-white sm:text-[1.6rem]">
+              {display.title}
+            </h2>
+            {display.subtitle ? (
+              <p className="mt-1 truncate font-sans text-sm font-medium leading-none text-white/78">
+                {display.subtitle}
+              </p>
+            ) : null}
+          </div>
+
+          <div className="mt-auto flex items-center justify-between gap-2 pt-3">
+            <div className="flex min-w-0 items-center gap-2 text-[1rem] text-white/82">
+              <Users className="h-4 w-4 shrink-0" />
+              <span className="truncate font-sans text-sm font-medium">{getPoolLabel(bolaoCount, t)}</span>
+            </div>
+            <ChevronRight className="h-5 w-5 shrink-0 text-white/48 transition group-hover:translate-x-0.5 group-hover:text-white/78" />
+          </div>
+        </div>
+
+        <div className="relative flex items-center justify-end overflow-visible">
+          <div className="absolute inset-y-0 -right-10 w-[150px] bg-[radial-gradient(circle_at_50%_46%,rgba(255,255,255,0.13),transparent_52%)] blur-lg" />
+          <div className="relative flex h-[108px] w-[104px] items-center justify-center overflow-visible sm:h-[124px] sm:w-[118px]">
+            {assetName ? (
+              <ArenaAssetSlot
+                name={assetName}
+                label={display.title}
+                src={assetSrc}
+                variant="cutout"
+                className="h-[108px] w-[104px] bg-transparent shadow-none sm:h-[124px] sm:w-[118px]"
+                imgClassName="p-0 object-contain drop-shadow-[0_16px_24px_rgba(0,0,0,0.36)]"
+                fallbackClassName="scale-[0.68]"
+              />
+            ) : championship.logoUrl ? (
               <img
                 src={championship.logoUrl}
                 alt={championship.name}
-                className="h-[58px] w-[58px] object-contain drop-shadow-[0_10px_18px_rgba(0,0,0,0.28)]"
+                className="h-[104px] w-[104px] object-contain drop-shadow-[0_10px_18px_rgba(0,0,0,0.28)]"
               />
             ) : (
               <span className="text-5xl">{championship.logo}</span>
             )}
           </div>
-          <StatusPill status={championship.status} />
-        </div>
-
-        <div className="min-w-0">
-          <p className="font-display text-[1.25rem] font-semibold uppercase tracking-[0.06em] text-white/58">
-            {(championship.confederation ?? championship.country ?? "").toUpperCase()} <span className="text-white/28">•</span> {championship.season}
-          </p>
-          <h2 className="mt-2 font-sans text-[2rem] font-extrabold leading-[0.95] tracking-[-0.04em] text-white">
-            {display.title}
-          </h2>
-          {display.subtitle ? (
-            <p className="mt-1 font-sans text-[1.05rem] font-semibold leading-none text-white/78">
-              {display.subtitle}
-            </p>
-          ) : null}
-        </div>
-
-        <div className="mt-auto flex items-center justify-between pt-6">
-          <div className="flex items-center gap-2 text-[1.2rem] text-white/82">
-            <Users className="h-4 w-4" />
-            <span className="font-sans text-base font-medium">{getPoolLabel(bolaoCount, t)}</span>
-          </div>
-          <ChevronRight className="h-5 w-5 text-white/48 transition group-hover:translate-x-0.5 group-hover:text-white/78" />
         </div>
       </div>
     </motion.button>
@@ -386,6 +418,7 @@ export default function Campeonatos() {
               isSelected={current.id === championship.id}
               onSelect={() => handleSelect(championship)}
               index={index}
+              assetName={LEAGUE_ASSET_FILENAME_BY_ID[championship.id]}
             />
           ))}
         </motion.section>

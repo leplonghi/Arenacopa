@@ -11,7 +11,7 @@ describe("BolaoEntryGuidance", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText(/Este grupo \(Injeção\) pode descobrir ou controlar a entrada/)).toBeInTheDocument();
+    expect(screen.getByText(/Este grupo \(Injeção\) pode centralizar bolões/)).toBeInTheDocument();
     expect(screen.getByText("Criar sem grupo")).toBeInTheDocument();
     expect(screen.getByText("Criar neste grupo")).toBeInTheDocument();
   });

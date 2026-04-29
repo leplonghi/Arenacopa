@@ -70,7 +70,7 @@ export default function Grupos() {
           }
           return {
             id: snapshot.id,
-            name: String(snapshot.data().name || "Grupo"),
+            name: String(snapshot.data().name || "Comunidade"),
             description: (snapshot.data().description as string | null) ?? null,
             emoji: String(snapshot.data().emoji || "👥"),
             invite_code: String(snapshot.data().invite_code || ""),
@@ -96,7 +96,7 @@ export default function Grupos() {
           return {
             id: String(request.id),
             groupId: String(request.grupo_id),
-            groupName: snapshot.exists() ? String(snapshot.data().name || "Grupo") : "Grupo",
+            groupName: snapshot.exists() ? String(snapshot.data().name || "Comunidade") : "Comunidade",
             updatedAt: (request.updated_at as string | null) ?? null,
           };
         }),
@@ -107,7 +107,7 @@ export default function Grupos() {
     } catch (error) {
       console.error(error);
       toast({
-        title: "Não foi possível carregar seus grupos",
+        title: "Não foi possível carregar suas comunidades",
         description: "Tente novamente em alguns instantes.",
         variant: "destructive",
       });
@@ -125,7 +125,7 @@ export default function Grupos() {
       pendingRequests.map((request) => ({
         id: request.id,
         title: request.groupName,
-        subtitle: "Sua entrada está aguardando aprovação do grupo.",
+        subtitle: "Sua entrada está aguardando aprovação da comunidade.",
         meta: request.updatedAt ? `Atualizado em ${new Date(request.updatedAt).toLocaleString("pt-BR")}` : null,
         status: "Pendente",
       })),
@@ -139,7 +139,7 @@ export default function Grupos() {
 
   const spotlightMetrics = useMemo(
     () => [
-      { label: "Meus grupos", value: groups.length },
+      { label: "Comunidades", value: groups.length },
       { label: "Pendentes", value: pendingRequests.length },
       { label: "Admin", value: invitationGroups.length },
     ],
@@ -163,14 +163,14 @@ export default function Grupos() {
 
       if (result.status === "joined" || result.status === "already_member") {
         trackSocialEvent("join_direct_success", { kind: "group" });
-        navigate(`/grupos/${result.group_id}`);
+        navigate(`/comunidades/${result.group_id}`);
         return;
       }
 
       trackSocialEvent("join_requested", { kind: "group" });
       toast({
         title: "Solicitação enviada",
-        description: "Agora é só aguardar a aprovação do grupo.",
+        description: "Agora é só aguardar a aprovação da comunidade.",
       });
       setJoinCode("");
       void loadGroups();
@@ -190,7 +190,7 @@ export default function Grupos() {
     await navigator.clipboard.writeText(url);
     toast({
       title: "Link copiado",
-      description: "Agora é só compartilhar com a galera.",
+      description: "Agora é só compartilhar com a turma.",
     });
   };
 
@@ -198,20 +198,22 @@ export default function Grupos() {
     <div className="arena-screen">
       <ArenaPanel tone="strong" className="mb-7 p-5 sm:p-6">
         <ArenaSectionHeader
-          eyebrow="Grupos"
-          title="Comunidades organizadas sem ruído"
+          eyebrow="Comunidades"
+          title="Suas comunidades"
+          hint="Comunidades servem para reunir a mesma turma em vários bolões. Se você quer só uma disputa rápida, crie um bolão avulso."
           action={
             <Link
-              to="/grupos/criar"
+              to="/comunidades/criar"
               className="inline-flex items-center gap-2 rounded-[18px] bg-primary px-4 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-black transition hover:brightness-105"
             >
               <Plus className="h-4 w-4" />
-              Criar grupo
+              Criar comunidade
             </Link>
           }
         />
-        <p className="mt-3 max-w-3xl text-sm leading-6 text-zinc-300">
-          Aqui você organiza a comunidade. Depois decide qual bolão vai viver dentro dela, sem misturar governança com participação.
+
+        <p className="mt-5 max-w-2xl text-sm font-semibold leading-6 text-zinc-200">
+          Comunidade é sua base recorrente. Crie vários bolões com a mesma turma ao longo da temporada.
         </p>
 
         <div className="mt-5 grid gap-3 sm:grid-cols-3">
@@ -229,15 +231,18 @@ export default function Grupos() {
 
       <div className="grid gap-6">
         <ArenaPanel className="p-5">
-          <ArenaSectionHeader eyebrow="Meus grupos" title="Onde sua comunidade já existe" />
-          <p className="mt-3 text-sm leading-6 text-zinc-400">Os grupos em que você já participa e pode organizar a galera.</p>
+          <ArenaSectionHeader
+            eyebrow="Minhas comunidades"
+            title="Turmas recorrentes"
+            hint="Comunidades em que você participa ou administra. Dentro de cada comunidade você pode destacar bolões e controlar pedidos de entrada."
+          />
 
           {loading ? (
             <div className="flex justify-center py-10"><Loader2 className="h-7 w-7 animate-spin text-primary" /></div>
           ) : groups.length === 0 ? (
             <EmptyState
               icon="👥"
-              title="Você ainda não participa de nenhum grupo"
+              title="Você ainda não participa de nenhuma comunidade"
               description="Crie o seu ou entre com um código."
               className="mt-4 rounded-[24px] border border-dashed border-white/10 bg-white/[0.03]"
               glowColor="green"
@@ -245,7 +250,7 @@ export default function Grupos() {
           ) : (
             <div className="mt-4 grid gap-3 md:grid-cols-2">
               {groups.map((group) => (
-                <Link key={group.id} to={`/grupos/${group.id}`} className="rounded-[26px] border border-white/10 bg-white/[0.04] p-4 backdrop-blur-xl transition hover:border-primary/20 hover:bg-white/[0.06]">
+                <Link key={group.id} to={`/comunidades/${group.id}`} className="rounded-[26px] border border-white/10 bg-white/[0.04] p-4 backdrop-blur-xl transition hover:border-primary/20 hover:bg-white/[0.06]">
                   <div className="flex items-center gap-3">
                     <div className="flex h-12 w-12 items-center justify-center rounded-[18px] border border-primary/15 bg-primary/10 text-2xl">
                       {group.emoji}
@@ -268,21 +273,24 @@ export default function Grupos() {
 
         <div className="grid items-start gap-6 lg:grid-cols-[1.2fr,0.8fr]">
           <AdmissionInbox
-            title="Solicitações pendentes"
-            description="Tudo que ainda depende de aprovação do grupo fica aqui, separado da navegação principal."
+            title="Pedidos"
+            description="Pedidos de entrada em comunidades privadas ficam aqui."
             emptyTitle="Nada pendente agora"
-            emptyDescription="Se você pedir entrada em um grupo privado, ele vai aparecer aqui."
+            emptyDescription="Pedidos para comunidades privadas aparecem aqui."
             items={pendingItems}
           />
 
           <ArenaPanel className="p-5">
-            <ArenaSectionHeader eyebrow="Código" title="Entrar com código" />
-            <p className="mt-3 text-sm leading-6 text-zinc-400">Recebeu um código? Esse é o caminho curto.</p>
+            <ArenaSectionHeader
+              eyebrow="Código"
+              title="Entrar rápido"
+              hint="Cole o código da comunidade. Em comunidade privada, o pedido vai para aprovação do admin."
+            />
             <div className="mt-4 flex gap-2">
               <input
                 value={joinCode}
                 onChange={(event) => setJoinCode(event.target.value.toUpperCase())}
-                placeholder="Código do grupo"
+                placeholder="Código da comunidade"
                 className="flex-1 rounded-[18px] border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-black uppercase tracking-[0.2em] text-white placeholder:text-zinc-500"
               />
               <button
@@ -297,15 +305,16 @@ export default function Grupos() {
         </div>
 
         <ArenaPanel className="p-5">
-          <ArenaSectionHeader eyebrow="Convites" title="Compartilhar sem procurar em menus" />
-          <p className="mt-3 text-sm leading-6 text-zinc-400">
-            Se você administra um grupo, compartilhe o link certo sem precisar cavar menus.
-          </p>
+          <ArenaSectionHeader
+            eyebrow="Convites"
+            title="Chamar a turma"
+            hint="Admins copiam o link certo daqui. O link deixa claro se a pessoa entra direto ou precisa pedir aprovação."
+          />
 
           {invitationGroups.length === 0 ? (
             <div className="mt-5 rounded-[26px] border border-dashed border-white/10 bg-white/[0.03] px-5 py-7">
-              <p className="font-display text-[1.35rem] font-semibold uppercase leading-none text-white">Você ainda não administra nenhum grupo</p>
-              <p className="mt-2 text-sm leading-6 text-zinc-500">Quando criar um grupo, os atalhos de convite aparecem aqui.</p>
+              <p className="font-display text-[1.35rem] font-semibold uppercase leading-none text-white">Você ainda não administra nenhuma comunidade</p>
+              <p className="mt-2 text-sm leading-6 text-zinc-500">Quando criar uma comunidade, os atalhos de convite aparecem aqui.</p>
             </div>
           ) : (
             <div className="mt-4 grid gap-3 md:grid-cols-2">
@@ -345,11 +354,12 @@ export default function Grupos() {
 
         <ArenaPanel className="p-5">
           <ArenaSectionHeader
-            eyebrow="Criar grupo"
-            title="Montar a comunidade antes do bolão"
+            eyebrow="Criar comunidade"
+            title="Nova turma"
+            hint="Crie a comunidade primeiro quando quiser controlar membros, aprovar entradas e reunir vários bolões no mesmo lugar."
             action={
               <Link
-                to="/grupos/criar"
+                to="/comunidades/criar"
                 className="inline-flex items-center gap-2 rounded-[18px] bg-primary px-4 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-black transition hover:brightness-105"
               >
                 <Plus className="h-4 w-4" />
@@ -357,9 +367,6 @@ export default function Grupos() {
               </Link>
             }
           />
-          <p className="mt-3 text-sm leading-6 text-zinc-400">
-            Monte a comunidade primeiro e só depois escolha se ela já nasce com um bolão.
-          </p>
         </ArenaPanel>
       </div>
     </div>

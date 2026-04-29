@@ -16,10 +16,10 @@ export function BrandWordmark({
   const prefix = suffix ? normalizedLabel.slice(0, -suffix.length) : normalizedLabel;
 
   return (
-    <span aria-label={normalizedLabel} className={cn("inline-flex items-baseline uppercase", className)}>
+    <span aria-label={normalizedLabel} className={cn("inline-flex items-baseline overflow-visible uppercase", className)}>
       <span>{prefix}</span>
       {suffix ? (
-        <span className={cn("text-gradient-gold", accentClassName)}>
+        <span className={cn("inline-block pr-[0.08em] text-gradient-gold", accentClassName)}>
           {suffix}
         </span>
       ) : null}

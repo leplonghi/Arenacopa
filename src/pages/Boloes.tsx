@@ -1,8 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Loader2, Plus, Search, Trophy } from "lucide-react";
-import { collection, doc, documentId, getDocs, query, where, orderBy, limit } from "firebase/firestore";
-import { db } from "@/integrations/firebase/client";
+import { Compass, Loader2, Plus, Search, Sparkles, Store, Trophy, Users2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { EmptyState } from "@/components/EmptyState";
@@ -12,42 +10,19 @@ import { BolaoEntryGuidance } from "@/features/boloes/shared/BolaoEntryGuidance"
 import { joinViaInvite } from "@/services/groups/group-access.service";
 import { trackSocialEvent } from "@/lib/analytics/social.telemetry";
 import { ArenaMetric, ArenaPanel, ArenaSectionHeader } from "@/components/arena/ArenaPrimitives";
-
-type BolaoCard = {
-  id: string;
-  name: string;
-  description: string | null;
-  invite_code: string;
-  avatar_url: string | null;
-  category: "public" | "private";
-  is_paid: boolean;
-  status: string;
-};
-
-type RequestCard = {
-  id: string;
-  bolaoId: string;
-  bolaoName: string;
-  requestStatus: string;
-  updatedAt: string | null;
-};
-
-function chunk<T>(values: T[], size: number) {
-  const groups: T[][] = [];
-  for (let index = 0; index < values.length; index += size) {
-    groups.push(values.slice(index, index + size));
-  }
-  return groups;
-}
+import { OpportunityRail } from "@/components/opportunities/OpportunityRail";
+import { getBolaoCardShellClass } from "@/features/boloes/listing/bolaoCardVisuals";
+import { useOpportunities } from "@/hooks/useOpportunities";
+import { listUserBoloes, type BolaoListingCard, type BolaoListingRequestCard } from "@/services/boloes/bolao-listing.service";
 
 export default function Boloes() {
   const { user } = useAuth();
   const { toast } = useToast();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [myBoloes, setMyBoloes] = useState<BolaoCard[]>([]);
-  const [pendingRequests, setPendingRequests] = useState<RequestCard[]>([]);
-  const [discoverBoloes, setDiscoverBoloes] = useState<BolaoCard[]>([]);
+  const [myBoloes, setMyBoloes] = useState<BolaoListingCard[]>([]);
+  const [pendingRequests, setPendingRequests] = useState<BolaoListingRequestCard[]>([]);
+  const [discoverBoloes, setDiscoverBoloes] = useState<BolaoListingCard[]>([]);
   const [joinCode, setJoinCode] = useState("");
   const [joining, setJoining] = useState(false);
 
@@ -62,88 +37,10 @@ export default function Boloes() {
 
     setLoading(true);
     try {
-      const membershipSnapshot = await getDocs(
-        query(collection(db, "bolao_members"), where("user_id", "==", user.id)),
-      );
-      const bolaoIds = Array.from(
-        new Set(
-          membershipSnapshot.docs
-            .filter((docSnapshot) => {
-              const membershipStatus = String(docSnapshot.data().membership_status || "active");
-              return !["left", "removed", "withdrawn_by_owner"].includes(membershipStatus);
-            })
-            .map((docSnapshot) => docSnapshot.data().bolao_id as string),
-        ),
-      );
-
-      const myBoloesDocs = await Promise.all(
-        chunk(bolaoIds, 30).map(async (ids) => {
-          if (!ids.length) {
-            return [];
-          }
-          const snapshot = await getDocs(
-            query(collection(db, "boloes"), where(documentId(), "in", ids)),
-          );
-          return snapshot.docs;
-        }),
-      );
-
-      const mine = myBoloesDocs
-        .flat()
-        .map((docSnapshot) => ({
-          id: docSnapshot.id,
-          name: String(docSnapshot.data().name || "Bolão"),
-          description: (docSnapshot.data().description as string | null) ?? null,
-          invite_code: String(docSnapshot.data().invite_code || ""),
-          avatar_url: (docSnapshot.data().avatar_url as string | null) ?? null,
-          category: (docSnapshot.data().category as "public" | "private") || "private",
-          is_paid: Boolean(docSnapshot.data().is_paid),
-          status: String(docSnapshot.data().status || "open"),
-        }))
-        .sort((left, right) => right.id.localeCompare(left.id));
-
-      const requestSnapshot = await getDocs(
-        query(collection(db, "bolao_join_requests"), where("user_id", "==", user.id)),
-      );
-      const pending = requestSnapshot.docs
-        .map((docSnapshot) => ({ id: docSnapshot.id, ...docSnapshot.data() }))
-        .filter((request) => request.request_status === "pending");
-
-      const pendingBolaoDocs = await Promise.all(
-        pending.map(async (request) => {
-          const poolSnapshot = await getDocs(
-            query(collection(db, "boloes"), where(documentId(), "==", request.bolao_id)),
-          );
-          const poolDoc = poolSnapshot.docs[0];
-          return {
-            id: request.id,
-            bolaoId: String(request.bolao_id),
-            bolaoName: poolDoc ? String(poolDoc.data().name || "Bolão") : "Bolão",
-            requestStatus: String(request.request_status || "pending"),
-            updatedAt: (request.updated_at as string | null) ?? null,
-          };
-        }),
-      );
-
-      const publicSnapshot = await getDocs(
-        query(collection(db, "boloes"), where("category", "==", "public"), orderBy("created_at", "desc"), limit(12)),
-      );
-      const discover = publicSnapshot.docs
-        .filter((docSnapshot) => !bolaoIds.includes(docSnapshot.id))
-        .map((docSnapshot) => ({
-          id: docSnapshot.id,
-          name: String(docSnapshot.data().name || "Bolão"),
-          description: (docSnapshot.data().description as string | null) ?? null,
-          invite_code: String(docSnapshot.data().invite_code || ""),
-          avatar_url: (docSnapshot.data().avatar_url as string | null) ?? null,
-          category: "public" as const,
-          is_paid: Boolean(docSnapshot.data().is_paid),
-          status: String(docSnapshot.data().status || "open"),
-        }));
-
-      setMyBoloes(mine);
-      setPendingRequests(pendingBolaoDocs);
-      setDiscoverBoloes(discover);
+      const listing = await listUserBoloes();
+      setMyBoloes(listing.myBoloes);
+      setPendingRequests(listing.pendingRequests);
+      setDiscoverBoloes(listing.discoverBoloes);
     } catch (error) {
       console.error(error);
       toast({
@@ -180,6 +77,11 @@ export default function Boloes() {
     ],
     [discoverBoloes.length, myBoloes.length, pendingRequests.length],
   );
+  const opportunities = useOpportunities({
+    user,
+    activeBoloes: myBoloes,
+    surface: "boloes",
+  });
 
   const handleJoinByCode = async () => {
     if (!joinCode.trim()) {
@@ -215,7 +117,9 @@ export default function Boloes() {
         description:
           error instanceof Error && error.message === "join_requires_group"
             ? "Esse bolão exige entrada prévia no grupo vinculado."
-            : "Revise o código e tente novamente.",
+            : error instanceof Error && error.message === "commercial_participant_limit_reached"
+              ? "Este pacote atingiu o limite de participantes."
+              : "Revise o código e tente novamente.",
         variant: "destructive",
       });
     } finally {
@@ -228,20 +132,27 @@ export default function Boloes() {
       <ArenaPanel tone="strong" className="mb-7 p-5 sm:p-6">
         <ArenaSectionHeader
           eyebrow="Bolões"
-          title="Entrar, descobrir e criar sem confusão"
+          title="Acompanhe suas disputas"
+          hint="Bolões reúnem seus palpites, entradas pendentes, comunidades e rankings em uma área operacional."
           action={
-            <Link
-              to="/boloes/criar"
-              className="inline-flex items-center gap-2 rounded-[18px] bg-primary px-4 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-black transition hover:brightness-105"
-            >
-              <Plus className="h-4 w-4" />
-              Criar bolão
-            </Link>
+            <div className="grid w-full grid-cols-1 gap-2 sm:flex sm:w-auto sm:flex-wrap">
+              <Link
+                to="/boloes/criar"
+                className="inline-flex min-w-0 items-center justify-center gap-2 rounded-[18px] bg-primary px-4 py-3 text-center text-[11px] font-black uppercase tracking-[0.16em] text-black transition hover:brightness-105 sm:w-auto"
+              >
+                <Plus className="h-4 w-4" />
+                Bolao da turma
+              </Link>
+              <Link
+                to="/negocios"
+                className="inline-flex min-w-0 items-center justify-center gap-2 rounded-[18px] border border-white/10 bg-white/[0.04] px-4 py-3 text-center text-[11px] font-black uppercase tracking-[0.16em] text-white transition hover:bg-white/[0.07] sm:w-auto"
+              >
+                <Store className="h-4 w-4" />
+                Negócios
+              </Link>
+            </div>
           }
         />
-        <p className="mt-3 max-w-3xl text-sm leading-6 text-zinc-300">
-          Seus bolões ficam aqui. Entrada, descoberta e criação agora aparecem em blocos separados, com menos ruído e mais contexto.
-        </p>
 
         <div className="mt-5 grid gap-3 sm:grid-cols-3">
           {spotlightMetrics.map((item, index) => (
@@ -256,10 +167,85 @@ export default function Boloes() {
         </div>
       </ArenaPanel>
 
+      <div className="mb-6 grid gap-3 lg:grid-cols-3">
+        <Link
+          to="/descobrir/boloes"
+          className="group rounded-[22px] border border-primary/25 bg-primary/[0.08] p-5 text-white transition hover:border-primary/45 hover:bg-primary/[0.12]"
+        >
+          <div className="flex items-start gap-3">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-primary/25 bg-primary/10 text-primary">
+              <Compass className="h-5 w-5" />
+            </span>
+            <div className="min-w-0">
+              <h3 className="font-display text-xl font-bold uppercase tracking-[0.04em]">
+                Quer encontrar novos bolões?
+              </h3>
+              <p className="mt-2 text-sm leading-6 text-zinc-300">
+                Explore bolões públicos, campanhas e disputas perto de você.
+              </p>
+              <span className="mt-4 inline-flex text-[11px] font-black uppercase tracking-[0.16em] text-primary transition group-hover:translate-x-0.5">
+                Explorar bolões
+              </span>
+            </div>
+          </div>
+        </Link>
+
+        <Link
+          to="/comunidades"
+          className="group rounded-[22px] border border-white/10 bg-white/[0.04] p-5 text-white transition hover:border-white/20 hover:bg-white/[0.06]"
+        >
+          <div className="flex items-start gap-3">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.05] text-primary">
+              <Users2 className="h-5 w-5" />
+            </span>
+            <div className="min-w-0">
+              <h3 className="font-display text-xl font-bold uppercase tracking-[0.04em]">
+                Comunidades
+              </h3>
+              <p className="mt-2 text-sm leading-6 text-zinc-300">
+                Reúna a mesma turma em vários bolões ao longo da temporada.
+              </p>
+              <span className="mt-4 inline-flex text-[11px] font-black uppercase tracking-[0.16em] text-primary transition group-hover:translate-x-0.5">
+                Abrir comunidades
+              </span>
+            </div>
+          </div>
+        </Link>
+
+        <Link
+          to="/boloes/creator"
+          className="group rounded-[22px] border border-white/10 bg-white/[0.04] p-5 text-white transition hover:border-white/20 hover:bg-white/[0.06]"
+        >
+          <div className="flex items-start gap-3">
+            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.05] text-primary">
+              <Sparkles className="h-5 w-5" />
+            </span>
+            <div className="min-w-0">
+              <h3 className="font-display text-xl font-bold uppercase tracking-[0.04em]">
+                Creator Pro
+              </h3>
+              <p className="mt-2 text-sm leading-6 text-zinc-300">
+                Prepare bolões com materiais de divulgação e uma presença mais profissional.
+              </p>
+              <span className="mt-4 inline-flex text-[11px] font-black uppercase tracking-[0.16em] text-primary transition group-hover:translate-x-0.5">
+                Conhecer recursos
+              </span>
+            </div>
+          </div>
+        </Link>
+      </div>
+
+      <div className="mb-6">
+        <OpportunityRail opportunities={opportunities} title="Próximas ações em Bolões" />
+      </div>
+
       <div className="grid gap-6">
         <ArenaPanel className="p-5">
-          <ArenaSectionHeader eyebrow="Meus bolões" title="Onde você já está jogando" />
-          <p className="mt-3 text-sm leading-6 text-zinc-400">Os bolões em que você já está dentro e pode agir agora.</p>
+          <ArenaSectionHeader
+            eyebrow="Meus bolões"
+            title="Sua mesa"
+            hint="Bolões em que você participa. Toque em um card para abrir tabela, jogos, membros e compartilhamento."
+          />
           {loading ? (
             <div className="flex justify-center py-10"><Loader2 className="h-7 w-7 animate-spin text-primary" /></div>
           ) : myBoloes.length === 0 ? (
@@ -273,7 +259,7 @@ export default function Boloes() {
           ) : (
             <div className="mt-5 grid gap-3 md:grid-cols-2">
               {myBoloes.map((bolao) => (
-                <Link key={bolao.id} to={`/boloes/${bolao.id}`} className="rounded-[26px] border border-white/10 bg-white/[0.04] p-4 backdrop-blur-xl transition hover:border-primary/20 hover:bg-white/[0.06]">
+                <Link key={bolao.id} to={`/boloes/${bolao.id}`} className={getBolaoCardShellClass("action")}>
                   <div className="flex items-center gap-3">
                     <BolaoAvatar
                       avatarUrl={bolao.avatar_url}
@@ -300,18 +286,19 @@ export default function Boloes() {
 
         <div className="grid items-start gap-6 lg:grid-cols-[1.2fr,0.8fr]">
           <AdmissionInbox
-            title="Convites e solicitações"
-            description="Tudo que depende de aprovação ou está esperando uma resposta fica aqui."
+            title="Entradas"
+            description="Convites e pedidos ficam reunidos aqui."
             emptyTitle="Nada pendente agora"
-            emptyDescription="Quando você pedir entrada em um bolão privado, ele vai aparecer aqui."
+            emptyDescription="Pedidos para bolões privados aparecem aqui."
             items={requestItems}
           />
 
           <ArenaPanel className="p-5">
-            <ArenaSectionHeader eyebrow="Código" title="Entrar com código" />
-            <p className="mt-3 text-sm leading-6 text-zinc-400">
-              Se alguém te mandou um código, aqui é o caminho mais rápido.
-            </p>
+            <ArenaSectionHeader
+              eyebrow="Código"
+              title="Entrar rápido"
+              hint="Cole o código enviado por WhatsApp, Telegram ou outro convite. Se o bolão for privado, sua entrada pode depender de aprovação."
+            />
 
             <div className="mt-4 flex gap-2">
               <input
@@ -332,10 +319,11 @@ export default function Boloes() {
         </div>
 
         <ArenaPanel className="p-5">
-          <ArenaSectionHeader eyebrow="Descobrir" title="Bolões abertos para encontrar" />
-          <p className="mt-3 text-sm leading-6 text-zinc-400">
-            Aqui entram só os bolões públicos ou abertos para descoberta, sem misturar com os seus.
-          </p>
+          <ArenaSectionHeader
+            eyebrow="Descobrir"
+            title="Mesas abertas"
+            hint="Lista apenas bolões públicos ou abertos para descoberta. Os seus ficam na seção de cima."
+          />
 
           {loading ? (
             <div className="flex justify-center py-10"><Loader2 className="h-7 w-7 animate-spin text-primary" /></div>
@@ -350,7 +338,7 @@ export default function Boloes() {
           ) : (
             <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
               {discoverBoloes.map((bolao) => (
-                <div key={bolao.id} className="rounded-[26px] border border-white/10 bg-white/[0.04] p-4 backdrop-blur-xl">
+                <div key={bolao.id} className={getBolaoCardShellClass("info")}>
                   <div className="flex items-center gap-3">
                     <BolaoAvatar
                       avatarUrl={bolao.avatar_url}

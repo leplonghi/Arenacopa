@@ -4,7 +4,7 @@ import { trackBolaoConfigEvent } from "@/lib/analytics/bolao-config.telemetry";
 describe("trackBolaoConfigEvent", () => {
   it("forwards approved rollout metrics to plausible", () => {
     const plausible = vi.fn();
-    (window as any).plausible = plausible;
+    (window as Window & { plausible: typeof plausible }).plausible = plausible;
 
     trackBolaoConfigEvent("member_removal_blocked", { source: "edit_panel" });
 

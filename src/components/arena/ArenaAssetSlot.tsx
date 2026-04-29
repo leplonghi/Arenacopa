@@ -5,6 +5,8 @@ type ArenaAssetSlotProps = {
   name: string;
   label: string;
   src?: string | null;
+  variant?: "slot" | "cutout";
+  loading?: "eager" | "lazy";
   className?: string;
   imgClassName?: string;
   fallbackClassName?: string;
@@ -14,14 +16,20 @@ export function ArenaAssetSlot({
   name,
   label,
   src,
+  variant = "slot",
+  loading = "lazy",
   className,
   imgClassName,
   fallbackClassName,
 }: ArenaAssetSlotProps) {
+  const isCutout = variant === "cutout" && Boolean(src);
+
   return (
     <div
       className={cn(
-        "relative flex aspect-square items-center justify-center overflow-hidden rounded-[22px] border border-[#7dff48]/20 bg-[radial-gradient(circle_at_50%_20%,rgba(255,200,40,0.14),transparent_36%),linear-gradient(160deg,rgba(10,45,28,0.82),rgba(2,10,8,0.96))] shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_18px_38px_-28px_rgba(0,0,0,0.85)]",
+        isCutout
+          ? "relative flex aspect-square items-center justify-center overflow-visible border-0 bg-transparent shadow-none"
+          : "relative flex aspect-square items-center justify-center overflow-hidden rounded-[22px] border border-[#7dff48]/20 bg-[radial-gradient(circle_at_50%_20%,rgba(255,200,40,0.14),transparent_36%),linear-gradient(160deg,rgba(10,45,28,0.82),rgba(2,10,8,0.96))] shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_18px_38px_-28px_rgba(0,0,0,0.85)]",
         className,
       )}
       data-asset-slot={name}
@@ -30,8 +38,12 @@ export function ArenaAssetSlot({
         <img
           src={src}
           alt={label}
+          loading={loading}
+          decoding="async"
           className={cn(
-            "h-full w-full object-contain p-3 drop-shadow-[0_14px_24px_rgba(0,0,0,0.38)]",
+            isCutout
+              ? "h-full w-full object-contain p-0 drop-shadow-[0_14px_24px_rgba(0,0,0,0.38)]"
+              : "h-full w-full object-contain p-1.5 drop-shadow-[0_14px_24px_rgba(0,0,0,0.38)]",
             imgClassName,
           )}
         />

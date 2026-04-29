@@ -1,6 +1,6 @@
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { ArrowLeft, ChevronDown, Crown, Info, Share2, Trophy, Users } from "lucide-react";
+import { ArrowLeft, ChevronDown, Crown, Info, LockKeyhole, Share2, Trophy, Users } from "lucide-react";
 import confetti from "canvas-confetti";
 import type { TFunction } from "i18next";
 import { db } from "@/integrations/firebase/client";
@@ -19,7 +19,6 @@ import {
 } from "firebase/firestore";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { getSiteUrl } from "@/utils/site-url";
 import { useTranslation } from "react-i18next";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -37,8 +36,10 @@ import { approveBolaoJoin, rejectBolaoJoin } from "@/services/groups/group-acces
 import { trackSocialEvent } from "@/lib/analytics/social.telemetry";
 import type { BolaoActivity, BolaoData, BolaoMarket, BolaoOnboardingState, BolaoPrediction, MemberData, Palpite } from "@/types/bolao";
 import { ArenaMetric, ArenaPanel, ArenaTabPill } from "@/components/arena/ArenaPrimitives";
+import { buildBolaoInviteUrl, buildBolaoWhatsAppMessage } from "@/utils/bolao-share";
+import { BolaoSharePanel } from "@/components/copa/bolao/BolaoSharePanel";
 
-type BolaoDetailTab = "palpites" | "ranking" | "pessoas" | "resumo";
+type BolaoDetailTab = "palpites" | "ranking" | "pessoas" | "resumo" | "compartilhar";
 
 type PoolJoinRequestRow = {
   id: string;
@@ -112,6 +113,9 @@ function normalizeBolaoTab(tab: string | null): BolaoDetailTab | null {
     case "config":
     case "resumo":
       return "resumo";
+    case "share":
+    case "compartilhar":
+      return "compartilhar";
     default:
       return null;
   }
@@ -169,13 +173,6 @@ export default function BolaoDetail() {
   }, []);
 
   const isCreator = bolao?.creator_id === user?.id;
-  const myMember = members.find(m => m.user_id === user?.id);
-  const isPaid =
-    myMember?.payment_status === 'paid' ||
-    myMember?.payment_status === 'exempt' ||
-    myMember?.payment_status === 'confirmed' ||
-    myMember?.payment_status === 'waived' ||
-    isCreator;
   const championMarket = bolaoMarkets.find((market) => market.slug === "champion");
   const matchMarkets = bolaoMarkets.filter((market) => market.scope === "match");
   const phaseMarkets = bolaoMarkets.filter((market) => market.scope === "phase");
@@ -297,9 +294,13 @@ export default function BolaoDetail() {
                 });
               }
               toast({ title: "Solicitação aprovada" });
-            } catch {
+            } catch (error) {
               toast({
                 title: "Não foi possível aprovar",
+                description:
+                  error instanceof Error && error.message === "commercial_participant_limit_reached"
+                    ? "Este pacote atingiu o limite de participantes."
+                    : undefined,
                 variant: "destructive",
               });
             }
@@ -356,6 +357,12 @@ export default function BolaoDetail() {
       if (!bolaoSnap.exists()) throw new Error(t('bolao_detail.not_found'));
 
       const bData = bolaoSnap.data();
+      if (bData.lifecycle?.status === "deleted" || bData.status === "deleted") {
+        toast({ title: "Este bolão foi apagado" });
+        navigate("/boloes", { replace: true });
+        return;
+      }
+
       setBolao({
         id: bolaoSnap.id,
         name: bData.name,
@@ -416,7 +423,7 @@ export default function BolaoDetail() {
   }, [id, navigate, t, toast, user]);
 
   useEffect(() => {
-    if (!id || !user || !bolao) return;
+    if (!id || !user) return;
     loadBolao();
   }, [id, user, loadBolao]);
 
@@ -455,6 +462,13 @@ export default function BolaoDetail() {
           user_id: data.user_id,
           role: data.role,
           payment_status: data.payment_status,
+          payment_proof_text: data.payment_proof_text ?? null,
+          payment_proof_status: data.payment_proof_status ?? null,
+          payment_proof_submitted_at: data.payment_proof_submitted_at?.toDate
+            ? data.payment_proof_submitted_at.toDate().toISOString()
+            : data.payment_proof_submitted_at ?? null,
+          prize_agreement_accepted: data.prize_agreement_accepted ?? null,
+          prize_agreement_status: data.prize_agreement_status ?? null,
           joined_at: data.joined_at || new Date().toISOString(),
           profile: profilesMap[data.user_id] || null
         } as MemberData);
@@ -651,8 +665,13 @@ export default function BolaoDetail() {
   const handleShareInvite = async () => {
     if (!bolao) return;
 
-    const inviteUrl = `${getSiteUrl()}/b/${bolao.invite_code}`;
-    const shareText = `Vem pro bolao "${bolao.name}" no Arena CUP. Usa o codigo ${bolao.invite_code} ou entra por aqui: ${inviteUrl}`;
+    const inviteUrl = buildBolaoInviteUrl(bolao.invite_code);
+    const shareText = buildBolaoWhatsAppMessage({
+      name: bolao.name,
+      inviteCode: bolao.invite_code,
+      inviteUrl,
+      context: bolao.grupo_id ? "evento" : "turma",
+    });
 
     try {
       if (navigator.share) {
@@ -662,7 +681,7 @@ export default function BolaoDetail() {
           url: inviteUrl,
         });
       } else {
-        await navigator.clipboard.writeText(inviteUrl);
+        await navigator.clipboard.writeText(shareText);
         toast({
           title: t('bolao_detail.link_copied'),
           description: t('bolao_detail.link_copied_desc'),
@@ -746,12 +765,13 @@ export default function BolaoDetail() {
       {
         id: "palpites" as const,
         label: highlightedMatch
-          ? t('bolao_detail.tab_palpitar_pending', { defaultValue: "Palpites pendentes" })
-          : t('bolao_detail.tab_palpite', { defaultValue: "Palpites" }),
+          ? t('bolao_detail.tab_palpitar_pending', { defaultValue: "Jogos para marcar" })
+          : t('bolao_detail.tab_palpite', { defaultValue: "Jogos" }),
       },
       { id: "ranking" as const, label: t('bolao_detail.tab_ranking', { defaultValue: "Ranking" }) },
-      { id: "pessoas" as const, label: t('bolao_detail.tab_people', { defaultValue: "Pessoas" }) },
-      { id: "resumo" as const, label: t('bolao_detail.tab_summary', { defaultValue: "Resumo" }) },
+      { id: "pessoas" as const, label: t('bolao_detail.tab_people', { defaultValue: "Participantes" }) },
+      { id: "resumo" as const, label: t('bolao_detail.tab_summary', { defaultValue: "Organização" }) },
+      { id: "compartilhar" as const, label: t('bolao_detail.tab_share', { defaultValue: "Compartilhar" }) },
     ],
     [highlightedMatch, t]
   );
@@ -781,6 +801,13 @@ export default function BolaoDetail() {
   const completionPercent = pendingOverview.totalOpen > 0
     ? Math.round((pendingOverview.completed / pendingOverview.totalOpen) * 100)
     : 100;
+  const bolaoInviteUrl = buildBolaoInviteUrl(bolao.invite_code);
+  const bolaoShareText = buildBolaoWhatsAppMessage({
+    name: bolao.name,
+    inviteCode: bolao.invite_code,
+    inviteUrl: bolaoInviteUrl,
+    context: bolao.grupo_id ? "evento" : "turma",
+  });
 
   return (
     <div className="arena-screen max-w-6xl pb-28 pt-6 text-white">
@@ -920,7 +947,7 @@ export default function BolaoDetail() {
           <h2 className="mt-2 font-display text-[2.5rem] font-black uppercase leading-[0.92] tracking-[0.02em] text-white sm:text-[3.2rem]">
             {pendingOverview.totalPending > 0
               ? t("bolao_detail.pending_title", {
-                  defaultValue: "Você ainda tem {{count}} pendências abertas",
+                  defaultValue: "{{count}} jogos para resolver",
                   count: pendingOverview.totalPending,
                 })
               : t("bolao_detail.caught_up_title", {
@@ -929,9 +956,9 @@ export default function BolaoDetail() {
           </h2>
           <p className="mt-3 max-w-2xl text-sm leading-relaxed text-zinc-300">
             {pendingOverview.totalPending > 0
-              ? pendingOverview.summary || t("bolao_detail.pending_desc_fallback", { defaultValue: "Abra seus palpites e feche tudo antes do próximo prazo." })
+              ? pendingOverview.summary || t("bolao_detail.pending_desc_fallback", { defaultValue: "Abra os jogos e salve seus resultados antes do prazo." })
               : t("bolao_detail.caught_up_desc", {
-                  defaultValue: "Agora você pode acompanhar o ranking, a galera e os mercados resolvidos sem correr contra o relógio.",
+                  defaultValue: "Agora você pode acompanhar ranking, participantes e escolhas já fechadas.",
                 })}
           </p>
           <div className="mt-5">
@@ -940,7 +967,7 @@ export default function BolaoDetail() {
               className={pendingOverview.totalPending > 0 ? "arena-button-gold" : "arena-button-green"}
             >
               {pendingOverview.totalPending > 0
-                ? t("bolao_detail.go_to_predictions", { defaultValue: "Palpitar agora" })
+                ? t("bolao_detail.go_to_predictions", { defaultValue: "Marcar agora" })
                 : t("bolao_detail.go_to_ranking", { defaultValue: "Ver ranking" })}
             </button>
           </div>
@@ -1088,7 +1115,7 @@ export default function BolaoDetail() {
                 </button>
               </div>
               {galeraView === "rivais" && <PublicPalpitesTab bolaoId={bolao.id} />}
-              {galeraView === "membros" && <MembrosTab members={members} userId={user!.id} bolaoId={bolao.id} isCreator={isCreator} isPaid={isPaid} onRefresh={() => {}} />}
+              {galeraView === "membros" && <MembrosTab members={members} userId={user!.id} bolaoId={bolao.id} isCreator={isCreator} isPaid={Boolean(bolao.is_paid)} onRefresh={() => {}} />}
             </div>
           </Suspense>
         )}
@@ -1097,6 +1124,20 @@ export default function BolaoDetail() {
         {activeTab === "resumo" && bolao && (
           <Suspense fallback={<DetailSectionFallback />}>
             <div className="space-y-6">
+              <ArenaPanel className="p-4 sm:p-5">
+                <div className="flex items-start gap-3">
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] border border-primary/25 bg-primary/10 text-primary">
+                    <LockKeyhole className="h-4 w-4" />
+                  </span>
+                  <div>
+                    <p className="font-bold text-white">Regras e estrutura</p>
+                    <p className="mt-1 text-sm leading-6 text-zinc-400">
+                      Esta regra está travada para preservar a justiça da disputa. Para mudar a estrutura,
+                      duplique o bolão e crie uma nova edição.
+                    </p>
+                  </div>
+                </div>
+              </ArenaPanel>
               <OverviewTab bolao={bolao} members={members} palpites={myPalpites} userId={user!.id} isCreator={isCreator} markets={bolaoMarkets} marketPredictions={allMarketPredictions} activityFeed={activityFeed} onShare={handleShareInvite} />
               <div className="border-t border-white/10 pt-6">
                  <p className="mb-4 text-xs font-black uppercase tracking-widest text-zinc-400">{t('bolao_detail.caixinha_header')}</p>
@@ -1117,6 +1158,16 @@ export default function BolaoDetail() {
               )}
             </div>
           </Suspense>
+        )}
+
+        {activeTab === "compartilhar" && bolao && (
+          <BolaoSharePanel
+            bolaoName={bolao.name}
+            inviteCode={bolao.invite_code}
+            inviteUrl={bolaoInviteUrl}
+            shareText={bolaoShareText}
+            onNativeShare={handleShareInvite}
+          />
         )}
       </ArenaPanel>
 

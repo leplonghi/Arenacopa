@@ -4,7 +4,9 @@ const https = require("https");
 const NEWS_SOURCES = require("./newsSources");
 const bolaoConfigHandlers = require("./bolao-config/handlers");
 const bolaoConfigRepository = require("./bolao-config/repository");
+const bolaoListingRepository = require("./bolao-listing/repository");
 const groupAccessRepository = require("./group-access/repository");
+const commercialCampaignRepository = require("./commercial-campaigns/repository");
 
 admin.initializeApp();
 
@@ -66,6 +68,26 @@ function getRuntimeConfig() {
     return {
         stripeSecretKey: runtimeConfig?.stripe?.secret_key || process.env.STRIPE_SECRET_KEY || "",
         stripePremiumPriceId: runtimeConfig?.stripe?.premium_price_id || process.env.STRIPE_PREMIUM_PRICE_ID || "",
+        stripeCommercialCampaignPriceIds: {
+            single_match:
+                runtimeConfig?.stripe?.commercial_match_price_id ||
+                process.env.STRIPE_COMMERCIAL_MATCH_PRICE_ID ||
+                runtimeConfig?.stripe?.commercial_campaign_price_id ||
+                process.env.STRIPE_COMMERCIAL_CAMPAIGN_PRICE_ID ||
+                "",
+            five_matches:
+                runtimeConfig?.stripe?.commercial_five_matches_price_id ||
+                process.env.STRIPE_COMMERCIAL_FIVE_MATCHES_PRICE_ID ||
+                "",
+            short_championship:
+                runtimeConfig?.stripe?.commercial_short_championship_price_id ||
+                process.env.STRIPE_COMMERCIAL_SHORT_CHAMPIONSHIP_PRICE_ID ||
+                "",
+            full_cup:
+                runtimeConfig?.stripe?.commercial_full_cup_price_id ||
+                process.env.STRIPE_COMMERCIAL_FULL_CUP_PRICE_ID ||
+                "",
+        },
         siteUrl: runtimeConfig?.app?.site_url || process.env.SITE_URL || DEFAULT_SITE_URL,
         footballDataApiKey: runtimeConfig?.football_data?.api_key || process.env.FOOTBALL_DATA_API_KEY || "",
         seedToken: runtimeConfig?.seed?.token || process.env.SEED_ADMIN_TOKEN || "",
@@ -74,6 +96,9 @@ function getRuntimeConfig() {
 
 function mapAuthedOperationError(error) {
     const code = error?.message || "internal";
+    if (code === "auth_required") {
+        return { status: 401, error: code };
+    }
     if (code === "permission_denied") {
         return { status: 403, error: code };
     }
@@ -83,17 +108,26 @@ function mapAuthedOperationError(error) {
     if (["config_conflict"].includes(code)) {
         return { status: 409, error: code };
     }
+    if (["payment_required"].includes(code)) {
+        return { status: 402, error: code };
+    }
     if (["already_member", "existing_request"].includes(code)) {
         return { status: 409, error: code };
     }
     if (
         [
+            "blocked_commercial_reward_language",
+            "invalid_campaign_period",
+            "invalid_cep",
+            "invalid_phone",
             "invalid_state",
+            "match_not_future",
             "structure_locked",
             "member_protected",
             "removal_blocked",
             "validation_failed",
             "join_requires_group",
+            "commercial_participant_limit_reached",
             "creator_cannot_leave",
             "cannot_remove_creator",
             "invalid_featured_bolao",
@@ -177,6 +211,12 @@ exports.resolvePublicInvite = functions.region("us-central1").https.onRequest(as
 
             const bolaoDoc = bolaoSnapshot.docs[0];
             const bolaoData = bolaoDoc.data();
+            if (
+                bolaoData.lifecycle?.status === "deleted" ||
+                bolaoData.status === "deleted"
+            ) {
+                return res.status(404).json({ found: false });
+            }
             const grupoId = bolaoData.context?.grupo_id || bolaoData.grupo_id || null;
             const requiredGroupSnapshot = grupoId
                 ? await db.collection("grupos").doc(grupoId).get()
@@ -274,7 +314,7 @@ exports.resolvePublicInvite = functions.region("us-central1").https.onRequest(as
 async function verifyHttpUser(req) {
     const authHeader = req.headers.authorization || "";
     if (!authHeader.startsWith("Bearer ")) {
-        throw new Error("Autenticação obrigatória.");
+        throw new Error("auth_required");
     }
 
     const idToken = authHeader.slice("Bearer ".length).trim();
@@ -929,8 +969,18 @@ function detectChampionshipIds(title, summary, source) {
     return sourceChampionships;
 }
 
+let RSSParserConstructor = null;
+
+function getRSSParserConstructor() {
+    if (!RSSParserConstructor) {
+        RSSParserConstructor = require("rss-parser");
+    }
+    return RSSParserConstructor;
+}
+
 function createNewsParser() {
-    return new RSSParser({
+    const Parser = getRSSParserConstructor();
+    return new Parser({
         customFields: {
             item: [
                 ["media:content", "media:content"],
@@ -1933,7 +1983,6 @@ exports.onBolaoPredictionWrite = functions.firestore
 // Runs every 30 minutes.
 // =============================================
 
-const RSSParser = require("rss-parser");
 const crypto = require("crypto");
 
 // Team name/alias -> FIFA code (used as country_filter in Firestore)
@@ -2211,6 +2260,164 @@ exports.syncPremiumCheckoutSession = functions.region("us-central1").https.onReq
     }
 });
 
+exports.createCommercialCampaignDraft = createAuthedEndpoint(async ({ auth, nowIso, req }) => {
+    return commercialCampaignRepository.createCampaignDraft({
+        db,
+        actorId: auth.uid,
+        body: req.body || {},
+        siteUrl: getRuntimeConfig().siteUrl,
+        nowIso,
+    });
+});
+
+exports.getCommercialCampaign = createAuthedEndpoint(async ({ auth, req }) => {
+    return commercialCampaignRepository.getManagedCampaign({
+        db,
+        actorId: auth.uid,
+        campaignId: req.body?.campaign_id,
+    });
+});
+
+exports.listManagedMerchants = createAuthedEndpoint(async ({ auth }) => {
+    return commercialCampaignRepository.listManagedMerchants({
+        db,
+        actorId: auth.uid,
+    });
+});
+
+exports.createCommercialCampaignCheckout = createAuthedEndpoint(async ({ auth, nowIso, req }) => {
+    const { stripeCommercialCampaignPriceIds, siteUrl: configuredSiteUrl } = getRuntimeConfig();
+
+    const campaignId = typeof req.body?.campaign_id === "string" ? req.body.campaign_id.trim() : "";
+    if (!campaignId) {
+        throw new Error("validation_failed");
+    }
+
+    const requestSiteUrl = typeof req.body?.site_url === "string" ? req.body.site_url.replace(/\/$/, "") : "";
+    const requestOriginAllowed = getAllowedOrigins(configuredSiteUrl).has(requestSiteUrl);
+    const resolvedSiteUrl = (requestOriginAllowed ? requestSiteUrl : configuredSiteUrl).replace(/\/$/, "");
+    const campaign = await commercialCampaignRepository.getManagedCampaign({
+        db,
+        actorId: auth.uid,
+        campaignId,
+    });
+    const effectivePricingPlan = ["unlimited_monthly", "unlimited_annual"].includes(campaign.pricing_plan)
+        ? "full_cup"
+        : campaign.pricing_plan;
+    const stripePriceId = stripeCommercialCampaignPriceIds[effectivePricingPlan] || "";
+    if (!stripePriceId) {
+        throw new Error("payment_required");
+    }
+    const checkoutMode = "payment";
+
+    const params = {
+        mode: checkoutMode,
+        success_url: `${resolvedSiteUrl}/bares/campanhas/${campaignId}?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${resolvedSiteUrl}/bares/campanhas/${campaignId}?checkout=cancelled`,
+        client_reference_id: auth.uid,
+        "line_items[0][price]": stripePriceId,
+        "line_items[0][quantity]": "1",
+        "metadata[user_id]": auth.uid,
+        "metadata[source]": "arenacopa_commercial_campaign",
+        "metadata[campaign_id]": campaignId,
+        "metadata[merchant_id]": campaign.merchant_id,
+        "metadata[pricing_plan]": effectivePricingPlan,
+        allow_promotion_codes: "true",
+        billing_address_collection: "auto",
+    };
+
+    if (auth.email) {
+        params.customer_email = auth.email;
+    }
+
+    const session = await stripeApiRequest({
+        method: "POST",
+        path: "/checkout/sessions",
+        params,
+        idempotencyKey: `commercial_campaign_${campaignId}_${Math.floor(Date.now() / 10000)}`,
+    });
+
+    const order = await commercialCampaignRepository.createOrder({
+        db,
+        actorId: auth.uid,
+        campaignId,
+        checkoutSession: session,
+        stripePriceId,
+        pricingPlan: effectivePricingPlan,
+        nowIso,
+    });
+
+    return {
+        url: session.url,
+        sessionId: session.id,
+        orderId: order.orderId,
+    };
+});
+
+exports.syncCommercialCampaignCheckout = createAuthedEndpoint(async ({ auth, nowIso, req }) => {
+    const checkoutSessionId = typeof req.body?.checkout_session_id === "string"
+        ? req.body.checkout_session_id.trim()
+        : "";
+    if (!checkoutSessionId) {
+        throw new Error("validation_failed");
+    }
+
+    const session = await stripeApiRequest({
+        method: "GET",
+        path: `/checkout/sessions/${checkoutSessionId}`,
+    });
+
+    const sessionUserId = session.client_reference_id || session.metadata?.user_id || null;
+    if (sessionUserId && sessionUserId !== auth.uid) {
+        throw new Error("permission_denied");
+    }
+
+    return commercialCampaignRepository.publishPaidCampaign({
+        db,
+        actorId: auth.uid,
+        checkoutSession: session,
+        nowIso,
+    });
+});
+
+exports.resolveCommercialCampaign = functions.region("us-central1").https.onRequest(async (req, res) => {
+    applyCors(req, res);
+
+    if (req.method === "OPTIONS") {
+        return res.status(204).send("");
+    }
+
+    if (req.method !== "POST") {
+        return res.status(405).json({ error: "Método não permitido." });
+    }
+
+    try {
+        const shareCode = typeof req.body?.share_code === "string"
+            ? req.body.share_code.trim().toUpperCase()
+            : "";
+        if (!shareCode) {
+            return res.status(400).json({ error: "validation_failed" });
+        }
+
+        const campaign = await commercialCampaignRepository.loadCampaignView({
+            db,
+            shareCode,
+        });
+
+        if (!["published", "live", "finished"].includes(campaign.status)) {
+            return res.status(404).json({ error: "not_found" });
+        }
+
+        return res.status(200).json(campaign);
+    } catch (error) {
+        const mapped = mapAuthedOperationError(error);
+        functions.logger.error("resolveCommercialCampaign failed", {
+            error: error?.message || error,
+        });
+        return res.status(mapped.status).json({ error: mapped.error });
+    }
+});
+
 exports.seedLeagueData = functions.region("us-central1").https.onRequest(async (req, res) => {
     applyCors(req, res);
 
@@ -2388,7 +2595,8 @@ exports.fetchNewsScheduled = functions.pubsub
     .schedule("every 30 minutes")
     .timeZone("America/Sao_Paulo")
     .onRun(async (context) => {
-        const parser = new RSSParser({
+        const Parser = getRSSParserConstructor();
+        const parser = new Parser({
             customFields: {
                 item: [
                     ["media:content", "media:content"],
@@ -2532,6 +2740,55 @@ exports.createBolaoDraft = createAuthedEndpoint(async ({ auth, nowIso, req }) =>
     };
 });
 
+exports.createAndPublishBolao = createAuthedEndpoint(async ({ auth, nowIso, req }) => {
+    let grupoId = req.body?.context?.grupo_id || null;
+    const groupCreation = req.body?.group_creation || null;
+
+    if (groupCreation) {
+        const groupRef = db.collection("grupos").doc();
+        await groupAccessRepository.createGroup({
+            db,
+            groupId: groupRef.id,
+            actorId: auth.uid,
+            payload: groupCreation,
+            nowIso,
+        });
+        grupoId = groupRef.id;
+    }
+
+    const bolaoRef = db.collection("boloes").doc();
+    const payload = bolaoConfigHandlers.buildDraftBolaoDocument({
+        bolaoId: bolaoRef.id,
+        actorId: auth.uid,
+        nowIso,
+        input: {
+            ...req.body,
+            context: {
+                ...(req.body?.context || {}),
+                grupo_id: grupoId,
+            },
+        },
+    });
+
+    const created = await bolaoConfigRepository.createDraft({
+        db,
+        bolaoId: bolaoRef.id,
+        payload,
+    });
+    const published = await bolaoConfigRepository.publishBolao({
+        db,
+        bolaoId: bolaoRef.id,
+        actorId: auth.uid,
+        expectedConfigVersion: Number(created.integrity?.config_version || 1),
+        nowIso,
+    });
+
+    return {
+        bolao_id: bolaoRef.id,
+        ...published,
+    };
+});
+
 exports.updateBolaoConfiguration = createAuthedEndpoint(async ({ auth, nowIso, req }) => {
     const updated = await bolaoConfigRepository.updateConfiguration({
         db,
@@ -2621,6 +2878,21 @@ exports.archiveBolao = createAuthedEndpoint(async ({ auth, nowIso, req }) => {
     return {
         bolao_id: updated.id,
         ...updated,
+  };
+});
+
+exports.deleteBolao = createAuthedEndpoint(async ({ auth, nowIso, req }) => {
+    const updated = await bolaoConfigRepository.deleteBolao({
+        db,
+        bolaoId: req.body?.bolao_id,
+        actorId: auth.uid,
+        nowIso,
+        reason: req.body?.reason || null,
+    });
+
+    return {
+        bolao_id: updated.id,
+        ...updated,
     };
 });
 
@@ -2658,6 +2930,17 @@ exports.updatePoolMemberPaymentStatus = createAuthedEndpoint(async ({ auth, nowI
         memberId: req.body?.member_id,
         actorId: auth.uid,
         paymentStatus: req.body?.payment_status,
+        nowIso,
+    });
+});
+
+exports.submitPoolMemberPaymentProof = createAuthedEndpoint(async ({ auth, nowIso, req }) => {
+    return bolaoConfigRepository.submitPoolMemberPaymentProof({
+        db,
+        bolaoId: req.body?.bolao_id,
+        actorId: auth.uid,
+        proofText: req.body?.proof_text,
+        prizeAgreementAccepted: Boolean(req.body?.prize_agreement_accepted),
         nowIso,
     });
 });
@@ -2829,6 +3112,10 @@ exports.joinViaInvite = createAuthedEndpoint(async ({ auth, nowIso, req }) => {
     if (bolaoSnapshot.empty) {
         throw new Error("not_found");
     }
+    const bolaoData = bolaoSnapshot.docs[0].data();
+    if (bolaoData.lifecycle?.status === "deleted" || bolaoData.status === "deleted") {
+        throw new Error("not_found");
+    }
 
     const result = await groupAccessRepository.requestBolaoJoin({
         db,
@@ -2842,4 +3129,11 @@ exports.joinViaInvite = createAuthedEndpoint(async ({ auth, nowIso, req }) => {
         bolao_id: bolaoSnapshot.docs[0].id,
         ...result,
     };
+});
+
+exports.listUserBoloes = createAuthedEndpoint(async ({ auth }) => {
+    return bolaoListingRepository.listUserBoloes({
+        db,
+        actorId: auth.uid,
+    });
 });
