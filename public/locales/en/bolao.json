@@ -79,6 +79,7 @@
     "queue_pending": "Resolve this match before the next deadline.",
     "exclusive_seats_title": "Exclusive seats",
     "exclusive_pick_label": "Choose an available score",
+    "exclusive_score_taken": "That score was just picked by another participant.",
     "score_input_aria": "Goal prediction for {{team}}",
     "extra_market_label": "Extra match market",
     "first_scorer_title": "Who scores first?",

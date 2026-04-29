@@ -56,4 +56,28 @@ describe("market template contract", () => {
 
     expect(unsupported).toEqual([]);
   });
+
+  it("keeps every enabled frontend template supported by the Functions market builder", () => {
+    const unsupported = bolaoMarketTemplates
+      .filter((template) => template.isEnabled)
+      .filter((template) => {
+        const markets = buildBolaoMarkets({
+          bolaoId: `contract-template-${template.id}`,
+          selectedMarketIds: [template.id],
+          matches: [
+            {
+              id: "match-1",
+              match_date: "2026-06-10T20:00:00.000Z",
+              home_team_code: "BRA",
+              away_team_code: "ARG",
+            },
+          ],
+        });
+
+        return !markets.some((market) => market.slug === template.id);
+      })
+      .map((template) => template.id);
+
+    expect(unsupported).toEqual([]);
+  });
 });

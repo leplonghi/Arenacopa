@@ -21,7 +21,11 @@ import { ShareCardGenerator } from "./ShareCardGenerator";
 import { toPng } from "html-to-image";
 import { EmptyState } from "@/components/EmptyState";
 import { cn } from "@/lib/utils";
-import { saveBolaoPalpite } from "@/services/boloes/bolao.service";
+import { saveBolaoPalpite, saveExclusiveBolaoPalpite } from "@/services/boloes/bolao.service";
+import {
+    subscribeBolaoExclusiveScoreLocks,
+    type ExclusiveScoreSeat,
+} from "@/services/boloes/bolao-exclusive-locks.service";
 import { saveBolaoPrediction } from "@/services/boloes/bolao-prediction.service";
 import { ArenaPanel, ArenaSectionHeader } from "@/components/arena/ArenaPrimitives";
 import type { BolaoData, BolaoMarket, BolaoPrediction } from "@/types/bolao";
@@ -138,7 +142,7 @@ export function JogosTab({
     const [draftFirstScorers, setDraftFirstScorers] = useState<Record<string, string>>({});
     const [savingMatchId, setSavingMatchId] = useState<string | null>(null);
     const [savedFlashMatchIds, setSavedFlashMatchIds] = useState<Set<string>>(new Set());
-    const [allPalpites, setAllPalpites] = useState<Record<string, { home: number; away: number; userId: string }[]>>({});
+    const [exclusiveSeats, setExclusiveSeats] = useState<Record<string, ExclusiveScoreSeat[]>>({});
     
     // Filters
     const [filterTeam, setFilterTeam] = useState<string>("all");
@@ -257,19 +261,12 @@ export function JogosTab({
             setSavedPalpites(m);
         });
 
-        // If exclusive mode, fetch ALL palpites to know occupied seats
+        // If exclusive mode, fetch sanitized score locks to know occupied seats.
         let unsubscribeAll = () => {};
         if (bolao?.scoring_mode === "exclusive") {
-            const qAll = query(palpitesRef, where("bolao_id", "==", bolaoId));
-            unsubscribeAll = onSnapshot(qAll, (snapshot) => {
-                const map: Record<string, { home: number; away: number; userId: string }[]> = {};
-                snapshot.forEach(doc => {
-                    const p = doc.data() as PalpiteRealtimeRow & { user_id: string };
-                    if (!map[p.match_id]) map[p.match_id] = [];
-                    map[p.match_id].push({ home: p.home_score, away: p.away_score, userId: p.user_id });
-                });
-                setAllPalpites(map);
-            });
+            unsubscribeAll = subscribeBolaoExclusiveScoreLocks(bolaoId, setExclusiveSeats);
+        } else {
+            setExclusiveSeats({});
         }
 
         return () => {
@@ -330,17 +327,18 @@ export function JogosTab({
             const tasks: Promise<unknown>[] = [];
 
             if (hasScoreInput) {
-                tasks.push(
-                    saveBolaoPalpite({
-                        bolaoId,
-                        userId: user.id,
-                        matchId,
-                        homeScore: hs,
-                        awayScore: as,
-                        isPowerPlay: false,
-                        existingId: savedPalpites[matchId]?.id,
-                    })
-                );
+                const saveScorePalpite =
+                    bolao?.scoring_mode === "exclusive" ? saveExclusiveBolaoPalpite : saveBolaoPalpite;
+
+                await saveScorePalpite({
+                    bolaoId,
+                    userId: user.id,
+                    matchId,
+                    homeScore: hs,
+                    awayScore: as,
+                    isPowerPlay: false,
+                    existingId: savedPalpites[matchId]?.id,
+                });
 
                 const derivedMarkets = matchMarkets.filter(
                     (market) => market.match_id === matchId && derivableMarketSlugs.has(market.slug)
@@ -398,7 +396,13 @@ export function JogosTab({
             });
         } catch (error) {
             console.error(error);
-            toast({ title: t('palpites.error_save'), variant: 'destructive' });
+            toast({
+                title:
+                    error instanceof Error && error.message === "exclusive_score_taken"
+                        ? t("palpites.exclusive_score_taken")
+                        : t('palpites.error_save'),
+                variant: 'destructive',
+            });
         } finally {
             setSavingMatchId(null);
         }
@@ -784,7 +788,7 @@ export function JogosTab({
                                     </div>
                                     <div className="grid grid-cols-5 gap-1.5 rounded-[24px] border border-white/10 bg-black/20 p-3">
                                         {[0,1,2,3,4].flatMap(homeG => [0,1,2,3,4].map(awayG => {
-                                            const oc = (allPalpites[m.id] || []).find(ap => ap.home === homeG && ap.away === awayG);
+                                            const oc = (exclusiveSeats[m.id] || []).find(ap => ap.home === homeG && ap.away === awayG);
                                             const isMine = oc?.userId === user?.id;
                                             const isTaken = oc && !isMine;
                                             const isSelected = p.home === homeG.toString() && p.away === awayG.toString();
