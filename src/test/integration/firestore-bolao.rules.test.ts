@@ -7,7 +7,7 @@ import {
   initializeTestEnvironment,
   RulesTestEnvironment,
 } from "@firebase/rules-unit-testing";
-import { doc, setDoc, updateDoc, deleteDoc, getDoc } from "firebase/firestore";
+import { collection, doc, getDoc, getDocs, query, setDoc, updateDoc, deleteDoc, where } from "firebase/firestore";
 
 let testEnv: RulesTestEnvironment;
 const describeWithFirestoreEmulator = process.env.FIRESTORE_EMULATOR_HOST ? describe : describe.skip;
@@ -133,6 +133,54 @@ describeWithFirestoreEmulator("bolao firestore rules", () => {
 
     await expect(
       assertSucceeds(getDoc(doc(memberDb, "bolao_champion_predictions/member-4_bolao-404"))),
+    ).resolves.toBeDefined();
+  });
+
+  it("lets members read exclusive score locks but blocks client writes", async () => {
+    const memberDb = testEnv.authenticatedContext("member-10").firestore();
+
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), "boloes/bolao-exclusive-1"), {
+        creator_id: "owner-10",
+        category: "private",
+        status: "open",
+      });
+      await setDoc(doc(context.firestore(), "bolao_members/member-10_bolao-exclusive-1"), {
+        bolao_id: "bolao-exclusive-1",
+        user_id: "member-10",
+        role: "member",
+        membership_status: "active",
+      });
+      await setDoc(doc(context.firestore(), "bolao_exclusive_score_locks/bolao-exclusive-1_match-1_2_1"), {
+        bolao_id: "bolao-exclusive-1",
+        match_id: "match-1",
+        home_score: 2,
+        away_score: 1,
+        user_id: "member-11",
+      });
+    });
+
+    await expect(
+      assertSucceeds(
+        getDocs(
+          query(
+            collection(memberDb, "bolao_exclusive_score_locks"),
+            where("bolao_id", "==", "bolao-exclusive-1"),
+          ),
+        ),
+      ),
+    ).resolves.toBeDefined();
+
+    await expect(
+      assertFails(
+        setDoc(doc(memberDb, "bolao_exclusive_score_locks/bolao-exclusive-1_match-1_3_0"), {
+          bolao_id: "bolao-exclusive-1",
+          match_id: "match-1",
+          home_score: 3,
+          away_score: 0,
+          user_id: "member-10",
+        }),
+      ),
     ).resolves.toBeDefined();
   });
 

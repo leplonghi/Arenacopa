@@ -1,11 +1,10 @@
 import { useState } from "react";
-import { doc, updateDoc } from "firebase/firestore";
-import { db } from "@/integrations/firebase/client";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { DollarSign, MessageSquare } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { openWhatsAppShare } from "@/lib/security";
+import { updateBolaoPrizeSettings } from "@/services/boloes/bolao.service";
 
 interface BolaoData {
   id: string;
@@ -61,13 +60,13 @@ export function CaixinhaPanel({ bolao, isCreator }: Props) {
     setPixError(null);
     setSaving(true);
     try {
-      await updateDoc(doc(db, "boloes", bolao.id), {
-        prize_type: prizeType,
-        prize_description: prizeDesc || null,
-        pix_key: pixKey || null,
-        caixinha_enabled: caixinha,
-        caixinha_value_per_person: caixinha && valuePerPerson ? Number(valuePerPerson) : null,
-        updated_at: new Date().toISOString(),
+      await updateBolaoPrizeSettings({
+        bolaoId: bolao.id,
+        prizeType,
+        prizeDescription: prizeDesc || null,
+        pixKey: pixKey || null,
+        caixinhaEnabled: caixinha,
+        caixinhaValuePerPerson: caixinha && valuePerPerson ? Number(valuePerPerson) : null,
       });
       toast({ title: t('caixinha.saved_ok'), className: "bg-emerald-500 text-white font-black" });
     } catch (e) {

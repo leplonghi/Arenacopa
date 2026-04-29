@@ -8,6 +8,7 @@ import {
 } from "firebase/firestore";
 import type { MemberData, Palpite } from "@/types/bolao";
 import { leaveBolao, updatePoolMemberPaymentStatus } from "@/services/boloes/bolao-config.service";
+import { postAuthedFunction } from "@/services/backend/functions-http";
 
 export function buildBolaoPalpiteId(input: {
   userId: string;
@@ -74,6 +75,25 @@ export async function saveBolaoPalpite(input: {
   }
 }
 
+export async function saveExclusiveBolaoPalpite(input: {
+  bolaoId: string;
+  userId: string;
+  matchId: string;
+  homeScore: number;
+  awayScore: number;
+  isPowerPlay: boolean;
+  existingId?: string;
+}) {
+  return postAuthedFunction<Palpite>("saveExclusiveBolaoPalpite", {
+    bolao_id: input.bolaoId,
+    match_id: input.matchId,
+    home_score: input.homeScore,
+    away_score: input.awayScore,
+    is_power_play: input.isPowerPlay,
+    existing_id: input.existingId ?? null,
+  });
+}
+
 export async function removeBolaoMember(bolaoId: string, userId: string) {
   if (!bolaoId || !userId) {
     throw new Error("validation_failed");
@@ -97,5 +117,31 @@ export async function updateBolaoMemberPaymentStatus(input: {
       member_id: `${input.userId}_${input.bolaoId}`,
       payment_status: input.paymentStatus,
     },
+  });
+}
+
+export async function updateBolaoPrizeSettings(input: {
+  bolaoId: string;
+  prizeType: string;
+  prizeDescription?: string | null;
+  pixKey?: string | null;
+  caixinhaEnabled: boolean;
+  caixinhaValuePerPerson?: number | null;
+}) {
+  return postAuthedFunction<{
+    bolao_id: string;
+    prize_type: string;
+    prize_description: string | null;
+    pix_key: string | null;
+    caixinha_enabled: boolean;
+    caixinha_value_per_person: number | null;
+    updated_at: string;
+  }>("updateBolaoPrizeSettings", {
+    bolao_id: input.bolaoId,
+    prize_type: input.prizeType,
+    prize_description: input.prizeDescription ?? null,
+    pix_key: input.pixKey ?? null,
+    caixinha_enabled: input.caixinhaEnabled,
+    caixinha_value_per_person: input.caixinhaValuePerPerson ?? null,
   });
 }

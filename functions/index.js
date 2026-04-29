@@ -7,6 +7,9 @@ const bolaoConfigRepository = require("./bolao-config/repository");
 const bolaoListingRepository = require("./bolao-listing/repository");
 const groupAccessRepository = require("./group-access/repository");
 const commercialCampaignRepository = require("./commercial-campaigns/repository");
+const { resolveLegacyMatchPredictionPoints } = require("./bolao-ranking/scoring");
+const { saveExclusiveBolaoPalpite } = require("./bolao-exclusive/palpites");
+const { updateBolaoPrizeSettings } = require("./bolao-prize/settings");
 
 admin.initializeApp();
 
@@ -15,11 +18,6 @@ const DEFAULT_SITE_URL = "https://arenacopa.app";
 const STRIPE_API_BASE_URL = "https://api.stripe.com/v1";
 const STRIPE_API_VERSION = "2026-02-25.clover";
 
-const SCORING = {
-    EXACT: 5,
-    WINNER: 3,
-    DRAW: 2,
-};
 const LEAGUE_CHAMPIONSHIPS = [
     { id: "brasileirao2026", fdoId: 2013, name: "Brasileirão", season: "2026" },
     { id: "libertadores2026", fdoId: 2152, name: "Libertadores", season: "2026" },
@@ -44,7 +42,9 @@ function getAllowedOrigins(configuredSiteUrl = DEFAULT_SITE_URL) {
         "https://arenacup.net",
         "http://localhost",
         "http://localhost:5173",
+        "http://localhost:8080",
         "http://127.0.0.1:5173",
+        "http://127.0.0.1:8080",
         "capacitor://localhost",
     ]);
 }
@@ -105,7 +105,7 @@ function mapAuthedOperationError(error) {
     if (["not_found"].includes(code)) {
         return { status: 404, error: code };
     }
-    if (["config_conflict"].includes(code)) {
+    if (["config_conflict", "exclusive_score_taken"].includes(code)) {
         return { status: 409, error: code };
     }
     if (["payment_required"].includes(code)) {
@@ -978,6 +978,24 @@ function getRSSParserConstructor() {
     return RSSParserConstructor;
 }
 
+async function loadBolaoScoringRulesMap(bolaoIds) {
+    const scoringRulesByBolao = new Map();
+    const uniqueBolaoIds = Array.from(new Set((bolaoIds || []).filter(Boolean)));
+
+    for (const chunk of chunkArray(uniqueBolaoIds, 10)) {
+        const snapshot = await db
+            .collection("boloes")
+            .where(admin.firestore.FieldPath.documentId(), "in", chunk)
+            .get();
+
+        snapshot.forEach((docSnapshot) => {
+            scoringRulesByBolao.set(docSnapshot.id, docSnapshot.data()?.scoring_rules || null);
+        });
+    }
+
+    return scoringRulesByBolao;
+}
+
 function createNewsParser() {
     const Parser = getRSSParserConstructor();
     return new Parser({
@@ -1627,6 +1645,14 @@ exports.onMatchResultUpdated = functions.firestore
         const batch = db.batch();
         const affectedRankings = new Set();
         const legacyPredictionsSnapshot = await db.collection("bolao_palpites").where("match_id", "==", matchId).get();
+        const legacyBolaoIds = Array.from(
+            new Set(
+                legacyPredictionsSnapshot.docs
+                    .map((docSnapshot) => docSnapshot.data()?.bolao_id)
+                    .filter(Boolean)
+            )
+        );
+        const scoringRulesByBolao = await loadBolaoScoringRulesMap(legacyBolaoIds);
 
         for (const docSnapshot of legacyPredictionsSnapshot.docs) {
             const palpite = docSnapshot.data();
@@ -1639,30 +1665,14 @@ exports.onMatchResultUpdated = functions.firestore
                 continue;
             }
 
-            let points = 0;
-            let type = "miss";
-
-            if (predictionHomeScore === matchHomeScore && predictionAwayScore === matchAwayScore) {
-                points = SCORING.EXACT;
-                type = "exact";
-            } else {
-                const predictionResult = getResultType(predictionHomeScore, predictionAwayScore);
-                const matchResult = getResultType(matchHomeScore, matchAwayScore);
-
-                if (predictionResult === matchResult) {
-                    if (matchResult === "draw") {
-                        points = SCORING.DRAW;
-                        type = "draw";
-                    } else {
-                        points = SCORING.WINNER;
-                        type = "winner";
-                    }
-                }
-            }
-
-            if (palpite.is_power_play && points > 0) {
-                points *= 2;
-            }
+            const { points, type } = resolveLegacyMatchPredictionPoints({
+                predictionHomeScore,
+                predictionAwayScore,
+                matchHomeScore,
+                matchAwayScore,
+                scoringRules: scoringRulesByBolao.get(bolaoId),
+                isPowerPlay: Boolean(palpite.is_power_play),
+            });
 
             batch.update(docSnapshot.ref, {
                 points,
@@ -2930,6 +2940,25 @@ exports.updatePoolMemberPaymentStatus = createAuthedEndpoint(async ({ auth, nowI
         memberId: req.body?.member_id,
         actorId: auth.uid,
         paymentStatus: req.body?.payment_status,
+        nowIso,
+    });
+});
+
+exports.saveExclusiveBolaoPalpite = createAuthedEndpoint(async ({ auth, nowIso, req }) => {
+    return saveExclusiveBolaoPalpite({
+        db,
+        admin,
+        actorId: auth.uid,
+        input: req.body || {},
+        nowIso,
+    });
+});
+
+exports.updateBolaoPrizeSettings = createAuthedEndpoint(async ({ auth, nowIso, req }) => {
+    return updateBolaoPrizeSettings({
+        db,
+        actorId: auth.uid,
+        input: req.body || {},
         nowIso,
     });
 });

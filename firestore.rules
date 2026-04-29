@@ -312,6 +312,15 @@ service cloud.firestore {
       allow delete: if isSignedIn() && isOwner(resource.data.user_id);
     }
 
+    // bolao_exclusive_score_locks — server-owned seat occupancy for exclusive-score pools
+    match /bolao_exclusive_score_locks/{lockId} {
+      allow read: if isSignedIn() && (
+        isBolaoMember(resource.data.bolao_id) ||
+        isBolaoCreator(resource.data.bolao_id)
+      );
+      allow write: if false;
+    }
+
     // bolao_predictions
     match /bolao_predictions/{predictionId} {
       allow read: if isSignedIn() && (

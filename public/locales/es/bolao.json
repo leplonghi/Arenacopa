@@ -79,6 +79,7 @@
     "queue_pending": "Resuelve este partido antes del próximo plazo.",
     "exclusive_seats_title": "Asientos exclusivos",
     "exclusive_pick_label": "Elige un marcador libre",
+    "exclusive_score_taken": "Ese marcador acaba de ser elegido por otra persona.",
     "score_input_aria": "Pronóstico de goles para {{team}}",
     "extra_market_label": "Mercado extra del partido",
     "first_scorer_title": "¿Quién marca primero?",

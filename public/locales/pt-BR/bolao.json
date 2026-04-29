@@ -79,6 +79,7 @@
     "queue_pending": "Resolva este jogo antes do próximo prazo.",
     "exclusive_seats_title": "Assentos exclusivos",
     "exclusive_pick_label": "Escolha um placar livre",
+    "exclusive_score_taken": "Esse placar acabou de ser escolhido por outra pessoa.",
     "score_input_aria": "Placar de {{team}}",
     "extra_market_label": "Mercado extra da partida",
     "first_scorer_title": "Quem marca primeiro?",
