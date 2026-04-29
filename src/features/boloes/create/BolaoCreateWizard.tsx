@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
+import { CreateBolaoCatalogStep } from "@/features/boloes/create/CreateBolaoCatalogStep";
 import { CreateBolaoContextStep } from "@/features/boloes/create/CreateBolaoContextStep";
 import { CreateBolaoRulesStep } from "@/features/boloes/create/CreateBolaoRulesStep";
 import { CreateBolaoAdmissionStep } from "@/features/boloes/create/CreateBolaoAdmissionStep";
@@ -33,6 +34,10 @@ export function BolaoCreateWizard() {
 
   if (flow.step === "quick") {
     return <CreateBolaoQuickStep flow={flow} />;
+  }
+
+  if (flow.step === "catalog") {
+    return <CreateBolaoCatalogStep flow={flow} />;
   }
 
   if (flow.step === "context") {

@@ -130,7 +130,7 @@ export function JogosTab({
     rules?: unknown;
     markets?: BolaoMarket[];
     predictions?: BolaoPrediction[];
-    bolao?: Pick<BolaoData, "scoring_mode"> | null;
+    bolao?: Pick<BolaoData, "scoring_mode" | "allowed_match_ids"> | null;
 }) {
     const { t, i18n } = useTranslation('bolao');
     const { user } = useAuth();
@@ -535,12 +535,13 @@ export function JogosTab({
     const uniqueStages = Array.from(new Set(matches.map(m => m.stage))).filter(Boolean);
 
     const filteredMatches = matches.filter(m => {
+        if (bolao?.allowed_match_ids && bolao.allowed_match_ids !== "all" && !bolao.allowed_match_ids.includes(m.id)) return false;
         if (filterTeam !== "all" && m.home_team_code !== filterTeam && m.away_team_code !== filterTeam) return false;
         if (filterStage !== "all" && m.stage !== filterStage && new Date(m.match_date).toLocaleDateString(currentLanguage) !== filterStage) return false;
         return true;
     });
     const enrichedMatches = useMemo(() => {
-        return filteredMatches
+        const computed = filteredMatches
             .map((match) => {
                 const isStarted = match.status === 'live' || match.status === 'finished';
                 const marketsForMatch = matchMarketsByMatchId[match.id] ?? [];
@@ -585,8 +586,31 @@ export function JogosTab({
                     canSave,
                     isHighlighted,
                     isPending,
-                    sortPriority,
                 };
+            });
+
+        const nextMatchIds = new Set(
+            [...computed]
+                .filter((m) => !m.isStarted)
+                .sort((a, b) => new Date(a.match.match_date).getTime() - new Date(b.match.match_date).getTime())
+                .slice(0, 3)
+                .map((m) => m.match.id)
+        );
+
+        return computed
+            .map((item) => {
+                const isUpcoming = nextMatchIds.has(item.match.id);
+                const sortPriority = item.isHighlighted 
+                    ? 0 
+                    : isUpcoming 
+                        ? 1 
+                        : item.isPending 
+                            ? 2 
+                            : item.isStarted 
+                                ? 4 
+                                : 3;
+
+                return { ...item, isUpcoming, sortPriority };
             })
             .sort((left, right) => {
                 if (left.sortPriority !== right.sortPriority) {
@@ -689,14 +713,21 @@ export function JogosTab({
                 </div>
             </ArenaPanel>
 
-            {enrichedMatches.map(({ match: m, isStarted, marketsForMatch, firstScorerMarket, savedFirstScorer, currentFirstScorer, p, hasSavedPrediction, isDirty, canSave, isHighlighted, isPending }) => {
+            {enrichedMatches.map(({ match: m, isStarted, marketsForMatch, firstScorerMarket, savedFirstScorer, currentFirstScorer, p, hasSavedPrediction, isDirty, canSave, isHighlighted, isPending, isUpcoming }) => {
                 return (
                     <div id={`match-card-${m.id}`} key={m.id} className={cn(
                         "relative overflow-hidden rounded-[34px] border p-6 transition-all shadow-[0_24px_60px_-34px_rgba(0,0,0,0.82)]",
                         isHighlighted
                             ? "border-primary/45 bg-[radial-gradient(circle_at_top_left,rgba(145,255,59,0.14),transparent_30%),linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.03))] ring-1 ring-primary/18"
-                            : "border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.03))]"
+                            : isUpcoming
+                                ? "border-primary/30 bg-[linear-gradient(180deg,rgba(145,255,59,0.04),rgba(255,255,255,0.02))] ring-1 ring-primary/10"
+                                : "border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.03))]"
                     )}>
+                        {isUpcoming && !isHighlighted && (
+                            <div className="absolute top-0 right-0 rounded-bl-3xl rounded-tr-[34px] bg-primary/20 border border-primary/20 px-4 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-primary">
+                                Próximo Jogo
+                            </div>
+                        )}
                         {isStarted && <div className="absolute inset-0 bg-black/50 z-10 backdrop-blur-sm pointer-events-none flex flex-col items-center justify-center">
                             <Lock className="w-8 h-8 text-gray-500 mb-2" />
                             <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">

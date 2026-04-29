@@ -3,9 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { BolaoEditSectionCard } from "@/features/boloes/edit/BolaoEditSectionCard";
 import { useAuth } from "@/contexts/AuthContext";
+import { useDashboardMatches } from "@/hooks/useDashboardMatches";
 import { useToast } from "@/hooks/use-toast";
 import { db } from "@/integrations/firebase/client";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { collection, getDocs, query, where, updateDoc, doc } from "firebase/firestore";
 import { getDefaultMarketIdsForFormat, listBolaoFormats } from "@/services/boloes/bolao-format.service";
 import {
   alterBolaoPresentation,
@@ -57,6 +58,8 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated }: Bo
   const [savingKey, setSavingKey] = useState<string | null>(null);
   const [availableGroups, setAvailableGroups] = useState<Array<{ id: string; name: string }>>([]);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [allowedMatchIds, setAllowedMatchIds] = useState<string[] | "all">("all");
+  const { data: matches } = useDashboardMatches();
 
   useEffect(() => {
     if (!bolao) {
@@ -81,6 +84,7 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated }: Bo
     setEntryFee(bolao.entry_fee ? String(bolao.entry_fee) : "");
     setPaymentDetails(bolao.payment_details || "");
     setPrizeDistribution(bolao.prize_distribution || "");
+    setAllowedMatchIds(bolao.allowed_match_ids ?? "all");
   }, [bolao]);
 
   useEffect(() => {
@@ -220,6 +224,27 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated }: Bo
       toast({
         title: "Não foi possível salvar",
         description: "Tente novamente em alguns instantes.",
+        variant: "destructive",
+      });
+    } finally {
+      setSavingKey(null);
+    }
+  };
+
+  const saveAllowedMatchIds = async () => {
+    try {
+      setSavingKey("catalog");
+      const bolaoRef = doc(db, "boloes", bolao.id);
+      await updateDoc(bolaoRef, { allowed_match_ids: allowedMatchIds });
+      updateLocal({ allowed_match_ids: allowedMatchIds });
+      toast({
+        title: "Jogos atualizados",
+        description: "A lista de jogos permitidos foi atualizada com sucesso.",
+      });
+    } catch {
+      toast({
+        title: "Erro ao salvar",
+        description: "Não foi possível atualizar os jogos do bolão.",
         variant: "destructive",
       });
     } finally {
@@ -514,6 +539,73 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated }: Bo
           </div>
 
           <BolaoEditSectionCard
+            title="Jogos do Bolão"
+            description="Selecione os jogos específicos para este bolão."
+            editable={true}
+            actionLabel="Salvar jogos"
+            onAction={saveAllowedMatchIds}
+            busy={savingKey === "catalog"}
+          />
+          <div className="grid gap-3 rounded-3xl border border-white/10 bg-white/5 p-4">
+            <div className="flex flex-col gap-2">
+              <label className="flex items-center gap-2 text-sm text-white cursor-pointer hover:opacity-80">
+                <input
+                  type="checkbox"
+                  checked={allowedMatchIds === "all"}
+                  onChange={(e) => setAllowedMatchIds(e.target.checked ? "all" : [])}
+                  className="rounded border-white/20 bg-black/50"
+                />
+                Incluir todos os jogos do campeonato
+              </label>
+              
+              {allowedMatchIds !== "all" && matches && matches.length > 0 && (
+                <div className="mt-2 flex max-h-60 flex-col gap-2 overflow-y-auto rounded-xl border border-white/5 bg-black/20 p-2">
+                  {matches.map((m) => (
+                    <label key={m.id} className="flex items-center justify-between gap-2 text-xs text-zinc-300 cursor-pointer hover:bg-white/5 p-2 rounded-lg transition-colors">
+                      <div className="flex items-center gap-3">
+                        <input
+                          type="checkbox"
+                          checked={allowedMatchIds.includes(m.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setAllowedMatchIds([...allowedMatchIds, m.id]);
+                            } else {
+                              setAllowedMatchIds(allowedMatchIds.filter((id) => id !== m.id));
+                            }
+                          }}
+                          className="rounded border-white/20 bg-black/50"
+                        />
+                        <div className="flex items-center gap-2">
+                          <img src={m.home_team_flag_url || ""} alt="" className="w-4 h-4 rounded-full object-cover" />
+                          <span>{m.home_team_name}</span>
+                          <span className="text-zinc-500">vs</span>
+                          <img src={m.away_team_flag_url || ""} alt="" className="w-4 h-4 rounded-full object-cover" />
+                          <span>{m.away_team_name}</span>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {new Date(m.match_date).getTime() > Date.now() && new Date(m.match_date).getTime() < Date.now() + 7 * 24 * 60 * 60 * 1000 && (
+                          <span className="rounded-full border border-[#D5FF5C]/30 bg-[#D5FF5C]/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-[#D5FF5C]">
+                            Próximo
+                          </span>
+                        )}
+                        <span className="text-[10px] text-zinc-500">
+                          {new Date(m.match_date).toLocaleDateString("pt-BR", {
+                            day: "2-digit",
+                            month: "short",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </span>
+                      </div>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          <BolaoEditSectionCard
             title="Regras"
             description="Formato, mercados, pontuação e travas competitivas."
             editable={editableSections.competition_rules}
@@ -787,3 +879,4 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated }: Bo
     </Dialog>
   );
 }
+

@@ -85,7 +85,7 @@ export function CreateBolaoQuickStep({ flow }: { flow: Flow }) {
     <div className="mx-auto max-w-5xl px-4 py-8 text-white">
       <CreateBolaoStepRail activeStep={1} />
       <p className="break-words text-[11px] font-black uppercase leading-tight tracking-[0.18em] text-primary">
-        Etapa 1 de 2
+        Etapa 1 de 6
       </p>
       <h1 className="mt-2 break-words font-display text-[2.35rem] font-black uppercase leading-tight tracking-[0.02em] [overflow-wrap:anywhere]">
         Crie o bolão da turma
@@ -201,188 +201,14 @@ export function CreateBolaoQuickStep({ flow }: { flow: Flow }) {
           </p>
         </div>
       </div>
-
-      <details className="mt-7 rounded-[28px] border border-white/10 bg-white/[0.03] p-5">
-        <summary className="flex cursor-pointer list-none items-center justify-between gap-3">
-          <span className="flex min-w-0 items-center gap-2">
-            <Settings2 className="h-5 w-5 shrink-0 text-primary" />
-            <span className="min-w-0 break-words text-xs font-black uppercase leading-tight tracking-[0.14em] text-zinc-300">
-              Ajustar regras e acesso
-            </span>
-          </span>
-          <span className="shrink-0 text-[10px] font-black uppercase tracking-[0.12em] text-zinc-500">
-            Opcional
-          </span>
-        </summary>
-
-        <div className="mt-4 border-t border-white/10 pt-4">
-          <div className="mt-4 grid gap-5 lg:grid-cols-2">
-            <div className="space-y-3">
-              <p className="text-[11px] font-black uppercase tracking-[0.14em] text-zinc-500">Contexto</p>
-              <div className="grid gap-2 sm:grid-cols-2">
-                {[
-                  { id: "standalone", title: "Sem grupo" },
-                  { id: "new_group", title: "Criar grupo junto" },
-                ].map((option) => (
-                  <button
-                    key={option.id}
-                    type="button"
-                    onClick={() =>
-                      flow.setState((current) => ({
-                        ...current,
-                        contextMode: option.id as "standalone" | "new_group",
-                        accessMode:
-                          option.id === "new_group"
-                            ? "group_gated"
-                            : current.accessMode === "group_gated"
-                              ? "approval"
-                              : current.accessMode,
-                      }))
-                    }
-                    className={cn(
-                      "min-w-0 whitespace-normal rounded-[18px] border px-4 py-3 text-left text-sm font-black leading-tight",
-                      flow.state.contextMode === option.id
-                        ? "border-primary bg-primary/10"
-                        : "border-white/10 bg-black/20",
-                    )}
-                  >
-                    {option.title}
-                  </button>
-                ))}
-              </div>
-
-              {flow.state.contextMode === "new_group" ? (
-                <div className="grid gap-3">
-                  <input
-                    value={flow.state.newGroupName}
-                    onChange={(event) => flow.setState((current) => ({ ...current, newGroupName: event.target.value }))}
-                    placeholder="Nome do grupo"
-                    className="min-w-0 rounded-[18px] border border-white/10 bg-black/20 px-4 py-3 text-sm text-white"
-                  />
-                  <input
-                    value={flow.state.newGroupDescription}
-                    onChange={(event) => flow.setState((current) => ({ ...current, newGroupDescription: event.target.value }))}
-                    placeholder="Descricao do grupo, opcional"
-                    className="min-w-0 rounded-[18px] border border-white/10 bg-black/20 px-4 py-3 text-sm text-white"
-                  />
-                </div>
-              ) : null}
-            </div>
-
-            <div className="space-y-3">
-              <p className="text-[11px] font-black uppercase tracking-[0.14em] text-zinc-500">Entrada e visibilidade</p>
-              <div className="grid gap-2 sm:grid-cols-2">
-                {[
-                  { id: "approval", title: "Privado com aprovacao", icon: Lock },
-                  { id: "public", title: "Publico por link", icon: Globe2 },
-                ].map((option) => (
-                  <button
-                    key={option.id}
-                    type="button"
-                    onClick={() =>
-                      flow.setState((current) => ({
-                        ...current,
-                        accessMode:
-                          current.contextMode !== "standalone" && option.id === "approval"
-                            ? "group_gated"
-                            : (option.id as AccessMode),
-                      }))
-                    }
-                    className={cn(
-                      "min-w-0 whitespace-normal rounded-[18px] border px-4 py-3 text-left text-sm font-black leading-tight",
-                      (option.id === "public" && flow.state.accessMode === "public") ||
-                        (option.id === "approval" && flow.state.accessMode !== "public")
-                        ? "border-primary bg-primary/10"
-                        : "border-white/10 bg-black/20",
-                    )}
-                  >
-                    <option.icon className="mb-2 h-4 w-4 text-primary" />
-                    {option.title}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <p className="text-[11px] font-black uppercase tracking-[0.14em] text-zinc-500">Tipo de disputa</p>
-              <div className="grid gap-2 sm:grid-cols-2">
-                {[
-                  { id: "rapid", title: "Rápido" },
-                  { id: "complete", title: "Completo" },
-                ].map((option) => (
-                  <button
-                    key={option.id}
-                    type="button"
-                    onClick={() => flow.setSelectedType(option.id as PoolTypeId)}
-                    className={cn(
-                      "min-w-0 whitespace-normal rounded-[18px] border px-4 py-3 text-center text-sm font-black leading-tight",
-                      flow.state.selectedTypeId === option.id ? "border-primary bg-primary/10" : "border-white/10 bg-black/20",
-                    )}
-                  >
-                    {option.title}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <p className="text-[11px] font-black uppercase tracking-[0.14em] text-zinc-500">Pontuacao</p>
-              <div className="grid gap-2 sm:grid-cols-3">
-                {[
-                  { id: "conservative", title: "Leve" },
-                  { id: "standard", title: "Equilibrada" },
-                  { id: "risky", title: "Arriscada" },
-                ].map((option) => {
-                  const selected = flow.state.scoringRules.exact === PRESETS[option.id as keyof typeof PRESETS].exact;
-                  return (
-                    <button
-                      key={option.id}
-                      type="button"
-                      onClick={() =>
-                        flow.setState((current) => ({
-                          ...current,
-                          scoringRules: PRESETS[option.id as keyof typeof PRESETS],
-                        }))
-                      }
-                      className={cn(
-                        "min-w-0 whitespace-normal rounded-[18px] border px-4 py-3 text-center text-sm font-black leading-tight",
-                        selected ? "border-primary bg-primary/10" : "border-white/10 bg-black/20",
-                      )}
-                    >
-                      {option.title}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="space-y-3 lg:col-span-2">
-              <p className="text-[11px] font-black uppercase tracking-[0.14em] text-zinc-500">Premiacao simbolica</p>
-              <textarea
-                value={flow.state.prizeDistribution}
-                onChange={(event) => flow.setState((current) => ({ ...current, prizeDistribution: event.target.value }))}
-                placeholder="Opcional: trofeu, rodada paga, camisa, brinde interno ou reconhecimento simbolico."
-                className="min-h-[110px] w-full min-w-0 rounded-[18px] border border-white/10 bg-black/20 px-4 py-3 text-sm text-white"
-              />
-            </div>
-          </div>
-
-          <div className="mt-5 grid gap-2 md:grid-cols-3">
-            <SummaryCard label="Mercados" value={flow.state.selectedTypeId === "complete" ? "Completo" : "Rapido"} />
-            <SummaryCard label="Acesso" value={flow.state.accessMode === "public" ? "Publico por link" : "Privado com aprovacao"} />
-            <SummaryCard label="Grupo" value={flow.state.contextMode === "new_group" ? "Novo grupo junto" : "Bolao independente"} />
-          </div>
-        </div>
-      </details>
-
       <div className="mt-8 flex justify-end">
         <button
           type="button"
-          onClick={() => flow.setStep("review")}
+          onClick={() => flow.setStep("catalog")}
           disabled={!flow.canAdvance}
           className="inline-flex min-w-0 items-center gap-2 whitespace-normal rounded-[20px] bg-primary px-5 py-3 text-center text-[11px] font-black uppercase leading-tight tracking-[0.14em] text-black disabled:opacity-50"
         >
-          Revisar e publicar
+          Avançar
           <ArrowRight className="h-4 w-4 shrink-0" />
         </button>
       </div>

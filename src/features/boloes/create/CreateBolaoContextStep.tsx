@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { PoolContextChooser } from "@/features/boloes/create/PoolContextChooser";
+import { CreateBolaoStepRail } from "@/features/boloes/create/CreateBolaoStepRail";
 import { useAuth } from "@/contexts/AuthContext";
 import type { useBolaoCreateFlow } from "@/features/boloes/create/useBolaoCreateFlow";
 
@@ -54,7 +55,10 @@ export function CreateBolaoContextStep({ flow }: { flow: Flow }) {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 text-white">
-      <p className="text-[11px] font-black uppercase tracking-[0.22em] text-primary">Etapa 1 de 4</p>
+      <div className="mb-8">
+        <CreateBolaoStepRail activeStep={3} />
+      </div>
+      <p className="text-[11px] font-black uppercase tracking-[0.22em] text-primary">Etapa 3 de 6</p>
       <h1 className="mt-2 text-3xl font-black">Onde esse bolão vai viver?</h1>
       <p className="mt-2 text-sm text-zinc-400">
         Primeiro definimos o contexto. O nome vem depois, quando a estrutura já estiver clara.
@@ -195,7 +199,14 @@ export function CreateBolaoContextStep({ flow }: { flow: Flow }) {
         </div>
       ) : null}
 
-      <div className="mt-8 flex justify-end">
+      <div className="mt-8 flex justify-between">
+        <button
+          type="button"
+          onClick={() => flow.setStep("catalog")}
+          className="inline-flex min-w-0 items-center gap-2 whitespace-normal rounded-[20px] border border-white/10 bg-black/20 px-5 py-3 text-center text-[11px] font-black uppercase leading-tight tracking-[0.14em] text-zinc-400 transition-all hover:bg-white/5"
+        >
+          Voltar
+        </button>
         <button
           onClick={() => flow.setStep("type")}
           disabled={!flow.canAdvance}

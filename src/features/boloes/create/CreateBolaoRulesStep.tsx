@@ -1,4 +1,5 @@
 import type { FinanceMode, PoolTypeId, useBolaoCreateFlow } from "@/features/boloes/create/useBolaoCreateFlow";
+import { CreateBolaoStepRail } from "@/features/boloes/create/CreateBolaoStepRail";
 
 type Flow = ReturnType<typeof useBolaoCreateFlow>;
 
@@ -16,7 +17,10 @@ const financeModes: Array<{ id: FinanceMode; title: string; description: string 
 export function CreateBolaoRulesStep({ flow }: { flow: Flow }) {
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 text-white">
-      <p className="text-[11px] font-black uppercase tracking-[0.22em] text-primary">Etapa 2 de 4</p>
+      <div className="mb-8">
+        <CreateBolaoStepRail activeStep={4} />
+      </div>
+      <p className="text-[11px] font-black uppercase tracking-[0.22em] text-primary">Etapa 4 de 6</p>
       <h1 className="mt-2 text-3xl font-black">Que tipo de bolão você quer montar?</h1>
       <p className="mt-2 text-sm text-zinc-400">
         Primeiro você escolhe o estilo. O avançado só aparece quando realmente precisa.

@@ -90,6 +90,7 @@ export function CreateBolaoReviewStep({ flow }: { flow: Flow }) {
             emoji: flow.state.emoji,
           },
           championship_id: championship.id,
+            allowed_match_ids: flow.state.allowedMatchIds,
         },
       });
       flow.setDraftId(draft.bolaoId);
@@ -160,6 +161,7 @@ export function CreateBolaoReviewStep({ flow }: { flow: Flow }) {
           token,
           payload: {
             championship_id: championship.id,
+            allowed_match_ids: flow.state.allowedMatchIds,
             context: {
               group_binding_mode: structure.groupBindingMode,
               grupo_id: structure.grupoId,
@@ -297,6 +299,7 @@ export function CreateBolaoReviewStep({ flow }: { flow: Flow }) {
                   emoji: flow.state.emoji,
                 },
                 championship_id: championship.id,
+            allowed_match_ids: flow.state.allowedMatchIds,
               },
             });
       if (flow.draftId && flow.draftConfigVersion) {
@@ -338,7 +341,7 @@ export function CreateBolaoReviewStep({ flow }: { flow: Flow }) {
               : "linked_discovery",
         join_mode: structure.accessPolicy.join_mode,
       });
-      navigate(`/boloes/${published.bolaoId}`);
+      navigate(`/boloes/${published.bolaoId}?tab=palpites`);
     } catch (error) {
       console.error("Create bolao failed", error);
       toast({
@@ -352,8 +355,8 @@ export function CreateBolaoReviewStep({ flow }: { flow: Flow }) {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 text-white">
-      <CreateBolaoStepRail activeStep={2} />
-      <p className="text-[11px] font-black uppercase tracking-[0.22em] text-primary">Etapa 2 de 2</p>
+      <CreateBolaoStepRail activeStep={6} />
+      <p className="text-[11px] font-black uppercase tracking-[0.22em] text-primary">Etapa 6 de 6</p>
       <h1 className="mt-2 text-3xl font-black">Revise e publique</h1>
       <p className="mt-2 text-sm text-zinc-400">
         Confira o resumo final. Se quiser ajustar acesso, grupo ou pontuacao, volte um passo.

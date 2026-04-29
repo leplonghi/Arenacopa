@@ -26,10 +26,12 @@ export type CreateDraftBolaoPayload = {
   competition_rules?: Record<string, unknown>;
   finance_rules?: Record<string, unknown>;
   championship_id?: string | null;
+  allowed_match_ids?: string[] | "all";
 };
 
 export type CreateAndPublishBolaoPayload = {
   championship_id?: string | null;
+  allowed_match_ids?: string[] | "all";
   context?: Record<string, unknown>;
   presentation?: Record<string, unknown>;
   access_policy?: Record<string, unknown>;

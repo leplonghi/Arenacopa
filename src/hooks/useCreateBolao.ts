@@ -32,6 +32,7 @@ export interface CreateBolaoParams {
   champion: string;
   grupoId?: string | null;
   championshipId?: string;
+  allowedMatchIds?: string[] | "all";
   /** Quando fornecido, cria um bolão de jogo único (Rachão rápido) */
   matchId?: string;
 }
@@ -94,6 +95,7 @@ export function useCreateBolao() {
         avatar_url: params.emoji,
         grupo_id: params.grupoId ?? null,
         championship_id: params.championshipId ?? null,
+        allowed_match_ids: params.allowedMatchIds ?? "all",
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };

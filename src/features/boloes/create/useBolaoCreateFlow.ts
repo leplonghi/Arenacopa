@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { getDefaultMarketIdsForFormat } from "@/services/boloes/bolao-format.service";
 import type { BolaoFormatSlug, MarketTemplateSlug, ScoringRules } from "@/types/bolao";
 
-export type CreateStep = "quick" | "context" | "type" | "admission" | "review";
+export type CreateStep = "quick" | "catalog" | "context" | "type" | "admission" | "review";
 export type PoolContextMode = "standalone" | "existing_group" | "new_group";
 export type GroupBindingMode = "none" | "linked_discovery" | "group_gated";
 export type FinanceMode = "free" | "paid_external";
@@ -48,6 +48,8 @@ type WizardState = {
   newGroupObjective: string;
   newGroupVisibility: "private" | "public";
   newGroupAdmissionMode: "approval" | "direct_code_or_invite";
+  championshipId: string | null;
+  allowedMatchIds: string[] | "all";
 };
 
 const poolTypeConfig: Record<PoolTypeId, { formatId: BolaoFormatSlug; preset: PresetKey }> = {
@@ -110,6 +112,8 @@ export function useBolaoCreateFlow(initialGrupoId: string | null) {
     newGroupObjective: "friends",
     newGroupVisibility: "private",
     newGroupAdmissionMode: "approval",
+    championshipId: null,
+    allowedMatchIds: "all",
   });
 
   const canAdvance = useMemo(() => {
@@ -123,6 +127,12 @@ export function useBolaoCreateFlow(initialGrupoId: string | null) {
       }
 
       return state.name.trim().length >= 3;
+    }
+
+    if (step === "catalog") {
+      if (!state.championshipId) return false;
+      if (Array.isArray(state.allowedMatchIds) && state.allowedMatchIds.length === 0) return false;
+      return true;
     }
 
     if (step === "context") {

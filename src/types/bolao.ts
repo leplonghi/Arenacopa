@@ -202,6 +202,7 @@ export interface BolaoData {
     cutoff_mode?: "per_match" | "per_phase" | "manual";
     /** Championship this bolão belongs to. Defaults to "wc2026" for legacy records. */
     championship_id?: string;
+    allowed_match_ids?: string[] | "all";
     schema_version?: number;
     editable_sections?: EditableSections;
     lifecycle?: {

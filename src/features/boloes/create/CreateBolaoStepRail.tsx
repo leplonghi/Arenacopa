@@ -18,15 +18,19 @@ const toneClasses: Record<StepTone, string> = {
 export function CreateBolaoStepRail({
   activeStep,
   steps = [
-    { number: 1, label: "Escolha", tone: "green" },
-    { number: 2, label: "Publicar", tone: "gold" },
+    { number: 1, label: "Identidade", tone: "green" },
+    { number: 2, label: "Jogos", tone: "gold" },
+    { number: 3, label: "Contexto", tone: "cyan" },
+    { number: 4, label: "Regras", tone: "rose" },
+    { number: 5, label: "Acesso", tone: "gold" },
+    { number: 6, label: "Publicar", tone: "green" },
   ],
 }: {
   activeStep: number;
   steps?: StepRailItem[];
 }) {
   return (
-    <div className="mb-6 grid gap-2 sm:grid-cols-2" aria-label="Etapas sequenciais do bolão">
+    <div className="mb-6 grid grid-cols-2 gap-2 sm:grid-cols-6" aria-label="Etapas sequenciais do bolão">
       {steps.map((step) => {
         const active = step.number === activeStep;
         return (
