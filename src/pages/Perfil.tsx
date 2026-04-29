@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { teams, getTeam } from "@/data/mockData";
 import { Flag } from "@/components/Flag";
 import { cn } from "@/lib/utils";
-import { LogOut, Settings, Bell, Sparkles, Goal, Newspaper, Clock, Loader2, Languages, Target, Star, Crown, Zap, Trophy, Medal, Award, Heart, BookOpen } from "lucide-react";
+import { LogOut, Settings, Bell, Goal, Newspaper, Clock, Loader2, Languages, Target, Star, Crown, Zap, Trophy, Medal, Award, Heart, BookOpen } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { db } from "@/integrations/firebase/client";
 import { useNavigate } from "react-router-dom";
@@ -116,7 +116,7 @@ const Perfil = () => {
     { id: "campeao", title: t('achievements.champion.title'), description: (stats?.titles || 0) > 0 ? t('achievements.champion.desc') : t('achievements.locked'), icon: <Trophy className="w-6 h-6 text-emerald-400" />, unlocked: (stats?.titles || 0) > 0 },
   ];
   const historyItems = [
-    { label: "Palpites enviados", value: (stats?.totalPredictions || 0).toLocaleString("pt-BR") },
+    { label: "Jogos marcados", value: (stats?.totalPredictions || 0).toLocaleString("pt-BR") },
     { label: "Placares exatos", value: (stats?.exactScores || 0).toLocaleString("pt-BR") },
     { label: "Bolões criados", value: (stats?.createdBoloes || 0).toLocaleString("pt-BR") },
     { label: "Títulos", value: (stats?.titles || 0).toLocaleString("pt-BR") },
@@ -185,7 +185,7 @@ const Perfil = () => {
             <div className="inline-flex items-center gap-2 rounded-full border border-primary/35 bg-primary/12 px-4 py-2 text-primary">
               <Star className="h-4 w-4 fill-current" />
               <span className="font-display text-xl font-black uppercase">
-                Nível {levelInfo.level} • Apostador
+                Nível {levelInfo.level} • Participante
               </span>
             </div>
             <p className="text-2xl font-black text-zinc-200">
@@ -372,7 +372,7 @@ const Perfil = () => {
               </span>
             }
           />
-          <ArenaMetric label="Palpites" value={(stats?.totalPredictions || 0).toLocaleString("pt-BR")} />
+          <ArenaMetric label="Escolhas" value={(stats?.totalPredictions || 0).toLocaleString("pt-BR")} />
         </div>
       </ArenaPanel>
 
@@ -487,40 +487,6 @@ const Perfil = () => {
           <p className="text-xs leading-relaxed text-zinc-400">
             {t('language_system', { language: languageLabels[systemLanguage] })}
           </p>
-        </div>
-      </ArenaPanel>
-
-      <ArenaPanel className="overflow-hidden p-0">
-        <div className="flex items-center gap-3 bg-[linear-gradient(90deg,rgba(145,255,59,0.86),rgba(112,230,39,0.94))] px-5 py-4 text-black">
-          <div className="flex-1">
-            <div className="mb-1 flex items-center gap-1.5">
-              <Sparkles className="w-4 h-4" />
-              <span className="font-display text-[1.35rem] font-semibold uppercase">{t('fun_mode')}</span>
-            </div>
-            <p className="text-[11px] font-semibold leading-relaxed text-black/75">
-              {t('fun_mode_desc')}
-            </p>
-          </div>
-          <button
-            onClick={async () => {
-              const newVal = !profile?.fun_mode;
-              setProfile(prev => prev ? { ...prev, fun_mode: newVal } : null);
-              if (user?.id) {
-                await updateProfile(user.id, { fun_mode: newVal });
-              }
-            }}
-            aria-pressed={Boolean(profile?.fun_mode)}
-            aria-label={profile?.fun_mode ? t('fun_mode_disable') : t('fun_mode_enable')}
-            className={cn(
-              "relative h-8 w-14 shrink-0 rounded-full transition-colors",
-              profile?.fun_mode ? "bg-black/75" : "bg-black/25"
-            )}
-          >
-            <span className={cn(
-              "absolute top-1 h-6 w-6 rounded-full bg-white shadow transition-transform",
-              profile?.fun_mode ? "left-7" : "left-1"
-            )} />
-          </button>
         </div>
       </ArenaPanel>
 

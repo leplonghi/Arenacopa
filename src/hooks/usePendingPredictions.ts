@@ -1,18 +1,18 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   collection,
   documentId,
   getDocs,
   onSnapshot,
-  orderBy,
   query,
   where,
 } from "firebase/firestore";
 
 import { DEFAULT_CHAMPIONSHIP_ID, resolveChampionshipId } from "@/data/championships/definitions";
 import { useAuth } from "@/contexts/AuthContext";
+import { useDashboardMatches } from "@/hooks/useDashboardMatches";
 import { db } from "@/integrations/firebase/client";
-import { normalizeMatchDateValue, normalizeMatchFeedStatus } from "@/lib/match-feed";
+import { createAsyncRefreshScheduler } from "@/lib/async-refresh-scheduler";
 
 export type PendingMatch = {
   id: string;
@@ -41,17 +41,6 @@ type PredictionRow = {
   bolao_id: string;
 };
 
-type FirestoreMatchRow = {
-  championship_id?: string | null;
-  stage?: string | null;
-  home_team_code?: string | null;
-  away_team_code?: string | null;
-  match_date?: string | { toDate?: () => Date } | null;
-  status?: string | null;
-  home_score?: number | null;
-  away_score?: number | null;
-};
-
 function chunkValues<T>(values: T[], chunkSize: number) {
   const chunks: T[][] = [];
   for (let index = 0; index < values.length; index += chunkSize) {
@@ -64,13 +53,15 @@ function resolveBolaoChampionshipId(value?: string | null) {
   return resolveChampionshipId(value || DEFAULT_CHAMPIONSHIP_ID) || DEFAULT_CHAMPIONSHIP_ID;
 }
 
-function resolveMatchChampionshipId(value?: string | null) {
-  return resolveChampionshipId(value || DEFAULT_CHAMPIONSHIP_ID) || DEFAULT_CHAMPIONSHIP_ID;
-}
-
 export function usePendingPredictions() {
   const { user } = useAuth();
+  const { data: dashboardMatches } = useDashboardMatches();
   const [pendingItems, setPendingItems] = useState<PendingPredictionItem[]>([]);
+  const dashboardMatchesRef = useRef(dashboardMatches);
+
+  useEffect(() => {
+    dashboardMatchesRef.current = dashboardMatches;
+  }, [dashboardMatches]);
 
   const fetchPending = useCallback(async () => {
     if (!user?.id) {
@@ -118,32 +109,21 @@ export function usePendingPredictions() {
         uniqueBolaoIds.map((bolaoId) => bolaoChampionshipMap.get(bolaoId) || DEFAULT_CHAMPIONSHIP_ID)
       );
 
-      const [matchesSnapshot, predictionsSnapshot] = await Promise.all([
-        getDocs(query(collection(db, "matches"), orderBy("match_date", "asc"))),
-        getDocs(query(collection(db, "bolao_palpites"), where("user_id", "==", user.id))),
-      ]);
+      const predictionsSnapshot = await getDocs(
+        query(collection(db, "bolao_palpites"), where("user_id", "==", user.id))
+      );
 
       const now = Date.now();
-      const upcomingMatches = matchesSnapshot.docs
-        .map((docSnapshot) => {
-          const data = docSnapshot.data() as FirestoreMatchRow;
-          const matchDate = normalizeMatchDateValue(data.match_date);
-          const championshipId = resolveMatchChampionshipId(data.championship_id);
-          return {
-            id: docSnapshot.id,
-            championship_id: championshipId,
-            stage: data.stage || null,
-            home_team_code: data.home_team_code || null,
-            away_team_code: data.away_team_code || null,
-            match_date: matchDate,
-            status: normalizeMatchFeedStatus({
-              status: data.status,
-              matchDate,
-              homeScore: data.home_score ?? null,
-              awayScore: data.away_score ?? null,
-            }),
-          };
-        })
+      const upcomingMatches = dashboardMatchesRef.current
+        .map((match) => ({
+          id: match.id,
+          championship_id: match.championshipId || DEFAULT_CHAMPIONSHIP_ID,
+          stage: match.stage || null,
+          home_team_code: match.homeTeamCode || null,
+          away_team_code: match.awayTeamCode || null,
+          match_date: match.matchDate,
+          status: match.status,
+        }))
         .filter((match) => championshipIds.has(match.championship_id || DEFAULT_CHAMPIONSHIP_ID))
         .filter((match) => match.status === "scheduled")
         .filter((match) => new Date(match.match_date).getTime() >= now)
@@ -195,39 +175,48 @@ export function usePendingPredictions() {
     }
   }, [user?.id]);
 
+  const fetchPendingRef = useRef(fetchPending);
+  useEffect(() => {
+    fetchPendingRef.current = fetchPending;
+  }, [fetchPending]);
+
   useEffect(() => {
     if (!user?.id) {
       setPendingItems([]);
       return;
     }
 
-    void fetchPending();
+    const refreshScheduler = createAsyncRefreshScheduler(
+      () => fetchPendingRef.current(),
+      { delayMs: 100 },
+    );
 
     const membershipQuery = query(collection(db, "bolao_members"), where("user_id", "==", user.id));
     const predictionsQuery = query(collection(db, "bolao_palpites"), where("user_id", "==", user.id));
-    const matchesQuery = query(collection(db, "matches"), orderBy("match_date", "asc"));
-
     const unsubscribeMemberships = onSnapshot(membershipQuery, () => {
-      void fetchPending();
+      refreshScheduler.request();
     });
     const unsubscribePredictions = onSnapshot(predictionsQuery, () => {
-      void fetchPending();
-    });
-    const unsubscribeMatches = onSnapshot(matchesQuery, () => {
-      void fetchPending();
+      refreshScheduler.request();
     });
 
     const intervalId = window.setInterval(() => {
-      void fetchPending();
+      refreshScheduler.request();
     }, 30000);
 
     return () => {
+      refreshScheduler.dispose();
       unsubscribeMemberships();
       unsubscribePredictions();
-      unsubscribeMatches();
       window.clearInterval(intervalId);
     };
-  }, [fetchPending, user?.id]);
+  }, [user?.id]);
+
+  useEffect(() => {
+    if (user?.id) {
+      fetchPendingRef.current();
+    }
+  }, [dashboardMatches, user?.id]);
 
   return pendingItems;
 }

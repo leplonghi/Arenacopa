@@ -23,6 +23,7 @@ import { getSiteUrl } from "@/utils/site-url";
 import { getTeam } from "@/data/mockData";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
+import type { MarketTemplateSlug } from "@/types/bolao";
 
 // ─── Types ────────────────────────────────────────────────────
 type MatchRow = {
@@ -34,6 +35,8 @@ type MatchRow = {
   stage?: string | null;
   group_id?: string | null;
 };
+
+const quickBolaoMarketIds: MarketTemplateSlug[] = ["exact_score"];
 
 // ─── Match item card ──────────────────────────────────────────
 function MatchItem({
@@ -168,7 +171,7 @@ export default function BolaoRapido() {
       emoji: "⚽",
       category: "private",
       formatId: "classic",
-      selectedMarketIds: ["score"],
+      selectedMarketIds: quickBolaoMarketIds,
       scoringRules: { exact: 10, winner: 3, draw: 3, participation: 1 },
       champion: "",
       scoringMode: "default",

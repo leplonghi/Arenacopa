@@ -7,9 +7,6 @@ import {
     orderBy, 
     getDocs, 
     onSnapshot, 
-    doc, 
-    setDoc,
-    serverTimestamp
 } from "firebase/firestore";
 import { useAuth } from "@/contexts/AuthContext";
 import { Flag } from "@/components/Flag";
@@ -24,6 +21,7 @@ import { ShareCardGenerator } from "./ShareCardGenerator";
 import { toPng } from "html-to-image";
 import { EmptyState } from "@/components/EmptyState";
 import { cn } from "@/lib/utils";
+import { saveBolaoPalpite } from "@/services/boloes/bolao.service";
 import { saveBolaoPrediction } from "@/services/boloes/bolao-prediction.service";
 import { ArenaPanel, ArenaSectionHeader } from "@/components/arena/ArenaPrimitives";
 import type { BolaoData, BolaoMarket, BolaoPrediction } from "@/types/bolao";
@@ -332,16 +330,16 @@ export function JogosTab({
             const tasks: Promise<unknown>[] = [];
 
             if (hasScoreInput) {
-                const docId = `${user.id}_${matchId}_${bolaoId}`;
                 tasks.push(
-                    setDoc(doc(db, "bolao_palpites", docId), {
-                        bolao_id: bolaoId,
-                        user_id: user.id,
-                        match_id: matchId,
-                        home_score: hs,
-                        away_score: as,
-                        updated_at: serverTimestamp()
-                    }, { merge: true })
+                    saveBolaoPalpite({
+                        bolaoId,
+                        userId: user.id,
+                        matchId,
+                        homeScore: hs,
+                        awayScore: as,
+                        isPowerPlay: false,
+                        existingId: savedPalpites[matchId]?.id,
+                    })
                 );
 
                 const derivedMarkets = matchMarkets.filter(

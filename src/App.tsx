@@ -4,6 +4,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import "./i18n/config";
 import { Suspense, lazy, useEffect } from "react";
+import type { ComponentType } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
 import { App as CapacitorApp } from '@capacitor/app';
@@ -13,35 +14,69 @@ import { TermsGuard } from "@/components/TermsGuard";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { MonetizationProvider } from "@/contexts/MonetizationContext";
 import { ChampionshipProvider } from "@/contexts/ChampionshipContext";
+import { AppSplash } from "@/components/AppSplash";
 import FieldBackground from "@/components/FieldBackground";
 import { useLanguage } from "@/i18n/useLanguage";
+import { BRAND_MARK_SRC } from "@/lib/brand-assets";
 import { sanitizeInternalRedirect } from "@/lib/security";
-const Index = lazy(() => import("./pages/Index"));
-const Copa = lazy(() => import("./pages/Copa"));
-const Boloes = lazy(() => import("./pages/Boloes"));
-const CriarBolao = lazy(() => import("./pages/CriarBolao"));
-const BolaoDetail = lazy(() => import("./pages/BolaoDetail"));
-const Perfil = lazy(() => import("./pages/Perfil"));
-const Ranking = lazy(() => import("./pages/Ranking"));
-const Rules = lazy(() => import("./pages/Rules"));
-const TeamDetails = lazy(() => import("./pages/TeamDetails"));
-const Auth = lazy(() => import("./pages/Auth"));
-const Guia = lazy(() => import("./pages/Guia"));
-const MenuPage = lazy(() => import("./pages/Menu"));
-const NotFound = lazy(() => import("./pages/NotFound"));
-const Premium = lazy(() => import("./pages/Premium"));
-const PublicInvite = lazy(() => import("./pages/PublicInvite"));
-const PublicGroupInvite = lazy(() => import("./pages/PublicGroupInvite"));
-const Grupos = lazy(() => import("./pages/Grupos"));
-const CriarGrupo = lazy(() => import("./pages/CriarGrupo"));
-const GrupoDetail = lazy(() => import("./pages/GrupoDetail"));
-const Privacidade = lazy(() => import("./pages/Privacidade"));
-const Termos = lazy(() => import("./pages/Termos"));
-const Noticias = lazy(() => import("./pages/Noticias"));
-const ExcluirConta = lazy(() => import("./pages/ExcluirConta"));
-const Campeonatos = lazy(() => import("./pages/Campeonatos"));
-const CampeonatoHub = lazy(() => import("./pages/CampeonatoHub"));
-const BolaoRapido = lazy(() => import("./pages/BolaoRapido"));
+function isLazyChunkError(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error);
+  return /Failed to fetch dynamically imported module|Importing a module script failed|ChunkLoadError|Loading chunk/i.test(message);
+}
+
+function lazyWithReloadRetry<T extends ComponentType<Record<string, never>>>(
+  key: string,
+  loader: () => Promise<{ default: T }>,
+) {
+  return lazy(async () => {
+    try {
+      const module = await loader();
+      sessionStorage.removeItem(`lazy-retry:${key}`);
+      return module;
+    } catch (error) {
+      const retryKey = `lazy-retry:${key}`;
+      if (isLazyChunkError(error) && !sessionStorage.getItem(retryKey)) {
+        sessionStorage.setItem(retryKey, "1");
+        window.location.reload();
+        return new Promise<{ default: T }>(() => undefined);
+      }
+      throw error;
+    }
+  });
+}
+
+const Index = lazyWithReloadRetry("Index", () => import("./pages/Index"));
+const Copa = lazyWithReloadRetry("Copa", () => import("./pages/Copa"));
+const Descobrir = lazyWithReloadRetry("Descobrir", () => import("./pages/Descobrir"));
+const Boloes = lazyWithReloadRetry("Boloes", () => import("./pages/Boloes"));
+const CreatorPro = lazyWithReloadRetry("CreatorPro", () => import("./pages/CreatorPro"));
+const CriarBolao = lazyWithReloadRetry("CriarBolao", () => import("./pages/CriarBolao"));
+const BolaoDetail = lazyWithReloadRetry("BolaoDetail", () => import("./pages/BolaoDetail"));
+const Perfil = lazyWithReloadRetry("Perfil", () => import("./pages/Perfil"));
+const Ranking = lazyWithReloadRetry("Ranking", () => import("./pages/Ranking"));
+const Rules = lazyWithReloadRetry("Rules", () => import("./pages/Rules"));
+const TeamDetails = lazyWithReloadRetry("TeamDetails", () => import("./pages/TeamDetails"));
+const Auth = lazyWithReloadRetry("Auth", () => import("./pages/Auth"));
+const Guia = lazyWithReloadRetry("Guia", () => import("./pages/Guia"));
+const MenuPage = lazyWithReloadRetry("Menu", () => import("./pages/Menu"));
+const NotFound = lazyWithReloadRetry("NotFound", () => import("./pages/NotFound"));
+const Premium = lazyWithReloadRetry("Premium", () => import("./pages/Premium"));
+const PublicInvite = lazyWithReloadRetry("PublicInvite", () => import("./pages/PublicInvite"));
+const PublicGroupInvite = lazyWithReloadRetry("PublicGroupInvite", () => import("./pages/PublicGroupInvite"));
+const Grupos = lazyWithReloadRetry("Grupos", () => import("./pages/Grupos"));
+const CriarGrupo = lazyWithReloadRetry("CriarGrupo", () => import("./pages/CriarGrupo"));
+const GrupoDetail = lazyWithReloadRetry("GrupoDetail", () => import("./pages/GrupoDetail"));
+const Privacidade = lazyWithReloadRetry("Privacidade", () => import("./pages/Privacidade"));
+const Termos = lazyWithReloadRetry("Termos", () => import("./pages/Termos"));
+const Noticias = lazyWithReloadRetry("Noticias", () => import("./pages/Noticias"));
+const ExcluirConta = lazyWithReloadRetry("ExcluirConta", () => import("./pages/ExcluirConta"));
+const Campeonatos = lazyWithReloadRetry("Campeonatos", () => import("./pages/Campeonatos"));
+const CampeonatoHub = lazyWithReloadRetry("CampeonatoHub", () => import("./pages/CampeonatoHub"));
+const BolaoRapido = lazyWithReloadRetry("BolaoRapido", () => import("./pages/BolaoRapido"));
+const BaresLanding = lazyWithReloadRetry("BaresLanding", () => import("./pages/BaresLanding"));
+const CriarCampanhaBar = lazyWithReloadRetry("CriarCampanhaBar", () => import("./pages/CriarCampanhaBar"));
+const CampanhaBarDetail = lazyWithReloadRetry("CampanhaBarDetail", () => import("./pages/CampanhaBarDetail"));
+const PublicCommercialCampaign = lazyWithReloadRetry("PublicCommercialCampaign", () => import("./pages/PublicCommercialCampaign"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -143,12 +178,21 @@ function LanguageRuntime() {
   return null;
 }
 
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [pathname]);
+
+  return null;
+}
+
 const LoadingScreen = () => (
   <div className="flex h-screen w-full items-center justify-center bg-[#061a10] text-white">
     <div className="flex flex-col items-center gap-6">
       <div className="relative">
         <img
-          src="/logo.png?v=20260316"
+          src={BRAND_MARK_SRC}
           alt="Arena CUP"
           className="h-20 w-20 object-contain drop-shadow-[0_0_24px_rgba(34,197,94,0.45)]"
         />
@@ -189,6 +233,7 @@ const AppRoutes = () => (
     <Route path="/auth" element={<AuthRoute><Auth /></AuthRoute>} />
     {/* /b/:inviteCode — shareable invite link. Public so unauthenticated users can see the "Join" screen. */}
     <Route path="/b/:inviteCode" element={<PublicInvite />} />
+    <Route path="/c/:shareCode" element={<PublicCommercialCampaign />} />
     <Route path="/grupos/entrar/:inviteCode" element={<PublicGroupInvite />} />
     {/* Legal / compliance pages — intentionally PUBLIC (Play Store / App Store requirement).
         /excluir-conta must be public so unauthenticated users can still request deletion. */}
@@ -214,10 +259,26 @@ const AppRoutes = () => (
     <Route path="/campeonatos" element={<ProtectedRoute><Layout><Campeonatos /></Layout></ProtectedRoute>} />
     {/* Placeholder for individual championship pages (Phase 1 builds these) */}
     <Route path="/campeonato/:championshipId" element={<ProtectedRoute><Layout><CampeonatoHub /></Layout></ProtectedRoute>} />
+    <Route path="/descobrir" element={<ProtectedRoute><Layout><Descobrir /></Layout></ProtectedRoute>} />
+    <Route path="/descobrir/boloes" element={<ProtectedRoute><Layout><Descobrir /></Layout></ProtectedRoute>} />
+    <Route path="/descobrir/locais" element={<ProtectedRoute><Layout><Descobrir /></Layout></ProtectedRoute>} />
+    <Route path="/descobrir/campanhas" element={<ProtectedRoute><Layout><Descobrir /></Layout></ProtectedRoute>} />
+    <Route path="/descobrir/rankings" element={<ProtectedRoute><Layout><Descobrir /></Layout></ProtectedRoute>} />
     <Route path="/boloes" element={<ProtectedRoute><Layout><Boloes /></Layout></ProtectedRoute>} />
+    <Route path="/boloes/creator" element={<ProtectedRoute><Layout><CreatorPro /></Layout></ProtectedRoute>} />
     <Route path="/boloes/rapido" element={<ProtectedRoute><Layout><BolaoRapido /></Layout></ProtectedRoute>} />
     <Route path="/boloes/criar" element={<ProtectedRoute><Layout><CriarBolao /></Layout></ProtectedRoute>} />
     <Route path="/boloes/:id" element={<ProtectedRoute><Layout><BolaoDetail /></Layout></ProtectedRoute>} />
+    <Route path="/bares" element={<ProtectedRoute><Layout><BaresLanding /></Layout></ProtectedRoute>} />
+    <Route path="/bares/campanhas/criar" element={<ProtectedRoute><Layout><CriarCampanhaBar /></Layout></ProtectedRoute>} />
+    <Route path="/bares/campanhas/:campaignId" element={<ProtectedRoute><Layout><CampanhaBarDetail /></Layout></ProtectedRoute>} />
+    <Route path="/campanhas" element={<ProtectedRoute><Layout><BaresLanding /></Layout></ProtectedRoute>} />
+    <Route path="/campanhas/criar" element={<ProtectedRoute><Layout><CriarCampanhaBar /></Layout></ProtectedRoute>} />
+    <Route path="/campanhas/:campaignId" element={<ProtectedRoute><Layout><CampanhaBarDetail /></Layout></ProtectedRoute>} />
+    <Route path="/negocios" element={<ProtectedRoute><Layout><BaresLanding /></Layout></ProtectedRoute>} />
+    <Route path="/negocios/criar" element={<ProtectedRoute><LegacyRedirect to="/campanhas/criar" /></ProtectedRoute>} />
+    <Route path="/negocios/campanhas" element={<ProtectedRoute><Layout><BaresLanding /></Layout></ProtectedRoute>} />
+    <Route path="/negocios/campanhas/:campaignId" element={<ProtectedRoute><Layout><CampanhaBarDetail /></Layout></ProtectedRoute>} />
     <Route path="/criar-bolao" element={<ProtectedRoute><LegacyRedirectWithSearch to="/boloes/criar" /></ProtectedRoute>} />
     <Route path="/pools" element={<ProtectedRoute><LegacyRedirect to="/boloes" /></ProtectedRoute>} />
     <Route path="/pools/create" element={<ProtectedRoute><LegacyRedirectWithSearch to="/boloes/criar" /></ProtectedRoute>} />
@@ -225,6 +286,9 @@ const AppRoutes = () => (
     <Route path="/grupos" element={<ProtectedRoute><Layout><Grupos /></Layout></ProtectedRoute>} />
     <Route path="/grupos/criar" element={<ProtectedRoute><Layout><CriarGrupo /></Layout></ProtectedRoute>} />
     <Route path="/grupos/:grupoId" element={<ProtectedRoute><Layout><GrupoDetail /></Layout></ProtectedRoute>} />
+    <Route path="/comunidades" element={<ProtectedRoute><Layout><Grupos /></Layout></ProtectedRoute>} />
+    <Route path="/comunidades/criar" element={<ProtectedRoute><LegacyRedirectWithSearch to="/grupos/criar" /></ProtectedRoute>} />
+    <Route path="/comunidades/:grupoId" element={<ProtectedRoute><Layout><GrupoDetail /></Layout></ProtectedRoute>} />
     <Route path="/guia" element={<ProtectedRoute><LegacyRedirect to="/copa/guia" /></ProtectedRoute>} />
     <Route path="/guia/historia" element={<ProtectedRoute><LegacyRedirect to="/copa/historia" /></ProtectedRoute>} />
     <Route path="/guia/:subtab" element={<ProtectedRoute><LegacyGuiaRedirect /></ProtectedRoute>} />
@@ -256,9 +320,11 @@ const App = () => (
             <Suspense fallback={<LoadingScreen />}>
               <LanguageRuntime />
               <FieldBackground />
+              <AppSplash />
               <BrowserRouter>
                 <DeepLinkListener />
                 <PushNotificationListener />
+                <ScrollToTop />
                 <AppRoutes />
               </BrowserRouter>
             </Suspense>

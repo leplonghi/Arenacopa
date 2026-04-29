@@ -151,7 +151,7 @@ export default {
       },
       fontFamily: {
         sans: ['"Manrope"', 'system-ui', 'sans-serif'],
-        display: ['"Teko"', '"Rajdhani"', 'sans-serif'],
+        display: ['"Barlow Condensed"', '"Teko"', '"Rajdhani"', 'sans-serif'],
       }
     }
   },

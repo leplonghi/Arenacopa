@@ -1,8 +1,8 @@
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { Trophy, Bell, ChevronLeft, User, Users2, Menu } from "lucide-react";
+import { Trophy, Bell, ChevronLeft, Compass, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { NotificationsSheet } from "@/components/NotificationsSheet";
 import { OnboardingModal } from "@/components/OnboardingModal";
@@ -13,7 +13,9 @@ import { BrandWordmark } from "@/components/BrandWordmark";
 import {
   ChampionshipBadgeIcon,
   CupTrophyIcon,
+  GroupsArenaIcon,
   HomeArenaIcon,
+  MenuArenaIcon,
   NewsPulseIcon,
 } from "@/components/AppNavIcons";
 import {
@@ -33,21 +35,23 @@ import { getProfile } from "@/services/profile/profile.service";
 import { useQuery } from "@tanstack/react-query";
 import { listNotifications } from "@/services/notifications/notifications.service";
 import { appNavigationItems, isNavigationItemActive, type AppNavIconKey } from "@/config/navigation";
+import { BRAND_MARK_SRC } from "@/lib/brand-assets";
 import { useProfileStats } from "@/hooks/useProfileStats";
 import { getArenaLevel } from "@/lib/profile-level";
 
-const logoUrl = "/logo.png?v=20260316";
+const logoUrl = BRAND_MARK_SRC;
 
 const navIconMap: Record<AppNavIconKey, React.ComponentType<{ className?: string; strokeWidth?: number }>> = {
   home: HomeArenaIcon,
   copa: CupTrophyIcon,
   championships: ChampionshipBadgeIcon,
   bolao: Trophy,
+  discover: Compass,
   news: NewsPulseIcon,
   guia: NewsPulseIcon,
-  groups: Users2,
+  groups: GroupsArenaIcon,
   profile: User,
-  menu: Menu,
+  menu: MenuArenaIcon,
 };
 
 function Header({ className }: { className?: string }) {
@@ -111,6 +115,8 @@ function Header({ className }: { className?: string }) {
     if (path.startsWith("/boloes/")) return t('header.titles.bolao_detail');
     if (path === "/grupos") return t('header.titles.groups');
     if (path.startsWith("/grupos/")) return t('header.titles.group_detail');
+    if (path === "/comunidades") return t('header.titles.groups');
+    if (path.startsWith("/comunidades/")) return t('header.titles.group_detail');
     if (path === "/perfil") return t('header.titles.profile');
     return null;
   };
@@ -208,11 +214,15 @@ function BottomTabs({ className }: { className?: string }) {
   const { t } = useTranslation('common');
   const location = useLocation();
   const tabs = appNavigationItems.filter((item) => item.mobile);
+  const itemBaseClass =
+    "group relative flex h-full min-w-0 flex-col items-center justify-center gap-1 rounded-[24px] px-1 py-2 text-center outline-none transition-all duration-300";
+  const iconShellClass =
+    "relative flex h-[46px] w-[46px] items-center justify-center rounded-[18px] transition-all duration-300";
 
   return (
     <nav className={cn("fixed bottom-0 inset-x-0 z-30 overflow-visible safe-bottom", className)}>
       <div
-        className="mx-auto grid h-[88px] max-w-md items-end overflow-visible rounded-t-[28px] border border-b-0 border-[#3b5b4d] bg-[linear-gradient(180deg,rgba(5,19,14,0.98)_0%,rgba(3,12,9,1)_100%)] px-2 pb-3 pt-2 shadow-[0_-20px_60px_-30px_rgba(0,0,0,0.9)]"
+        className="relative mx-auto grid h-[94px] max-w-md items-end overflow-visible rounded-t-[30px] border border-b-0 border-[#496653]/75 bg-[linear-gradient(180deg,rgba(6,24,17,0.98)_0%,rgba(2,12,9,1)_72%,rgba(1,8,7,1)_100%)] px-2 pb-3 pt-2 shadow-[0_-22px_70px_-34px_rgba(8,255,93,0.45),0_-18px_58px_-26px_rgba(0,0,0,0.95)] before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-[linear-gradient(90deg,transparent,rgba(139,255,87,0.42),transparent)]"
         style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}
       >
         {tabs.map((tab) => {
@@ -223,12 +233,12 @@ function BottomTabs({ className }: { className?: string }) {
           if (tab.path === "#menu") {
             return (
               <MobileMenuSheet key={tab.path}>
-                <button className="flex h-full min-w-0 flex-col items-center justify-center gap-1.5 rounded-[22px] px-1 py-2 text-center text-zinc-300 transition-colors outline-none">
-                  <span className="relative flex h-8 w-8 items-center justify-center scale-[0.96] transition-all duration-300">
-                    <span className="absolute inset-0 rounded-[14px] border transition-all duration-300 border-transparent bg-transparent" />
-                    <Icon className="relative z-10 h-[22px] w-[22px]" strokeWidth={1.72} />
+                <button className={cn(itemBaseClass, "text-zinc-300 hover:text-white focus-visible:ring-2 focus-visible:ring-primary/70")}>
+                  <span className={cn(iconShellClass, "scale-[0.98] border border-transparent bg-white/[0.025] group-hover:border-white/10 group-hover:bg-white/[0.06]")}>
+                    <span className="absolute inset-1 rounded-[15px] bg-[radial-gradient(circle_at_50%_20%,rgba(255,255,255,0.08),transparent_58%)]" />
+                    <Icon className="relative z-10 h-[30px] w-[30px] drop-shadow-[0_0_10px_rgba(255,255,255,0.12)]" strokeWidth={2.15} />
                   </span>
-                  <span className="font-display text-[13px] leading-none">{t(tab.labelKey)}</span>
+                  <span className="font-display text-[15px] font-semibold leading-none tracking-[0.01em]">{t(tab.labelKey)}</span>
                 </button>
               </MobileMenuSheet>
             );
@@ -240,8 +250,10 @@ function BottomTabs({ className }: { className?: string }) {
               end={tab.path === "/"}
               className={({ isActive }) =>
                 cn(
-                  "flex h-full min-w-0 flex-col items-center justify-center gap-1.5 rounded-[22px] px-1 py-2 text-center transition-colors",
-                  isActive ? "text-primary" : "text-zinc-300"
+                  itemBaseClass,
+                  isActive
+                    ? "text-primary"
+                    : "text-zinc-300 hover:text-white"
                 )
               }
             >
@@ -249,21 +261,32 @@ function BottomTabs({ className }: { className?: string }) {
                 <>
                   <span
                     className={cn(
-                      "relative flex h-8 w-8 items-center justify-center transition-all duration-300",
-                      isActive ? "scale-100" : "scale-[0.96]"
+                      iconShellClass,
+                      isActive
+                        ? "scale-105 border border-primary/45 bg-[radial-gradient(circle_at_50%_20%,rgba(255,205,0,0.25),rgba(117,255,72,0.12)_42%,rgba(4,22,13,0.18)_100%)] shadow-[0_0_22px_rgba(255,205,0,0.20),inset_0_0_18px_rgba(117,255,72,0.08)]"
+                        : "scale-[0.98] border border-transparent bg-white/[0.025] group-hover:border-white/10 group-hover:bg-white/[0.06]"
                     )}
                   >
-                    <span
+                    <span className={cn(
+                      "absolute -bottom-1 h-1.5 w-7 rounded-full transition-all duration-300",
+                      isActive ? "bg-primary shadow-[0_0_16px_rgba(255,205,0,0.52)]" : "bg-transparent"
+                    )} />
+                    <Icon
                       className={cn(
-                        "absolute inset-0 rounded-[14px] border transition-all duration-300",
+                        "relative z-10 h-[30px] w-[30px] transition-all duration-300",
                         isActive
-                          ? "border-primary/40 bg-primary/10 shadow-[0_0_18px_rgba(255,198,0,0.14)]"
-                          : "border-transparent bg-transparent"
+                          ? "drop-shadow-[0_0_14px_rgba(255,205,0,0.46)]"
+                          : "drop-shadow-[0_0_10px_rgba(255,255,255,0.10)]"
                       )}
+                      strokeWidth={isActive ? 2.35 : 2.05}
                     />
-                    <Icon className="relative z-10 h-[22px] w-[22px]" strokeWidth={isActive ? 2.05 : 1.72} />
                   </span>
-                  <span className={cn("font-display text-[13px] leading-none", isActive ? "font-black" : "font-semibold")}>{t(tab.labelKey)}</span>
+                  <span className={cn(
+                    "font-display text-[15px] leading-none tracking-[0.01em]",
+                    isActive ? "font-black text-primary" : "font-semibold"
+                  )}>
+                    {t(tab.labelKey)}
+                  </span>
                 </>
               )}
             </NavLink>
@@ -330,9 +353,15 @@ import { CookieBanner } from "@/components/CookieBanner";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
+  const mainScrollRef = useRef<HTMLElement | null>(null);
   const hideBottomNav = location.pathname === "/boloes/criar";
   const { user } = useAuth();
   const { t } = useTranslation('common');
+
+  useEffect(() => {
+    mainScrollRef.current?.scrollTo({ top: 0, left: 0, behavior: "auto" });
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [location.pathname, location.search]);
 
   return (
     <SidebarProvider>
@@ -342,7 +371,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <AppSidebar className="hidden md:flex z-40" />
         <SidebarInset className="bg-transparent flex flex-col h-svh w-full overflow-hidden">
           <Header className="w-full shrink-0" />
-          <main className={cn(
+          <main ref={mainScrollRef} className={cn(
             "flex-1 overflow-y-auto w-full max-w-7xl mx-auto scrollbar-hide flex flex-col pt-[calc(4.6rem+var(--safe-area-top,0px))] md:pt-20 pb-[calc(8.5rem+var(--safe-area-bottom,0px))] md:pb-12"
           )}>
             <div className="flex-1">

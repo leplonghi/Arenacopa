@@ -9,4 +9,12 @@ export const monetizationEnv = {
   premiumCheckoutEnabled: parseBoolean(import.meta.env.VITE_PREMIUM_CHECKOUT_ENABLED, false),
   premiumPriceLabel: import.meta.env.VITE_STRIPE_PREMIUM_PRICE_LABEL?.trim() || "R$9,90",
   premiumProductName: import.meta.env.VITE_STRIPE_PREMIUM_PRODUCT_NAME?.trim() || "Arena CUP Premium",
+  commercialCampaignCheckoutEnabled: parseBoolean(
+    import.meta.env.VITE_COMMERCIAL_CAMPAIGN_CHECKOUT_ENABLED,
+    false,
+  ),
+  commercialCampaignPriceLabel:
+    import.meta.env.VITE_STRIPE_COMMERCIAL_CAMPAIGN_PRICE_LABEL?.trim() || "R$49,90",
+  commercialCampaignProductName:
+    import.meta.env.VITE_STRIPE_COMMERCIAL_CAMPAIGN_PRODUCT_NAME?.trim() || "ArenaCup para Bares",
 };

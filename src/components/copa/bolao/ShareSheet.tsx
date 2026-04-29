@@ -1,4 +1,4 @@
-import { X, MessageCircle, Link2, Instagram } from "lucide-react";
+import { Download, X, MessageCircle, Link2, Instagram } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTranslation } from "react-i18next";
 import { useToast } from "@/hooks/use-toast";
@@ -8,8 +8,12 @@ import { toPng } from "html-to-image";
 import { type BolaoData } from "@/types/bolao";
 import { QRCodeSVG } from "qrcode.react";
 import { ShareCardGenerator } from "./ShareCardGenerator";
-import { getInviteUrl } from "@/utils/site-url";
 import { openWhatsAppShare } from "@/lib/security";
+import {
+    buildBolaoInviteUrl,
+    buildBolaoWhatsAppMessage,
+    buildQrPosterFileName,
+} from "@/utils/bolao-share";
 
 interface ShareSheetProps {
     open: boolean;
@@ -21,10 +25,16 @@ export function ShareSheet({ open, onClose, bolao }: ShareSheetProps) {
     const { t } = useTranslation('bolao');
     const { toast } = useToast();
     const shareRef = useRef<HTMLDivElement>(null);
+    const qrPosterRef = useRef<HTMLDivElement>(null);
     const [isGenerating, setIsGenerating] = useState(false);
 
-    const shareUrl = getInviteUrl(`/b/${bolao.invite_code}?utm_source=app&utm_medium=share_sheet&utm_campaign=bolao_invite`);
-    const shareText = t('share.invite_msg', { name: bolao.name, code: bolao.invite_code, url: shareUrl });
+    const shareUrl = buildBolaoInviteUrl(bolao.invite_code);
+    const shareText = buildBolaoWhatsAppMessage({
+        name: bolao.name,
+        inviteCode: bolao.invite_code,
+        inviteUrl: shareUrl,
+        context: "bar",
+    });
 
     const handleShareImage = async () => {
         if (!shareRef.current) return;
@@ -46,6 +56,23 @@ export function ShareSheet({ open, onClose, bolao }: ShareSheetProps) {
             onClose();
         } catch (err) {
             toast({ title: t('share.error_image'), variant: "destructive" });
+        } finally {
+            setIsGenerating(false);
+        }
+    };
+
+    const handleDownloadQrPoster = async () => {
+        if (!qrPosterRef.current) return;
+        try {
+            setIsGenerating(true);
+            const dataUrl = await toPng(qrPosterRef.current, { cacheBust: true, quality: 0.98, pixelRatio: 2 });
+            const link = document.createElement("a");
+            link.download = buildQrPosterFileName({ name: bolao.name, inviteCode: bolao.invite_code });
+            link.href = dataUrl;
+            link.click();
+            toast({ title: "QR do bolão gerado" });
+        } catch {
+            toast({ title: "Não foi possível gerar o QR", variant: "destructive" });
         } finally {
             setIsGenerating(false);
         }
@@ -88,6 +115,14 @@ export function ShareSheet({ open, onClose, bolao }: ShareSheetProps) {
                 onClose();
             }
         },
+        {
+            label: "QR para bar ou evento",
+            desc: "Baixar uma arte simples para imprimir ou mostrar na TV.",
+            icon: Download,
+            color: "bg-amber-500",
+            bgClass: "bg-amber-500/10 border-amber-500/20",
+            action: handleDownloadQrPoster
+        },
     ];
 
     return (
@@ -125,10 +160,13 @@ export function ShareSheet({ open, onClose, bolao }: ShareSheetProps) {
 
                         <div className="px-6 pb-8 space-y-3">
                             <div className="p-4 rounded-[24px] bg-secondary border border-border flex flex-col items-center justify-center text-center space-y-4 mb-4">
-                                <QRCodeSVG value={shareUrl} size={150} bgColor="transparent" fgColor="#fff" level="Q" className="p-2 bg-white/5 rounded-2xl" />
+                                <QRCodeSVG value={shareUrl} size={150} bgColor="#ffffff" fgColor="#101010" level="Q" className="rounded-2xl bg-white p-3" />
                                 <div>
                                     <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{t('share.code_label')}</span>
                                     <div className="text-3xl font-black tracking-[0.25em] text-primary">{bolao.invite_code}</div>
+                                    <p className="mt-2 max-w-[260px] text-xs leading-5 text-muted-foreground">
+                                        Compartilhe o link no WhatsApp ou baixe o QR para bares, telões e eventos.
+                                    </p>
                                 </div>
                             </div>
 
@@ -158,6 +196,23 @@ export function ShareSheet({ open, onClose, bolao }: ShareSheetProps) {
 
                     <div className="fixed -left-[9999px] top-0 pointer-events-none" aria-hidden="true" ref={shareRef}>
                         <ShareCardGenerator type="join_bolao" format="story" data={bolao} />
+                    </div>
+                    <div className="fixed -left-[9999px] top-0 pointer-events-none" aria-hidden="true">
+                        <div ref={qrPosterRef} className="flex h-[900px] w-[640px] flex-col items-center justify-between bg-[#f7f3e7] p-12 text-center text-[#111]">
+                            <div>
+                                <p className="text-sm font-black uppercase tracking-[0.28em] text-[#137d42]">ArenaCopa</p>
+                                <h2 className="mt-8 text-5xl font-black leading-tight">{bolao.name}</h2>
+                                <p className="mt-5 text-xl leading-8">Aponte a camera, entre no bolao e confirme seus palpites.</p>
+                            </div>
+                            <div className="rounded-[40px] bg-white p-8 shadow-2xl">
+                                <QRCodeSVG value={shareUrl} size={360} bgColor="#ffffff" fgColor="#101010" level="H" />
+                            </div>
+                            <div>
+                                <p className="text-sm font-black uppercase tracking-[0.22em] text-[#137d42]">Codigo do bolao</p>
+                                <p className="mt-3 text-5xl font-black tracking-[0.2em]">{bolao.invite_code}</p>
+                                <p className="mt-5 text-base leading-7">1. Escaneie o QR  2. Entre ou crie sua conta  3. Confirme a entrada</p>
+                            </div>
+                        </div>
                     </div>
                 </>
             )}

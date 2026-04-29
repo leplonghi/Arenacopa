@@ -27,10 +27,6 @@
         "select_aria": "Elegir {{team}} como equipo favorito",
         "open_selector_aria": "Abrir el selector completo de equipos"
     },
-    "fun_mode": "Modo Fiesta",
-    "fun_mode_desc": "Activa animaciones de fiesta, confeti en los goles y comentarios divertidos.",
-    "fun_mode_enable": "Activar modo fiesta",
-    "fun_mode_disable": "Desactivar modo fiesta",
     "notifications_title": "Notificaciones",
     "browser_notifications_unsupported": "Tu navegador no soporta notificaciones.",
     "notifications_denied_title": "Permiso denegado",

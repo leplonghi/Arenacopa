@@ -46,5 +46,7 @@ describe("BolaoEditPanel", () => {
     expect(screen.getByText("Identidade")).toBeInTheDocument();
     expect(screen.getAllByText(/Duplicar para/i).length).toBeGreaterThan(0);
     expect(screen.getByText("Salvar identidade")).toBeInTheDocument();
+    expect(screen.getByText("Apagar bolão")).toBeInTheDocument();
+    expect(screen.getByText(/remove o bolão das listas e desativa o convite/i)).toBeInTheDocument();
   });
 });

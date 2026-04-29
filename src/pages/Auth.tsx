@@ -7,12 +7,13 @@ import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { signInWithGoogle, signInWithPassword, signUpWithPassword } from "@/services/auth/auth.service";
 import { getDefaultProfileName } from "@/i18n/language";
+import { BRAND_MARK_SRC } from "@/lib/brand-assets";
 import { acceptTerms, ensureProfile, updateProfile } from "@/services/profile/profile.service";
 import { sanitizeInternalRedirect } from "@/lib/security";
 import { BrandWordmark } from "@/components/BrandWordmark";
 
 const Auth = () => {
-  const logoUrl = "/logo.png?v=20260316";
+  const logoUrl = BRAND_MARK_SRC;
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

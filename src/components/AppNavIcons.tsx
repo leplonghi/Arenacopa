@@ -111,6 +111,62 @@ export function ChampionshipBadgeIcon({ className, strokeWidth = 1.9 }: AppNavIc
   );
 }
 
+export function GroupsArenaIcon({ className, strokeWidth = 1.9 }: AppNavIconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} {...svgProps}>
+      <path
+        d="M9.1 11.05a3.05 3.05 0 1 0 0-6.1 3.05 3.05 0 0 0 0 6.1Z"
+        strokeWidth={strokeWidth}
+      />
+      <path
+        d="M14.95 10.15a2.55 2.55 0 1 0 0-5.1"
+        strokeWidth={strokeWidth}
+      />
+      <path
+        d="M3.95 18.85c.42-3.13 2.32-5.05 5.15-5.05s4.73 1.92 5.15 5.05"
+        strokeWidth={strokeWidth}
+      />
+      <path
+        d="M14.75 13.85c2.63.2 4.41 1.92 4.8 4.7"
+        strokeWidth={Math.max(strokeWidth - 0.05, 1.2)}
+      />
+      <path
+        d="M6.6 18.1c.7-.78 1.54-1.17 2.5-1.17s1.8.39 2.5 1.17"
+        fill="currentColor"
+        fillOpacity="0.14"
+        stroke="none"
+      />
+    </svg>
+  );
+}
+
+export function MenuArenaIcon({ className, strokeWidth = 1.9 }: AppNavIconProps) {
+  return (
+    <svg viewBox="0 0 24 24" className={className} {...svgProps}>
+      <path
+        d="M5 7.25h14"
+        strokeWidth={strokeWidth}
+      />
+      <path
+        d="M5 12h14"
+        strokeWidth={strokeWidth}
+      />
+      <path
+        d="M5 16.75h14"
+        strokeWidth={strokeWidth}
+      />
+      <path
+        d="M16.85 7.25h2.15M12.25 12h6.75M14.6 16.75H19"
+        strokeWidth={Math.max(strokeWidth + 0.25, 1.7)}
+      />
+      <path
+        d="M5 7.25h3.2M5 12h3.2M5 16.75h3.2"
+        strokeWidth={Math.max(strokeWidth + 0.25, 1.7)}
+      />
+    </svg>
+  );
+}
+
 export function NewsPulseIcon({ className, strokeWidth = 1.9 }: AppNavIconProps) {
   return (
     <svg viewBox="0 0 24 24" className={className} {...svgProps}>

@@ -29,8 +29,7 @@ export function AdmissionInbox({
 }: AdmissionInboxProps) {
   return (
     <ArenaPanel className="p-5 text-white">
-      <ArenaSectionHeader eyebrow="Inbox" title={title} />
-      <p className="mt-3 text-sm leading-6 text-zinc-400">{description}</p>
+      <ArenaSectionHeader eyebrow="Entrada" title={title} hint={description} />
 
       {items.length === 0 ? (
         <div className="mt-5 rounded-[26px] border border-dashed border-white/10 bg-white/[0.03] px-5 py-7">

@@ -108,8 +108,8 @@ export function GroupCreationFlow() {
             {[
               {
                 id: "friends",
-                title: "Amigos e família",
-                description: "Grupo privado, ideal para organizar convite e aprovação com calma.",
+                title: "Turma privada",
+                description: "Ideal para equipe, sala, familia, amigos ou qualquer grupo fechado.",
               },
               {
                 id: "community",
@@ -256,7 +256,7 @@ export function GroupCreationFlow() {
               className="rounded-3xl border border-white/10 bg-white/5 px-5 py-5 text-left"
             >
               <p className="font-black">Criar grupo primeiro</p>
-              <p className="mt-1 text-sm text-zinc-400">Suba o grupo e convide a galera. O bolão pode vir depois.</p>
+              <p className="mt-1 text-sm text-zinc-400">Crie o grupo e convide sua turma. O bolão pode vir depois.</p>
             </button>
             <button
               onClick={() => void create("group_and_pool")}

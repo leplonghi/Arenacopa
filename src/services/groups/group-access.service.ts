@@ -2,14 +2,50 @@ import { postAuthedFunction } from "@/services/backend/functions-http";
 import type {
   BolaoJoinResult,
   CreateGroupPayload,
+  GroupAdmissionMode,
   GroupJoinResult,
   GroupSummary,
+  GroupVisibility,
   UpdateGroupSettingsPayload,
 } from "@/types/group-access";
 
-function mapGroupSummary(input: any): GroupSummary {
+type GroupSummaryDocument = {
+  id?: string;
+  group_id?: string;
+  name?: string;
+  description?: string | null;
+  emoji?: string;
+  visibility?: GroupVisibility;
+  admission_mode?: GroupAdmissionMode;
+  category?: "private" | "public";
+  featured_bolao_id?: string | null;
+  objective?: string;
+  invite_code?: string;
+};
+
+type GroupJoinResponse = {
+  group_id: string;
+  status: GroupJoinResult["status"];
+  membership_status?: GroupJoinResult["membershipStatus"];
+  request_id?: string;
+  request_status?: GroupJoinResult["requestStatus"];
+  group?: GroupSummaryDocument;
+};
+
+type BolaoJoinResponse = {
+  bolao_id: string;
+  status: BolaoJoinResult["status"];
+  membership_status?: BolaoJoinResult["membershipStatus"];
+  request_id?: string;
+  request_status?: BolaoJoinResult["requestStatus"];
+  required_group_id?: string | null;
+};
+
+export type JoinViaInviteResult = GroupJoinResponse | BolaoJoinResponse;
+
+function mapGroupSummary(input: GroupSummaryDocument): GroupSummary {
   return {
-    id: input.id ?? input.group_id,
+    id: input.id ?? input.group_id ?? "",
     name: input.name ?? "",
     description: input.description ?? null,
     emoji: input.emoji ?? "👥",
@@ -28,7 +64,7 @@ export async function createGroup(input: {
   token?: string;
   payload: CreateGroupPayload;
 }) {
-  const raw = await postAuthedFunction<any>("createGroup", input.payload, input.token);
+  const raw = await postAuthedFunction<GroupSummaryDocument>("createGroup", input.payload, input.token);
   return mapGroupSummary(raw);
 }
 
@@ -36,7 +72,7 @@ export async function updateGroupSettings(input: {
   token?: string;
   payload: UpdateGroupSettingsPayload;
 }) {
-  const raw = await postAuthedFunction<any>("updateGroupSettings", input.payload, input.token);
+  const raw = await postAuthedFunction<GroupSummaryDocument>("updateGroupSettings", input.payload, input.token);
   return mapGroupSummary(raw);
 }
 
@@ -44,7 +80,7 @@ export async function requestGroupJoin(input: {
   token?: string;
   payload: { group_id: string; invite_code?: string | null; origin?: string };
 }) {
-  const raw = await postAuthedFunction<any>("requestGroupJoin", input.payload, input.token);
+  const raw = await postAuthedFunction<GroupJoinResponse>("requestGroupJoin", input.payload, input.token);
   return {
     groupId: raw.group_id,
     status: raw.status,
@@ -107,7 +143,7 @@ export async function requestBolaoJoin(input: {
   token?: string;
   payload: { bolao_id: string; invite_code?: string | null; origin?: string };
 }) {
-  const raw = await postAuthedFunction<any>("requestBolaoJoin", input.payload, input.token);
+  const raw = await postAuthedFunction<BolaoJoinResponse>("requestBolaoJoin", input.payload, input.token);
   return {
     bolaoId: raw.bolao_id,
     status: raw.status,
@@ -143,5 +179,5 @@ export async function joinViaInvite(input: {
   token?: string;
   payload: { kind: "group" | "bolao"; invite_code: string };
 }) {
-  return postAuthedFunction<any>("joinViaInvite", input.payload, input.token);
+  return postAuthedFunction<JoinViaInviteResult>("joinViaInvite", input.payload, input.token);
 }

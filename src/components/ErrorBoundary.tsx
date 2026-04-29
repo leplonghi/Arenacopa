@@ -69,16 +69,21 @@ export class ErrorBoundary extends Component<Props, State> {
               </button>
             </div>
 
-            {this.state.error && SHOW_DEBUG_DETAILS && (
-              <pre className="mt-8 w-full overflow-x-auto rounded-3xl border border-white/10 bg-black/30 p-5 text-left text-xs leading-6 text-white/75">
-                {this.state.error.toString()}
-                {this.state.error.stack && (
-                  <>
-                    {"\n\n"}
-                    {this.state.error.stack}
-                  </>
-                )}
-              </pre>
+            {this.state.error && (
+              <details className="mt-8 w-full rounded-3xl border border-white/10 bg-black/30 p-5 text-left text-xs leading-6 text-white/75">
+                <summary className="cursor-pointer font-black uppercase tracking-[0.14em] text-white/80">
+                  Detalhes técnicos
+                </summary>
+                <pre className="mt-4 max-h-56 overflow-auto whitespace-pre-wrap">
+                  {this.state.error.toString()}
+                  {this.state.error.stack && SHOW_DEBUG_DETAILS && (
+                    <>
+                      {"\n\n"}
+                      {this.state.error.stack}
+                    </>
+                  )}
+                </pre>
+              </details>
             )}
           </div>
         </div>

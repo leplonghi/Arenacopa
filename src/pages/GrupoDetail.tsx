@@ -83,7 +83,7 @@ export default function GrupoDetail() {
 
       const groupData = {
         id: gSnap.id,
-        name: String(gSnap.data().name || "Grupo"),
+        name: String(gSnap.data().name || "Comunidade"),
         emoji: String(gSnap.data().emoji || "👥"),
         description: (gSnap.data().description as string | null) ?? null,
         invite_code: String(gSnap.data().invite_code || ""),
@@ -152,7 +152,7 @@ export default function GrupoDetail() {
     } catch (error) {
       console.error(error);
       toast({
-        title: "Não foi possível carregar o grupo",
+        title: "Não foi possível carregar a comunidade",
         description: "Tente novamente em alguns instantes.",
         variant: "destructive",
       });
@@ -191,7 +191,7 @@ export default function GrupoDetail() {
       requests.map((request) => ({
         id: request.id,
         title: request.display_name,
-        subtitle: "Quer entrar neste grupo.",
+        subtitle: "Quer entrar nesta comunidade.",
         meta: request.updated_at ? `Atualizado em ${new Date(request.updated_at).toLocaleString("pt-BR")}` : null,
         status: "Pendente",
         primaryActionLabel: "Aprovar",
@@ -293,12 +293,12 @@ export default function GrupoDetail() {
           group_id: grupoId,
         },
       });
-      toast({ title: "Você saiu do grupo" });
-      navigate("/grupos");
+      toast({ title: "Você saiu da comunidade" });
+      navigate("/comunidades");
     } catch {
       toast({
         title: "Não foi possível sair",
-        description: "Verifique se você não é o criador do grupo.",
+        description: "Verifique se você não é o criador da comunidade.",
         variant: "destructive",
       });
     }
@@ -332,7 +332,7 @@ export default function GrupoDetail() {
   }
 
   if (!grupo) {
-    return <EmptyState icon="👥" title="Grupo não encontrado" description="Verifique o link ou volte para a lista." />;
+    return <EmptyState icon="👥" title="Comunidade não encontrada" description="Verifique o link ou volte para a lista." />;
   }
 
   return (
@@ -341,14 +341,14 @@ export default function GrupoDetail() {
         <div className="flex items-center gap-3">
           <button
             aria-label="Voltar"
-            onClick={() => navigate("/grupos")}
+            onClick={() => navigate("/comunidades")}
             className="flex h-12 w-12 items-center justify-center rounded-[20px] bg-white/5"
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
           <div className="flex h-14 w-14 items-center justify-center rounded-[22px] bg-primary/10 text-2xl">{grupo.emoji}</div>
           <div>
-            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">Grupo</p>
+            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">Comunidade</p>
             <h1 className="text-3xl font-black">{grupo.name}</h1>
             {grupo.description ? <p className="text-sm text-zinc-400">{grupo.description}</p> : null}
           </div>
@@ -375,7 +375,7 @@ export default function GrupoDetail() {
               className="inline-flex items-center gap-2 rounded-2xl border border-white/10 px-4 py-3 text-sm font-bold text-white"
             >
               <LogOut className="h-4 w-4 text-primary" />
-              Sair do grupo
+              Sair da comunidade
             </button>
           )}
         </div>
@@ -387,7 +387,7 @@ export default function GrupoDetail() {
         {isManager ? (
           <AdmissionInbox
             title="Solicitações para entrar"
-            description="Aqui ficam só as entradas pendentes, sem misturar com os bolões do grupo."
+            description="Aqui ficam só as entradas pendentes, sem misturar com os bolões da comunidade."
             emptyTitle="Nenhuma solicitação pendente"
             emptyDescription="Quando alguém pedir entrada, ela aparece aqui."
             items={requestItems}
@@ -395,14 +395,14 @@ export default function GrupoDetail() {
         ) : null}
 
         <section className="rounded-[32px] border border-white/10 bg-white/5 p-5">
-          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">Bolões do grupo</p>
+          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">Bolões da comunidade</p>
           <p className="mt-2 text-sm text-zinc-400">
-            O grupo pode ter vários bolões, mas só um fica em destaque para não poluir a experiência.
+            A comunidade pode ter vários bolões, mas só um fica em destaque para não poluir a experiência.
           </p>
 
           {boloes.length === 0 ? (
             <div className="mt-4">
-              <EmptyState icon="⚽" title="Nenhum bolão ainda" description="Crie um bolão e vincule a este grupo." />
+              <EmptyState icon="⚽" title="Nenhum bolão ainda" description="Crie um bolão e vincule a esta comunidade." />
             </div>
           ) : (
             <div className="mt-4 grid gap-3 md:grid-cols-2">

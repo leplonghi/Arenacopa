@@ -24,6 +24,15 @@ const MAX_AVATAR_SIZE_BYTES = 5 * 1024 * 1024;
 const ALLOWED_AVATAR_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
 const ALLOWED_AVATAR_EXTENSIONS = new Set(["jpg", "jpeg", "png", "webp", "gif"]);
 const DEFAULT_PROFILE_NAME = getDefaultProfileName();
+const PUBLIC_PROFILE_CACHE_TTL_MS = 60 * 1000;
+
+type CachedPublicProfile = {
+  profile: PublicProfileRecord | null;
+  expiresAt: number;
+};
+
+const publicProfileCache = new Map<string, CachedPublicProfile>();
+const inFlightPublicProfileLoads = new Map<string, Promise<PublicProfileRecord | null>>();
 
 function buildPublicProfilePayload(input: {
   userId: string;
@@ -181,27 +190,94 @@ export async function uploadAvatar(userId: string, file: File) {
 export async function getPublicProfilesByIds(userIds: string[]) {
   const uniqueIds = Array.from(new Set(userIds.filter(Boolean)));
   const profilesMap = new Map<string, PublicProfileRecord>();
+  const now = Date.now();
+  const idsToFetch: string[] = [];
+  const pendingProfileLoads: Promise<void>[] = [];
 
-  for (let index = 0; index < uniqueIds.length; index += 30) {
-    const chunkIds = uniqueIds.slice(index, index + 30);
+  uniqueIds.forEach((userId) => {
+    const cachedProfile = publicProfileCache.get(userId);
+    if (cachedProfile && cachedProfile.expiresAt > now) {
+      if (cachedProfile.profile) {
+        profilesMap.set(userId, cachedProfile.profile);
+      }
+      return;
+    }
+
+    const inFlightProfile = inFlightPublicProfileLoads.get(userId);
+    if (inFlightProfile) {
+      pendingProfileLoads.push(
+        inFlightProfile.then((profile) => {
+          if (profile) {
+            profilesMap.set(userId, profile);
+          }
+        })
+      );
+      return;
+    }
+
+    idsToFetch.push(userId);
+  });
+
+  for (let index = 0; index < idsToFetch.length; index += 30) {
+    const chunkIds = idsToFetch.slice(index, index + 30);
     if (!chunkIds.length) continue;
 
-    const snapshot = await getDocs(
+    const chunkLoad = getDocs(
       query(collection(db, "public_profiles"), where(documentId(), "in", chunkIds))
-    );
+    ).then((snapshot) => {
+      const foundIds = new Set<string>();
+      const loadedProfiles = new Map<string, PublicProfileRecord | null>();
 
-    snapshot.forEach((profileDoc) => {
-      const data = profileDoc.data() as Partial<PublicProfileRecord>;
-      profilesMap.set(profileDoc.id, {
-        user_id: profileDoc.id,
-        name: data.name ?? null,
-        nickname: data.nickname ?? null,
-        avatar_url: data.avatar_url ?? null,
-        created_at: data.created_at ?? null,
-        updated_at: data.updated_at ?? null,
+      snapshot.forEach((profileDoc) => {
+        const data = profileDoc.data() as Partial<PublicProfileRecord>;
+        const profile = {
+          user_id: profileDoc.id,
+          name: data.name ?? null,
+          nickname: data.nickname ?? null,
+          avatar_url: data.avatar_url ?? null,
+          created_at: data.created_at ?? null,
+          updated_at: data.updated_at ?? null,
+        };
+
+        foundIds.add(profileDoc.id);
+        loadedProfiles.set(profileDoc.id, profile);
+        publicProfileCache.set(profileDoc.id, {
+          profile,
+          expiresAt: now + PUBLIC_PROFILE_CACHE_TTL_MS,
+        });
+      });
+
+      chunkIds.forEach((userId) => {
+        if (!foundIds.has(userId)) {
+          loadedProfiles.set(userId, null);
+          publicProfileCache.set(userId, {
+            profile: null,
+            expiresAt: now + PUBLIC_PROFILE_CACHE_TTL_MS,
+          });
+        }
+      });
+
+      return loadedProfiles;
+    }).finally(() => {
+      chunkIds.forEach((userId) => {
+        inFlightPublicProfileLoads.delete(userId);
       });
     });
+
+    chunkIds.forEach((userId) => {
+      const profileLoad = chunkLoad.then((loadedProfiles) => loadedProfiles.get(userId) ?? null);
+      inFlightPublicProfileLoads.set(userId, profileLoad);
+      pendingProfileLoads.push(
+        profileLoad.then((profile) => {
+          if (profile) {
+            profilesMap.set(userId, profile);
+          }
+        })
+      );
+    });
   }
+
+  await Promise.all(pendingProfileLoads);
 
   return profilesMap;
 }

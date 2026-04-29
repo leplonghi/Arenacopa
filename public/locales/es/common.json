@@ -7,7 +7,8 @@
     "guia": "Guía",
     "championships": "Campeonatos",
     "news": "Noticias",
-    "groups": "Grupos",
+    "discover": "Descubrir",
+    "groups": "Comunidades",
     "ranking": "Ranking",
     "profile": "Cuenta",
     "menu": "Menú"
@@ -17,8 +18,8 @@
       "boloes": "Quinielas",
       "create_bolao": "Crear Quiniela",
       "bolao_detail": "Quiniela",
-      "groups": "Mis grupos",
-      "group_detail": "Grupo",
+      "groups": "Comunidades",
+      "group_detail": "Comunidad",
       "profile": "Cuenta",
       "menu": "Cuenta"
     }

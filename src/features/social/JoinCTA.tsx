@@ -3,8 +3,9 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { joinViaInvite, requestBolaoJoin, requestGroupJoin } from "@/services/groups/group-access.service";
+import { joinViaInvite, requestBolaoJoin, requestGroupJoin, type JoinViaInviteResult } from "@/services/groups/group-access.service";
 import { trackSocialEvent } from "@/lib/analytics/social.telemetry";
+import type { BolaoJoinResult, GroupJoinResult } from "@/types/group-access";
 
 type JoinCTAMode = "direct" | "request" | "group_first";
 
@@ -15,7 +16,7 @@ type JoinCTAProps = {
   inviteCode?: string | null;
   requiredGroupInviteCode?: string | null;
   className?: string;
-  onCompleted?: (result: any) => void;
+  onCompleted?: (result: GroupJoinResult | BolaoJoinResult | JoinViaInviteResult) => void;
 };
 
 function getRedirectPath(pathname: string, search: string) {
@@ -119,6 +120,14 @@ export function JoinCTA({
         if (requiredGroupInviteCode) {
           navigate(`/grupos/entrar/${requiredGroupInviteCode}`);
         }
+        return;
+      }
+      if (error instanceof Error && error.message === "commercial_participant_limit_reached") {
+        toast({
+          title: "Limite de participantes atingido",
+          description: "Este pacote atingiu o limite de participantes.",
+          variant: "destructive",
+        });
         return;
       }
 

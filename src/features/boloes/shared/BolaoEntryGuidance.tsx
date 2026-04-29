@@ -16,15 +16,16 @@ export function BolaoEntryGuidance({
 
   return (
     <div className="rounded-[26px] border border-white/10 bg-white/[0.04] p-5 text-white backdrop-blur-xl">
-      <ArenaSectionHeader eyebrow="Guia rápido" title="Como começar do jeito certo" />
+      <ArenaSectionHeader
+        eyebrow="Guia rápido"
+        title="Começar"
+        hint="Você escolhe primeiro se o bolão vive sozinho, em um grupo existente ou junto de um novo grupo. O nome vem depois."
+      />
 
       <p className="mt-4 text-sm font-semibold leading-6 text-zinc-200">
         {groupId
-          ? `Este grupo${groupName ? ` (${groupName})` : ""} pode descobrir ou controlar a entrada dos bolões vinculados.`
-          : "Você pode criar um bolão independente ou começar a partir de um grupo existente."}
-      </p>
-      <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-400">
-        Primeiro você decide o vínculo e o tipo do bolão. O nome vem depois, quando a estrutura já estiver clara.
+          ? `Este grupo${groupName ? ` (${groupName})` : ""} pode centralizar bolões e controlar entradas quando a participação depender dele.`
+          : "Bolão independente ou com grupo."}
       </p>
 
       <div className="mt-5 flex flex-wrap gap-3">

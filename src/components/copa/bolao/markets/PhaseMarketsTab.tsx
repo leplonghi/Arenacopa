@@ -88,6 +88,7 @@ export function PhaseMarketsTab({
     userId,
     markets,
     predictions,
+    canManage = false,
 }: {
     bolaoId: string;
     userId: string;

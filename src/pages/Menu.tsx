@@ -1,4 +1,4 @@
-import { Settings, LogOut, User, BookOpen, HelpCircle, Bell, Shield } from "lucide-react";
+import { Settings, LogOut, User, BookOpen, HelpCircle, Bell, Shield, Store, Users2, PlusCircle, Megaphone } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useAuth } from "@/contexts/AuthContext";
 import { useNavigate } from "react-router-dom";
@@ -38,6 +38,50 @@ export default function Menu() {
                 >
                     <BookOpen className="w-5 h-5 text-blue-400" />
                     <span className="font-bold text-sm">{t("menu.rules_title")}</span>
+                </button>
+
+                <button
+                    onClick={() => navigate("/comunidades")}
+                    className="w-full p-4 glass-card-hover text-left flex items-center gap-3"
+                >
+                    <Users2 className="w-5 h-5 text-primary" />
+                    <div className="flex-1">
+                        <span className="font-bold text-sm">Comunidades</span>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">Acesse seus grupos e espaços de disputa.</p>
+                    </div>
+                </button>
+
+                <button
+                    onClick={() => navigate("/comunidades/criar")}
+                    className="w-full p-4 glass-card-hover text-left flex items-center gap-3"
+                >
+                    <PlusCircle className="w-5 h-5 text-primary" />
+                    <div className="flex-1">
+                        <span className="font-bold text-sm">Criar comunidade</span>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">Monte um espaço para reunir participantes.</p>
+                    </div>
+                </button>
+
+                <button
+                    onClick={() => navigate("/negocios")}
+                    className="w-full p-4 glass-card-hover text-left flex items-center gap-3"
+                >
+                    <Store className="w-5 h-5 text-primary" />
+                    <div className="flex-1">
+                        <span className="font-bold text-sm">ArenaCup para Negócios</span>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">Crie campanha com QR, link e benefício simples.</p>
+                    </div>
+                </button>
+
+                <button
+                    onClick={() => navigate("/negocios/criar")}
+                    className="w-full p-4 glass-card-hover text-left flex items-center gap-3"
+                >
+                    <Megaphone className="w-5 h-5 text-primary" />
+                    <div className="flex-1">
+                        <span className="font-bold text-sm">Criar campanha</span>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">Publique uma campanha para dias de jogo.</p>
+                    </div>
                 </button>
 
                 <button

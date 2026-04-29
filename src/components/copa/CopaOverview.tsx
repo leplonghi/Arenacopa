@@ -7,15 +7,17 @@ import {
   Clock3,
   Globe2,
   MapPinned,
-  Sparkles,
+  Share2,
   Trophy,
 } from "lucide-react";
 import { Flag } from "@/components/Flag";
 import { MatchDetailsModal } from "./MatchDetailsModal";
+import { ArenaAssetSlot } from "@/components/arena/ArenaAssetSlot";
 import { ArenaMetric, ArenaPanel, ArenaSectionHeader } from "@/components/arena/ArenaPrimitives";
 import { useMatches } from "@/hooks/useMatches";
 import { getTeam, groupStandings, groups, type Match } from "@/data/mockData";
 import { cn } from "@/lib/utils";
+import { getArenaAssetSrc } from "@/lib/arena-assets";
 
 const PHASES = [
   {
@@ -221,13 +223,24 @@ export function CopaOverview() {
           <div className="relative flex min-h-[260px] items-center justify-center">
             <div className="absolute h-52 w-52 rounded-full bg-amber-400/20 blur-3xl" />
             <div className="absolute h-40 w-40 rounded-full border border-amber-300/25" />
-            <div className="relative flex h-56 w-56 items-center justify-center rounded-full border border-white/10 bg-[radial-gradient(circle_at_50%_40%,rgba(255,214,102,0.22),rgba(0,0,0,0.15))] shadow-[0_0_80px_rgba(255,186,0,0.18)]">
-              <img
-                src="/images/championships/wc2026.svg?v=20260405b"
-                alt="Copa do Mundo 2026"
-                className="h-36 w-36 object-contain drop-shadow-[0_0_24px_rgba(255,215,0,0.22)]"
-              />
-            </div>
+            <ArenaAssetSlot
+              name="wc2026-trophy.png"
+              label="Troféu Copa do Mundo 2026"
+              src={getArenaAssetSrc("wc2026-trophy.png")}
+              variant="cutout"
+              className="relative h-72 w-56 border-amber-300/20 bg-transparent shadow-none"
+              imgClassName="p-0 object-contain drop-shadow-[0_0_44px_rgba(255,215,0,0.38)]"
+              fallbackClassName="scale-75"
+            />
+            <ArenaAssetSlot
+              name="world-cup-badge.png"
+              label="Selo Copa 2026"
+              src={getArenaAssetSrc("world-cup-badge.png")}
+              variant="cutout"
+              className="absolute left-2 top-2 h-20 w-20 bg-transparent shadow-none"
+              imgClassName="p-1 object-contain"
+              fallbackClassName="scale-[0.6]"
+            />
             <div className="absolute bottom-3 left-3 rounded-[20px] border border-white/10 bg-black/35 px-4 py-3 backdrop-blur-xl">
               <p className="arena-kicker text-zinc-400">Abertura</p>
               <p className="font-display text-[1.8rem] font-semibold uppercase leading-none text-white">11 jun</p>
@@ -340,15 +353,15 @@ export function CopaOverview() {
         <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex items-start gap-4">
             <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[22px] border border-[#ffc107]/35 bg-[#ffc107]/12 text-[#ffc107]">
-              <Sparkles className="h-8 w-8" />
+              <Share2 className="h-8 w-8" />
             </div>
             <div>
               <p className="font-display text-[2.1rem] font-semibold uppercase leading-none text-white">
-                Participe e conquiste recompensas
+                Crie bolões para acompanhar a Copa
               </p>
-              <p className="mt-2 max-w-xl text-sm leading-relaxed text-zinc-300">
-                Entre na Copa para palpitar, subir no ranking e transformar cada rodada em progresso real dentro do app.
-              </p>
+                <p className="mt-2 max-w-xl text-sm leading-relaxed text-zinc-300">
+                  Organize sua turma, convide por link e acompanhe a disputa com equipe, comunidade ou convidados.
+                </p>
             </div>
           </div>
 
@@ -363,7 +376,7 @@ export function CopaOverview() {
               onClick={() => navigate("/boloes/criar", { state: { championship_id: "wc2026" } })}
               className="arena-button-gold"
             >
-              Entrar na Copa
+              Criar bolão da Copa
             </button>
           </div>
         </div>

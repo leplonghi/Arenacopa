@@ -3,10 +3,27 @@ import {
   doc, 
   setDoc, 
   getDoc,
-  serverTimestamp 
+  serverTimestamp,
+  updateDoc
 } from "firebase/firestore";
 import type { MemberData, Palpite } from "@/types/bolao";
 import { leaveBolao, updatePoolMemberPaymentStatus } from "@/services/boloes/bolao-config.service";
+
+export function buildBolaoPalpiteId(input: {
+  userId: string;
+  bolaoId: string;
+  matchId: string;
+}) {
+  return `${input.userId}_${input.bolaoId}_${input.matchId}`;
+}
+
+export function buildLegacyBolaoPalpiteId(input: {
+  userId: string;
+  bolaoId: string;
+  matchId: string;
+}) {
+  return `${input.userId}_${input.matchId}_${input.bolaoId}`;
+}
 
 export async function saveBolaoPalpite(input: {
   bolaoId: string;
@@ -19,7 +36,7 @@ export async function saveBolaoPalpite(input: {
 }) {
   try {
     // We can use a deterministic ID: userId_bolaoId_matchId to avoid duplicates
-    const palpiteId = input.existingId || `${input.userId}_${input.bolaoId}_${input.matchId}`;
+    const palpiteId = input.existingId || buildBolaoPalpiteId(input);
     const docRef = doc(db, "bolao_palpites", palpiteId);
     
     const payload = {

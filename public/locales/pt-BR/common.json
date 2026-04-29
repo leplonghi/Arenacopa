@@ -7,7 +7,8 @@
     "guia": "Guia",
     "championships": "Campeonatos",
     "news": "Notícias",
-    "groups": "Grupos",
+    "discover": "Descobrir",
+    "groups": "Comunidades",
     "ranking": "Ranking",
     "profile": "Conta",
     "menu": "Menu"
@@ -17,8 +18,8 @@
       "boloes": "Bolões",
       "create_bolao": "Criar Bolão",
       "bolao_detail": "Bolão",
-      "groups": "Meus Grupos",
-      "group_detail": "Grupo",
+      "groups": "Comunidades",
+      "group_detail": "Comunidade",
       "profile": "Conta",
       "menu": "Conta"
     }
@@ -41,7 +42,7 @@
   "notifications": {
     "title": "Notificações",
     "mark_all_read": "Marcar todas como lidas",
-    "description": "Confira as últimas novidades e atualizações.",
+    "description": "Avisos importantes do app.",
     "empty": "Nenhuma notificação",
     "load_error": "Não consegui carregar as notificações.",
     "demo_title": "Novo convite",
@@ -52,16 +53,16 @@
   },
   "pwa": {
     "title": "Instale o app",
-    "description": "Tenha a ArenaCUP na tela inicial e receba uma experiência mais fluida no celular.",
+    "description": "Coloque o ArenaCUP na tela inicial.",
     "install": "Instalar agora"
   },
   "onboarding": {
     "title": "Bem-vindo à ArenaCUP",
-    "description": "Escolha seu time favorito para a Copa 2026.",
+    "description": "Escolha seu time e entre na rodada.",
     "loading": "Confirmando...",
     "confirm": "Confirmar e Entrar na Arena",
     "notifications_title": "Fique por dentro",
-    "notifications_description": "Ative as notificações para receber alertas de jogos, resultados e atualizações do seu bolão em tempo real.",
+    "notifications_description": "Receba avisos de jogos, resultados e entradas no bolão.",
     "enable_notifications": "Ativar notificações",
     "skip_notifications": "Agora não",
     "notifications_enabled": "✓ Notificações ativadas!",
@@ -87,7 +88,7 @@
     "title": "Regulamento",
     "subtitle": "Arena Cup 2026 • Manual Oficial",
     "hero_title": "Regras do Bolão",
-    "hero_desc": "Bem-vindo ao ArenaCup! Entenda como funciona nosso sistema de pontuação, prazos e critérios de desempate para subir no ranking global.",
+    "hero_desc": "Pontuação, prazos e desempates em linguagem direta.",
     "points_title": "Sistema de Pontos",
     "points_label": "pontos",
     "operation_title": "Funcionamento",
@@ -97,28 +98,28 @@
     "cards": {
       "exact": {
         "title": "Placar Exato",
-        "example": "Você palpitou 2x1 e o jogo foi 2x1."
+        "example": "Você marcou 2x1 e o jogo foi 2x1."
       },
       "winner_goal_diff": {
         "title": "Vencedor + Saldo",
-        "example": "Palpitou 3x1 (saldo 2) e foi 2x0 (saldo 2)."
+        "example": "Marcou 3x1 (saldo 2) e foi 2x0 (saldo 2)."
       },
       "winner_and_goals": {
         "title": "Vencedor + Gols de um time",
-        "example": "Palpitou 2x1 e foi 2x0 (vencedor A + 2 gols A)."
+        "example": "Marcou 2x1 e foi 2x0 (vencedor A + 2 gols A)."
       },
       "winner_only": {
         "title": "Apenas Vencedor/Empate",
-        "example": "Você palpitou 1x0 e o jogo foi 3x1."
+        "example": "Você marcou 1x0 e o jogo foi 3x1."
       },
       "single_score": {
         "title": "Apenas um placar",
-        "example": "Você palpitou 1x1 e o jogo foi 0x1."
+        "example": "Você marcou 1x1 e o jogo foi 0x1."
       }
     },
     "operation": {
-      "deadlines_title": "Prazos de Palpite",
-      "deadlines_desc": "Os palpites podem ser feitos ou alterados até 30 minutos antes do início de cada partida em horário local.",
+  "deadlines_title": "Prazos dos Jogos",
+  "deadlines_desc": "As escolhas podem ser feitas ou alteradas até 30 minutos antes do início de cada partida em horário local.",
       "live_update_title": "Atualização Instantânea",
       "live_update_desc": "O ranking oficial e os pontos dos participantes são processados automaticamente no apito final de cada jogo.",
       "responsibility_title": "Responsabilidade",

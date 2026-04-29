@@ -10,11 +10,12 @@ import {
 import { doc, setDoc, updateDoc, deleteDoc, getDoc } from "firebase/firestore";
 
 let testEnv: RulesTestEnvironment;
+const describeWithFirestoreEmulator = process.env.FIRESTORE_EMULATOR_HOST ? describe : describe.skip;
 
 beforeAll(async () => {
   const emulatorHost = process.env.FIRESTORE_EMULATOR_HOST;
   if (!emulatorHost) {
-    throw new Error("FIRESTORE_EMULATOR_HOST is required. Run via firebase emulators:exec.");
+    return;
   }
 
   const [host, portRaw] = emulatorHost.split(":");
@@ -36,7 +37,7 @@ afterAll(async () => {
   }
 });
 
-describe("bolao firestore rules", () => {
+describeWithFirestoreEmulator("bolao firestore rules", () => {
   it("blocks direct structural update on published bolao", async () => {
     const ownerDb = testEnv.authenticatedContext("owner-1").firestore();
 
@@ -132,6 +133,49 @@ describe("bolao firestore rules", () => {
 
     await expect(
       assertSucceeds(getDoc(doc(memberDb, "bolao_champion_predictions/member-4_bolao-404"))),
+    ).resolves.toBeDefined();
+  });
+
+  it("blocks direct writes to commercial campaign governance collections", async () => {
+    const ownerDb = testEnv.authenticatedContext("merchant-owner-1").firestore();
+
+    await expect(
+      assertFails(
+        setDoc(doc(ownerDb, "merchants/merchant-1"), {
+          owner_uid: "merchant-owner-1",
+          status: "active",
+          name: "Bar do Zeca",
+        }),
+      ),
+    ).resolves.toBeDefined();
+
+    await expect(
+      assertFails(
+        setDoc(doc(ownerDb, "commercial_campaigns/campaign-1"), {
+          merchant_id: "merchant-1",
+          status: "published",
+          share_code: "BAR123",
+        }),
+      ),
+    ).resolves.toBeDefined();
+
+    await expect(
+      assertFails(
+        setDoc(doc(ownerDb, "commercial_orders/order-1"), {
+          merchant_id: "merchant-1",
+          campaign_id: "campaign-1",
+          status: "paid",
+        }),
+      ),
+    ).resolves.toBeDefined();
+
+    await expect(
+      assertFails(
+        setDoc(doc(ownerDb, "commercial_audit/audit-1"), {
+          actor_uid: "merchant-owner-1",
+          action: "publish_campaign",
+        }),
+      ),
     ).resolves.toBeDefined();
   });
 });

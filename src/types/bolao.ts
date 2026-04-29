@@ -194,7 +194,7 @@ export interface BolaoData {
     prize_distribution: string | null;
     scoring_rules: ScoringRules;
     avatar_url: string | null;
-    status: 'draft' | 'open' | 'active' | 'finished';
+    status: 'draft' | 'open' | 'active' | 'finished' | 'deleted';
     format_id?: BolaoFormatSlug;
     scoring_mode?: "default" | "custom" | "exclusive";
     grupo_id?: string | null;
@@ -209,6 +209,7 @@ export interface BolaoData {
         published_at?: string | null;
         finished_at?: string | null;
         archived_at?: string | null;
+        deleted_at?: string | null;
     };
     integrity?: {
         is_structure_locked?: boolean;
@@ -225,6 +226,11 @@ export interface MemberData {
     role: string;
     joined_at: string;
     payment_status?: 'pending' | 'paid' | 'exempt' | 'confirmed' | 'waived';
+    payment_proof_text?: string | null;
+    payment_proof_status?: "pending" | "submitted" | "validated" | null;
+    payment_proof_submitted_at?: string | null;
+    prize_agreement_accepted?: boolean | null;
+    prize_agreement_status?: "pending" | "submitted" | "validated" | null;
     profile: { name: string; avatar_url: string | null } | null;
 }
 

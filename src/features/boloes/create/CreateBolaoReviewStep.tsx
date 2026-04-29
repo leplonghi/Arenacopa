@@ -1,8 +1,10 @@
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 import { useChampionship } from "@/contexts/ChampionshipContext";
 import {
   alterBolaoPresentation,
+  createAndPublishBolao,
   createDraftBolao,
   publishBolao,
   updateBolaoConfiguration,
@@ -20,11 +22,39 @@ const emojiOptions = ["⚽", "🏆", "🔥", "🎯", "🎉", "🦁"];
 export function CreateBolaoReviewStep({ flow }: { flow: Flow }) {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { session } = useAuth();
   const { current: championship } = useChampionship();
 
   const structure = mapWizardStateToBolaoStructure(flow.state);
 
+  const getOperationToken = async () => {
+    if (!session) {
+      throw new Error("auth_required");
+    }
+
+    return session.getIdToken();
+  };
+
+  const getFailureMessage = (error: unknown) => {
+    const message = error instanceof Error ? error.message : "";
+
+    if (message === "auth_required" || message.includes("Autenticação")) {
+      return "Sua sessão expirou. Entre novamente e publique o bolão.";
+    }
+
+    if (message === "config_conflict") {
+      return "Esse rascunho mudou em outro lugar. Atualize a página e tente de novo.";
+    }
+
+    if (message === "validation_failed") {
+      return "Confira nome, entrada e regras antes de publicar.";
+    }
+
+    return "Revise os dados e tente novamente.";
+  };
+
   const createOrUpdateDraft = async () => {
+    const token = await getOperationToken();
     const configurationPatch = {
       context: {
         group_binding_mode: structure.groupBindingMode,
@@ -48,6 +78,7 @@ export function CreateBolaoReviewStep({ flow }: { flow: Flow }) {
 
     if (!flow.draftId) {
       const draft = await createDraftBolao({
+        token,
         payload: {
           ...configurationPatch,
           presentation: {
@@ -64,6 +95,7 @@ export function CreateBolaoReviewStep({ flow }: { flow: Flow }) {
     }
 
     const updated = await updateBolaoConfiguration({
+      token,
       payload: {
         bolao_id: flow.draftId,
         expected_config_version: flow.draftConfigVersion || 1,
@@ -71,6 +103,7 @@ export function CreateBolaoReviewStep({ flow }: { flow: Flow }) {
       },
     });
     await alterBolaoPresentation({
+      token,
       payload: {
         bolao_id: flow.draftId,
         patch: {
@@ -114,9 +147,70 @@ export function CreateBolaoReviewStep({ flow }: { flow: Flow }) {
         access_mode: flow.state.accessMode,
       });
 
+      const token = await getOperationToken();
+
+      if (!flow.draftId) {
+        const published = await createAndPublishBolao({
+          token,
+          payload: {
+            championship_id: championship.id,
+            context: {
+              group_binding_mode: structure.groupBindingMode,
+              grupo_id: structure.grupoId,
+            },
+            access_policy: structure.accessPolicy,
+            competition_rules: {
+              pool_type: flow.state.selectedTypeId,
+              format: flow.state.formatId,
+              scoring_mode: flow.state.scoringMode,
+              markets: flow.state.selectedMarketIds,
+              scoring_rules: flow.state.scoringRules,
+            },
+            finance_rules: {
+              finance_mode: "free",
+              entry_fee_amount: null,
+              distribution_custom_text: flow.state.prizeDistribution.trim(),
+              payment_details: "",
+            },
+            presentation: {
+              name: flow.state.name.trim(),
+              description: flow.state.description.trim(),
+              emoji: flow.state.emoji,
+            },
+            group_creation:
+              flow.state.contextMode === "new_group"
+                ? {
+                    presentation: {
+                      name: flow.state.newGroupName.trim(),
+                      description: flow.state.newGroupDescription.trim(),
+                      emoji: flow.state.newGroupEmoji,
+                      objective: flow.state.newGroupObjective,
+                    },
+                    visibility: flow.state.newGroupVisibility,
+                    admission_mode: flow.state.newGroupAdmissionMode,
+                  }
+                : null,
+          },
+        });
+
+        trackSocialEvent("pool_create_completed", {
+          context_mode: flow.state.contextMode,
+          access_mode: flow.state.accessMode,
+        });
+        trackBolaoConfigEvent("pool_published", {
+          source: "create_wizard",
+          lifecycle_status: published.lifecycle.status,
+          group_binding_mode: structure.groupBindingMode,
+          join_mode: structure.accessPolicy.join_mode,
+        });
+        navigate(`/boloes/${published.bolaoId}`);
+        return;
+      }
+
       let grupoId = structure.grupoId;
       if (flow.state.contextMode === "new_group") {
         const createdGroup = await createGroup({
+          token,
           payload: {
             presentation: {
               name: flow.state.newGroupName.trim(),
@@ -134,6 +228,7 @@ export function CreateBolaoReviewStep({ flow }: { flow: Flow }) {
       const draft =
         flow.draftId && flow.draftConfigVersion
           ? await updateBolaoConfiguration({
+              token,
               payload: {
                 bolao_id: flow.draftId,
                 expected_config_version: flow.draftConfigVersion,
@@ -165,6 +260,7 @@ export function CreateBolaoReviewStep({ flow }: { flow: Flow }) {
               },
             })
           : await createDraftBolao({
+              token,
               payload: {
                 context: {
                   group_binding_mode:
@@ -199,6 +295,7 @@ export function CreateBolaoReviewStep({ flow }: { flow: Flow }) {
             });
       if (flow.draftId && flow.draftConfigVersion) {
         await alterBolaoPresentation({
+          token,
           payload: {
             bolao_id: flow.draftId,
             patch: {
@@ -213,6 +310,7 @@ export function CreateBolaoReviewStep({ flow }: { flow: Flow }) {
       flow.setDraftConfigVersion(draft.integrity.configVersion);
 
       const published = await publishBolao({
+        token,
         payload: {
           bolao_id: draft.bolaoId,
           expected_config_version: draft.integrity.configVersion,
@@ -235,10 +333,11 @@ export function CreateBolaoReviewStep({ flow }: { flow: Flow }) {
         join_mode: structure.accessPolicy.join_mode,
       });
       navigate(`/boloes/${published.bolaoId}`);
-    } catch {
+    } catch (error) {
+      console.error("Create bolao failed", error);
       toast({
         title: "Não foi possível publicar o bolão",
-        description: "Revise os dados e tente novamente.",
+        description: getFailureMessage(error),
         variant: "destructive",
       });
     }
@@ -246,10 +345,10 @@ export function CreateBolaoReviewStep({ flow }: { flow: Flow }) {
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 text-white">
-      <p className="text-[11px] font-black uppercase tracking-[0.22em] text-primary">Etapa 4 de 4</p>
-      <h1 className="mt-2 text-3xl font-black">Agora dê nome e publique</h1>
+      <p className="text-[11px] font-black uppercase tracking-[0.22em] text-primary">Etapa 2 de 2</p>
+      <h1 className="mt-2 text-3xl font-black">Revise e publique</h1>
       <p className="mt-2 text-sm text-zinc-400">
-        O nome fecha a história. O usuário já entende o contexto, o tipo e a entrada antes de ler isso.
+        Confira o resumo final. Se quiser ajustar acesso, grupo ou pontuacao, volte um passo.
       </p>
 
       <div className="mt-6 flex flex-wrap gap-2">
@@ -286,14 +385,14 @@ export function CreateBolaoReviewStep({ flow }: { flow: Flow }) {
         <div className="mt-3 space-y-2 text-sm text-zinc-300">
           <p>Contexto: {flow.state.contextMode === "standalone" ? "Sem grupo" : flow.state.contextMode === "existing_group" ? "Grupo existente" : "Novo grupo + bolão"}</p>
           <p>Entrada: {flow.state.accessMode === "group_gated" ? "Controlado pelo grupo" : flow.state.accessMode === "public" ? "Público" : "Privado com aprovação"}</p>
-          <p>Tipo: {flow.state.selectedTypeId === "rapid" ? "Rápido" : flow.state.selectedTypeId === "complete" ? "Completo" : "Valendo grana"}</p>
-          <p>Financeiro: {flow.state.financeMode === "paid_external" ? "Pago por fora" : "Sem dinheiro"}</p>
+          <p>Tipo: {flow.state.selectedTypeId === "rapid" ? "Rapido" : "Completo"}</p>
+          <p>Premiacao simbolica: {flow.state.prizeDistribution.trim() || "Nao definida"}</p>
         </div>
       </div>
 
       <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
         <button
-          onClick={() => flow.setStep("admission")}
+          onClick={() => flow.setStep("quick")}
           className="rounded-2xl border border-white/10 px-5 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-white"
         >
           Voltar

@@ -59,7 +59,7 @@ function legacyStatusFromLifecycle(lifecycleStatus) {
   if (lifecycleStatus === "live") {
     return "active";
   }
-  if (["finished", "archived"].includes(lifecycleStatus)) {
+  if (["finished", "archived", "deleted"].includes(lifecycleStatus)) {
     return lifecycleStatus;
   }
   return "open";
@@ -107,7 +107,7 @@ function deriveFacts(source) {
       activeMembers.length > 0 ||
       firstPredictionSaved ||
       firstPaymentConfirmed ||
-      ["live", "finished", "archived"].includes(source.lifecycle?.status),
+      ["live", "finished", "archived", "deleted"].includes(source.lifecycle?.status),
     lockTrigger:
       source.integrity?.lock_trigger ||
       (firstPredictionSaved
@@ -116,7 +116,7 @@ function deriveFacts(source) {
           ? "first_payment_confirmed"
           : activeMembers.length > 0
             ? "external_participant_joined"
-            : ["live", "finished", "archived"].includes(source.lifecycle?.status)
+            : ["live", "finished", "archived", "deleted"].includes(source.lifecycle?.status)
               ? "competition_started"
               : null),
   };
@@ -165,6 +165,7 @@ function normalizeBolaoDocument(source) {
       published_at: source.lifecycle?.published_at || null,
       finished_at: source.lifecycle?.finished_at || null,
       archived_at: source.lifecycle?.archived_at || null,
+      deleted_at: source.lifecycle?.deleted_at || null,
     },
     integrity: {
       is_structure_locked: Boolean(source.integrity?.is_structure_locked),
@@ -328,6 +329,47 @@ function buildRemoveMemberDecision({
   return {
       membership_status: decision.nextStatus,
       reason_code: reasonCode || null,
+  };
+}
+
+function buildPaymentProofUpdate({
+  currentMember,
+  actorId,
+  bolaoId,
+  proofText,
+  prizeAgreementAccepted,
+  nowIso,
+}) {
+  if (!currentMember || currentMember.bolao_id !== bolaoId) {
+    throw new Error("validation_failed");
+  }
+
+  if (currentMember.user_id !== actorId) {
+    throw new Error("permission_denied");
+  }
+
+  if (
+    ["left", "withdrawn_by_owner", "removed"].includes(
+      String(currentMember.membership_status || "active"),
+    )
+  ) {
+    throw new Error("invalid_state");
+  }
+
+  const normalizedProof = String(proofText || "").trim();
+  if (normalizedProof.length < 3) {
+    throw new Error("validation_failed");
+  }
+
+  return {
+    ...clone(currentMember),
+    payment_proof_text: normalizedProof,
+    payment_proof_status: "submitted",
+    payment_proof_submitted_at: nowIso,
+    payment_proof_submitted_by: actorId,
+    prize_agreement_accepted: Boolean(prizeAgreementAccepted),
+    prize_agreement_status: prizeAgreementAccepted ? "submitted" : "pending",
+    updated_at: nowIso,
   };
 }
 
@@ -511,12 +553,61 @@ function buildLifecycleUpdate({
   return next;
 }
 
+function buildDeleteBolaoUpdate({
+  current,
+  actorId,
+  nowIso,
+  reason = null,
+}) {
+  const normalized = normalizeBolaoDocument(current);
+  if (normalized.lifecycle.status === "deleted") {
+    throw new Error("invalid_state");
+  }
+
+  const next = clone(normalized);
+  next.lifecycle.status = "deleted";
+  next.lifecycle.deleted_at = nowIso;
+  next.status = "deleted";
+  next.deleted_at = nowIso;
+  next.category = "private";
+  next.access_policy.visibility = "deleted";
+  next.access_policy.join_mode = "private_invite";
+  next.integrity.is_structure_locked = true;
+  next.integrity.structure_locked_at = normalized.integrity.structure_locked_at || nowIso;
+  next.integrity.structure_lock_reason =
+    normalized.integrity.structure_lock_reason || reason || "owner_deleted";
+  next.integrity.lock_trigger = normalized.integrity.lock_trigger || "owner_deleted";
+  next.integrity.config_version = normalized.integrity.config_version + 1;
+  next.audit_meta = nextAuditMeta(normalized, actorId, nowIso);
+  next.updated_at = nowIso;
+
+  const derived = recomputeDerivedState(next, nowIso);
+  next.integrity = {
+    ...derived.integrity,
+    is_structure_locked: true,
+    structure_locked_at: next.integrity.structure_locked_at,
+    structure_lock_reason: next.integrity.structure_lock_reason,
+    lock_trigger: next.integrity.lock_trigger,
+  };
+  next.editable_sections = {
+    presentation: false,
+    context: false,
+    access_policy: false,
+    competition_rules: false,
+    finance_rules: false,
+    operation: false,
+  };
+  return next;
+}
+
 module.exports = {
   assertConfigVersion,
   buildConfigurationUpdate,
+  buildDeleteBolaoUpdate,
   buildDraftBolaoDocument,
   buildDuplicateDraftDocument,
   buildLifecycleUpdate,
+  buildPaymentProofUpdate,
   buildPublishedSnapshot,
   buildPresentationUpdate,
   buildPublishUpdate,

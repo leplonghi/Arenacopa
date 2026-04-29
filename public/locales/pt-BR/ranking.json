@@ -2,8 +2,8 @@
   "common": {
     "points_short": "PTS"
   },
-  "title": "Torcedores em alta",
-  "subtitle": "Os maiores palpiteiros da Copa do Mundo 2026. Suba na classificação e conquiste a glória eterna.",
+  "title": "Mesa em disputa",
+  "subtitle": "Veja a classificação dos bolões da Copa do Mundo 2026.",
   "hall_of_fame": "HALL OF FAME",
   "tabs": {
     "global": "Global",
@@ -12,8 +12,8 @@
     "stats": "Stats"
   },
   "user_section": {
-    "podium_desc": "Elite Global",
-    "my_performance": "Sua Performance",
+    "podium_desc": "Pódio geral",
+    "my_performance": "Seu resumo",
     "status_protective": "Status Protetivo",
     "climbing": "SUBINDO",
     "points": "PONTOS",
@@ -22,10 +22,10 @@
     "top_50": "Classificação Top 50"
   },
   "boloes_section": {
-    "elite": "Elite dos Bolões",
+    "elite": "Bolões em destaque",
     "members": "MEMBROS",
     "accuracy": "ACC",
-    "total_prize": "PRÊMIO TOTAL"
+    "total_prize": "COMBINADO"
   },
   "history_section": {
     "legendary_winners": "CAMPEÕES LENDÁRIOS",
@@ -55,7 +55,7 @@
   "empty_desc": "Assim que os bolões começarem a pontuar, o ranking global aparece aqui.",
   "overall": "Classificação geral",
   "page_label": "Ranking",
-  "page_title": "Torcedores em alta",
+  "page_title": "Mesa em disputa",
   "page_desc": "Dados agregados dos bolões já pontuados.",
   "my_position": "Sua posição atual",
   "overall_title": "Classificação geral",

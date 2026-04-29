@@ -35,14 +35,16 @@ vi.mock("@/hooks/use-toast", () => ({
 }));
 
 describe("CriarBolao wizard", () => {
-  it("starts with structural choices before naming the bolao", () => {
+  it("starts with a two-step quick setup and asks for the bolao name immediately", () => {
     render(
       <MemoryRouter initialEntries={["/boloes/criar"]}>
         <CriarBolao />
       </MemoryRouter>,
     );
 
-    expect(screen.getByText("Onde esse bolão vai viver?")).toBeInTheDocument();
-    expect(screen.queryByPlaceholderText("Nome do bolão")).not.toBeInTheDocument();
+    expect(screen.getByText("Escolha como vamos criar")).toBeInTheDocument();
+    expect(screen.getByText("Bolao da Turma")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Nome do bolao")).toBeInTheDocument();
+    expect(screen.queryByText("Etapa 3 de 4")).not.toBeInTheDocument();
   });
 });

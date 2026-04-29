@@ -95,6 +95,13 @@ export default function PublicInvite() {
           navigate(`/grupos/entrar/${bolao.required_group_invite_code}`, { replace: true });
           return;
         }
+        if (error instanceof Error && error.message === "commercial_participant_limit_reached") {
+          toast({
+            title: "Limite de participantes atingido",
+            description: "Este pacote atingiu o limite de participantes.",
+            variant: "destructive",
+          });
+        }
       }
     };
 
