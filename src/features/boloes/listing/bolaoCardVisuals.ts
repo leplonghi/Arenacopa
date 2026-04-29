@@ -1,6 +1,6 @@
 export type BolaoCardVisualIntent = "action" | "info" | "cta";
 
-const baseCardClass = "rounded-[26px] border p-4 backdrop-blur-xl";
+const baseCardClass = "min-w-0 rounded-[26px] border p-4 break-words backdrop-blur-xl [overflow-wrap:anywhere]";
 
 export function getBolaoCardShellClass(intent: BolaoCardVisualIntent) {
   if (intent === "action") {

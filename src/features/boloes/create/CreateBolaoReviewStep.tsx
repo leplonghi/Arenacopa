@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -13,6 +14,7 @@ import { createGroup } from "@/services/groups/group-access.service";
 import { trackBolaoConfigEvent } from "@/lib/analytics/bolao-config.telemetry";
 import { trackSocialEvent } from "@/lib/analytics/social.telemetry";
 import { mapWizardStateToBolaoStructure } from "@/features/boloes/create/useBolaoCreateFlow";
+import { CreateBolaoStepRail } from "@/features/boloes/create/CreateBolaoStepRail";
 import type { useBolaoCreateFlow } from "@/features/boloes/create/useBolaoCreateFlow";
 
 type Flow = ReturnType<typeof useBolaoCreateFlow>;
@@ -24,6 +26,7 @@ export function CreateBolaoReviewStep({ flow }: { flow: Flow }) {
   const { toast } = useToast();
   const { session } = useAuth();
   const { current: championship } = useChampionship();
+  const [publishing, setPublishing] = useState(false);
 
   const structure = mapWizardStateToBolaoStructure(flow.state);
 
@@ -141,6 +144,9 @@ export function CreateBolaoReviewStep({ flow }: { flow: Flow }) {
   };
 
   const handleCreate = async () => {
+    if (publishing) return;
+
+    setPublishing(true);
     try {
       trackSocialEvent("pool_create_started", {
         context_mode: flow.state.contextMode,
@@ -340,11 +346,13 @@ export function CreateBolaoReviewStep({ flow }: { flow: Flow }) {
         description: getFailureMessage(error),
         variant: "destructive",
       });
+      setPublishing(false);
     }
   };
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 text-white">
+      <CreateBolaoStepRail activeStep={2} />
       <p className="text-[11px] font-black uppercase tracking-[0.22em] text-primary">Etapa 2 de 2</p>
       <h1 className="mt-2 text-3xl font-black">Revise e publique</h1>
       <p className="mt-2 text-sm text-zinc-400">
@@ -401,16 +409,31 @@ export function CreateBolaoReviewStep({ flow }: { flow: Flow }) {
         <div className="flex gap-3">
           <button
             onClick={() => void handleSaveDraft()}
+            disabled={publishing}
             className="rounded-2xl border border-white/10 px-5 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-white"
           >
             Salvar rascunho
           </button>
           <button
             onClick={() => void handleCreate()}
-            disabled={!flow.canAdvance}
-            className="rounded-2xl bg-primary px-5 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-black disabled:opacity-50"
+            disabled={!flow.canAdvance || publishing}
+            className="inline-flex min-w-[156px] items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-black disabled:opacity-70"
           >
-            Publicar bolão
+            {publishing ? (
+              <>
+                <span
+                  role="status"
+                  aria-label="Criando bolão"
+                  className="relative h-5 w-5 animate-spin rounded-full border-2 border-black/80 bg-white shadow-[inset_0_0_0_2px_rgba(0,0,0,0.12)]"
+                >
+                  <span className="absolute left-1/2 top-0 h-full w-0.5 -translate-x-1/2 bg-black/70" />
+                  <span className="absolute left-0 top-1/2 h-0.5 w-full -translate-y-1/2 bg-black/70" />
+                </span>
+                Criando bolão
+              </>
+            ) : (
+              "Publicar bolão"
+            )}
           </button>
         </div>
       </div>

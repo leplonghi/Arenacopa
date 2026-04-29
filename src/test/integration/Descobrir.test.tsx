@@ -40,6 +40,8 @@ describe("Descobrir", () => {
       "href",
       "/descobrir/campanhas",
     );
+    expect(screen.getByRole("heading", { name: "Bolões" })).toHaveClass("break-words");
+    expect(screen.getByRole("link", { name: /Explorar bolões/i })).toHaveClass("whitespace-normal");
     await waitFor(() => {
       expect(screen.getByText("Nenhum bolão público disponível agora")).toBeInTheDocument();
     });

@@ -144,7 +144,7 @@ export default function Descobrir() {
               key={href}
               to={href}
               className={cn(
-                "rounded-full border px-3 py-2 text-sm font-semibold transition-colors",
+                "min-w-0 whitespace-normal rounded-full border px-3 py-2 text-center text-sm font-semibold leading-tight transition-colors",
                 currentSection === label
                   ? "border-primary/45 bg-primary/15 text-primary"
                   : "border-white/10 bg-white/[0.04] text-zinc-300 hover:border-white/20 hover:text-white",
@@ -177,20 +177,20 @@ export default function Descobrir() {
               <Link
                 key={card.href}
                 to={card.href}
-                className="group flex min-h-[154px] flex-col justify-between rounded-[18px] border border-white/10 bg-white/[0.035] p-4 transition hover:border-primary/35 hover:bg-primary/[0.06]"
+                className="group flex min-h-[154px] min-w-0 flex-col justify-between whitespace-normal rounded-[18px] border border-white/10 bg-white/[0.035] p-4 break-words transition [overflow-wrap:anywhere] hover:border-primary/35 hover:bg-primary/[0.06]"
               >
                 <div className="flex items-start gap-3">
                   <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-primary/25 bg-primary/10 text-primary">
                     <Icon className="h-5 w-5" />
                   </span>
                   <div className="min-w-0">
-                    <h3 className="font-display text-xl font-bold uppercase tracking-[0.04em] text-white">
+                    <h3 className="break-words font-display text-xl font-bold uppercase leading-tight tracking-[0.03em] text-white [overflow-wrap:anywhere]">
                       {card.title}
                     </h3>
                     <p className="mt-2 text-sm leading-relaxed text-zinc-300">{card.description}</p>
                   </div>
                 </div>
-                <span className="mt-4 inline-flex items-center gap-2 text-sm font-bold text-primary transition group-hover:translate-x-0.5">
+                <span className="mt-4 inline-flex min-w-0 items-center gap-2 whitespace-normal text-sm font-bold leading-tight text-primary transition group-hover:translate-x-0.5">
                   {card.cta}
                 </span>
               </Link>
@@ -209,7 +209,7 @@ export default function Descobrir() {
           action={
             <Link
               to="/boloes"
-              className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] px-4 text-sm font-bold text-white transition hover:bg-white/[0.07]"
+              className="inline-flex min-h-11 min-w-0 items-center justify-center whitespace-normal rounded-full border border-white/10 bg-white/[0.04] px-4 text-center text-sm font-bold leading-tight text-white transition hover:bg-white/[0.07]"
             >
               Meus bolões
             </Link>
@@ -229,10 +229,10 @@ export default function Descobrir() {
         ) : (
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {discoverBoloes.map((bolao) => (
-              <article key={bolao.id} className="rounded-[20px] border border-white/10 bg-white/[0.04] p-4">
+              <article key={bolao.id} className="min-w-0 rounded-[20px] border border-white/10 bg-white/[0.04] p-4 break-words [overflow-wrap:anywhere]">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <h3 className="font-display text-xl font-bold uppercase tracking-[0.04em] text-white">
+                    <h3 className="break-words font-display text-xl font-bold uppercase leading-tight tracking-[0.03em] text-white [overflow-wrap:anywhere]">
                       {bolao.name}
                     </h3>
                     {bolao.description ? (
@@ -252,7 +252,7 @@ export default function Descobrir() {
                 <Link
                   to={`/b/${bolao.invite_code}`}
                   aria-label={`Entrar no bolão ${bolao.name}`}
-                  className="mt-4 inline-flex w-full items-center justify-center rounded-[16px] bg-primary px-4 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-black transition hover:brightness-105"
+                  className="mt-4 inline-flex w-full min-w-0 items-center justify-center whitespace-normal rounded-[16px] bg-primary px-4 py-3 text-center text-[11px] font-black uppercase leading-tight tracking-[0.12em] text-black transition hover:brightness-105"
                 >
                   Entrar
                 </Link>
@@ -270,7 +270,7 @@ export default function Descobrir() {
           action={
             <Link
               to="/negocios"
-              className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] px-4 text-sm font-bold text-white transition hover:bg-white/[0.07]"
+              className="inline-flex min-h-11 min-w-0 items-center justify-center whitespace-normal rounded-full border border-white/10 bg-white/[0.04] px-4 text-center text-sm font-bold leading-tight text-white transition hover:bg-white/[0.07]"
             >
               Negócios
             </Link>
@@ -290,11 +290,11 @@ export default function Descobrir() {
         ) : (
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {campaigns.map((campaign) => (
-              <article key={campaign.id} className="rounded-[20px] border border-white/10 bg-white/[0.04] p-4">
-                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">
+              <article key={campaign.id} className="min-w-0 rounded-[20px] border border-white/10 bg-white/[0.04] p-4 break-words [overflow-wrap:anywhere]">
+                <p className="break-words text-[11px] font-black uppercase leading-tight tracking-[0.12em] text-primary [overflow-wrap:anywhere]">
                   {campaign.merchantName}
                 </p>
-                <h3 className="mt-2 font-display text-xl font-bold uppercase tracking-[0.04em] text-white">
+                <h3 className="mt-2 break-words font-display text-xl font-bold uppercase leading-tight tracking-[0.03em] text-white [overflow-wrap:anywhere]">
                   {campaign.title}
                 </h3>
                 <p className="mt-2 line-clamp-2 text-sm leading-6 text-zinc-300">{campaign.benefitSummary}</p>
@@ -306,7 +306,7 @@ export default function Descobrir() {
                 <Link
                   to={`/c/${campaign.shareCode}`}
                   aria-label={`Ver campanha ${campaign.title}`}
-                  className="mt-4 inline-flex w-full items-center justify-center rounded-[16px] bg-primary px-4 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-black transition hover:brightness-105"
+                  className="mt-4 inline-flex w-full min-w-0 items-center justify-center whitespace-normal rounded-[16px] bg-primary px-4 py-3 text-center text-[11px] font-black uppercase leading-tight tracking-[0.12em] text-black transition hover:brightness-105"
                 >
                   Ver campanha
                 </Link>
@@ -324,7 +324,7 @@ export default function Descobrir() {
           action={
             <Link
               to="/noticias"
-              className="inline-flex min-h-11 items-center justify-center rounded-full border border-white/10 bg-white/[0.04] px-4 text-sm font-bold text-white transition hover:bg-white/[0.07]"
+              className="inline-flex min-h-11 min-w-0 items-center justify-center whitespace-normal rounded-full border border-white/10 bg-white/[0.04] px-4 text-center text-sm font-bold leading-tight text-white transition hover:bg-white/[0.07]"
             >
               Ver notícias
             </Link>
@@ -349,12 +349,12 @@ export default function Descobrir() {
                 href={item.url}
                 target="_blank"
                 rel="noreferrer"
-                className="rounded-[20px] border border-white/10 bg-white/[0.04] p-4 transition hover:border-white/20 hover:bg-white/[0.06]"
+                className="min-w-0 rounded-[20px] border border-white/10 bg-white/[0.04] p-4 break-words transition [overflow-wrap:anywhere] hover:border-white/20 hover:bg-white/[0.06]"
               >
-                <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">
+                <p className="break-words text-[11px] font-black uppercase leading-tight tracking-[0.12em] text-primary [overflow-wrap:anywhere]">
                   {item.source_name || item.category || "ArenaCup"}
                 </p>
-                <h3 className="mt-2 line-clamp-2 font-display text-xl font-bold uppercase tracking-[0.04em] text-white">
+                <h3 className="mt-2 break-words font-display text-xl font-bold uppercase leading-tight tracking-[0.03em] text-white [overflow-wrap:anywhere]">
                   {item.title}
                 </h3>
                 {item.summary || item.description ? (
@@ -376,7 +376,7 @@ export default function Descobrir() {
           action={
             <Link
               to="/ranking"
-              className="inline-flex min-h-11 items-center justify-center rounded-full border border-primary/30 bg-primary/10 px-4 text-sm font-bold text-primary transition hover:bg-primary/15"
+              className="inline-flex min-h-11 min-w-0 items-center justify-center whitespace-normal rounded-full border border-primary/30 bg-primary/10 px-4 text-center text-sm font-bold leading-tight text-primary transition hover:bg-primary/15"
             >
               Abrir ranking
             </Link>
@@ -394,17 +394,17 @@ export default function Descobrir() {
       <ArenaPanel className="grid gap-3 md:grid-cols-2">
         <Link
           to="/comunidades"
-          className="flex items-center gap-3 rounded-[18px] border border-white/10 bg-white/[0.035] p-4 transition hover:border-white/20"
+          className="flex min-w-0 items-center gap-3 rounded-[18px] border border-white/10 bg-white/[0.035] p-4 transition hover:border-white/20"
         >
           <Users2 className="h-5 w-5 text-primary" />
-          <span className="font-semibold text-white">Comunidades</span>
+          <span className="min-w-0 break-words font-semibold text-white">Comunidades</span>
         </Link>
         <Link
           to="/negocios"
-          className="flex items-center gap-3 rounded-[18px] border border-white/10 bg-white/[0.035] p-4 transition hover:border-white/20"
+          className="flex min-w-0 items-center gap-3 rounded-[18px] border border-white/10 bg-white/[0.035] p-4 transition hover:border-white/20"
         >
           <Compass className="h-5 w-5 text-primary" />
-          <span className="font-semibold text-white">Negócios</span>
+          <span className="min-w-0 break-words font-semibold text-white">Negócios</span>
         </Link>
       </ArenaPanel>
     </div>

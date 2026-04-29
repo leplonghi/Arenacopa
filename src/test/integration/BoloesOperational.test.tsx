@@ -23,6 +23,10 @@ vi.mock("@/services/boloes/bolao-listing.service", () => ({
   })),
 }));
 
+vi.mock("@/components/opportunities/OpportunityRail", () => ({
+  OpportunityRail: ({ title }: { title: string }) => <div>{title}</div>,
+}));
+
 vi.mock("@/services/groups/group-access.service", () => ({
   joinViaInvite: vi.fn(),
 }));
@@ -32,7 +36,7 @@ vi.mock("@/lib/analytics/social.telemetry", () => ({
 }));
 
 describe("Boloes operational area", () => {
-  it("keeps core pool actions and points exploration to Descobrir", async () => {
+  it("separates social pool creation, business pools, and operational status", async () => {
     render(
       <MemoryRouter initialEntries={["/boloes"]}>
         <Boloes />
@@ -43,10 +47,17 @@ describe("Boloes operational area", () => {
       expect(screen.getByText("Você ainda não participa de nenhum bolão")).toBeInTheDocument();
     });
 
-    expect(screen.getByRole("link", { name: /Bolao da turma/i })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: /Criar bolão da turma/i })).toHaveAttribute(
       "href",
       "/boloes/criar",
     );
+    expect(screen.getByRole("button", { name: /Sobre bolão da turma/i })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Bolões para negócios/i })).toHaveAttribute(
+      "href",
+      "/negocios",
+    );
+    expect(screen.getByRole("button", { name: /Sobre bolões para negócios/i })).toBeInTheDocument();
+    expect(screen.getByText("Status dos bolões")).toBeInTheDocument();
     expect(screen.getByPlaceholderText("Código do bolão")).toBeInTheDocument();
     expect(screen.getByText("Quer encontrar novos bolões?")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Explorar bolões/i })).toHaveAttribute(

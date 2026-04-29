@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, type Mock, vi } from "vitest";
 import { CreateBolaoQuickStep } from "@/features/boloes/create/CreateBolaoQuickStep";
 import type { useBolaoCreateFlow } from "@/features/boloes/create/useBolaoCreateFlow";
 
@@ -47,19 +47,20 @@ function buildFlow(): Flow {
 }
 
 describe("CreateBolaoQuickStep social presets", () => {
-  it("offers free personal presets and a separate business path", () => {
+  it("offers social audience presets and removes the business path", () => {
     render(
       <MemoryRouter>
         <CreateBolaoQuickStep flow={buildFlow()} />
       </MemoryRouter>,
     );
 
-    expect(screen.getByText(/Bolao da Turma/i)).toBeInTheDocument();
-    expect(screen.getByText(/ArenaCup para Negocios/i)).toBeInTheDocument();
-    expect(screen.getAllByText(/Rapido/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/Completo/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/Comunidade/i).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/Publico por link/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/Crie o bolão da turma/i)).toBeInTheDocument();
+    expect(screen.getByText(/Para quem é o bolão/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Para quem: Amigos\/família/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Para quem: Comunidade/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Para quem: Aberto por link/i })).toBeInTheDocument();
+    expect(screen.queryByText(/ArenaCup para Negocios/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Continuar para negocios/i })).not.toBeInTheDocument();
     expect(screen.queryByText(/Ilimitado/i)).not.toBeInTheDocument();
   });
 
@@ -71,9 +72,15 @@ describe("CreateBolaoQuickStep social presets", () => {
       </MemoryRouter>,
     );
 
-    fireEvent.click(screen.getByRole("button", { name: /Completo/i }));
+    fireEvent.click(screen.getByRole("button", { name: /Para quem: Aberto por link/i }));
 
     expect(flow.setState).toHaveBeenCalled();
-    expect(flow.setSelectedType).toHaveBeenCalledWith("complete");
+    expect(flow.setSelectedType).toHaveBeenCalledWith("rapid");
+
+    const updateState = (flow.setState as Mock).mock.calls[0][0];
+    const nextState = updateState(flow.state);
+    expect(nextState.accessMode).toBe("public");
+    expect(nextState.audienceMode).toBe("personal");
+    expect(nextState.financeMode).toBe("free");
   });
 });

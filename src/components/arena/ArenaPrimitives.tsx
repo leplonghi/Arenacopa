@@ -13,7 +13,7 @@ export function ArenaPanel({
   tone?: "default" | "strong";
 }) {
   return (
-    <section className={cn(tone === "strong" ? "arena-panel-strong" : "arena-panel", className)}>
+    <section className={cn(tone === "strong" ? "arena-panel-strong" : "arena-panel", "min-w-0", className)}>
       {children}
     </section>
   );
@@ -33,17 +33,17 @@ export function ArenaSectionHeader({
   className?: string;
 }) {
   return (
-    <div className={cn("flex flex-col items-stretch gap-4 sm:flex-row sm:items-start sm:justify-between", className)}>
+    <div className={cn("flex min-w-0 flex-col items-stretch gap-4 sm:flex-row sm:items-start sm:justify-between", className)}>
       <div className="min-w-0 flex-1">
         {eyebrow ? (
-          <div className="flex items-center gap-2">
-            <p className="arena-kicker text-primary">{eyebrow}</p>
+          <div className="flex min-w-0 items-center gap-2">
+            <p className="arena-kicker min-w-0 break-words text-primary">{eyebrow}</p>
             {hint ? <ArenaHint label={`Sobre ${title}`}>{hint}</ArenaHint> : null}
           </div>
         ) : hint ? (
           <ArenaHint label={`Sobre ${title}`}>{hint}</ArenaHint>
         ) : null}
-        <h2 className="mt-1 font-display text-[1.95rem] font-bold uppercase leading-[0.88] tracking-[0.035em] text-white sm:text-[2.3rem]">
+        <h2 className="mt-1 break-words font-display text-[1.75rem] font-bold uppercase leading-[1.02] tracking-[0.02em] text-white [overflow-wrap:anywhere] sm:text-[2.3rem]">
           {title}
         </h2>
       </div>
@@ -104,19 +104,19 @@ export function ArenaMetric({
   return (
     <div
       className={cn(
-        "rounded-[18px] border px-4 py-4 backdrop-blur-xl",
+        "min-w-0 rounded-[18px] border px-4 py-4 backdrop-blur-xl",
         accent ? "border-primary/30 bg-primary/[0.08]" : "border-[#8d8158]/30 bg-[#061510]/70",
         className,
       )}
     >
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <p className={cn("text-[1.02rem] font-display font-bold uppercase tracking-[0.11em]", accent ? "text-[#44df62]" : "text-primary")}>
+          <p className={cn("break-words font-display text-[0.92rem] font-bold uppercase leading-tight tracking-[0.08em]", accent ? "text-[#44df62]" : "text-primary")}>
             {label}
           </p>
           <div
             className={cn(
-              "mt-2 font-display text-[2.15rem] font-bold uppercase leading-none tracking-[0.02em]",
+              "mt-2 break-words font-display text-[2.15rem] font-bold uppercase leading-tight tracking-[0.02em]",
               "text-white",
             )}
           >
@@ -141,7 +141,7 @@ export function ArenaTabPill({
   return (
     <div
       className={cn(
-        "inline-flex items-center justify-center rounded-[18px] border px-4 py-2 font-display text-base font-bold uppercase tracking-[0.08em] transition",
+        "inline-flex min-w-0 items-center justify-center whitespace-normal rounded-[18px] border px-4 py-2 text-center font-display text-base font-bold uppercase leading-tight tracking-[0.06em] transition",
         active
           ? "border-primary/50 bg-primary/15 text-primary shadow-[0_0_22px_rgba(145,255,59,0.18)]"
           : "border-white/10 bg-white/[0.04] text-zinc-400",
