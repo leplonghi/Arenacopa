@@ -29,19 +29,72 @@ async function loadMatchesForBolaoMarketSync({ db, championshipId }) {
   }));
 }
 
-async function syncBolaoMarkets({ db, bolaoId, competitionRules, championshipId = null }) {
-  const existingSnapshot = await db
-    .collection("bolao_markets")
-    .where("bolao_id", "==", bolaoId)
-    .get();
+async function syncBolaoMarkets({ db, bolaoId, competitionRules, championshipId = null, allowedMatchIds = "all" }) {
+  const selectedMarketIds = competitionRules?.markets || [];
+  if (selectedMarketIds.length === 0) {
+    // No markets to sync — clear existing if any
+    const existingSnapshot = await db
+      .collection("bolao_markets")
+      .where("bolao_id", "==", bolaoId)
+      .limit(1)
+      .get();
+    if (existingSnapshot.empty) return [];
+    // Fall through to full sync to clear
+  }
 
-  const matches = await loadMatchesForBolaoMarketSync({ db, championshipId });
-  const markets = buildBolaoMarkets({
-    bolaoId,
-    selectedMarketIds: competitionRules?.markets || [],
-    matches,
+  // Load existing markets for diff
+  const [existingSnapshot, matches] = await Promise.all([
+    db.collection("bolao_markets").where("bolao_id", "==", bolaoId).get(),
+    loadMatchesForBolaoMarketSync({ db, championshipId }),
+  ]);
+
+  const newMarkets = buildBolaoMarkets({ bolaoId, selectedMarketIds, matches, allowedMatchIds });
+  const newMarketIds = new Set(newMarkets.map((m) => m.id));
+
+  // Build maps for diff
+  const existingById = new Map();
+  existingSnapshot.docs.forEach((doc) => {
+    existingById.set(doc.id, doc.ref);
   });
 
+  const toDelete = [];
+  const toCreate = [];
+  const toUpdate = [];
+
+  // Find markets to delete (exist but not in new set)
+  for (const [id, ref] of existingById) {
+    if (!newMarketIds.has(id)) {
+      toDelete.push(ref);
+    }
+  }
+
+  // Find markets to create or update
+  for (const market of newMarkets) {
+    const existingRef = existingById.get(market.id);
+    if (!existingRef) {
+      toCreate.push(market);
+    } else {
+      // Only update if meaningful fields changed
+      const existingData = existingSnapshot.docs.find((d) => d.id === market.id)?.data();
+      if (existingData) {
+        const hasChanged =
+          existingData.title !== market.title ||
+          existingData.closes_at !== market.closes_at ||
+          existingData.status !== market.status ||
+          existingData.match_id !== market.match_id;
+        if (hasChanged) {
+          toUpdate.push({ ref: existingRef, data: market });
+        }
+      }
+    }
+  }
+
+  // If nothing changed, skip all writes
+  if (toDelete.length === 0 && toCreate.length === 0 && toUpdate.length === 0) {
+    return newMarkets;
+  }
+
+  // Execute batches
   const maxBatchOperations = 450;
   let batch = db.batch();
   let operationCount = 0;
@@ -50,31 +103,39 @@ async function syncBolaoMarkets({ db, bolaoId, competitionRules, championshipId 
     if (operationCount === 0 || (!force && operationCount < maxBatchOperations)) {
       return;
     }
-
     await batch.commit();
     batch = db.batch();
     operationCount = 0;
   };
 
-  for (const doc of existingSnapshot.docs) {
-    batch.delete(doc.ref);
+  // Deletes
+  for (const ref of toDelete) {
+    batch.delete(ref);
     operationCount += 1;
     await commitIfNeeded();
   }
 
-  for (const market of markets) {
+  // Creates
+  for (const market of toCreate) {
     batch.set(db.collection("bolao_markets").doc(market.id), market);
     operationCount += 1;
     await commitIfNeeded();
   }
 
-  await commitIfNeeded(true);
+  // Updates
+  for (const { ref, data } of toUpdate) {
+    batch.set(ref, data, { merge: true });
+    operationCount += 1;
+    await commitIfNeeded();
+  }
 
-  return markets;
+  await commitIfNeeded(true);
+  return newMarkets;
 }
 
 async function writeAuditLog({ db, bolaoId, actorId, action, before, after, reason }) {
-  await db.collection("bolao_audit").add({
+  // Fire-and-forget: don't await, don't block the main flow
+  db.collection("bolao_audit").add({
     bolao_id: bolaoId,
     actor_id: actorId,
     action,
@@ -82,6 +143,8 @@ async function writeAuditLog({ db, bolaoId, actorId, action, before, after, reas
     after,
     reason: reason || null,
     created_at: admin.firestore.FieldValue.serverTimestamp(),
+  }).catch((err) => {
+    console.error("Audit log failed (non-blocking):", err.message);
   });
 }
 
@@ -103,46 +166,53 @@ async function getOwnedBolaoOrThrow({ db, bolaoId, actorId }) {
 
 async function createDraft({ db, bolaoId, payload }) {
   const ref = db.collection("boloes").doc(bolaoId);
-  await ref.set(payload);
   const ownerId = payload.creator_id;
   const nowIso = payload.created_at || payload.audit_meta?.last_updated_at || new Date().toISOString();
 
-  if (ownerId) {
-    await db.collection("bolao_members").doc(`${ownerId}_${bolaoId}`).set({
-      bolao_id: bolaoId,
-      user_id: ownerId,
-      role: "admin",
-      membership_status: "active",
-      payment_status: "not_required",
-      created_at: nowIso,
-      joined_at: nowIso,
-      updated_at: nowIso,
-    }, { merge: true });
+  // Write bolao document
+  await ref.set(payload);
 
-    await db.collection("bolao_onboarding_state").doc(`${ownerId}_${bolaoId}`).set({
-      id: `${ownerId}_${bolaoId}`,
-      bolao_id: bolaoId,
-      user_id: ownerId,
-      seen_intro: false,
-      seen_scoring: false,
-      seen_markets: false,
-      seen_ranking: false,
-      completed_at: null,
-      updated_at: nowIso,
-    }, { merge: true });
-  }
+  // Parallel writes for member + onboarding + markets
+  const memberPromise = ownerId
+    ? db.collection("bolao_members").doc(`${ownerId}_${bolaoId}`).set({
+        bolao_id: bolaoId,
+        user_id: ownerId,
+        role: "admin",
+        membership_status: "active",
+        payment_status: "not_required",
+        created_at: nowIso,
+        joined_at: nowIso,
+        updated_at: nowIso,
+      }, { merge: true })
+    : Promise.resolve();
 
-  await syncBolaoMarkets({
+  const onboardingPromise = ownerId
+    ? db.collection("bolao_onboarding_state").doc(`${ownerId}_${bolaoId}`).set({
+        id: `${ownerId}_${bolaoId}`,
+        bolao_id: bolaoId,
+        user_id: ownerId,
+        seen_intro: false,
+        seen_scoring: false,
+        seen_markets: false,
+        seen_ranking: false,
+        completed_at: null,
+        updated_at: nowIso,
+      }, { merge: true })
+    : Promise.resolve();
+
+  const marketsPromise = syncBolaoMarkets({
     db,
     bolaoId,
     competitionRules: payload.competition_rules,
     championshipId: payload.championship_id || null,
+    allowedMatchIds: payload.allowed_match_ids ?? "all",
   });
 
+  await Promise.all([memberPromise, onboardingPromise, marketsPromise]);
   return payload;
 }
 
-async function updateConfiguration({ db, bolaoId, actorId, expectedConfigVersion, patch, nowIso }) {
+async function updateConfiguration({ db, bolaoId, actorId, expectedConfigVersion, patch, nowIso, forceEdit = false }) {
   const { ref, data } = await getOwnedBolaoOrThrow({ db, bolaoId, actorId });
   const before = normalizeBolaoDocument(data);
   const after = buildConfigurationUpdate({
@@ -151,18 +221,23 @@ async function updateConfiguration({ db, bolaoId, actorId, expectedConfigVersion
     patch,
     actorId,
     nowIso,
+    forceEdit,
   });
 
   await ref.set(after, { merge: true });
-  if (patch?.competition_rules) {
-    await syncBolaoMarkets({
-      db,
-      bolaoId,
-      competitionRules: after.competition_rules,
-      championshipId: after.championship_id || null,
-    });
-  }
-  await writeAuditLog({
+
+  // Sync markets in parallel with audit log (fire-and-forget)
+  const marketsPromise = patch?.competition_rules
+    ? syncBolaoMarkets({
+        db,
+        bolaoId,
+        competitionRules: after.competition_rules,
+        championshipId: after.championship_id || null,
+        allowedMatchIds: after.allowed_match_ids ?? "all",
+      })
+    : Promise.resolve();
+
+  writeAuditLog({
     db,
     bolaoId,
     actorId,
@@ -171,6 +246,7 @@ async function updateConfiguration({ db, bolaoId, actorId, expectedConfigVersion
     after,
   });
 
+  await marketsPromise;
   return after;
 }
 
@@ -185,7 +261,7 @@ async function publishBolao({ db, bolaoId, actorId, expectedConfigVersion, nowIs
   });
 
   await ref.set(after, { merge: true });
-  await writeAuditLog({
+  writeAuditLog({
     db,
     bolaoId,
     actorId,
@@ -221,14 +297,19 @@ async function duplicateBolao({
     overrides,
   });
 
-  await newRef.set(after);
-  await syncBolaoMarkets({
-    db,
-    bolaoId: newRef.id,
-    competitionRules: after.competition_rules,
-    championshipId: after.championship_id || null,
-  });
-  await writeAuditLog({
+  // Parallel: create bolao + sync markets
+  const [_, markets] = await Promise.all([
+    newRef.set(after),
+    syncBolaoMarkets({
+      db,
+      bolaoId: newRef.id,
+      competitionRules: after.competition_rules,
+      championshipId: after.championship_id || null,
+      allowedMatchIds: after.allowed_match_ids ?? "all",
+    }),
+  ]);
+
+  writeAuditLog({
     db,
     bolaoId: sourceBolaoId,
     actorId,
@@ -251,7 +332,7 @@ async function alterPresentation({ db, bolaoId, actorId, patch, nowIso }) {
   });
 
   await ref.set(after, { merge: true });
-  await writeAuditLog({
+  writeAuditLog({
     db,
     bolaoId,
     actorId,
@@ -275,7 +356,7 @@ async function finishBolao({ db, bolaoId, actorId, nowIso, reason }) {
   });
 
   await ref.set(after, { merge: true });
-  await writeAuditLog({
+  writeAuditLog({
     db,
     bolaoId,
     actorId,
@@ -300,7 +381,7 @@ async function archiveBolao({ db, bolaoId, actorId, nowIso, reason }) {
   });
 
   await ref.set(after, { merge: true });
-  await writeAuditLog({
+  writeAuditLog({
     db,
     bolaoId,
     actorId,
@@ -324,7 +405,7 @@ async function deleteBolao({ db, bolaoId, actorId, nowIso, reason }) {
   });
 
   await ref.set(after, { merge: true });
-  await writeAuditLog({
+  writeAuditLog({
     db,
     bolaoId,
     actorId,
@@ -380,7 +461,7 @@ async function removePoolMember({
   };
 
   await memberRef.set(after, { merge: true });
-  await writeAuditLog({
+  writeAuditLog({
     db,
     bolaoId,
     actorId,
@@ -452,7 +533,7 @@ async function leaveBolao({
   };
 
   await memberRef.set(after, { merge: true });
-  await writeAuditLog({
+  writeAuditLog({
     db,
     bolaoId,
     actorId,
@@ -509,7 +590,7 @@ async function updatePoolMemberPaymentStatus({
   };
 
   await memberRef.set(after, { merge: true });
-  await writeAuditLog({
+  writeAuditLog({
     db,
     bolaoId,
     actorId,
@@ -578,7 +659,7 @@ async function submitPoolMemberPaymentProof({
     },
     { merge: true },
   );
-  await writeAuditLog({
+  writeAuditLog({
     db,
     bolaoId,
     actorId,
@@ -603,6 +684,7 @@ module.exports = {
   finishBolao,
   getOwnedBolaoOrThrow,
   leaveBolao,
+  loadMatchesForBolaoMarketSync,
   publishBolao,
   removePoolMember,
   submitPoolMemberPaymentProof,

@@ -1,19 +1,58 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Compass, Loader2, Plus, Search, Sparkles, Store, Trophy, Users2 } from "lucide-react";
+import {
+  ArrowRight,
+  Compass,
+  Loader2,
+  Plus,
+  Search,
+  Sparkles,
+  Store,
+  Users2,
+} from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { EmptyState } from "@/components/EmptyState";
-import { BolaoAvatar } from "@/components/BolaoAvatar";
 import { AdmissionInbox } from "@/features/social/AdmissionInbox";
 import { BolaoEntryGuidance } from "@/features/boloes/shared/BolaoEntryGuidance";
+import { BolaoCard, BolaoCardSkeleton } from "@/features/boloes/listing/BolaoCard";
 import { joinViaInvite } from "@/services/groups/group-access.service";
 import { trackSocialEvent } from "@/lib/analytics/social.telemetry";
-import { ArenaHint, ArenaMetric, ArenaPanel, ArenaSectionHeader } from "@/components/arena/ArenaPrimitives";
 import { OpportunityRail } from "@/components/opportunities/OpportunityRail";
-import { getBolaoCardShellClass } from "@/features/boloes/listing/bolaoCardVisuals";
 import { useOpportunities } from "@/hooks/useOpportunities";
-import { listUserBoloes, type BolaoListingCard, type BolaoListingRequestCard } from "@/services/boloes/bolao-listing.service";
+import {
+  listUserBoloes,
+  type BolaoListingCard,
+  type BolaoListingRequestCard,
+} from "@/services/boloes/bolao-listing.service";
+
+// ─── Quick-action entry cards ────────────────────────────────────────────────
+const QUICK_ACTIONS = [
+  {
+    id: "explore",
+    to: "/descobrir/boloes",
+    icon: Compass,
+    label: "Explorar bolões",
+    description: "Públicos e abertos",
+    accent: false,
+  },
+  {
+    id: "communities",
+    to: "/comunidades",
+    icon: Users2,
+    label: "Comunidades",
+    description: "Turma recorrente",
+    accent: false,
+  },
+  {
+    id: "creator",
+    to: "/boloes/creator",
+    icon: Sparkles,
+    label: "Creator Pro",
+    description: "Divulgação profissional",
+    accent: false,
+  },
+] as const;
 
 export default function Boloes() {
   const { user } = useAuth();
@@ -34,7 +73,6 @@ export default function Boloes() {
       setLoading(false);
       return;
     }
-
     setLoading(true);
     try {
       const listing = await listUserBoloes();
@@ -63,20 +101,14 @@ export default function Boloes() {
         id: request.id,
         title: request.bolaoName,
         subtitle: "Sua entrada está aguardando aprovação do criador.",
-        meta: request.updatedAt ? `Atualizado em ${new Date(request.updatedAt).toLocaleString("pt-BR")}` : null,
+        meta: request.updatedAt
+          ? `Atualizado em ${new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(new Date(request.updatedAt))}`
+          : null,
         status: "Pendente",
       })),
     [pendingRequests],
   );
 
-  const spotlightMetrics = useMemo(
-    () => [
-      { label: "Ativos", value: myBoloes.length },
-      { label: "Pendentes", value: pendingRequests.length },
-      { label: "Descobrir", value: discoverBoloes.length },
-    ],
-    [discoverBoloes.length, myBoloes.length, pendingRequests.length],
-  );
   const opportunities = useOpportunities({
     user,
     activeBoloes: myBoloes,
@@ -84,10 +116,7 @@ export default function Boloes() {
   });
 
   const handleJoinByCode = async () => {
-    if (!joinCode.trim()) {
-      return;
-    }
-
+    if (!joinCode.trim()) return;
     try {
       setJoining(true);
       trackSocialEvent("join_cta_viewed", { source: "pool_code_entry" });
@@ -97,13 +126,11 @@ export default function Boloes() {
           invite_code: joinCode.trim().toUpperCase(),
         },
       });
-
       if (result.status === "joined" || result.status === "already_member") {
         trackSocialEvent("join_direct_success", { kind: "bolao" });
         navigate(`/boloes/${result.bolao_id}`);
         return;
       }
-
       trackSocialEvent("join_requested", { kind: "bolao" });
       toast({
         title: "Solicitação enviada",
@@ -127,299 +154,261 @@ export default function Boloes() {
     }
   };
 
-  return (
-    <div className="arena-screen">
-      <ArenaPanel tone="strong" className="mb-7 p-5 sm:p-6">
-        <ArenaSectionHeader
-          eyebrow="Bolões"
-          title="Escolha seu caminho"
-          hint="Crie bolões sociais para sua turma ou siga para negócios quando a intenção for campanha, ativação comercial ou público externo."
-        />
+  const activeCount = myBoloes.filter((b) =>
+    ["active", "open", "published", "live"].includes(b.status),
+  ).length;
 
-        <div className="mt-6 grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
-          <div className="rounded-[28px] border border-primary/35 bg-[linear-gradient(145deg,rgba(145,255,59,0.14),rgba(255,197,77,0.08),rgba(0,0,0,0.18))] p-5 shadow-[0_0_0_1px_rgba(145,255,59,0.08)]">
-            <div className="flex min-w-0 items-start justify-between gap-3">
-              <div className="min-w-0">
-                <div className="flex min-w-0 items-center gap-2">
-                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-primary/30 bg-primary/15 text-primary">
-                    <Users2 className="h-5 w-5" />
-                  </span>
-                  <h3 className="break-words font-display text-[1.7rem] font-bold uppercase leading-tight tracking-[0.02em] text-white [overflow-wrap:anywhere]">
-                    Bolão da turma
-                  </h3>
-                  <ArenaHint label="Sobre bolão da turma">
-                    Para amigos, família, comunidade ou grupo recorrente. O foco é convidar pessoas, registrar palpites e acompanhar ranking.
-                  </ArenaHint>
-                </div>
-                <p className="mt-4 max-w-xl text-sm leading-6 text-zinc-300">
-                  Crie uma disputa social, escolha quem entra e publique o convite para a galera palpitar.
-                </p>
-              </div>
+  return (
+    <div className="arena-screen space-y-6">
+
+      {/* ── HERO HEADER ──────────────────────────────────────────── */}
+      <div className="relative overflow-hidden rounded-[28px] border border-primary/20 bg-[linear-gradient(145deg,rgba(145,255,59,0.12),rgba(255,197,77,0.06),rgba(0,0,0,0.5))] p-6">
+        {/* Decorative glow orb */}
+        <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-primary/10 blur-3xl" />
+
+        <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+          {/* Left: title + stat pills */}
+          <div>
+            <p className="text-[11px] font-black uppercase tracking-[0.22em] text-primary">
+              Seus bolões
+            </p>
+            <h1 className="mt-1.5 font-display text-3xl font-black uppercase leading-none tracking-tight text-white sm:text-4xl">
+              Escolha seu caminho
+            </h1>
+            <p className="mt-2 max-w-md text-sm leading-6 text-zinc-400">
+              Crie bolões para a turma ou ative campanhas para público externo.
+            </p>
+
+            {/* Stat pills */}
+            <div className="mt-5 flex flex-wrap gap-3">
+              <StatPill value={activeCount} label="Ativos" accent />
+              <StatPill value={pendingRequests.length} label="Pendentes" />
+              <StatPill value={discoverBoloes.length} label="Disponíveis" />
             </div>
+          </div>
+
+          {/* Right: two CTA cards */}
+          <div className="grid gap-3 sm:grid-cols-2 lg:w-[440px] lg:shrink-0">
+            {/* Social pool CTA */}
             <Link
               to="/boloes/criar"
               aria-label="Criar bolão da turma"
-              className="mt-5 inline-flex w-full min-w-0 items-center justify-center gap-2 whitespace-normal rounded-[20px] bg-primary px-5 py-4 text-center text-[11px] font-black uppercase leading-tight tracking-[0.14em] text-black transition hover:brightness-105 sm:w-auto"
+              className="group relative overflow-hidden rounded-[22px] border border-primary/30 bg-primary/10 p-4 transition-all duration-200 hover:border-primary/60 hover:bg-primary/15 hover:-translate-y-0.5 hover:shadow-[0_8px_30px_rgba(145,255,59,0.12)]"
             >
-              <Plus className="h-4 w-4 shrink-0" />
-              Criar bolão da turma
-            </Link>
-          </div>
-
-          <div className="rounded-[28px] border border-[#ffc54d]/25 bg-[linear-gradient(145deg,rgba(255,197,77,0.12),rgba(255,255,255,0.035),rgba(0,0,0,0.16))] p-5">
-            <div className="flex min-w-0 items-start justify-between gap-3">
-              <div className="min-w-0">
-                <div className="flex min-w-0 items-center gap-2">
-                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-[#ffc54d]/25 bg-[#ffc54d]/10 text-[#ffc54d]">
-                    <Store className="h-5 w-5" />
-                  </span>
-                  <h3 className="break-words font-display text-[1.45rem] font-bold uppercase leading-tight tracking-[0.02em] text-white [overflow-wrap:anywhere]">
-                    Bolões para negócios
-                  </h3>
-                  <ArenaHint label="Sobre bolões para negócios">
-                    Para bares, marcas, empresas e eventos que precisam de campanhas, ativações, QR code e alcance com público externo.
-                  </ArenaHint>
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] border border-primary/30 bg-primary/15 text-primary">
+                  <Users2 className="h-5 w-5" />
+                </span>
+                <div className="min-w-0">
+                  <p className="font-display text-sm font-black uppercase tracking-[0.03em] text-white">
+                    Bolão da turma
+                  </p>
+                  <p className="text-[11px] text-zinc-400">Social · Amigos · Ranking</p>
                 </div>
-                <p className="mt-4 text-sm leading-6 text-zinc-300">
-                  Use quando o bolão faz parte de uma campanha comercial ou experiência para clientes.
-                </p>
               </div>
-            </div>
+              <div className="mt-3 flex items-center gap-1.5 text-[11px] font-black uppercase tracking-[0.14em] text-primary">
+                <Plus className="h-3.5 w-3.5" />
+                Criar agora
+                <ArrowRight className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
+              </div>
+            </Link>
+
+            {/* Business CTA */}
             <Link
               to="/negocios"
               aria-label="Bolões para negócios"
-              className="mt-5 inline-flex w-full min-w-0 items-center justify-center gap-2 whitespace-normal rounded-[20px] border border-[#ffc54d]/30 bg-[#ffc54d]/10 px-5 py-4 text-center text-[11px] font-black uppercase leading-tight tracking-[0.14em] text-[#ffc54d] transition hover:bg-[#ffc54d]/15"
+              className="group relative overflow-hidden rounded-[22px] border border-amber-400/25 bg-amber-400/8 p-4 transition-all duration-200 hover:border-amber-400/45 hover:bg-amber-400/12 hover:-translate-y-0.5"
             >
-              <Store className="h-4 w-4 shrink-0" />
-              Bolões para negócios
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] border border-amber-400/25 bg-amber-400/10 text-amber-300">
+                  <Store className="h-5 w-5" />
+                </span>
+                <div className="min-w-0">
+                  <p className="font-display text-sm font-black uppercase tracking-[0.03em] text-white">
+                    Para negócios
+                  </p>
+                  <p className="text-[11px] text-zinc-400">Campanha · Público · QR</p>
+                </div>
+              </div>
+              <div className="mt-3 flex items-center gap-1.5 text-[11px] font-black uppercase tracking-[0.14em] text-amber-300">
+                <Store className="h-3.5 w-3.5" />
+                Explorar planos
+                <ArrowRight className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
+              </div>
             </Link>
           </div>
         </div>
-      </ArenaPanel>
+      </div>
 
-      <ArenaPanel className="mb-6 p-5">
-        <ArenaSectionHeader
-          eyebrow="Painel"
-          title="Status dos bolões"
-          hint="Aqui ficam os números operacionais da sua área: bolões ativos, entradas pendentes e mesas públicas para descobrir."
+      {/* ── QUICK NAVIGATION ─────────────────────────────────────── */}
+      <div className="grid grid-cols-3 gap-3">
+        {QUICK_ACTIONS.map((action) => (
+          <Link
+            key={action.id}
+            to={action.to}
+            className="group flex flex-col items-center gap-2 rounded-[18px] border border-white/8 bg-white/[0.03] p-4 text-center transition-all duration-200 hover:border-primary/25 hover:bg-primary/[0.05] hover:-translate-y-0.5"
+          >
+            <span className="flex h-10 w-10 items-center justify-center rounded-[14px] border border-white/10 bg-white/5 text-zinc-400 transition-colors duration-200 group-hover:border-primary/30 group-hover:bg-primary/10 group-hover:text-primary">
+              <action.icon className="h-5 w-5" />
+            </span>
+            <div>
+              <p className="text-xs font-black uppercase tracking-[0.08em] text-white">
+                {action.label}
+              </p>
+              <p className="text-[10px] text-zinc-500">{action.description}</p>
+            </div>
+          </Link>
+        ))}
+      </div>
+
+      {/* ── OPPORTUNITIES ─────────────────────────────────────────── */}
+      {opportunities.length > 0 && (
+        <div>
+          <OpportunityRail opportunities={opportunities} title="Próximas ações em Bolões" />
+        </div>
+      )}
+
+      {/* ── MY POOLS ─────────────────────────────────────────────── */}
+      <section>
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <p className="text-[11px] font-black uppercase tracking-[0.2em] text-primary">Meus bolões</p>
+            <h2 className="mt-0.5 font-display text-xl font-black uppercase text-white">Sua mesa</h2>
+          </div>
+          {myBoloes.length > 0 && (
+            <span className="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[11px] font-black text-primary">
+              {myBoloes.length}
+            </span>
+          )}
+        </div>
+
+        {loading ? (
+          <div className="grid gap-3 md:grid-cols-2">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <BolaoCardSkeleton key={i} />
+            ))}
+          </div>
+        ) : myBoloes.length === 0 ? (
+          <EmptyState
+            icon="⚽"
+            title="Você ainda não participa de nenhum bolão"
+            description="Entre por convite, código ou crie o seu."
+            className="rounded-[24px] border border-dashed border-white/10 bg-white/[0.03]"
+            glowColor="green"
+          />
+        ) : (
+          <div className="grid gap-3 md:grid-cols-2">
+            {myBoloes.map((bolao) => (
+              <BolaoCard key={bolao.id} bolao={bolao} variant="my" />
+            ))}
+          </div>
+        )}
+      </section>
+
+      {/* ── ENTRY BY CODE + ADMISSION INBOX ──────────────────────── */}
+      <div className="grid gap-4 lg:grid-cols-[1.2fr,0.8fr]">
+        {/* Admission inbox */}
+        <AdmissionInbox
+          title="Entradas"
+          description="Convites e pedidos ficam reunidos aqui."
+          emptyTitle="Nada pendente agora"
+          emptyDescription="Pedidos para bolões privados aparecem aqui."
+          items={requestItems}
         />
-        <div className="mt-5 grid gap-3 sm:grid-cols-3">
-          {spotlightMetrics.map((item, index) => (
-            <ArenaMetric
-              key={item.label}
-              label={item.label}
-              value={item.value}
-              accent={index === 0}
-              className="bg-black/20"
+
+        {/* Join by code */}
+        <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-5">
+          <p className="text-[11px] font-black uppercase tracking-[0.2em] text-zinc-400">Código</p>
+          <h3 className="mt-1 font-display text-lg font-black uppercase text-white">Entrar rápido</h3>
+          <p className="mt-1 text-xs leading-5 text-zinc-500">
+            Cole o código enviado por WhatsApp ou outro convite.
+          </p>
+          <div className="mt-4 flex gap-2">
+            <input
+              id="bolao-join-code"
+              value={joinCode}
+              onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+              placeholder="CÓDIGO"
+              maxLength={8}
+              className="min-w-0 flex-1 rounded-[16px] border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-black uppercase tracking-[0.24em] text-white placeholder:text-zinc-600 focus:border-primary/40 focus:outline-none focus:ring-1 focus:ring-primary/20 transition-colors"
             />
-          ))}
+            <button
+              onClick={() => void handleJoinByCode()}
+              disabled={joining || joinCode.trim().length < 6}
+              aria-label="Entrar por código"
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[16px] bg-primary text-black transition-all hover:brightness-110 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              {joining ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Search className="h-4 w-4" />
+              )}
+            </button>
+          </div>
         </div>
-      </ArenaPanel>
-
-      <div className="mb-6 grid gap-3 lg:grid-cols-3">
-        <Link
-          to="/descobrir/boloes"
-          className="group rounded-[22px] border border-primary/25 bg-primary/[0.08] p-5 text-white transition hover:border-primary/45 hover:bg-primary/[0.12]"
-        >
-          <div className="flex items-start gap-3">
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-primary/25 bg-primary/10 text-primary">
-              <Compass className="h-5 w-5" />
-            </span>
-            <div className="min-w-0">
-              <h3 className="break-words font-display text-xl font-bold uppercase leading-tight tracking-[0.03em] [overflow-wrap:anywhere]">
-                Quer encontrar novos bolões?
-              </h3>
-              <p className="mt-2 text-sm leading-6 text-zinc-300">
-                Explore bolões públicos, campanhas e disputas perto de você.
-              </p>
-              <span className="mt-4 inline-flex whitespace-normal text-[11px] font-black uppercase leading-tight tracking-[0.12em] text-primary transition group-hover:translate-x-0.5">
-                Explorar bolões
-              </span>
-            </div>
-          </div>
-        </Link>
-
-        <Link
-          to="/comunidades"
-          className="group rounded-[22px] border border-white/10 bg-white/[0.04] p-5 text-white transition hover:border-white/20 hover:bg-white/[0.06]"
-        >
-          <div className="flex items-start gap-3">
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.05] text-primary">
-              <Users2 className="h-5 w-5" />
-            </span>
-            <div className="min-w-0">
-              <h3 className="break-words font-display text-xl font-bold uppercase leading-tight tracking-[0.03em] [overflow-wrap:anywhere]">
-                Comunidades
-              </h3>
-              <p className="mt-2 text-sm leading-6 text-zinc-300">
-                Reúna a mesma turma em vários bolões ao longo da temporada.
-              </p>
-              <span className="mt-4 inline-flex whitespace-normal text-[11px] font-black uppercase leading-tight tracking-[0.12em] text-primary transition group-hover:translate-x-0.5">
-                Abrir comunidades
-              </span>
-            </div>
-          </div>
-        </Link>
-
-        <Link
-          to="/boloes/creator"
-          className="group rounded-[22px] border border-white/10 bg-white/[0.04] p-5 text-white transition hover:border-white/20 hover:bg-white/[0.06]"
-        >
-          <div className="flex items-start gap-3">
-            <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.05] text-primary">
-              <Sparkles className="h-5 w-5" />
-            </span>
-            <div className="min-w-0">
-              <h3 className="break-words font-display text-xl font-bold uppercase leading-tight tracking-[0.03em] [overflow-wrap:anywhere]">
-                Creator Pro
-              </h3>
-              <p className="mt-2 text-sm leading-6 text-zinc-300">
-                Prepare bolões com materiais de divulgação e uma presença mais profissional.
-              </p>
-              <span className="mt-4 inline-flex whitespace-normal text-[11px] font-black uppercase leading-tight tracking-[0.12em] text-primary transition group-hover:translate-x-0.5">
-                Conhecer recursos
-              </span>
-            </div>
-          </div>
-        </Link>
       </div>
 
-      <div className="mb-6">
-        <OpportunityRail opportunities={opportunities} title="Próximas ações em Bolões" />
-      </div>
-
-      <div className="grid gap-6">
-        <ArenaPanel className="p-5">
-          <ArenaSectionHeader
-            eyebrow="Meus bolões"
-            title="Sua mesa"
-            hint="Bolões em que você participa. Toque em um card para abrir tabela, jogos, membros e compartilhamento."
-          />
-          {loading ? (
-            <div className="flex justify-center py-10"><Loader2 className="h-7 w-7 animate-spin text-primary" /></div>
-          ) : myBoloes.length === 0 ? (
-            <EmptyState
-              icon="⚽"
-              title="Você ainda não participa de nenhum bolão"
-              description="Entre por convite, código ou crie o seu."
-              className="mt-4 rounded-[24px] border border-dashed border-white/10 bg-white/[0.03]"
-              glowColor="green"
-            />
-          ) : (
-            <div className="mt-5 grid gap-3 md:grid-cols-2">
-              {myBoloes.map((bolao) => (
-                <Link key={bolao.id} to={`/boloes/${bolao.id}`} className={getBolaoCardShellClass("action")}>
-                  <div className="flex items-center gap-3">
-                    <BolaoAvatar
-                      avatarUrl={bolao.avatar_url}
-                      fallback="⚽"
-                      alt={bolao.name}
-                      className="flex h-12 w-12 items-center justify-center rounded-[18px] border border-primary/15 bg-primary/10 text-2xl"
-                    />
-                    <div className="flex-1">
-                      <p className="break-words font-display text-[1.35rem] font-semibold uppercase leading-tight text-white [overflow-wrap:anywhere]">{bolao.name}</p>
-                      {bolao.description ? <p className="mt-2 text-sm leading-6 text-zinc-400">{bolao.description}</p> : null}
-                    </div>
-                    <Trophy className="h-5 w-5 text-zinc-600" />
-                  </div>
-                  <div className="mt-4 flex flex-wrap gap-2 text-[11px] font-black uppercase tracking-[0.14em]">
-                    <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1">{bolao.category === "public" ? "Público" : "Privado"}</span>
-                    {bolao.is_paid ? <span className="rounded-full border border-[#ffc54d]/20 bg-[#ffc54d]/10 px-3 py-1 text-[#ffc54d]">Pago</span> : null}
-                    <span className="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-primary">{bolao.status}</span>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          )}
-        </ArenaPanel>
-
-        <div className="grid items-start gap-6 lg:grid-cols-[1.2fr,0.8fr]">
-          <AdmissionInbox
-            title="Entradas"
-            description="Convites e pedidos ficam reunidos aqui."
-            emptyTitle="Nada pendente agora"
-            emptyDescription="Pedidos para bolões privados aparecem aqui."
-            items={requestItems}
-          />
-
-          <ArenaPanel className="p-5">
-            <ArenaSectionHeader
-              eyebrow="Código"
-              title="Entrar rápido"
-              hint="Cole o código enviado por WhatsApp, Telegram ou outro convite. Se o bolão for privado, sua entrada pode depender de aprovação."
-            />
-
-            <div className="mt-4 flex gap-2">
-              <input
-                value={joinCode}
-                onChange={(event) => setJoinCode(event.target.value.toUpperCase())}
-                placeholder="Código do bolão"
-                className="flex-1 rounded-[18px] border border-white/10 bg-white/[0.04] px-4 py-3 text-sm font-black uppercase tracking-[0.2em] text-white placeholder:text-zinc-500"
-              />
-              <button
-                onClick={() => void handleJoinByCode()}
-                disabled={joining || joinCode.trim().length < 6}
-                className="inline-flex items-center justify-center rounded-[18px] bg-primary px-4 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-black transition hover:brightness-105 disabled:opacity-50"
-              >
-                {joining ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-              </button>
-            </div>
-          </ArenaPanel>
+      {/* ── DISCOVER POOLS ───────────────────────────────────────── */}
+      <section>
+        <div className="mb-4 flex items-center justify-between">
+          <div>
+            <p className="text-[11px] font-black uppercase tracking-[0.2em] text-zinc-400">Descobrir</p>
+            <h2 className="mt-0.5 font-display text-xl font-black uppercase text-white">Mesas abertas</h2>
+          </div>
+          <Link
+            to="/descobrir/boloes"
+            className="flex items-center gap-1 text-[11px] font-black uppercase tracking-[0.14em] text-primary transition-all hover:gap-1.5"
+          >
+            Ver todos <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
         </div>
 
-        <ArenaPanel className="p-5">
-          <ArenaSectionHeader
-            eyebrow="Descobrir"
-            title="Mesas abertas"
-            hint="Lista apenas bolões públicos ou abertos para descoberta. Os seus ficam na seção de cima."
+        {loading ? (
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <BolaoCardSkeleton key={i} />
+            ))}
+          </div>
+        ) : discoverBoloes.length === 0 ? (
+          <EmptyState
+            icon="🌍"
+            title="Nenhum bolão público disponível agora"
+            description="Quando aparecer algum bolão aberto, ele vai surgir aqui."
+            className="rounded-[24px] border border-dashed border-white/10 bg-white/[0.03]"
+            glowColor="gold"
           />
+        ) : (
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+            {discoverBoloes.map((bolao) => (
+              <BolaoCard key={bolao.id} bolao={bolao} variant="discover" />
+            ))}
+          </div>
+        )}
+      </section>
 
-          {loading ? (
-            <div className="flex justify-center py-10"><Loader2 className="h-7 w-7 animate-spin text-primary" /></div>
-          ) : discoverBoloes.length === 0 ? (
-            <EmptyState
-              icon="🌍"
-              title="Nenhum bolão público disponível agora"
-              description="Quando aparecer algum bolão aberto, ele vai surgir aqui."
-              className="mt-4 rounded-[24px] border border-dashed border-white/10 bg-white/[0.03]"
-              glowColor="gold"
-            />
-          ) : (
-            <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-              {discoverBoloes.map((bolao) => (
-                <div key={bolao.id} className={getBolaoCardShellClass("info")}>
-                  <div className="flex items-center gap-3">
-                    <BolaoAvatar
-                      avatarUrl={bolao.avatar_url}
-                      fallback="⚽"
-                      alt={bolao.name}
-                      className="flex h-12 w-12 items-center justify-center rounded-[18px] border border-primary/15 bg-primary/10 text-2xl"
-                    />
-                    <div className="min-w-0">
-                      <p className="break-words font-display text-[1.35rem] font-semibold uppercase leading-tight text-white [overflow-wrap:anywhere]">{bolao.name}</p>
-                      {bolao.description ? <p className="mt-2 text-sm leading-6 text-zinc-400">{bolao.description}</p> : null}
-                    </div>
-                  </div>
-                  <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-black uppercase tracking-[0.14em]">
-                    <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1">Público</span>
-                    {bolao.is_paid ? <span className="rounded-full border border-[#ffc54d]/20 bg-[#ffc54d]/10 px-3 py-1 text-[#ffc54d]">Pago</span> : null}
-                  </div>
-                  <Link
-                    to={`/b/${bolao.invite_code}`}
-                    className="mt-4 inline-flex w-full min-w-0 items-center justify-center whitespace-normal rounded-[18px] border border-white/10 bg-white/[0.03] px-4 py-3 text-center text-[11px] font-black uppercase leading-tight tracking-[0.12em] text-white transition hover:bg-white/[0.06]"
-                  >
-                    Ver entrada
-                  </Link>
-                </div>
-              ))}
-            </div>
-          )}
-        </ArenaPanel>
-
-        <ArenaPanel className="p-5">
-          <BolaoEntryGuidance />
-        </ArenaPanel>
+      {/* ── ENTRY GUIDANCE ───────────────────────────────────────── */}
+      <div className="rounded-[24px] border border-white/8 bg-white/[0.03] p-5">
+        <BolaoEntryGuidance />
       </div>
+    </div>
+  );
+}
+
+// ─── Stat pill sub-component ──────────────────────────────────────────────────
+function StatPill({ value, label, accent = false }: { value: number; label: string; accent?: boolean }) {
+  return (
+    <div className={[
+      "flex items-center gap-2 rounded-full border px-3 py-1.5",
+      accent
+        ? "border-primary/25 bg-primary/10"
+        : "border-white/10 bg-white/[0.04]",
+    ].join(" ")}>
+      <span className={`text-lg font-black leading-none ${accent ? "text-primary" : "text-white"}`}>
+        {value}
+      </span>
+      <span className="text-[10px] font-black uppercase tracking-[0.12em] text-zinc-400">
+        {label}
+      </span>
     </div>
   );
 }

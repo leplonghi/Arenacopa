@@ -387,6 +387,7 @@ export default function BolaoDetail() {
         editable_sections: bData.editable_sections,
         lifecycle: bData.lifecycle,
         integrity: bData.integrity,
+        allowed_match_ids: bData.allowed_match_ids ?? "all",
       } as BolaoData);
 
       const membersQuery = query(collection(db, "bolao_members"), where("bolao_id", "==", id));

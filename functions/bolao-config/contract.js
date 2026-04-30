@@ -53,8 +53,8 @@ function computeEditableSections({
     presentation: true,
     context: isDraft || participationEditable,
     access_policy: isDraft || participationEditable,
-    competition_rules: isDraft,
-    finance_rules: isDraft,
+    competition_rules: isDraft || participationEditable,
+    finance_rules: isDraft || participationEditable,
     operation: true,
   };
 }

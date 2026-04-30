@@ -9,6 +9,7 @@ export type BolaoListingCard = {
   category: "public" | "private";
   is_paid: boolean;
   status: string;
+  member_count: number;
 };
 
 export type BolaoListingRequestCard = {

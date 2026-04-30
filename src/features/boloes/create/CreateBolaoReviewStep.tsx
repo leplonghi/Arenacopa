@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { useChampionship } from "@/contexts/ChampionshipContext";
@@ -15,6 +16,7 @@ import { trackBolaoConfigEvent } from "@/lib/analytics/bolao-config.telemetry";
 import { trackSocialEvent } from "@/lib/analytics/social.telemetry";
 import { mapWizardStateToBolaoStructure } from "@/features/boloes/create/useBolaoCreateFlow";
 import { CreateBolaoStepRail } from "@/features/boloes/create/CreateBolaoStepRail";
+import { cn } from "@/lib/utils";
 import type { useBolaoCreateFlow } from "@/features/boloes/create/useBolaoCreateFlow";
 
 type Flow = ReturnType<typeof useBolaoCreateFlow>;
@@ -22,6 +24,7 @@ type Flow = ReturnType<typeof useBolaoCreateFlow>;
 const emojiOptions = ["⚽", "🏆", "🔥", "🎯", "🎉", "🦁"];
 
 export function CreateBolaoReviewStep({ flow }: { flow: Flow }) {
+  const { t } = useTranslation("bolao");
   const navigate = useNavigate();
   const { toast } = useToast();
   const { session } = useAuth();
@@ -42,18 +45,18 @@ export function CreateBolaoReviewStep({ flow }: { flow: Flow }) {
     const message = error instanceof Error ? error.message : "";
 
     if (message === "auth_required" || message.includes("Autenticação")) {
-      return "Sua sessão expirou. Entre novamente e publique o bolão.";
+      return t("creation.review.messages.error_auth");
     }
 
     if (message === "config_conflict") {
-      return "Esse rascunho mudou em outro lugar. Atualize a página e tente de novo.";
+      return t("creation.review.messages.error_conflict");
     }
 
     if (message === "validation_failed") {
-      return "Confira nome, entrada e regras antes de publicar.";
+      return t("creation.review.messages.error_validation");
     }
 
-    return "Revise os dados e tente novamente.";
+    return t("creation.review.messages.error_generic");
   };
 
   const createOrUpdateDraft = async () => {
@@ -132,13 +135,13 @@ export function CreateBolaoReviewStep({ flow }: { flow: Flow }) {
         group_binding_mode: structure.groupBindingMode,
       });
       toast({
-        title: "Rascunho salvo",
-        description: `Você pode voltar depois usando o bolão ${draft.bolaoId}.`,
+        title: t("creation.review.messages.draft_success_title"),
+        description: t("creation.review.messages.draft_success_desc", { id: draft.bolaoId }),
       });
     } catch {
       toast({
-        title: "Não foi possível salvar o rascunho",
-        description: "Tente novamente em alguns instantes.",
+        title: t("creation.review.messages.draft_error_title"),
+        description: t("creation.review.messages.draft_error_desc"),
         variant: "destructive",
       });
     }
@@ -233,6 +236,39 @@ export function CreateBolaoReviewStep({ flow }: { flow: Flow }) {
         grupoId = createdGroup.id;
       }
 
+      const basePayload = {
+        context: {
+          group_binding_mode:
+            flow.state.accessMode === "group_gated"
+              ? "group_gated"
+              : flow.state.contextMode === "standalone"
+                ? "none"
+                : "linked_discovery",
+          grupo_id: grupoId,
+        },
+        access_policy: structure.accessPolicy,
+        competition_rules: {
+          pool_type: flow.state.selectedTypeId,
+          format: flow.state.formatId,
+          scoring_mode: flow.state.scoringMode,
+          markets: flow.state.selectedMarketIds,
+          scoring_rules: flow.state.scoringRules,
+        },
+        finance_rules: {
+          finance_mode: flow.state.financeMode,
+          entry_fee_amount: typeof flow.state.entryFee === "number" ? flow.state.entryFee : null,
+          distribution_custom_text: flow.state.prizeDistribution.trim(),
+          payment_details: flow.state.paymentDetails.trim(),
+        },
+        presentation: {
+          name: flow.state.name.trim(),
+          description: flow.state.description.trim(),
+          emoji: flow.state.emoji,
+        },
+        championship_id: championship.id,
+        allowed_match_ids: flow.state.allowedMatchIds,
+      };
+
       const draft =
         flow.draftId && flow.draftConfigVersion
           ? await updateBolaoConfiguration({
@@ -241,90 +277,41 @@ export function CreateBolaoReviewStep({ flow }: { flow: Flow }) {
                 bolao_id: flow.draftId,
                 expected_config_version: flow.draftConfigVersion,
                 patch: {
-                  context: {
-                    group_binding_mode:
-                      flow.state.accessMode === "group_gated"
-                        ? "group_gated"
-                        : flow.state.contextMode === "standalone"
-                          ? "none"
-                          : "linked_discovery",
-                    grupo_id: grupoId,
-                  },
-                  access_policy: structure.accessPolicy,
-                  competition_rules: {
-                    pool_type: flow.state.selectedTypeId,
-                    format: flow.state.formatId,
-                    scoring_mode: flow.state.scoringMode,
-                    markets: flow.state.selectedMarketIds,
-                    scoring_rules: flow.state.scoringRules,
-                  },
-                  finance_rules: {
-                    finance_mode: flow.state.financeMode,
-                    entry_fee_amount: typeof flow.state.entryFee === "number" ? flow.state.entryFee : null,
-                    distribution_custom_text: flow.state.prizeDistribution.trim(),
-                    payment_details: flow.state.paymentDetails.trim(),
-                  },
+                  context: basePayload.context,
+                  access_policy: basePayload.access_policy,
+                  competition_rules: basePayload.competition_rules,
+                  finance_rules: basePayload.finance_rules,
                 },
+                force_edit: true,
               },
             })
           : await createDraftBolao({
               token,
-              payload: {
-                context: {
-                  group_binding_mode:
-                    flow.state.accessMode === "group_gated"
-                      ? "group_gated"
-                      : flow.state.contextMode === "standalone"
-                        ? "none"
-                        : "linked_discovery",
-                  grupo_id: grupoId,
-                },
-                access_policy: structure.accessPolicy,
-                competition_rules: {
-                  pool_type: flow.state.selectedTypeId,
-                  format: flow.state.formatId,
-                  scoring_mode: flow.state.scoringMode,
-                  markets: flow.state.selectedMarketIds,
-                  scoring_rules: flow.state.scoringRules,
-                },
-                finance_rules: {
-                  finance_mode: flow.state.financeMode,
-                  entry_fee_amount: typeof flow.state.entryFee === "number" ? flow.state.entryFee : null,
-                  distribution_custom_text: flow.state.prizeDistribution.trim(),
-                  payment_details: flow.state.paymentDetails.trim(),
-                },
-                presentation: {
-                  name: flow.state.name.trim(),
-                  description: flow.state.description.trim(),
-                  emoji: flow.state.emoji,
-                },
-                championship_id: championship.id,
-            allowed_match_ids: flow.state.allowedMatchIds,
-              },
+              payload: basePayload,
             });
-      if (flow.draftId && flow.draftConfigVersion) {
-        await alterBolaoPresentation({
-          token,
-          payload: {
-            bolao_id: flow.draftId,
-            patch: {
-              name: flow.state.name.trim(),
-              description: flow.state.description.trim(),
-              emoji: flow.state.emoji,
-            },
-          },
-        });
-      }
-      flow.setDraftId(draft.bolaoId);
-      flow.setDraftConfigVersion(draft.integrity.configVersion);
 
-      const published = await publishBolao({
+      const presentationPromise = flow.draftId && flow.draftConfigVersion
+        ? alterBolaoPresentation({
+            token,
+            payload: {
+              bolao_id: flow.draftId,
+              patch: basePayload.presentation,
+            },
+          })
+        : Promise.resolve(draft);
+
+      const publishPromise = publishBolao({
         token,
         payload: {
           bolao_id: draft.bolaoId,
           expected_config_version: draft.integrity.configVersion,
         },
       });
+
+      const [_, published] = await Promise.all([presentationPromise, publishPromise]);
+
+      flow.setDraftId(draft.bolaoId);
+      flow.setDraftConfigVersion(published.integrity.configVersion);
 
       trackSocialEvent("pool_create_completed", {
         context_mode: flow.state.contextMode,
@@ -345,7 +332,7 @@ export function CreateBolaoReviewStep({ flow }: { flow: Flow }) {
     } catch (error) {
       console.error("Create bolao failed", error);
       toast({
-        title: "Não foi possível publicar o bolão",
+        title: t("creation.review.messages.publish_error_title"),
         description: getFailureMessage(error),
         variant: "destructive",
       });
@@ -356,10 +343,12 @@ export function CreateBolaoReviewStep({ flow }: { flow: Flow }) {
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 text-white">
       <CreateBolaoStepRail activeStep={6} />
-      <p className="text-[11px] font-black uppercase tracking-[0.22em] text-primary">Etapa 6 de 6</p>
-      <h1 className="mt-2 text-3xl font-black">Revise e publique</h1>
+      <p className="text-[11px] font-black uppercase tracking-[0.22em] text-primary">
+        {t("creation.review.step_label")}
+      </p>
+      <h1 className="mt-2 text-3xl font-black">{t("creation.review.title")}</h1>
       <p className="mt-2 text-sm text-zinc-400">
-        Confira o resumo final. Se quiser ajustar acesso, grupo ou pontuacao, volte um passo.
+        {t("creation.review.desc")}
       </p>
 
       <div className="mt-6 flex flex-wrap gap-2">
@@ -367,9 +356,10 @@ export function CreateBolaoReviewStep({ flow }: { flow: Flow }) {
           <button
             key={emoji}
             onClick={() => flow.setState((current) => ({ ...current, emoji }))}
-            className={`rounded-2xl border p-3 text-2xl ${
-              flow.state.emoji === emoji ? "border-primary bg-primary/10" : "border-white/10 bg-white/5"
-            }`}
+            className={cn(
+              "rounded-2xl border p-3 text-2xl transition-all hover:scale-110 active:scale-90",
+              flow.state.emoji === emoji ? "border-primary bg-primary/10 shadow-[0_0_15px_rgba(213,255,92,0.1)]" : "border-white/10 bg-white/5"
+            )}
           >
             {emoji}
           </button>
@@ -380,62 +370,59 @@ export function CreateBolaoReviewStep({ flow }: { flow: Flow }) {
         <input
           value={flow.state.name}
           onChange={(event) => flow.setState((current) => ({ ...current, name: event.target.value }))}
-          placeholder="Nome do bolão"
-          className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-lg font-black text-white"
+          placeholder={t("creation.review.placeholder_name")}
+          className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-lg font-black text-white focus:outline-none focus:border-primary/50 transition-colors"
         />
         <textarea
           value={flow.state.description}
           onChange={(event) => flow.setState((current) => ({ ...current, description: event.target.value }))}
-          placeholder="Uma descrição curta para explicar o clima do bolão"
-          className="min-h-[110px] rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white"
+          placeholder={t("creation.review.placeholder_desc")}
+          className="min-h-[110px] rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-white focus:outline-none focus:border-primary/50 transition-colors"
         />
       </div>
 
-      <div className="mt-6 rounded-3xl border border-white/10 bg-white/5 p-4">
-        <p className="text-xs font-black uppercase tracking-[0.18em] text-zinc-400">Resumo final</p>
+      <div className="mt-6 rounded-3xl border border-white/10 bg-white/5 p-4 animate-in fade-in slide-in-from-bottom-4 duration-700">
+        <p className="text-xs font-black uppercase tracking-[0.18em] text-zinc-400">{t("creation.review.summary_title")}</p>
         <div className="mt-3 space-y-2 text-sm text-zinc-300">
-          <p>Contexto: {flow.state.contextMode === "standalone" ? "Sem grupo" : flow.state.contextMode === "existing_group" ? "Grupo existente" : "Novo grupo + bolão"}</p>
-          <p>Entrada: {flow.state.accessMode === "group_gated" ? "Controlado pelo grupo" : flow.state.accessMode === "public" ? "Público" : "Privado com aprovação"}</p>
-          <p>Tipo: {flow.state.selectedTypeId === "rapid" ? "Rapido" : "Completo"}</p>
-          <p>Premiacao simbolica: {flow.state.prizeDistribution.trim() || "Nao definida"}</p>
+          <p>{t("creation.review.context_label")}: {flow.state.contextMode === "standalone" ? t("creation.context.modes.standalone") : flow.state.contextMode === "existing_group" ? t("creation.context.modes.existing_group") : t("creation.context.modes.new_group")}</p>
+          <p>{t("creation.review.admission_label")}: {flow.state.accessMode === "group_gated" ? t("creation.admission.modes.group_gated.title") : flow.state.accessMode === "public" ? t("creation.admission.modes.public.title") : t("creation.admission.modes.approval.title")}</p>
+          <p>{t("creation.review.type_label")}: {flow.state.selectedTypeId === "rapid" ? t("creation.rules.types.rapid.title") : t("creation.rules.types.complete.title")}</p>
+          <p>{t("creation.review.prize_label")}: {flow.state.prizeDistribution.trim() || t("creation.review.no_prize")}</p>
         </div>
       </div>
 
       <div className="mt-8 flex flex-wrap items-center justify-between gap-3">
         <button
-          onClick={() => flow.setStep("quick")}
-          className="rounded-2xl border border-white/10 px-5 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-white"
+          onClick={() => flow.setStep("admission")}
+          className="rounded-2xl border border-white/10 px-5 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-white hover:bg-white/5 transition-colors"
         >
-          Voltar
+          {t("wizard.back")}
         </button>
 
         <div className="flex gap-3">
           <button
             onClick={() => void handleSaveDraft()}
             disabled={publishing}
-            className="rounded-2xl border border-white/10 px-5 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-white"
+            className="rounded-2xl border border-white/10 px-5 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-white hover:bg-white/5 transition-colors disabled:opacity-50"
           >
-            Salvar rascunho
+            {t("creation.review.save_draft")}
           </button>
           <button
             onClick={() => void handleCreate()}
             disabled={!flow.canAdvance || publishing}
-            className="inline-flex min-w-[156px] items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-black disabled:opacity-70"
+            className="inline-flex min-w-[156px] items-center justify-center gap-2 rounded-2xl bg-primary px-5 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-black disabled:opacity-70 hover:scale-105 active:scale-95 transition-transform shadow-[0_4px_15px_rgba(213,255,92,0.2)]"
           >
             {publishing ? (
               <>
                 <span
                   role="status"
-                  aria-label="Criando bolão"
-                  className="relative h-5 w-5 animate-spin rounded-full border-2 border-black/80 bg-white shadow-[inset_0_0_0_2px_rgba(0,0,0,0.12)]"
-                >
-                  <span className="absolute left-1/2 top-0 h-full w-0.5 -translate-x-1/2 bg-black/70" />
-                  <span className="absolute left-0 top-1/2 h-0.5 w-full -translate-y-1/2 bg-black/70" />
-                </span>
-                Criando bolão
+                  aria-label={t("creation.review.publishing")}
+                  className="relative h-4 w-4 animate-spin rounded-full border-2 border-black/20 border-t-black"
+                />
+                {t("creation.review.publishing")}
               </>
             ) : (
-              "Publicar bolão"
+              t("creation.review.publish")
             )}
           </button>
         </div>

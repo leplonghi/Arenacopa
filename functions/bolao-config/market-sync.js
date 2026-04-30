@@ -321,16 +321,21 @@ function toMatchMarketDocId(bolaoId, templateId, matchId) {
   return `${bolaoId}_${templateId}_${matchId}`;
 }
 
-function buildBolaoMarkets({ bolaoId, selectedMarketIds = [], matches = [] }) {
+function buildBolaoMarkets({ bolaoId, selectedMarketIds = [], matches = [], allowedMatchIds = "all" }) {
   const builtMarkets = [];
   let orderIndex = 0;
+
+  // Filter matches if specific ones are selected
+  const effectiveMatches = allowedMatchIds !== "all" && Array.isArray(allowedMatchIds)
+    ? matches.filter((m) => allowedMatchIds.includes(m.id))
+    : matches;
 
   for (const templateId of selectedMarketIds) {
     const template = MARKET_TEMPLATES[templateId];
     if (!template) continue;
 
-    if (template.scope === "match" && matches.length) {
-      for (const match of matches) {
+    if (template.scope === "match" && effectiveMatches.length) {
+      for (const match of effectiveMatches) {
         builtMarkets.push({
           id: toMatchMarketDocId(bolaoId, templateId, match.id),
           bolao_id: bolaoId,

@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 
 export type PoolContextMode = "standalone" | "existing_group" | "new_group";
@@ -8,33 +9,35 @@ type PoolContextChooserProps = {
   hasGroups: boolean;
 };
 
-const options: Array<{
-  id: PoolContextMode;
-  title: string;
-  description: string;
-}> = [
-  {
-    id: "standalone",
-    title: "Sem grupo",
-    description: "O bolão vive sozinho e você controla os convites por ele mesmo.",
-  },
-  {
-    id: "existing_group",
-    title: "Em um grupo existente",
-    description: "O bolão nasce já conectado a uma comunidade que você participa.",
-  },
-  {
-    id: "new_group",
-    title: "Criar grupo + bolão",
-    description: "Você monta a comunidade e o bolão no mesmo fluxo, sem ida e volta.",
-  },
-];
-
 export function PoolContextChooser({
   value,
   onChange,
   hasGroups,
 }: PoolContextChooserProps) {
+  const { t } = useTranslation("bolao");
+
+  const options: Array<{
+    id: PoolContextMode;
+    title: string;
+    description: string;
+  }> = [
+    {
+      id: "standalone",
+      title: t("creation.context.modes.standalone"),
+      description: t("creation.context.modes_desc.standalone"),
+    },
+    {
+      id: "existing_group",
+      title: t("creation.context.modes.existing_group"),
+      description: t("creation.context.modes_desc.existing_group"),
+    },
+    {
+      id: "new_group",
+      title: t("creation.context.modes.new_group"),
+      description: t("creation.context.modes_desc.new_group"),
+    },
+  ];
+
   return (
     <div className="grid gap-3">
       {options

@@ -1,0 +1,49 @@
+const functions = require("firebase-functions");
+const { db, admin } = require("./shared/db");
+
+// Feature Modules
+const boloes = require("./features/boloes");
+const groups = require("./features/groups");
+const social = require("./features/social");
+const triggers = require("./shared/triggers");
+
+// --- HTTP ENDPOINTS (Delegated to Feature Modules) ---
+
+// Bolão Management
+exports.createBolaoDraft = boloes.createBolaoDraft;
+exports.createAndPublishBolao = boloes.createAndPublishBolao;
+exports.updateBolaoConfiguration = boloes.updateBolaoConfiguration;
+exports.publishBolao = boloes.publishBolao;
+exports.duplicateBolao = boloes.duplicateBolao;
+exports.alterBolaoPresentation = boloes.alterBolaoPresentation;
+exports.finishBolao = boloes.finishBolao;
+exports.archiveBolao = boloes.archiveBolao;
+exports.deleteBolao = boloes.deleteBolao;
+exports.leaveBolao = boloes.leaveBolao;
+exports.saveExclusiveBolaoPalpite = boloes.saveExclusiveBolaoPalpite;
+exports.updateBolaoPrizeSettings = boloes.updateBolaoPrizeSettings;
+exports.listUserBoloes = boloes.listUserBoloes;
+
+// Group Management
+exports.createGroup = groups.createGroup;
+exports.updateGroupSettings = groups.updateGroupSettings;
+exports.requestGroupJoin = groups.requestGroupJoin;
+exports.approveGroupJoin = groups.approveGroupJoin;
+exports.rejectGroupJoin = groups.rejectGroupJoin;
+exports.leaveGroup = groups.leaveGroup;
+exports.removeGroupMember = groups.removeGroupMember;
+exports.setFeaturedGroupBolao = groups.setFeaturedGroupBolao;
+
+// Social & Access
+exports.requestBolaoJoin = social.requestBolaoJoin;
+exports.approveBolaoJoin = social.approveBolaoJoin;
+exports.rejectBolaoJoin = social.rejectBolaoJoin;
+exports.joinViaInvite = social.joinViaInvite;
+
+// --- FIRESTORE TRIGGERS ---
+exports.onBolaoMemberWrite = triggers.onBolaoMemberWrite;
+exports.onBolaoDelete = triggers.onBolaoDelete;
+
+// --- LEGACY / UNPORTED / SCHEDULED FUNCTIONS ---
+// (Keeping scheduled and legacy functions in index.js for now)
+// ...

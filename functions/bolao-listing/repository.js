@@ -45,16 +45,14 @@ async function listUserBoloes({ db, actorId }) {
   ];
   const boloesById = await loadBoloesById({ db, bolaoIds });
 
-  let publicBoloes = [];
   try {
     const publicSnapshot = await db
       .collection("boloes")
       .where("category", "==", "public")
+      .orderBy("created_at", "desc")
       .limit(30)
       .get();
-    publicBoloes = publicSnapshot.docs
-      .map((doc) => ({ id: doc.id, ...doc.data() }))
-      .sort((left, right) => String(right.created_at || "").localeCompare(String(left.created_at || "")));
+    publicBoloes = publicSnapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
   } catch (error) {
     console.warn("Could not load public bolao discovery list", error);
     publicBoloes = [];

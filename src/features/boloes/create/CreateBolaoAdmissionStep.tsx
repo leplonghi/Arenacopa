@@ -1,86 +1,104 @@
+import { useTranslation } from "react-i18next";
 import type { AccessMode, useBolaoCreateFlow } from "@/features/boloes/create/useBolaoCreateFlow";
 import { CreateBolaoStepRail } from "@/features/boloes/create/CreateBolaoStepRail";
+import { cn } from "@/lib/utils";
+import { getToneClasses } from "@/features/boloes/create/stepColors";
 
 type Flow = ReturnType<typeof useBolaoCreateFlow>;
 
-function getOptions(flow: Flow): Array<{ id: AccessMode; title: string; description: string }> {
-  const base = [
-    {
-      id: "approval" as const,
-      title: "Privado com aprovação",
-      description: "A pessoa pede entrada e o dono do bolão decide com calma.",
-    },
-    {
-      id: "public" as const,
-      title: "Público",
-      description: "A entrada é direta enquanto o bolão estiver aberto.",
-    },
-  ];
-
-  if (flow.state.contextMode !== "standalone") {
-    base.push({
-      id: "group_gated",
-      title: "Controlado pelo grupo",
-      description: "Só entra no bolão quem já faz parte do grupo vinculado.",
-    });
-  }
-
-  return base;
-}
-
 export function CreateBolaoAdmissionStep({ flow }: { flow: Flow }) {
-  const options = getOptions(flow);
+  const { t } = useTranslation("bolao");
+  const tone = getToneClasses(5);
+
+  const getOptions = (): Array<{ id: AccessMode; title: string; description: string }> => {
+    const base = [
+      {
+        id: "approval" as const,
+        title: t("creation.admission.modes.approval.title"),
+        description: t("creation.admission.modes.approval.desc"),
+      },
+      {
+        id: "public" as const,
+        title: t("creation.admission.modes.public.title"),
+        description: t("creation.admission.modes.public.desc"),
+      },
+    ];
+
+    if (flow.state.contextMode !== "standalone") {
+      base.push({
+        id: "group_gated",
+        title: t("creation.admission.modes.group_gated.title"),
+        description: t("creation.admission.modes.group_gated.desc"),
+      });
+    }
+
+    return base;
+  };
+
+  const options = getOptions();
+  const selectedOption = options.find((o) => o.id === flow.state.accessMode);
+  const hasSelected = Boolean(selectedOption);
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 text-white">
       <div className="mb-8">
         <CreateBolaoStepRail activeStep={5} />
       </div>
-      <p className="text-[11px] font-black uppercase tracking-[0.22em] text-primary">Etapa 5 de 6</p>
-      <h1 className="mt-2 text-3xl font-black">Como as pessoas entram?</h1>
+      <p className={cn("text-[11px] font-black uppercase tracking-[0.22em]", tone.labelText)}>
+        {t("creation.admission.step_label")}
+      </p>
+      <h1 className="mt-2 text-3xl font-black">{t("creation.admission.title")}</h1>
       <p className="mt-2 text-sm text-zinc-400">
-        Aqui você define a expectativa do convite. Isso precisa ficar claro desde o primeiro link.
+        {t("creation.admission.desc")}
       </p>
 
       <div className="mt-8 grid gap-3">
-        {options.map((option) => (
-          <button
-            key={option.id}
-            onClick={() => flow.setState((current) => ({ ...current, accessMode: option.id }))}
-            className={`rounded-3xl border p-4 text-left transition-colors ${
-              flow.state.accessMode === option.id ? "border-primary bg-primary/10" : "border-white/10 bg-white/5"
-            }`}
-          >
-            <p className="font-black">{option.title}</p>
-            <p className="mt-1 text-sm text-zinc-400">{option.description}</p>
-          </button>
-        ))}
+        {hasSelected && selectedOption ? (
+          <div className={cn("rounded-3xl border p-4", tone.border, tone.bg)}>
+            <p className="font-black">{selectedOption.title}</p>
+            <p className="mt-1 text-sm text-zinc-400">{selectedOption.description}</p>
+          </div>
+        ) : (
+          options.map((option) => (
+            <button
+              key={option.id}
+              onClick={() => flow.setState((current) => ({ ...current, accessMode: option.id }))}
+              className={cn(
+                "rounded-3xl border p-4 text-left transition-all hover:scale-[1.02] active:scale-[0.98]",
+                flow.state.accessMode === option.id ? cn(tone.border, tone.bg) : "border-white/10 bg-white/5 hover:bg-white/10"
+              )}
+            >
+              <p className="font-black">{option.title}</p>
+              <p className="mt-1 text-sm text-zinc-400">{option.description}</p>
+            </button>
+          ))
+        )}
       </div>
 
       <div className="mt-6 rounded-3xl border border-white/10 bg-white/5 p-4 text-sm text-zinc-300">
-        <p className="font-black text-white">Resumo da decisão</p>
+        <p className="font-black text-white">{t("creation.admission.summary_title")}</p>
         <p className="mt-2">
           {flow.state.accessMode === "group_gated"
-            ? "O link do bolão vai orientar a pessoa a entrar no grupo antes."
+            ? t("creation.admission.summary.group_gated")
             : flow.state.accessMode === "public"
-              ? "O link do bolão deixa claro que a entrada é direta."
-              : "O link do bolão deixa claro que a entrada depende de aprovação."}
+              ? t("creation.admission.summary.public")
+              : t("creation.admission.summary.approval")}
         </p>
       </div>
 
       <div className="mt-8 flex items-center justify-between">
         <button
           onClick={() => flow.setStep("type")}
-          className="rounded-2xl border border-white/10 px-5 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-white"
+          className="rounded-2xl border border-white/10 px-5 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-white hover:bg-white/5 transition-colors"
         >
-          Voltar
+          {t("wizard.back")}
         </button>
         <button
           onClick={() => flow.setStep("review")}
           disabled={!flow.canAdvance}
-          className="rounded-2xl bg-primary px-5 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-black disabled:opacity-50"
+          className="rounded-2xl bg-primary px-5 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-black disabled:opacity-50 hover:scale-105 active:scale-95 transition-transform"
         >
-          Continuar
+          {t("wizard.next")}
         </button>
       </div>
     </div>

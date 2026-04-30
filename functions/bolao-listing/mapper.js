@@ -19,6 +19,7 @@ function toBolaoCard(id, data = {}, fallbackCategory = "private") {
     category: data.category || fallbackCategory,
     is_paid: Boolean(data.is_paid || data.finance_rules?.finance_mode === "paid_external"),
     status: String(data.status || "open"),
+    member_count: Number(data.member_count || 1),
   };
 }
 

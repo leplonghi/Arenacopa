@@ -1,12 +1,14 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { BolaoEditSectionCard } from "@/features/boloes/edit/BolaoEditSectionCard";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDashboardMatches } from "@/hooks/useDashboardMatches";
+import { useUserGroups } from "@/hooks/useUserGroups";
 import { useToast } from "@/hooks/use-toast";
 import { db } from "@/integrations/firebase/client";
-import { collection, getDocs, query, where, updateDoc, doc } from "firebase/firestore";
+import { updateDoc, doc } from "firebase/firestore";
 import { getDefaultMarketIdsForFormat, listBolaoFormats } from "@/services/boloes/bolao-format.service";
 import {
   alterBolaoPresentation,
@@ -32,6 +34,7 @@ type JoinMode = "private_invite" | "public_open";
 type FinanceMode = "free" | "paid_external";
 
 export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated }: BolaoEditPanelProps) {
+  const { t } = useTranslation("bolao");
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user } = useAuth();
@@ -56,11 +59,13 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated }: Bo
   const [paymentDetails, setPaymentDetails] = useState("");
   const [prizeDistribution, setPrizeDistribution] = useState("");
   const [savingKey, setSavingKey] = useState<string | null>(null);
-  const [availableGroups, setAvailableGroups] = useState<Array<{ id: string; name: string }>>([]);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
   const [allowedMatchIds, setAllowedMatchIds] = useState<string[] | "all">("all");
   const { data: matches } = useDashboardMatches();
   const [visibleMatchesCount, setVisibleMatchesCount] = useState(20);
+
+  const { groups: availableGroups } = useUserGroups(open);
 
   useEffect(() => {
     if (!bolao) {
@@ -89,52 +94,9 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated }: Bo
   }, [bolao]);
 
   useEffect(() => {
-    if (!user?.id || !open) {
-      return;
-    }
-
-    let mounted = true;
-    void (async () => {
-      try {
-        const membershipSnap = await getDocs(
-          query(collection(db, "grupo_members"), where("user_id", "==", user.id)),
-        );
-        const grupoIds = Array.from(
-          new Set(
-            membershipSnap.docs
-              .map((doc) => doc.data().grupo_id as string | undefined)
-              .filter(Boolean),
-          ),
-        );
-
-        const grupos = await Promise.all(
-          grupoIds.map(async (grupoId) => {
-            const snapshot = await getDocs(
-              query(collection(db, "grupos"), where("__name__", "==", grupoId)),
-            );
-            const match = snapshot.docs[0];
-            return match ? { id: match.id, name: String(match.data().name || "Grupo") } : null;
-          }),
-        );
-
-        if (mounted) {
-          setAvailableGroups(grupos.filter(Boolean) as Array<{ id: string; name: string }>);
-        }
-      } catch {
-        if (mounted) {
-          setAvailableGroups([]);
-        }
-      }
-    })();
-
-    return () => {
-      mounted = false;
-    };
-  }, [open, user?.id]);
-
-  useEffect(() => {
     if (!open) {
       setDeleteConfirmOpen(false);
+      setCancelConfirmOpen(false);
     }
   }, [open]);
 
@@ -192,8 +154,8 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated }: Bo
   const handleSaveIdentity = async () => {
     if (!name.trim()) {
       toast({
-        title: "Nome obrigatório",
-        description: "Dê um nome claro para o bolão antes de salvar.",
+        title: t("edit.sections.identity.error_name_required"),
+        description: t("edit.sections.identity.error_name_desc"),
         variant: "destructive",
       });
       return;
@@ -218,13 +180,13 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated }: Bo
         avatar_url: emoji,
       });
       toast({
-        title: "Identidade atualizada",
-        description: "As informações visuais do bolão foram salvas com segurança.",
+        title: t("edit.sections.identity.success_title"),
+        description: t("edit.sections.identity.success_desc"),
       });
     } catch {
       toast({
-        title: "Não foi possível salvar",
-        description: "Tente novamente em alguns instantes.",
+        title: t("errors.generic_title"),
+        description: t("errors.try_again_later"),
         variant: "destructive",
       });
     } finally {
@@ -239,13 +201,13 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated }: Bo
       await updateDoc(bolaoRef, { allowed_match_ids: allowedMatchIds });
       updateLocal({ allowed_match_ids: allowedMatchIds });
       toast({
-        title: "Jogos atualizados",
-        description: "A lista de jogos permitidos foi atualizada com sucesso.",
+        title: t("edit.sections.catalog.success_title"),
+        description: t("edit.sections.catalog.success_desc"),
       });
     } catch {
       toast({
-        title: "Erro ao salvar",
-        description: "Não foi possível atualizar os jogos do bolão.",
+        title: t("errors.generic_title"),
+        description: t("errors.try_again_later"),
         variant: "destructive",
       });
     } finally {
@@ -276,12 +238,12 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated }: Bo
 
       toast({
         title: successTitle,
-        description: "O contrato do bolão foi atualizado com segurança.",
+        description: t("edit.sections.participation.success_title"),
       });
     } catch (error) {
       toast({
-        title: "Não foi possível salvar a seção",
-        description: "Pode ter havido conflito de versão ou trava estrutural.",
+        title: t("errors.generic_title"),
+        description: t("errors.try_again_later"),
         variant: "destructive",
       });
       if (error instanceof Error && error.message === "structure_locked") {
@@ -315,13 +277,13 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated }: Bo
 
       updateLocal(mapConfigStateToLegacyPatch(updated as never));
       toast({
-        title: action === "finish" ? "Bolão encerrado" : "Bolão arquivado",
-        description: "O estado operacional foi atualizado com segurança.",
+        title: action === "finish" ? t("edit.sections.danger.finish") : t("edit.sections.danger.archive"),
+        description: t("edit.sections.identity.success_desc"),
       });
     } catch {
       toast({
-        title: "Não foi possível atualizar o status",
-        description: "Verifique se o bolão está no estado correto para essa ação.",
+        title: t("errors.generic_title"),
+        description: t("errors.try_again_later"),
         variant: "destructive",
       });
     } finally {
@@ -341,20 +303,49 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated }: Bo
 
       updateLocal(mapConfigStateToLegacyPatch(updated as never));
       toast({
-        title: "Bolão apagado",
-        description: "O convite foi desativado e o bolão saiu das listas principais.",
+        title: t("edit.sections.danger.delete"),
+        description: t("edit.sections.danger.confirm_delete_desc"),
       });
       onOpenChange(false);
       navigate("/boloes", { replace: true });
     } catch {
       toast({
-        title: "Não foi possível apagar",
-        description: "Tente novamente em alguns instantes.",
+        title: t("errors.generic_title"),
+        description: t("errors.try_again_later"),
         variant: "destructive",
       });
     } finally {
       setSavingKey(null);
       setDeleteConfirmOpen(false);
+    }
+  };
+
+  const handleCancelBolao = async () => {
+    try {
+      setSavingKey("cancel");
+      const archived = await archiveBolao({
+        payload: {
+          bolao_id: bolao.id,
+          reason: "owner_cancelled",
+        },
+      });
+
+      updateLocal(mapConfigStateToLegacyPatch(archived as never));
+      toast({
+        title: t("edit.sections.danger.cancel"),
+        description: t("edit.sections.danger.confirm_delete_desc"),
+      });
+      onOpenChange(false);
+      navigate("/boloes", { replace: true });
+    } catch {
+      toast({
+        title: t("errors.generic_title"),
+        description: t("errors.try_again_later"),
+        variant: "destructive",
+      });
+    } finally {
+      setSavingKey(null);
+      setCancelConfirmOpen(false);
     }
   };
 
@@ -406,18 +397,18 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated }: Bo
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl border-white/10 bg-[#08140d] text-white">
         <DialogHeader>
-          <DialogTitle className="text-2xl font-black">Editar bolão</DialogTitle>
+          <DialogTitle className="text-2xl font-black">{t("edit.title")}</DialogTitle>
           <DialogDescription className="text-sm text-zinc-400">
-            Cada seção respeita o estado do bolão. O que já afeta justiça competitiva vira cópia, não gambiarra.
+            {t("edit.description")}
           </DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-4">
           <BolaoEditSectionCard
-            title="Identidade"
-            description="Nome, descrição, avatar e mensagens visuais do bolão."
+            title={t("edit.sections.identity.title")}
+            description={t("edit.sections.identity.desc")}
             editable={editableSections.presentation}
-            actionLabel="Salvar identidade"
+            actionLabel={t("edit.sections.identity.action")}
             onAction={() => void handleSaveIdentity()}
             busy={savingKey === "presentation"}
           />
@@ -426,34 +417,34 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated }: Bo
               <input
                 value={name}
                 onChange={(event) => setName(event.target.value)}
-                placeholder="Nome do bolão"
+                placeholder={t("edit.sections.identity.name_placeholder")}
                 className="rounded-2xl border border-white/10 bg-[#122117] px-4 py-3 text-sm text-white"
               />
               <input
                 value={emoji}
                 onChange={(event) => setEmoji(event.target.value)}
-                placeholder="Emoji ou avatar curto"
+                placeholder={t("edit.sections.identity.avatar_placeholder")}
                 className="rounded-2xl border border-white/10 bg-[#122117] px-4 py-3 text-sm text-white"
               />
               <textarea
                 value={description}
                 onChange={(event) => setDescription(event.target.value)}
-                placeholder="Descrição do bolão"
+                placeholder={t("edit.sections.identity.desc_placeholder")}
                 className="min-h-[110px] rounded-2xl border border-white/10 bg-[#122117] px-4 py-3 text-sm text-white"
               />
             </div>
           </div>
 
           <BolaoEditSectionCard
-            title="Participação"
-            description="Vínculo com grupo, política de entrada e visibilidade."
+            title={t("edit.sections.participation.title")}
+            description={t("edit.sections.participation.desc")}
             editable={participationEditable}
-            actionLabel={participationEditable ? "Salvar participação" : "Duplicar para ajustar participação"}
+            actionLabel={participationEditable ? t("edit.sections.participation.action_save") : t("edit.sections.participation.action_duplicate")}
             onAction={() =>
               !canSaveParticipation
                 ? toast({
-                    title: "Escolha um grupo",
-                    description: "Selecione o grupo antes de vincular essa participação.",
+                    title: t("edit.sections.participation.error_select_group"),
+                    description: t("edit.sections.participation.error_select_group_desc"),
                     variant: "destructive",
                   })
                 : participationEditable
@@ -473,7 +464,7 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated }: Bo
                         category: joinMode === "public_open" ? "public" : "private",
                         grupo_id: groupBindingMode === "none" ? null : selectedGrupoId,
                       },
-                      "Participação atualizada",
+                      t("edit.sections.participation.success_title"),
                     )
                   : void handleDuplicateForSection("participation", {
                       context: {
@@ -493,7 +484,7 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated }: Bo
           />
           <div className="grid gap-3 rounded-3xl border border-white/10 bg-white/5 p-4 md:grid-cols-2">
             <label className="grid gap-2 text-sm">
-              <span className="text-zinc-300">Relação com grupo</span>
+              <span className="text-zinc-300">{t("edit.sections.participation.group_relation")}</span>
               <select
                 value={groupBindingMode}
                 onChange={(event) => {
@@ -505,20 +496,20 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated }: Bo
                 }}
                 className="rounded-2xl border border-white/10 bg-[#122117] px-4 py-3 text-white"
               >
-                <option value="none">Sem grupo</option>
-                <option value="linked_discovery">Vinculado para descoberta</option>
-                <option value="group_gated">Entrada limitada ao grupo</option>
+                <option value="none">{t("edit.sections.participation.no_group")}</option>
+                <option value="linked_discovery">{t("edit.sections.participation.discovery_link")}</option>
+                <option value="group_gated">{t("edit.sections.participation.group_gated")}</option>
               </select>
             </label>
             <label className="grid gap-2 text-sm">
-              <span className="text-zinc-300">Grupo vinculado</span>
+              <span className="text-zinc-300">{t("edit.sections.participation.linked_group")}</span>
               <select
                 value={selectedGrupoId || ""}
                 onChange={(event) => setSelectedGrupoId(event.target.value || null)}
                 disabled={groupBindingMode === "none"}
                 className="rounded-2xl border border-white/10 bg-[#122117] px-4 py-3 text-white disabled:opacity-50"
               >
-                <option value="">Selecione um grupo</option>
+                <option value="">{t("edit.sections.participation.select_group")}</option>
                 {availableGroups.map((group) => (
                   <option key={group.id} value={group.id}>
                     {group.name}
@@ -527,23 +518,23 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated }: Bo
               </select>
             </label>
             <label className="grid gap-2 text-sm">
-              <span className="text-zinc-300">Quem pode entrar</span>
+              <span className="text-zinc-300">{t("edit.sections.participation.access_policy")}</span>
               <select
                 value={joinMode}
                 onChange={(event) => setJoinMode(event.target.value as JoinMode)}
                 className="rounded-2xl border border-white/10 bg-[#122117] px-4 py-3 text-white"
               >
-                <option value="private_invite">Somente convite</option>
-                <option value="public_open">Aberto ao público</option>
+                <option value="private_invite">{t("edit.sections.participation.private_invite")}</option>
+                <option value="public_open">{t("edit.sections.participation.public_open")}</option>
               </select>
             </label>
           </div>
 
           <BolaoEditSectionCard
-            title="Jogos do Bolão"
-            description="Selecione os jogos específicos para este bolão."
+            title={t("edit.sections.catalog.title")}
+            description={t("edit.sections.catalog.desc")}
             editable={true}
-            actionLabel="Salvar jogos"
+            actionLabel={t("edit.sections.catalog.action")}
             onAction={saveAllowedMatchIds}
             busy={savingKey === "catalog"}
           />
@@ -556,7 +547,7 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated }: Bo
                   onChange={(e) => setAllowedMatchIds(e.target.checked ? "all" : [])}
                   className="rounded border-white/20 bg-black/50"
                 />
-                Incluir todos os jogos do campeonato
+                {t("edit.sections.catalog.include_all")}
               </label>
               
               {allowedMatchIds !== "all" && matches && matches.length > 0 && (
@@ -615,15 +606,15 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated }: Bo
           </div>
 
           <BolaoEditSectionCard
-            title="Regras"
-            description="Formato, mercados, pontuação e travas competitivas."
+            title={t("edit.sections.rules.title")}
+            description={t("edit.sections.rules.desc")}
             editable={editableSections.competition_rules}
-            actionLabel={editableSections.competition_rules ? "Salvar regras" : "Duplicar para mudar regras"}
+            actionLabel={editableSections.competition_rules ? t("edit.sections.rules.action_save") : t("edit.sections.rules.action_duplicate")}
             onAction={() =>
               !canSaveRules
                 ? toast({
-                    title: "Escolha ao menos um mercado",
-                    description: "O bolão precisa de pelo menos um mercado ativo para funcionar.",
+                    title: t("edit.sections.rules.error_markets"),
+                    description: t("edit.sections.rules.error_markets_desc"),
                     variant: "destructive",
                   })
                 : editableSections.competition_rules
@@ -641,7 +632,7 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated }: Bo
                         format_id: formatId as BolaoData["format_id"],
                         scoring_rules: scoringRules,
                       },
-                      "Regras atualizadas",
+                      t("edit.sections.rules.success_title"),
                     )
                   : void handleDuplicateForSection("rules", {
                       competition_rules: {
@@ -659,7 +650,7 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated }: Bo
           />
           <div className="grid gap-3 rounded-3xl border border-white/10 bg-white/5 p-4 md:grid-cols-2">
             <label className="grid gap-2 text-sm">
-              <span className="text-zinc-300">Formato</span>
+              <span className="text-zinc-300">{t("edit.sections.rules.format")}</span>
               <select
                 value={formatId}
                 onChange={(event) => {
@@ -680,7 +671,7 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated }: Bo
               {availableFormats.find((format) => format.id === formatId)?.description || "Formato atual do bolão."}
             </div>
             <div className="rounded-2xl border border-white/10 bg-[#122117] px-4 py-3 text-sm text-zinc-300 md:col-span-2">
-              <p className="mb-3 font-black text-white">Mercados ativos</p>
+              <p className="mb-3 font-black text-white">{t("edit.sections.rules.markets")}</p>
               <div className="flex flex-wrap gap-2">
                 {(getDefaultMarketIdsForFormat(formatId) as MarketTemplateSlug[]).map((marketId) => {
                   const checked = selectedMarketIds.includes(marketId);
@@ -704,7 +695,7 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated }: Bo
               </div>
             </div>
             <label className="grid gap-2 text-sm">
-              <span className="text-zinc-300">Pontos por placar exato</span>
+              <span className="text-zinc-300">{t("edit.sections.rules.exact_points")}</span>
               <input
                 type="number"
                 value={scoringRules.exact}
@@ -715,7 +706,7 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated }: Bo
               />
             </label>
             <label className="grid gap-2 text-sm">
-              <span className="text-zinc-300">Pontos por vencedor</span>
+              <span className="text-zinc-300">{t("edit.sections.rules.winner_points")}</span>
               <input
                 type="number"
                 value={scoringRules.winner}
@@ -726,7 +717,7 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated }: Bo
               />
             </label>
             <label className="grid gap-2 text-sm">
-              <span className="text-zinc-300">Pontos por empate</span>
+              <span className="text-zinc-300">{t("edit.sections.rules.draw_points")}</span>
               <input
                 type="number"
                 value={scoringRules.draw}
@@ -737,7 +728,7 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated }: Bo
               />
             </label>
             <label className="grid gap-2 text-sm">
-              <span className="text-zinc-300">Pontos por participação</span>
+              <span className="text-zinc-300">{t("edit.sections.rules.participation_points")}</span>
               <input
                 type="number"
                 value={scoringRules.participation ?? 0}
@@ -750,10 +741,10 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated }: Bo
           </div>
 
           <BolaoEditSectionCard
-            title="Financeiro"
-            description="Modo grátis/pago, valor de entrada e rateio."
+            title={t("edit.sections.finance.title")}
+            description={t("edit.sections.finance.desc")}
             editable={editableSections.finance_rules}
-            actionLabel={editableSections.finance_rules ? "Salvar financeiro" : "Duplicar para mudar financeiro"}
+            actionLabel={editableSections.finance_rules ? t("edit.sections.finance.action_save") : t("edit.sections.finance.action_duplicate")}
             onAction={() =>
               editableSections.finance_rules
                 ? void saveConfigurationSection(
@@ -772,7 +763,7 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated }: Bo
                       payment_details: paymentDetails.trim() || null,
                       prize_distribution: prizeDistribution.trim() || null,
                     },
-                    "Financeiro atualizado",
+                    t("edit.sections.finance.success_title"),
                   )
                 : void handleDuplicateForSection("finance", {
                     finance_rules: {
@@ -790,50 +781,50 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated }: Bo
           />
           <div className="grid gap-3 rounded-3xl border border-white/10 bg-white/5 p-4 md:grid-cols-2">
             <label className="grid gap-2 text-sm">
-              <span className="text-zinc-300">Modo financeiro</span>
+              <span className="text-zinc-300">{t("edit.sections.finance.mode")}</span>
               <select
                 value={financeMode}
                 onChange={(event) => setFinanceMode(event.target.value as FinanceMode)}
                 className="rounded-2xl border border-white/10 bg-[#122117] px-4 py-3 text-white"
               >
-                <option value="free">Grátis</option>
-                <option value="paid_external">Pago por fora</option>
+                <option value="free">{t("edit.sections.finance.mode_free")}</option>
+                <option value="paid_external">{t("edit.sections.finance.mode_paid")}</option>
               </select>
             </label>
             <label className="grid gap-2 text-sm">
-              <span className="text-zinc-300">Valor de entrada</span>
+              <span className="text-zinc-300">{t("edit.sections.finance.entry_fee")}</span>
               <input
                 value={entryFee}
                 onChange={(event) => setEntryFee(event.target.value)}
-                placeholder="Ex.: 20"
+                placeholder={t("edit.sections.finance.entry_fee_placeholder")}
                 className="rounded-2xl border border-white/10 bg-[#122117] px-4 py-3 text-white"
               />
             </label>
             <label className="grid gap-2 text-sm md:col-span-2">
-              <span className="text-zinc-300">Como o pagamento acontece</span>
+              <span className="text-zinc-300">{t("edit.sections.finance.payment_method")}</span>
               <textarea
                 value={paymentDetails}
                 onChange={(event) => setPaymentDetails(event.target.value)}
-                placeholder="Pix, prazo, conferência manual..."
+                placeholder={t("edit.sections.finance.payment_placeholder")}
                 className="min-h-[90px] rounded-2xl border border-white/10 bg-[#122117] px-4 py-3 text-white"
               />
             </label>
             <label className="grid gap-2 text-sm md:col-span-2">
-              <span className="text-zinc-300">Rateio combinado entre participantes</span>
+              <span className="text-zinc-300">{t("edit.sections.finance.prize_dist")}</span>
               <textarea
                 value={prizeDistribution}
                 onChange={(event) => setPrizeDistribution(event.target.value)}
-                placeholder="Ex.: combinação interna do grupo, se existir"
+                placeholder={t("edit.sections.finance.prize_placeholder")}
                 className="min-h-[90px] rounded-2xl border border-white/10 bg-[#122117] px-4 py-3 text-white"
               />
             </label>
           </div>
 
           <BolaoEditSectionCard
-            title="Operação"
-            description="Encerrar ou arquivar o bolão quando a disputa terminar."
+            title={t("edit.sections.operation.title")}
+            description={t("edit.sections.operation.desc")}
             editable={Boolean(editableSections.operation)}
-            actionLabel="Encerrar bolão"
+            actionLabel={t("edit.sections.operation.action_finish")}
             onAction={() => void handleLifecycleAction("finish")}
             busy={savingKey === "finish"}
           />
@@ -843,49 +834,110 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated }: Bo
               disabled={savingKey === "finish" || savingKey === "archive" || savingKey === "delete"}
               className="rounded-2xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm font-black text-amber-300 disabled:opacity-50"
             >
-              Encerrar bolão
+              {t("edit.sections.operation.action_finish")}
             </button>
             <button
               onClick={() => void handleLifecycleAction("archive")}
               disabled={savingKey === "finish" || savingKey === "archive" || savingKey === "delete"}
               className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-black text-white disabled:opacity-50"
             >
-              Arquivar bolão
+              {t("edit.sections.operation.action_archive")}
             </button>
           </div>
 
           <div className="rounded-3xl border border-red-500/20 bg-red-500/10 p-4">
-            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-              <div>
-                <p className="text-sm font-black text-red-200">Zona de risco</p>
-                <p className="mt-1 text-xs leading-5 text-red-100/75">
-                  remove o bolão das listas e desativa o convite. Os registros ficam preservados para auditoria.
-                </p>
+            {editableSections.operation && bolao.integrity?.is_structure_locked ? (
+              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                <div>
+                  <p className="text-sm font-black text-red-200">{t("edit.sections.danger.cancel_bolao")}</p>
+                  <p className="mt-1 text-xs leading-5 text-red-100/75">
+                    {t("edit.sections.danger.cancel_desc")}
+                  </p>
+                </div>
+                <div className="flex flex-col items-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!cancelConfirmOpen) {
+                        setCancelConfirmOpen(true);
+                        return;
+                      }
+                      void handleCancelBolao();
+                    }}
+                    disabled={savingKey === "cancel"}
+                    className="min-w-[160px] rounded-2xl border border-red-300/30 bg-red-400/15 px-4 py-3 text-sm font-black text-red-100 transition-colors hover:bg-red-400/25 disabled:opacity-50"
+                  >
+                    {savingKey === "cancel"
+                      ? t("edit.sections.danger.canceling")
+                      : cancelConfirmOpen
+                        ? t("edit.sections.danger.confirm_cancel")
+                        : t("edit.sections.danger.cancel_bolao")}
+                  </button>
+                  {cancelConfirmOpen && (
+                    <>
+                      <p className="max-w-xs rounded-2xl border border-red-300/20 bg-black/20 px-4 py-3 text-xs text-red-100/85">
+                        {t("edit.sections.danger.cancel_warning")}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setCancelConfirmOpen(false)}
+                        className="text-xs text-zinc-400 underline hover:text-white"
+                      >
+                        {t("edit.sections.danger.give_up")}
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  if (!deleteConfirmOpen) {
-                    setDeleteConfirmOpen(true);
-                    return;
-                  }
-                  void handleDeleteBolao();
-                }}
-                disabled={savingKey === "delete"}
-                className="rounded-2xl border border-red-300/30 bg-red-400/15 px-4 py-3 text-sm font-black text-red-100 disabled:opacity-50"
-              >
-                {deleteConfirmOpen ? "Confirmar apagar" : "Apagar bolão"}
-              </button>
-            </div>
-            {deleteConfirmOpen ? (
-              <p className="mt-3 rounded-2xl border border-red-300/20 bg-black/20 px-4 py-3 text-xs text-red-100/85">
-                Essa ação tira o bolão do acesso normal. Clique em confirmar apagar para continuar.
-              </p>
-            ) : null}
+            ) : (
+              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <p className="text-sm font-black text-red-200">{t("edit.sections.danger.risk_zone")}</p>
+                  <p className="mt-1 text-xs leading-5 text-red-100/75">
+                    {t("edit.sections.danger.risk_desc")}
+                  </p>
+                </div>
+                <div className="flex flex-col items-end gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!deleteConfirmOpen) {
+                        setDeleteConfirmOpen(true);
+                        return;
+                      }
+                      void handleDeleteBolao();
+                    }}
+                    disabled={savingKey === "delete"}
+                    className="min-w-[160px] rounded-2xl border border-red-300/30 bg-red-400/15 px-4 py-3 text-sm font-black text-red-100 transition-colors hover:bg-red-400/25 disabled:opacity-50"
+                  >
+                    {savingKey === "delete"
+                      ? t("edit.sections.danger.deleting")
+                      : deleteConfirmOpen
+                        ? t("edit.sections.danger.confirm_delete")
+                        : t("edit.sections.danger.delete")}
+                  </button>
+                  {deleteConfirmOpen && (
+                    <>
+                      <p className="max-w-xs rounded-2xl border border-red-300/20 bg-black/20 px-4 py-3 text-xs text-red-100/85">
+                        {t("edit.sections.danger.delete_warning")}
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setDeleteConfirmOpen(false)}
+                        className="text-xs text-zinc-400 underline hover:text-white"
+                      >
+                        {t("edit.sections.danger.give_up")}
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </DialogContent>
     </Dialog>
   );
 }
+
 

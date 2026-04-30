@@ -188,6 +188,7 @@ function normalizeBolaoDocument(source) {
     created_at: source.created_at || source.audit_meta?.last_updated_at || null,
     updated_at: source.updated_at || source.audit_meta?.last_updated_at || null,
     championship_id: source.championship_id || null,
+    allowed_match_ids: source.allowed_match_ids ?? "all",
   };
 
   const derived = recomputeDerivedState(normalized, normalized.audit_meta.last_updated_at);
@@ -293,6 +294,7 @@ function buildDraftBolaoDocument({ bolaoId, actorId, nowIso, input = {} }) {
     created_at: input.created_at || nowIso,
     updated_at: nowIso,
     championship_id: input.championship_id || null,
+    allowed_match_ids: input.allowed_match_ids ?? "all",
   });
 }
 
@@ -399,6 +401,7 @@ function buildConfigurationUpdate({
   patch,
   actorId,
   nowIso,
+  forceEdit = false,
 }) {
   const normalized = normalizeBolaoDocument(current);
   assertConfigVersion({
@@ -409,7 +412,9 @@ function buildConfigurationUpdate({
 
   const next = clone(normalized);
   for (const [sectionName, sectionPatch] of Object.entries(patch || {})) {
-    assertSectionEditable(normalized, sectionName);
+    if (!forceEdit) {
+      assertSectionEditable(normalized, sectionName);
+    }
     next[sectionName] = mergeSection(normalized[sectionName], sectionPatch);
   }
 
@@ -531,8 +536,12 @@ function buildLifecycleUpdate({
     next.lifecycle.status = "finished";
     next.lifecycle.finished_at = nowIso;
   } else if (action === "archive") {
-    if (!["finished", "archived"].includes(normalized.lifecycle.status)) {
+    if (!["published", "live", "finished", "archived"].includes(normalized.lifecycle.status)) {
       throw new Error("invalid_state");
+    }
+    if (["published", "live"].includes(normalized.lifecycle.status)) {
+      // Fast-path cancel: mark as finished first, then archived
+      next.lifecycle.finished_at = next.lifecycle.finished_at || nowIso;
     }
     next.lifecycle.status = "archived";
     next.lifecycle.archived_at = nowIso;
@@ -562,6 +571,10 @@ function buildDeleteBolaoUpdate({
   const normalized = normalizeBolaoDocument(current);
   if (normalized.lifecycle.status === "deleted") {
     throw new Error("invalid_state");
+  }
+
+  if (normalized.integrity.is_structure_locked) {
+    throw new Error("structure_locked");
   }
 
   const next = clone(normalized);

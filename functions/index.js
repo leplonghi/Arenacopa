@@ -11,6 +11,11 @@ const { resolveLegacyMatchPredictionPoints } = require("./bolao-ranking/scoring"
 const { saveExclusiveBolaoPalpite } = require("./bolao-exclusive/palpites");
 const { updateBolaoPrizeSettings } = require("./bolao-prize/settings");
 
+// Feature Modules
+const boloes = require("./features/boloes");
+const groups = require("./features/groups");
+const social = require("./features/social");
+
 admin.initializeApp();
 
 const db = admin.firestore();
@@ -2974,195 +2979,145 @@ exports.submitPoolMemberPaymentProof = createAuthedEndpoint(async ({ auth, nowIs
     });
 });
 
-exports.createGroup = createAuthedEndpoint(async ({ auth, nowIso, req }) => {
-    const groupRef = db.collection("grupos").doc();
-    const created = await groupAccessRepository.createGroup({
-        db,
-        groupId: groupRef.id,
-        actorId: auth.uid,
-        payload: req.body || {},
-        nowIso,
-    });
+// Group Management
+exports.createGroup = groups.createGroup;
+exports.updateGroupSettings = groups.updateGroupSettings;
+exports.requestGroupJoin = groups.requestGroupJoin;
+exports.approveGroupJoin = groups.approveGroupJoin;
+exports.rejectGroupJoin = groups.rejectGroupJoin;
+exports.leaveGroup = groups.leaveGroup;
+exports.removeGroupMember = groups.removeGroupMember;
+exports.setFeaturedGroupBolao = groups.setFeaturedGroupBolao;
 
-    return {
-        group_id: groupRef.id,
-        ...created,
-    };
-});
+// Social & Access
+exports.requestBolaoJoin = social.requestBolaoJoin;
+exports.approveBolaoJoin = social.approveBolaoJoin;
+exports.rejectBolaoJoin = social.rejectBolaoJoin;
+exports.joinViaInvite = social.joinViaInvite;
 
-exports.updateGroupSettings = createAuthedEndpoint(async ({ auth, nowIso, req }) => {
-    const updated = await groupAccessRepository.updateGroupSettings({
-        db,
-        groupId: req.body?.group_id,
-        actorId: auth.uid,
-        patch: req.body?.patch || {},
-        nowIso,
-    });
+exports.listUserBoloes = boloes.listUserBoloes;
 
-    return {
-        group_id: updated.id,
-        ...updated,
-    };
-});
+// ─────────────────────────────────────────────────────────────
+// Admin: Recreate bolão markets respecting allowed_match_ids
+// ─────────────────────────────────────────────────────────────
+exports.adminRecreateBolaoMarkets = functions
+    .region("us-central1")
+    .runWith({ timeoutSeconds: 540, memory: "1GB" })
+    .https.onRequest(async (req, res) => {
+        applyCors(req, res);
 
-exports.requestGroupJoin = createAuthedEndpoint(async ({ auth, nowIso, req }) => {
-    const result = await groupAccessRepository.requestGroupJoin({
-        db,
-        groupId: req.body?.group_id,
-        actorId: auth.uid,
-        nowIso,
-        inviteCode: req.body?.invite_code || null,
-        origin: req.body?.origin || "group_request",
-    });
-
-    return {
-        group_id: result.group?.id || req.body?.group_id,
-        ...result,
-    };
-});
-
-exports.approveGroupJoin = createAuthedEndpoint(async ({ auth, nowIso, req }) => {
-    return groupAccessRepository.approveGroupJoin({
-        db,
-        groupId: req.body?.group_id,
-        requestId: req.body?.request_id,
-        actorId: auth.uid,
-        nowIso,
-        reasonCode: req.body?.reason_code || null,
-    });
-});
-
-exports.rejectGroupJoin = createAuthedEndpoint(async ({ auth, nowIso, req }) => {
-    return groupAccessRepository.rejectGroupJoin({
-        db,
-        groupId: req.body?.group_id,
-        requestId: req.body?.request_id,
-        actorId: auth.uid,
-        nowIso,
-        reasonCode: req.body?.reason_code || null,
-    });
-});
-
-exports.leaveGroup = createAuthedEndpoint(async ({ auth, nowIso, req }) => {
-    return groupAccessRepository.leaveGroup({
-        db,
-        groupId: req.body?.group_id,
-        actorId: auth.uid,
-        nowIso,
-    });
-});
-
-exports.removeGroupMember = createAuthedEndpoint(async ({ auth, nowIso, req }) => {
-    return groupAccessRepository.removeGroupMember({
-        db,
-        groupId: req.body?.group_id,
-        memberId: req.body?.member_id,
-        actorId: auth.uid,
-        nowIso,
-        reasonCode: req.body?.reason_code || null,
-    });
-});
-
-exports.setFeaturedGroupBolao = createAuthedEndpoint(async ({ auth, nowIso, req }) => {
-    return groupAccessRepository.setFeaturedGroupBolao({
-        db,
-        groupId: req.body?.group_id,
-        bolaoId: req.body?.bolao_id || null,
-        actorId: auth.uid,
-        nowIso,
-    });
-});
-
-exports.requestBolaoJoin = createAuthedEndpoint(async ({ auth, nowIso, req }) => {
-    const result = await groupAccessRepository.requestBolaoJoin({
-        db,
-        bolaoId: req.body?.bolao_id,
-        actorId: auth.uid,
-        nowIso,
-        inviteCode: req.body?.invite_code || null,
-        origin: req.body?.origin || "pool_request",
-    });
-
-    return {
-        bolao_id: result.bolao?.id || req.body?.bolao_id,
-        ...result,
-    };
-});
-
-exports.approveBolaoJoin = createAuthedEndpoint(async ({ auth, nowIso, req }) => {
-    return groupAccessRepository.approveBolaoJoin({
-        db,
-        bolaoId: req.body?.bolao_id,
-        requestId: req.body?.request_id,
-        actorId: auth.uid,
-        nowIso,
-        reasonCode: req.body?.reason_code || null,
-    });
-});
-
-exports.rejectBolaoJoin = createAuthedEndpoint(async ({ auth, nowIso, req }) => {
-    return groupAccessRepository.rejectBolaoJoin({
-        db,
-        bolaoId: req.body?.bolao_id,
-        requestId: req.body?.request_id,
-        actorId: auth.uid,
-        nowIso,
-        reasonCode: req.body?.reason_code || null,
-    });
-});
-
-exports.joinViaInvite = createAuthedEndpoint(async ({ auth, nowIso, req }) => {
-    const inviteCode = typeof req.body?.invite_code === "string" ? req.body.invite_code.trim().toUpperCase() : "";
-    const kind = req.body?.kind;
-    if (!inviteCode || !["group", "bolao"].includes(kind)) {
-        throw new Error("validation_failed");
-    }
-
-    if (kind === "group") {
-        const groupSnapshot = await db.collection("grupos").where("invite_code", "==", inviteCode).limit(1).get();
-        if (groupSnapshot.empty) {
-            throw new Error("not_found");
+        if (req.method === "OPTIONS") {
+            return res.status(204).send("");
         }
-        const result = await groupAccessRepository.requestGroupJoin({
-            db,
-            groupId: groupSnapshot.docs[0].id,
-            actorId: auth.uid,
-            nowIso,
-            inviteCode,
-            origin: "invite_link",
+
+        if (req.method !== "POST") {
+            return res.status(405).json({ error: "Método não permitido." });
+        }
+
+        // Admin secret check (simple protection)
+        const adminSecret = req.body?.admin_secret || "";
+        const expectedSecret = process.env.ADMIN_SECRET || functions.config()?.admin?.secret || "";
+        if (!expectedSecret || adminSecret !== expectedSecret) {
+            return res.status(403).json({ error: "Acesso negado." });
+        }
+
+        const bolaoId = req.body?.bolao_id || null;
+        const dryRun = Boolean(req.body?.dry_run);
+        const limit = Math.min(Number(req.body?.limit) || 50, 200);
+
+        try {
+            let processed = 0;
+            let errors = [];
+
+            if (bolaoId) {
+                // Single bolão mode
+                const bolaoDoc = await db.collection("boloes").doc(bolaoId).get();
+                if (!bolaoDoc.exists) {
+                    return res.status(404).json({ error: "Bolão não encontrado." });
+                }
+                const bolaoData = bolaoDoc.data();
+                const result = await recreateMarketsForBolao(db, bolaoId, bolaoData, dryRun);
+                processed = 1;
+                if (result.error) errors.push(result.error);
+                return res.status(200).json({
+                    processed,
+                    bolao_id: bolaoId,
+                    dry_run: dryRun,
+                    result,
+                    errors: errors.length ? errors : undefined,
+                });
+            }
+
+            // Batch mode: paginated bolões
+            const boloesSnapshot = await db.collection("boloes").limit(limit).get();
+            const results = [];
+
+            for (const doc of boloesSnapshot.docs) {
+                const result = await recreateMarketsForBolao(db, doc.id, doc.data(), dryRun);
+                results.push({ bolao_id: doc.id, ...result });
+                processed++;
+                if (result.error) errors.push({ bolao_id: doc.id, error: result.error });
+            }
+
+            return res.status(200).json({
+                processed,
+                total_boloes: boloesSnapshot.size,
+                dry_run: dryRun,
+                limit,
+                results: dryRun ? results : undefined,
+                errors: errors.length ? errors : undefined,
+            });
+        } catch (error) {
+            functions.logger.error("adminRecreateBolaoMarkets failed", { error: error?.message || error });
+            return res.status(500).json({ error: error?.message || "Erro interno." });
+        }
+    });
+
+async function recreateMarketsForBolao(db, bolaoId, bolaoData, dryRun) {
+    const allowedMatchIds = bolaoData?.allowed_match_ids ?? "all";
+    const competitionRules = bolaoData?.competition_rules || {};
+    const championshipId = bolaoData?.championship_id || null;
+
+    // Count existing markets for reporting
+    const existingSnapshot = await db.collection("bolao_markets")
+        .where("bolao_id", "==", bolaoId)
+        .get();
+    const existingCount = existingSnapshot.size;
+
+    if (dryRun) {
+        // Calculate what would be created
+        const { loadMatchesForBolaoMarketSync } = require("./bolao-config/repository");
+        const { buildBolaoMarkets } = require("./bolao-config/market-sync");
+        const matches = await loadMatchesForBolaoMarketSync({ db, championshipId });
+        const newMarkets = buildBolaoMarkets({
+            bolaoId,
+            selectedMarketIds: competitionRules?.markets || [],
+            matches,
+            allowedMatchIds,
         });
         return {
-            group_id: groupSnapshot.docs[0].id,
-            ...result,
+            existing_markets: existingCount,
+            would_create: newMarkets.length,
+            allowed_match_ids: allowedMatchIds,
+            championship_id: championshipId,
+            markets: competitionRules?.markets || [],
         };
     }
 
-    const bolaoSnapshot = await db.collection("boloes").where("invite_code", "==", inviteCode).limit(1).get();
-    if (bolaoSnapshot.empty) {
-        throw new Error("not_found");
-    }
-    const bolaoData = bolaoSnapshot.docs[0].data();
-    if (bolaoData.lifecycle?.status === "deleted" || bolaoData.status === "deleted") {
-        throw new Error("not_found");
-    }
-
-    const result = await groupAccessRepository.requestBolaoJoin({
+    // Actually recreate
+    const { syncBolaoMarkets } = require("./bolao-config/repository");
+    const newMarkets = await syncBolaoMarkets({
         db,
-        bolaoId: bolaoSnapshot.docs[0].id,
-        actorId: auth.uid,
-        nowIso,
-        inviteCode,
-        origin: "invite_link",
+        bolaoId,
+        competitionRules,
+        championshipId,
+        allowedMatchIds,
     });
+
     return {
-        bolao_id: bolaoSnapshot.docs[0].id,
-        ...result,
+        existing_markets: existingCount,
+        new_markets: newMarkets.length,
+        allowed_match_ids: allowedMatchIds,
+        championship_id: championshipId,
     };
-});
-
-exports.listUserBoloes = createAuthedEndpoint(async ({ auth }) => {
-    return bolaoListingRepository.listUserBoloes({
-        db,
-        actorId: auth.uid,
-    });
-});
+}
