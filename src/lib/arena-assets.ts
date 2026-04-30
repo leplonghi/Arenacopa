@@ -21,6 +21,8 @@ const OPTIMIZED_ARENA_ASSETS = new Set([
   "bundesliga-logo.webp",
   "center-ball-nav.webp",
   "champions-league-logo.webp",
+  "fundo-hero.webp",
+  "fundo-header.webp",
   "home-palpites-hero-art.webp",
   "libertadores-logo.webp",
   "ligue1-logo.webp",

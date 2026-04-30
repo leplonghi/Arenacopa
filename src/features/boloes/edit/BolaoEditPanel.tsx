@@ -60,6 +60,7 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated }: Bo
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [allowedMatchIds, setAllowedMatchIds] = useState<string[] | "all">("all");
   const { data: matches } = useDashboardMatches();
+  const [visibleMatchesCount, setVisibleMatchesCount] = useState(20);
 
   useEffect(() => {
     if (!bolao) {
@@ -559,8 +560,16 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated }: Bo
               </label>
               
               {allowedMatchIds !== "all" && matches && matches.length > 0 && (
-                <div className="mt-2 flex max-h-60 flex-col gap-2 overflow-y-auto rounded-xl border border-white/5 bg-black/20 p-2">
-                  {matches.map((m) => (
+                <div 
+                  className="mt-2 flex max-h-60 flex-col gap-2 overflow-y-auto rounded-xl border border-white/5 bg-black/20 p-2 custom-scrollbar"
+                  onScroll={(e) => {
+                    const target = e.target as HTMLDivElement;
+                    if (target.scrollHeight - target.scrollTop <= target.clientHeight * 1.5) {
+                      setVisibleMatchesCount(c => Math.min(c + 20, matches.length));
+                    }
+                  }}
+                >
+                  {matches.slice(0, visibleMatchesCount).map((m) => (
                     <label key={m.id} className="flex items-center justify-between gap-2 text-xs text-zinc-300 cursor-pointer hover:bg-white/5 p-2 rounded-lg transition-colors">
                       <div className="flex items-center gap-3">
                         <input
@@ -576,21 +585,21 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated }: Bo
                           className="rounded border-white/20 bg-black/50"
                         />
                         <div className="flex items-center gap-2">
-                          <img src={m.home_team_flag_url || ""} alt="" className="w-4 h-4 rounded-full object-cover" />
-                          <span>{m.home_team_name}</span>
+                          <img src={m.homeCrest || ""} alt="" className="w-4 h-4 rounded-full object-cover" />
+                          <span>{m.homeTeamName}</span>
                           <span className="text-zinc-500">vs</span>
-                          <img src={m.away_team_flag_url || ""} alt="" className="w-4 h-4 rounded-full object-cover" />
-                          <span>{m.away_team_name}</span>
+                          <img src={m.awayCrest || ""} alt="" className="w-4 h-4 rounded-full object-cover" />
+                          <span>{m.awayTeamName}</span>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        {new Date(m.match_date).getTime() > Date.now() && new Date(m.match_date).getTime() < Date.now() + 7 * 24 * 60 * 60 * 1000 && (
+                        {new Date(m.matchDate).getTime() > Date.now() && new Date(m.matchDate).getTime() < Date.now() + 7 * 24 * 60 * 60 * 1000 && (
                           <span className="rounded-full border border-[#D5FF5C]/30 bg-[#D5FF5C]/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-[#D5FF5C]">
                             Próximo
                           </span>
                         )}
                         <span className="text-[10px] text-zinc-500">
-                          {new Date(m.match_date).toLocaleDateString("pt-BR", {
+                          {new Date(m.matchDate).toLocaleDateString("pt-BR", {
                             day: "2-digit",
                             month: "short",
                             hour: "2-digit",

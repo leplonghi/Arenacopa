@@ -7,7 +7,7 @@ const FieldBackground = () => (
 
     <div
       className="absolute inset-0 bg-center bg-cover bg-no-repeat opacity-[0.38] md:opacity-[0.5]"
-      style={{ backgroundImage: "url('/images/campo-bg.png?v=20260316')" }}
+      style={{ backgroundImage: "url('/images/campo-bg.webp?v=20260316')" }}
     />
 
     <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_24%,rgba(124,255,98,0.11),transparent_22%),radial-gradient(circle_at_84%_18%,rgba(255,191,0,0.18),transparent_18%),radial-gradient(circle_at_center,rgba(9,61,34,0.22)_0%,rgba(4,15,11,0.72)_48%,rgba(1,5,4,0.96)_100%)]" />

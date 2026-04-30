@@ -1010,9 +1010,9 @@ export default function CampeonatoHub() {
             <AlertTriangle className="h-7 w-7 text-amber-400" />
           </div>
           <div className="space-y-2">
-            <h1 className="text-xl font-black tracking-tight">
+            <h2 className="text-xl font-black tracking-tight">
               {t("championships:hub.not_found_title", { defaultValue: "Campeonato não encontrado" })}
-            </h1>
+            </h2>
             <p className="text-sm leading-relaxed text-white/60">
               {t("championships:hub.not_found_desc", { defaultValue: "Esse link não está mais disponível ou o campeonato ainda não foi publicado nesta área." })}
             </p>

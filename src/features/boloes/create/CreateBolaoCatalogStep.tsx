@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { ArrowRight } from "lucide-react";
 import { CreateBolaoStepRail } from "@/features/boloes/create/CreateBolaoStepRail";
 import { useBolaoCreateFlow } from "@/features/boloes/create/useBolaoCreateFlow";
@@ -11,6 +11,7 @@ type Flow = ReturnType<typeof useBolaoCreateFlow>;
 export function CreateBolaoCatalogStep({ flow }: { flow: Flow }) {
   const { all: championships } = useChampionship();
   const { data: matches } = useDashboardMatches();
+  const [visibleCount, setVisibleCount] = useState(20);
   
   const selectedChampionship = championships.find(c => c.id === flow.state.championshipId);
 
@@ -100,12 +101,17 @@ export function CreateBolaoCatalogStep({ flow }: { flow: Flow }) {
             </button>
           </div>
           
-          <div className="grid gap-2 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+          <div className="grid gap-2 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar" onScroll={(e) => {
+            const target = e.target as HTMLDivElement;
+            if (target.scrollHeight - target.scrollTop <= target.clientHeight * 1.5) {
+              setVisibleCount(c => Math.min(c + 20, availableMatches.length));
+            }
+          }}>
             {availableMatches.length === 0 ? (
                <div className="p-8 text-center border border-white/10 rounded-[20px] bg-white/5">
                  <p className="text-sm text-zinc-400">Nenhuma partida encontrada para este campeonato.</p>
                </div>
-            ) : availableMatches.map((match) => {
+            ) : availableMatches.slice(0, visibleCount).map((match) => {
               const isSelected = isAllSelected || (Array.isArray(flow.state.allowedMatchIds) && flow.state.allowedMatchIds.includes(match.id));
               return (
                 <button
