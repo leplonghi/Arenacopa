@@ -21,6 +21,8 @@ import { db } from "@/integrations/firebase/client";
 import { useTranslation } from "react-i18next";
 import { ArenaAssetSlot } from "@/components/arena/ArenaAssetSlot";
 import { getArenaAssetSrc } from "@/lib/arena-assets";
+import { useDashboardMatches } from "@/hooks/useDashboardMatches";
+import type { MatchFeedItem } from "@/types/match-feed";
 
 const COUNTRY_LABELS: Record<string, string> = {
   BR: "Brasil",
@@ -67,13 +69,26 @@ const LEAGUE_ASSET_FILENAME_BY_ID: Record<string, string> = {
   ucl2526: "champions-league-logo.png",
 };
 
+/** Background colors for each championship card — matches the design reference */
+const CHAMPIONSHIP_CARD_BG: Record<string, { from: string; to: string; border: string; accent: string }> = {
+  brasileirao2026: { from: "#0a1f0a", to: "#0d3d0d", border: "#1a5c1a", accent: "#4ade80" },
+  libertadores2026: { from: "#1a0505", to: "#3d0d0d", border: "#5c1a1a", accent: "#f87171" },
+  premier2526:     { from: "#1a0a2e", to: "#2d0d4a", border: "#4a1a6e", accent: "#c084fc" },
+  ligue12526:      { from: "#0a152e", to: "#0d244a", border: "#1a3a6e", accent: "#60a5fa" },
+  laliga2526:      { from: "#2e0a0a", to: "#4a0d0d", border: "#6e1a1a", accent: "#fb923c" },
+  bundesliga2526:  { from: "#2e1a0a", to: "#4a2d0d", border: "#6e4a1a", accent: "#fbbf24" },
+  saudipro2526:    { from: "#0a1f0a", to: "#0d3d0d", border: "#1a5c1a", accent: "#34d399" },
+  ucl2526:         { from: "#0a0a2e", to: "#0d0d4a", border: "#1a1a6e", accent: "#818cf8" },
+  mls2026:         { from: "#0a1a2e", to: "#0d2d4a", border: "#1a4a6e", accent: "#22d3ee" },
+};
+
 function StatusPill({ status }: { status: ChampionshipStatus }) {
   const { t } = useTranslation("championships");
 
   if (status === "live") {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-[#78ff46]/35 bg-[#1a351a]/88 px-2.5 py-1.5 font-display text-[0.9rem] font-semibold uppercase tracking-[0.06em] text-white shadow-[0_0_18px_rgba(95,255,56,0.12)]">
-        <Radio className="h-3.5 w-3.5 text-[#7dff48]" />
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-black/30 px-3 py-1.5 text-xs font-medium tracking-[0.02em] text-white">
+        <Radio className="h-3 w-3 text-green-400" />
         {t("status.live")}
       </span>
     );
@@ -81,15 +96,15 @@ function StatusPill({ status }: { status: ChampionshipStatus }) {
 
   if (status === "upcoming") {
     return (
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-[#ffc54d]/35 bg-[#34250a]/88 px-2.5 py-1.5 font-display text-[0.9rem] font-semibold uppercase tracking-[0.06em] text-[#ffd35c] shadow-[0_0_18px_rgba(255,197,77,0.12)]">
-        <Clock3 className="h-3.5 w-3.5" />
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/30 bg-amber-950/40 px-3 py-1.5 text-xs font-medium tracking-[0.02em] text-amber-300">
+        <Clock3 className="h-3 w-3" />
         {t("status.upcoming")}
       </span>
     );
   }
 
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-2.5 py-1.5 font-display text-[0.9rem] font-semibold uppercase tracking-[0.06em] text-zinc-300">
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-medium tracking-[0.02em] text-zinc-400">
       {t("status.finished")}
     </span>
   );
@@ -113,11 +128,13 @@ function FeaturedCompetitionCard({
   bolaoCount,
   isSelected,
   onSelect,
+  nextMatch,
 }: {
   championship: Championship;
   bolaoCount: number;
   isSelected: boolean;
   onSelect: () => void;
+  nextMatch?: MatchFeedItem | null;
 }) {
   const { t } = useTranslation("championships");
 
@@ -128,7 +145,7 @@ function FeaturedCompetitionCard({
       transition={{ duration: 0.34, ease: "easeOut" }}
       onClick={onSelect}
       className={cn(
-        "group relative w-full overflow-hidden rounded-[32px] border text-left transition-all duration-300",
+        "group relative w-full overflow-hidden rounded-[24px] border text-left transition-all duration-300",
         isSelected
           ? "border-[#7dff48]/45 shadow-[0_0_0_1px_rgba(125,255,72,0.16)_inset,0_18px_44px_-18px_rgba(0,0,0,0.88)]"
           : "border-[#78ff46]/22 shadow-[0_16px_42px_-20px_rgba(0,0,0,0.88)] hover:border-[#7dff48]/34"
@@ -144,69 +161,78 @@ function FeaturedCompetitionCard({
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.02),transparent_40%)]" />
       <div className="absolute inset-y-0 left-[34%] hidden w-px bg-gradient-to-b from-transparent via-[#7dff48]/20 to-transparent md:block" />
 
-      <div className="relative z-10 grid min-h-[238px] grid-cols-[minmax(0,1fr)_132px] gap-2 p-4 sm:grid-cols-[minmax(0,1fr)_190px] sm:gap-5 sm:p-5">
+      <div className="relative z-10 grid min-h-[180px] grid-cols-[minmax(0,1fr)_110px] gap-2 p-3.5 sm:grid-cols-[minmax(0,1fr)_150px] sm:gap-4 sm:p-4">
         <div className="flex min-w-0 flex-col">
-          <div className="mb-3 inline-flex w-fit items-center gap-1.5 rounded-full border border-[#ffc54d]/35 bg-[#4d3a0d]/80 px-3 py-1.5 text-[#ffd35c]">
-            <Star className="h-3.5 w-3.5 fill-current" />
-            <span className="font-display text-[1.05rem] font-semibold uppercase tracking-[0.05em]">{t("hero.special_event")}</span>
+          <div className="mb-2 inline-flex w-fit items-center gap-1.5 rounded-full border border-[#ffc54d]/35 bg-[#4d3a0d]/80 px-2.5 py-1 text-[#ffd35c]">
+            <Star className="h-3 w-3 fill-current" />
+            <span className="text-xs font-medium tracking-[0.02em]">{t("hero.special_event")}</span>
           </div>
-          <div className="mb-2 flex items-start justify-between gap-4">
-            <p className="font-display text-[1.1rem] font-semibold uppercase tracking-[0.06em] text-[#89ec5f] sm:text-[1.25rem]">
+          <div className="mb-1 flex items-start justify-between gap-4">
+            <p className="text-sm font-medium text-[#89ec5f] sm:text-[0.95rem]">
               {championship.confederation} <span className="text-white/35">•</span> <span className="text-white/68">{championship.season}</span>
             </p>
             <div className="hidden items-center gap-1 text-[#7dff48] md:flex">
               {Array.from({ length: 5 }).map((_, index) => (
-                <Star key={index} className="h-4 w-4 fill-current" />
+                <Star key={index} className="h-3.5 w-3.5 fill-current" />
               ))}
             </div>
           </div>
 
           <div className="max-w-2xl">
-            <p className="font-sans text-[1.9rem] font-bold uppercase leading-[0.92] tracking-[-0.04em] text-white sm:text-[2.65rem]">
+            <p className="font-sans text-[1.4rem] font-bold uppercase leading-[0.95] tracking-[-0.03em] text-white sm:text-[1.9rem]">
               COPA DO MUNDO
             </p>
-            <p className="font-sans text-[1.9rem] font-bold uppercase leading-[0.92] tracking-[-0.04em] text-[#58d84f] sm:text-[2.65rem]">
+            <p className="font-sans text-[1.4rem] font-bold uppercase leading-[0.95] tracking-[-0.03em] text-[#58d84f] sm:text-[1.9rem]">
               2026
             </p>
           </div>
 
-          <div className="mt-3 flex flex-wrap items-center gap-3">
+          <div className="mt-2 flex flex-wrap items-center gap-3">
             <StatusPill status={championship.status} />
           </div>
 
-          <div className="mt-4 space-y-1.5 text-zinc-300">
-            <div className="flex items-center gap-2 text-base">
-              <CalendarDays className="h-4 w-4 text-[#8de65b]" />
+          <div className="mt-3 space-y-1 text-zinc-300">
+            <div className="flex items-center gap-2 text-sm">
+              <CalendarDays className="h-3.5 w-3.5 text-[#8de65b]" />
               <span className="font-sans font-medium">{t("hero.date_range").split("·")[0].trim()}</span>
             </div>
-            <div className="flex items-center gap-2 text-base text-zinc-400">
-              <MapPin className="h-4 w-4 text-[#8de65b]" />
-              <span className="font-sans font-medium">EUA, Canadá e México</span>
-            </div>
+            {nextMatch ? (
+              <div className="flex items-center gap-2 text-sm text-zinc-400">
+                <Radio className={cn("h-3.5 w-3.5", nextMatch.status === "live" ? "animate-pulse text-green-400" : "text-[#8de65b]")} />
+                <span className="font-sans font-medium">
+                  {nextMatch.status === "live" ? "Ao vivo agora:" : "Próximo jogo:"} {nextMatch.homeTeamCode} × {nextMatch.awayTeamCode}
+                </span>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 text-sm text-zinc-400">
+                <MapPin className="h-3.5 w-3.5 text-[#8de65b]" />
+                <span className="font-sans font-medium">EUA, Canadá e México</span>
+              </div>
+            )}
           </div>
 
-          <div className="mt-auto flex items-center justify-between gap-3 pt-4">
+          <div className="mt-auto flex items-center justify-between gap-3 pt-3">
             <div className="flex min-w-0 items-center gap-2 text-[#8de65b]">
-              <Trophy className="h-4 w-4" />
-              <span className="truncate font-sans text-sm font-semibold">{t("hero.pools_other", { count: bolaoCount })}</span>
+              <Trophy className="h-3.5 w-3.5" />
+              <span className="truncate font-sans text-xs font-semibold">{t("hero.pools_other", { count: bolaoCount })}</span>
             </div>
-            <span className="inline-flex items-center gap-2 rounded-[16px] border border-[#ffc54d]/45 px-3 py-2 font-display text-[1.05rem] font-semibold uppercase tracking-[0.04em] text-[#ffc54d] transition group-hover:border-[#ffe263] group-hover:text-[#ffe263] sm:px-4 sm:text-[1.2rem]">
+            <span className="inline-flex items-center gap-1.5 rounded-[12px] border border-[#ffc54d]/45 px-2.5 py-1.5 text-sm font-medium text-[#ffc54d] transition group-hover:border-[#ffe263] group-hover:text-[#ffe263] sm:px-3 sm:text-[1rem]">
               {t("hero.enter")}
-              <ChevronRight className="h-5 w-5" />
+              <ChevronRight className="h-4 w-4" />
             </span>
           </div>
         </div>
 
         <div className="relative flex items-center justify-end overflow-visible">
-          <div className="absolute inset-y-0 -right-8 w-[220px] bg-[radial-gradient(circle_at_50%_50%,rgba(255,197,77,0.32),transparent_54%)] blur-xl sm:-right-12 sm:w-[300px]" />
+          <div className="absolute inset-y-0 -right-6 w-[180px] bg-[radial-gradient(circle_at_50%_50%,rgba(255,197,77,0.32),transparent_54%)] blur-xl sm:-right-10 sm:w-[260px]" />
           <ArenaAssetSlot
             name="wc2026-trophy.png"
             label="Troféu Copa do Mundo 2026"
             src={getArenaAssetSrc("wc2026-trophy.png") ?? championship.logoUrl}
             variant="cutout"
-            className="relative h-[190px] w-[130px] border-amber-300/20 bg-transparent shadow-none sm:h-[235px] sm:w-[172px]"
-            imgClassName="p-0 object-contain drop-shadow-[0_24px_34px_rgba(255,197,77,0.44)]"
-            fallbackClassName="scale-75"
+            className="relative h-[280px] w-[200px] border-amber-300/20 bg-transparent shadow-none sm:h-[340px] sm:w-[240px]"
+            imgClassName="p-0 object-contain drop-shadow-[0_40px_54px_rgba(255,197,77,0.55)] scale-110"
+            fallbackClassName="scale-125"
           />
         </div>
       </div>
@@ -221,6 +247,7 @@ function CompetitionTile({
   onSelect,
   index,
   assetName,
+  nextMatch,
 }: {
   championship: Championship;
   bolaoCount: number;
@@ -228,11 +255,17 @@ function CompetitionTile({
   onSelect: () => void;
   index: number;
   assetName?: string;
+  nextMatch?: MatchFeedItem | null;
 }) {
   const { t } = useTranslation("championships");
   const display = getDisplayName(championship);
-  const accent = championship.color;
   const assetSrc = assetName ? getArenaAssetSrc(assetName) : null;
+  const bg = CHAMPIONSHIP_CARD_BG[championship.id] ?? {
+    from: championship.gradient[0],
+    to: championship.gradient[1],
+    border: "rgba(255,255,255,0.12)",
+    accent: championship.color,
+  };
 
   return (
     <motion.button
@@ -241,77 +274,84 @@ function CompetitionTile({
       transition={{ delay: 0.05 + index * 0.035, duration: 0.3, ease: "easeOut" }}
       onClick={onSelect}
       className={cn(
-        "group relative min-h-[132px] overflow-hidden rounded-[22px] border text-left transition-all duration-300 sm:min-h-[148px]",
+        "group relative overflow-hidden rounded-[20px] border text-left transition-all duration-300",
         isSelected
-          ? "border-white/28 shadow-[0_0_0_1px_rgba(255,255,255,0.08)_inset,0_18px_44px_-24px_rgba(0,0,0,0.92)]"
-          : "border-white/12 hover:border-white/22 hover:translate-y-[-1px]"
+          ? "shadow-[0_0_0_1px_rgba(255,255,255,0.08)_inset,0_18px_44px_-24px_rgba(0,0,0,0.92)]"
+          : "hover:translate-y-[-1px]"
       )}
       style={{
-        background: [
-          "linear-gradient(180deg, rgba(255,255,255,0.04), transparent 28%)",
-          "radial-gradient(circle at 15% 0%, rgba(255,255,255,0.04), transparent 28%)",
-          `linear-gradient(135deg, ${championship.gradient[0]}, ${championship.gradient[1]})`,
-        ].join(","),
+        background: `linear-gradient(135deg, ${bg.from}, ${bg.to})`,
+        borderColor: isSelected ? `${bg.accent}55` : `${bg.border}88`,
         boxShadow: isSelected
-          ? `0 0 0 1px ${accent}35 inset, 0 16px 34px -20px rgba(0,0,0,0.9)`
+          ? `0 0 0 1px ${bg.accent}35 inset, 0 16px 34px -20px rgba(0,0,0,0.9)`
           : `0 14px 30px -22px rgba(0,0,0,0.92)`,
       }}
     >
-      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.02),transparent_42%)]" />
+      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),transparent_42%)]" />
 
-      <div className="relative z-10 grid h-full grid-cols-[minmax(0,1fr)_104px] gap-2 p-3.5 sm:grid-cols-[minmax(0,1fr)_118px]">
-        <div className="flex min-w-0 flex-col">
-          <div className="mb-2">
-            <StatusPill status={championship.status} />
-          </div>
-
-          <div className="min-w-0">
-            <p className="truncate font-display text-[0.92rem] font-semibold uppercase tracking-[0.06em] text-white/58">
-              {(championship.confederation ?? championship.country ?? "").toUpperCase()} <span className="text-white/28">•</span> {championship.season}
-            </p>
-            <h2 className="mt-1 line-clamp-2 font-sans text-[1.45rem] font-bold leading-[0.95] tracking-[-0.04em] text-white sm:text-[1.6rem]">
-              {display.title}
-            </h2>
-            {display.subtitle ? (
-              <p className="mt-1 truncate font-sans text-sm font-medium leading-none text-white/78">
-                {display.subtitle}
-              </p>
-            ) : null}
-          </div>
-
-          <div className="mt-auto flex items-center justify-between gap-2 pt-3">
-            <div className="flex min-w-0 items-center gap-2 text-[1rem] text-white/82">
-              <Users className="h-4 w-4 shrink-0" />
-              <span className="truncate font-sans text-sm font-medium">{getPoolLabel(bolaoCount, t)}</span>
-            </div>
-            <ChevronRight className="h-5 w-5 shrink-0 text-white/48 transition group-hover:translate-x-0.5 group-hover:text-white/78" />
-          </div>
-        </div>
-
-        <div className="relative flex items-center justify-end overflow-visible">
-          <div className="absolute inset-y-0 -right-10 w-[150px] bg-[radial-gradient(circle_at_50%_46%,rgba(255,255,255,0.13),transparent_52%)] blur-lg" />
-          <div className="relative flex h-[108px] w-[104px] items-center justify-center overflow-visible sm:h-[124px] sm:w-[118px]">
+      <div className="relative z-10 flex h-full items-center gap-3 p-3 sm:gap-3.5 sm:p-3.5">
+        {/* Left: Logo image column */}
+        <div className="flex shrink-0 items-center justify-center">
+          <div className="relative flex h-16 w-16 items-center justify-center sm:h-20 sm:w-20">
             {assetName ? (
               <ArenaAssetSlot
                 name={assetName}
                 label={display.title}
                 src={assetSrc}
                 variant="cutout"
-                className="h-[108px] w-[104px] bg-transparent shadow-none sm:h-[124px] sm:w-[118px]"
-                imgClassName="p-0 object-contain drop-shadow-[0_16px_24px_rgba(0,0,0,0.36)]"
-                fallbackClassName="scale-[0.68]"
+                className="absolute h-[110px] w-[110px] bg-transparent shadow-none sm:h-[130px] sm:w-[130px]"
+                imgClassName="p-0 object-contain drop-shadow-[0_12px_24px_rgba(0,0,0,0.7)] scale-110"
+                fallbackClassName="scale-125"
               />
             ) : championship.logoUrl ? (
               <img
                 src={championship.logoUrl}
                 alt={championship.name}
-                className="h-[104px] w-[104px] object-contain drop-shadow-[0_10px_18px_rgba(0,0,0,0.28)]"
+                className="absolute h-[100px] w-[100px] object-contain drop-shadow-[0_12px_24px_rgba(0,0,0,0.7)] scale-110 sm:h-[120px] sm:w-[120px]"
               />
             ) : (
-              <span className="text-5xl">{championship.logo}</span>
+              <span className="text-3xl sm:text-4xl">{championship.logo}</span>
             )}
           </div>
         </div>
+
+        {/* Right: Info — tight vertical packing */}
+        <div className="flex min-w-0 flex-1 flex-col justify-center">
+          <p className="text-[10px] font-medium text-white/40">
+            {(championship.confederation ?? championship.country ?? "").toUpperCase()} <span className="text-white/20">•</span> {championship.season}
+          </p>
+          <h2 className="mt-0 font-sans text-[1.05rem] font-bold leading-[1.15] tracking-[-0.02em] text-white sm:text-[1.15rem]">
+            {display.title}
+          </h2>
+          {display.subtitle ? (
+            <p className="mt-0 font-sans text-[0.75rem] font-medium leading-[1.2] text-white/55">
+              {display.subtitle}
+            </p>
+          ) : null}
+
+          {nextMatch && (
+            <div className="mt-1 flex items-center gap-1.5 overflow-hidden">
+              <div className="flex items-center gap-1 rounded-full bg-black/20 px-1.5 py-0.5 text-[0.65rem] font-bold text-white/70 shadow-inner">
+                {nextMatch.status === "live" ? (
+                  <Radio className="h-2.5 w-2.5 animate-pulse text-green-400" />
+                ) : (
+                  <CalendarDays className="h-2.5 w-2.5 text-white/40" />
+                )}
+                <span className="truncate">
+                  {nextMatch.homeTeamCode} <span className="text-white/30">×</span> {nextMatch.awayTeamCode}
+                </span>
+              </div>
+            </div>
+          )}
+
+          <div className="mt-1.5 flex items-center gap-1 text-white/50">
+            <Users className="h-3 w-3 shrink-0" />
+            <span className="font-sans text-[0.75rem] font-medium">{getPoolLabel(bolaoCount, t)}</span>
+          </div>
+        </div>
+
+        {/* Chevron */}
+        <ChevronRight className="h-4 w-4 shrink-0 text-white/25 transition group-hover:translate-x-0.5 group-hover:text-white/50" />
       </div>
     </motion.button>
   );
@@ -334,6 +374,16 @@ export default function Campeonatos() {
       return normalizedLeft - normalizedRight || left.name.localeCompare(right.name);
     });
   }, [all]);
+
+  const { data: allMatches } = useDashboardMatches();
+
+  const getNextMatch = (championshipId: string) => {
+    return allMatches.find(
+      (m) =>
+        m.championshipId === championshipId &&
+        (m.status === "live" || m.status === "scheduled")
+    );
+  };
 
   const { data: bolaoCountsMap = {} } = useQuery({
     queryKey: ["championship-bolao-counts", user?.id],
@@ -386,13 +436,13 @@ export default function Campeonatos() {
           transition={{ duration: 0.28 }}
           className="mb-5"
         >
-          <p className="font-display text-[1.45rem] font-semibold uppercase tracking-[0.22em] text-primary">
+          <p className="font-display text-[1.1rem] font-semibold uppercase tracking-[0.22em] text-primary">
             {t("header.kicker")}
           </p>
-          <h1 className="mt-2 font-display text-[4rem] font-semibold uppercase leading-[0.84] tracking-[0.03em] text-white sm:text-[5rem]">
+          <h1 className="mt-1 font-display text-[3.2rem] font-semibold uppercase leading-[0.88] tracking-[0.03em] text-white sm:text-[4rem]">
             {t("header.title")}
           </h1>
-          <p className="mt-2 font-sans text-[1.3rem] font-medium text-zinc-300">
+          <p className="mt-2 font-sans text-[1.1rem] font-medium text-zinc-400">
             Escolha seu campeonato
           </p>
         </motion.section>
@@ -402,13 +452,14 @@ export default function Campeonatos() {
           bolaoCount={bolaoCountsMap[copa.id] ?? 0}
           isSelected={current.id === copa.id}
           onSelect={() => handleSelect(copa)}
+          nextMatch={getNextMatch(copa.id)}
         />
 
         <motion.section
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.08, duration: 0.3 }}
-          className="mt-5 grid grid-cols-1 gap-4 sm:grid-cols-2"
+          className="mt-5 grid grid-cols-2 gap-3 sm:gap-4"
         >
           {leagueCards.map((championship, index) => (
             <CompetitionTile
@@ -419,6 +470,7 @@ export default function Campeonatos() {
               onSelect={() => handleSelect(championship)}
               index={index}
               assetName={LEAGUE_ASSET_FILENAME_BY_ID[championship.id]}
+              nextMatch={getNextMatch(championship.id)}
             />
           ))}
         </motion.section>
@@ -427,7 +479,7 @@ export default function Campeonatos() {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.22 }}
-          className="mt-6 text-center font-display text-[1rem] font-semibold uppercase tracking-[0.2em] text-zinc-500"
+          className="mt-6 text-center font-display text-[0.9rem] font-semibold uppercase tracking-[0.2em] text-zinc-600"
         >
           {t("footer_tip")}
         </motion.p>

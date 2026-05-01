@@ -22,7 +22,7 @@ export function RewardProgressCard({
           <Flag className="h-8 w-8" />
         </div>
         <div className="min-w-0">
-          <p className="font-display text-[1.8rem] font-semibold uppercase leading-none text-white">
+          <p className="truncate font-display text-[1.8rem] font-semibold uppercase leading-none text-white">
             {rewardLabel}
           </p>
           <p className="mt-1 flex items-center gap-2 text-lg font-bold text-zinc-300">

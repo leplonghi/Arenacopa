@@ -9,9 +9,9 @@ const opportunities: Opportunity[] = [
     id: "predict-now",
     type: "predict_now",
     priority: 100,
-    title: "Palpites pendentes",
+    title: "Chutes pendentes",
     description: "Resolva os jogos abertos.",
-    ctaLabel: "Marcar palpites",
+    ctaLabel: "Marcar chutes",
     ctaRoute: "/boloes/bolao-1",
   },
   {

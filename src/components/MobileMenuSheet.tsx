@@ -25,15 +25,15 @@ export function MobileMenuSheet({ children }: { children: React.ReactNode }) {
           <div className="grid gap-2">
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-1">{t('menu.account', 'Minha Conta')}</h3>
             <MenuLink to="/perfil" icon={<User className="w-5 h-5" />} label={t('nav.profile', 'Perfil')} onClick={() => setOpen(false)} />
-            <MenuLink to="/noticias" icon={<Bell className="w-5 h-5" />} label={t('nav.news', 'Avisos & Notícias')} onClick={() => setOpen(false)} />
             <MenuLink to="/ranking" icon={<Trophy className="w-5 h-5" />} label="Ranking Geral" onClick={() => setOpen(false)} />
+            <MenuLink to="/guia" icon={<Star className="w-5 h-5" />} label="Guia da Copa" onClick={() => setOpen(false)} />
             <MenuLink to="/premium" icon={<Star className="w-5 h-5 text-yellow-500" />} label="Arena Premium" onClick={() => setOpen(false)} />
           </div>
 
           <div className="grid gap-2">
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-1">Comunidades</h3>
-            <MenuLink to="/comunidades" icon={<Users2 className="w-5 h-5" />} label="Comunidades" onClick={() => setOpen(false)} />
-            <MenuLink to="/comunidades/criar" icon={<PlusCircle className="w-5 h-5" />} label="Criar comunidade" onClick={() => setOpen(false)} />
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-1">Grupos</h3>
+            <MenuLink to="/grupos" icon={<Users2 className="w-5 h-5" />} label="Comunidades" onClick={() => setOpen(false)} />
+            <MenuLink to="/grupos/criar" icon={<PlusCircle className="w-5 h-5" />} label="Criar grupo" onClick={() => setOpen(false)} />
           </div>
 
           <div className="grid gap-2">

@@ -60,28 +60,7 @@ export function ChavesTab() {
           "border border-white/[0.1]",
           "backdrop-blur-lg"
         )}>
-          {/* Decorative bracket lines in background */}
           <div className="absolute inset-0 pointer-events-none opacity-[0.04]">
-            <svg className="w-full h-full" viewBox="0 0 400 200">
-              {/* Simplified bracket silhouette */}
-              <line x1="40" y1="40" x2="120" y2="40" stroke="white" strokeWidth="2" />
-              <line x1="40" y1="80" x2="120" y2="80" stroke="white" strokeWidth="2" />
-              <line x1="120" y1="40" x2="120" y2="80" stroke="white" strokeWidth="2" />
-              <line x1="120" y1="60" x2="200" y2="60" stroke="white" strokeWidth="2" />
-              <line x1="40" y1="120" x2="120" y2="120" stroke="white" strokeWidth="2" />
-              <line x1="40" y1="160" x2="120" y2="160" stroke="white" strokeWidth="2" />
-              <line x1="120" y1="120" x2="120" y2="160" stroke="white" strokeWidth="2" />
-              <line x1="120" y1="140" x2="200" y2="140" stroke="white" strokeWidth="2" />
-              <line x1="200" y1="60" x2="200" y2="140" stroke="white" strokeWidth="2" />
-              <line x1="200" y1="100" x2="280" y2="100" stroke="white" strokeWidth="2" />
-              {/* Mirror side */}
-              <line x1="360" y1="40" x2="280" y2="40" stroke="white" strokeWidth="2" />
-              <line x1="360" y1="80" x2="280" y2="80" stroke="white" strokeWidth="2" />
-              <line x1="280" y1="40" x2="280" y2="80" stroke="white" strokeWidth="2" />
-              <line x1="360" y1="120" x2="280" y2="120" stroke="white" strokeWidth="2" />
-              <line x1="360" y1="160" x2="280" y2="160" stroke="white" strokeWidth="2" />
-              <line x1="280" y1="120" x2="280" y2="160" stroke="white" strokeWidth="2" />
-            </svg>
           </div>
 
           <motion.div

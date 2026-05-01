@@ -10,7 +10,8 @@ export type AppNavIconKey =
   | "discover"
   | "groups"
   | "profile"
-  | "menu";
+  | "menu"
+  | "ranking";
 
 export type AppNavItem = {
   path: string;
@@ -37,14 +38,18 @@ export const appNavigationItems: AppNavItem[] = [
   { path: "/", labelKey: "nav.home", iconKey: "home", mobile: true, desktop: true },
   { path: "/campeonatos", labelKey: "nav.championships", iconKey: "championships", mobile: true, desktop: true },
   { path: "/boloes", labelKey: "nav.bolao", iconKey: "bolao", mobile: true, desktop: true, isFab: true },
-  ...(isFeatureEnabled("discoverEnabled")
-    ? [{ path: "/descobrir", labelKey: "nav.discover", iconKey: "discover", mobile: true, desktop: true } satisfies AppNavItem]
-    : []),
+  { path: "/noticias", labelKey: "nav.news", iconKey: "news", mobile: true, desktop: true },
+  // Ranking is accessible via overflow menu and bolão detail tabs — not a primary nav action
+  { path: "/ranking", labelKey: "nav.ranking", iconKey: "ranking", mobile: false, desktop: true },
   { path: "#menu", labelKey: "nav.menu", iconKey: "menu", mobile: true },
-  // Desktop only or inside menu
+  // Desktop sidebar + overflow menu
+  ...(isFeatureEnabled("discoverEnabled")
+    ? [{ path: "/descobrir", labelKey: "nav.discover", iconKey: "discover", desktop: true } satisfies AppNavItem]
+    : []),
   { path: "/grupos", labelKey: "nav.groups", iconKey: "groups", desktop: true },
   { path: "/copa", labelKey: "nav.copa", iconKey: "copa", desktop: true },
-  { path: "/noticias", labelKey: "nav.news", iconKey: "news", desktop: true },
+  // Notícias moved to mobile bottom nav — high engagement content surface
+  // { path: "/noticias", labelKey: "nav.news", iconKey: "news", desktop: true },
   { path: "/perfil", labelKey: "nav.profile", iconKey: "profile", desktop: true },
 ];
 

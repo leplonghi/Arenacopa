@@ -216,7 +216,7 @@ export default function Ranking() {
           eyebrow={t('page_label')}
           title={t('page_title')}
           action={
-            <div className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 font-display text-lg font-bold uppercase text-zinc-200">
+            <div className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-base font-semibold text-zinc-200">
               Temporada 2026
             </div>
           }
@@ -241,7 +241,7 @@ export default function Ranking() {
           <div className="space-y-4">
             <ArenaPanel className="p-5">
               <p className="arena-kicker text-primary">Recorte da temporada</p>
-              <h3 className="mt-2 font-display text-[2rem] font-semibold uppercase leading-[0.92] text-white">
+              <h3 className="mt-2 text-[1.75rem] font-bold leading-tight text-white">
                 Competição global com foco no seu progresso
               </h3>
               <p className="mt-2 text-sm leading-6 text-zinc-400">
@@ -289,7 +289,7 @@ export default function Ranking() {
         <div className="mb-4 flex items-end justify-between gap-4">
           <div className="flex items-center gap-2">
             <Award className="h-4 w-4 text-primary" />
-            <h2 className="font-display text-2xl font-black uppercase tracking-[0.08em] text-white">
+            <h2 className="text-2xl font-bold tracking-normal text-white">
               {t('overall_title')}
             </h2>
           </div>

@@ -1,5 +1,5 @@
 /** Production URL — the single source of truth for all external share links. */
-const PRODUCTION_URL = 'https://arenacopa.app';
+const PRODUCTION_URL = 'https://arenacopa-web-2026.web.app';
 
 /**
  * Returns the current app origin.

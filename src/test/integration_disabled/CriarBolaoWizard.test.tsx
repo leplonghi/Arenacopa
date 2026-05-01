@@ -127,7 +127,7 @@ describe("CriarBolao wizard", () => {
     expect(screen.getByRole("button", { name: "Para quem: Aberto por link" })).toBeInTheDocument();
     expect(screen.getByText("Criar bolão")).toBeInTheDocument();
     expect(screen.getByText("Convidar participantes")).toBeInTheDocument();
-    expect(screen.getByText("Dar palpites")).toBeInTheDocument();
+    expect(screen.getByText("Dar chutes")).toBeInTheDocument();
     expect(screen.getByText("Ver ranking")).toBeInTheDocument();
     expect(screen.getByText(/10 pontos para placar exato/i)).toBeInTheDocument();
   });

@@ -8,7 +8,7 @@ import {
 describe("bolao share helpers", () => {
   it("builds a production invite URL with an action hint for direct joining", () => {
     expect(buildBolaoInviteUrl("abc123")).toBe(
-      "https://arenacopa.app/b/ABC123?action=join&utm_source=whatsapp&utm_medium=share&utm_campaign=bolao_invite",
+      "https://arenacopa-web-2026.web.app/b/ABC123?action=join&utm_source=whatsapp&utm_medium=share&utm_campaign=bolao_invite",
     );
   });
 
@@ -16,13 +16,13 @@ describe("bolao share helpers", () => {
     const message = buildBolaoWhatsAppMessage({
       name: "Mesa do Bar do Edu",
       inviteCode: "abc123",
-      inviteUrl: "https://arenacopa.app/b/ABC123?action=join",
+      inviteUrl: "https://arenacopa-web-2026.web.app/b/ABC123?action=join",
       context: "bar",
     });
 
     expect(message).toContain("Mesa do Bar do Edu");
     expect(message).toContain("Codigo: ABC123");
-    expect(message).toContain("https://arenacopa.app/b/ABC123?action=join");
+    expect(message).toContain("https://arenacopa-web-2026.web.app/b/ABC123?action=join");
     expect(message).toContain("1. Toque no link");
     expect(message).toContain("2. Entre ou crie sua conta");
     expect(message).toContain("3. Confirme sua entrada no bolao");

@@ -1,420 +1,493 @@
-import { useEffect, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { Compass, Loader2, Megaphone, Newspaper, Trophy, Users2 } from "lucide-react";
-import { ArenaPanel, ArenaSectionHeader } from "@/components/arena/ArenaPrimitives";
-import { EmptyState } from "@/components/EmptyState";
-import { OpportunityRail } from "@/components/opportunities/OpportunityRail";
-import { cn } from "@/lib/utils";
-import { useOpportunities } from "@/hooks/useOpportunities";
-import { listUserBoloes, type BolaoListingCard } from "@/services/boloes/bolao-listing.service";
+import { useTranslation, Trans } from "react-i18next";
+import { useEffect, useMemo, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import {
-  listDiscoverCommercialCampaigns,
-  type DiscoverCommercialCampaign,
-} from "@/services/commercial/commercial-discovery.service";
-import { useRealtimeNews } from "@/hooks/useRealtimeNews";
+  Award,
+  ChevronRight,
+  Radio,
+  Trophy,
+  Users,
+  Zap,
+} from "lucide-react";
+import { collection, getDocs, orderBy, query } from "firebase/firestore";
+import { db } from "@/integrations/firebase/client";
+import { cn } from "@/lib/utils";
+import { ArenaMetric, ArenaPanel, ArenaSectionHeader } from "@/components/arena/ArenaPrimitives";
+import { RankingListRow } from "@/components/ranking/RankingListRow";
+import { EmptyState } from "@/components/EmptyState";
+import { useAuth } from "@/contexts/AuthContext";
+import { useChampionship } from "@/contexts/ChampionshipContext";
+import { useDashboardMatches } from "@/hooks/useDashboardMatches";
+import { getPublicProfilesByIds } from "@/services/profile/profile.service";
+import { listUserBoloes, type BolaoListingCard } from "@/services/boloes/bolao-listing.service";
+import { getArenaLevel } from "@/lib/profile-level";
 
-type DiscoverCard = {
-  title: string;
-  description: string;
-  href: string;
-  cta: string;
-  icon: React.ComponentType<{ className?: string }>;
+// ─── Types ─────────────────────────────────────────────────────────────────
+
+type UserStanding = {
+  userId: string;
+  name: string;
+  avatar: string;
+  points: number;
 };
 
-const discoverCards: DiscoverCard[] = [
-  {
-    title: "Bolões",
-    description: "Encontre bolões ativos, volte para os seus favoritos e descubra novas disputas.",
-    href: "/descobrir/boloes",
-    cta: "Explorar bolões",
-    icon: Trophy,
-  },
-  {
-    title: "Campanhas",
-    description: "Veja campanhas e benefícios criados por negócios parceiros para dias de jogo.",
-    href: "/descobrir/campanhas",
-    cta: "Ver campanhas",
-    icon: Megaphone,
-  },
-  {
-    title: "Rankings",
-    description: "Acompanhe disputas, evolução de participantes e destaques da comunidade.",
-    href: "/descobrir/rankings",
-    cta: "Abrir rankings",
-    icon: Users2,
-  },
-  {
-    title: "Conteúdo",
-    description: "Notícias e informações úteis para acompanhar campeonatos sem perder contexto.",
-    href: "/noticias",
-    cta: "Ler conteúdo",
-    icon: Newspaper,
-  },
-];
+// ─── Fade-in animation variant ─────────────────────────────────────────────
 
-const sectionLabels: Record<string, string> = {
-  "/descobrir": "Para você",
-  "/descobrir/boloes": "Bolões",
-  "/descobrir/locais": "Locais",
-  "/descobrir/campanhas": "Campanhas",
-  "/descobrir/rankings": "Rankings",
+const item = {
+  hidden: { opacity: 0, y: 14 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.28, ease: "easeOut" } },
 };
 
-export default function Descobrir() {
-  const location = useLocation();
-  const currentSection = sectionLabels[location.pathname] ?? "Para você";
-  const [loadingPools, setLoadingPools] = useState(true);
-  const [loadingCampaigns, setLoadingCampaigns] = useState(true);
-  const [discoverBoloes, setDiscoverBoloes] = useState<BolaoListingCard[]>([]);
-  const [campaigns, setCampaigns] = useState<DiscoverCommercialCampaign[]>([]);
-  const { news, isLoading: loadingNews } = useRealtimeNews({ limitCount: 3 });
-  const opportunities = useOpportunities({
-    activeBoloes: [],
-    campaigns,
-    surface: "descobrir",
-  });
+const container = {
+  hidden: {},
+  show: { transition: { staggerChildren: 0.07 } },
+};
 
-  useEffect(() => {
-    let cancelled = false;
+// ─── Live Match Pill ───────────────────────────────────────────────────────
 
-    async function loadPools() {
-      setLoadingPools(true);
-      try {
-        const listing = await listUserBoloes();
-        if (!cancelled) {
-          setDiscoverBoloes(listing.discoverBoloes.slice(0, 6));
-        }
-      } catch {
-        if (!cancelled) {
-          setDiscoverBoloes([]);
-        }
-      } finally {
-        if (!cancelled) {
-          setLoadingPools(false);
-        }
-      }
-    }
-
-    void loadPools();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function loadCampaigns() {
-      setLoadingCampaigns(true);
-      try {
-        const nextCampaigns = await listDiscoverCommercialCampaigns({ limitCount: 6 });
-        if (!cancelled) {
-          setCampaigns(nextCampaigns);
-        }
-      } catch {
-        if (!cancelled) {
-          setCampaigns([]);
-        }
-      } finally {
-        if (!cancelled) {
-          setLoadingCampaigns(false);
-        }
-      }
-    }
-
-    void loadCampaigns();
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+function LiveMatchPill({
+  home,
+  away,
+  homeScore,
+  awayScore,
+  status,
+  matchDate,
+  onClick,
+}: {
+  home: string;
+  away: string;
+  homeScore: number | null;
+  awayScore: number | null;
+  status: string;
+  matchDate: string;
+  onClick: () => void;
+}) {
+  const { t } = useTranslation('arena');
+  const isLive = status === "live";
+  const kickoff = useMemo(() => {
+    const d = new Date(matchDate);
+    return d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  }, [matchDate]);
 
   return (
-    <div className="space-y-6 px-4 py-4 md:px-6">
-      <ArenaPanel tone="strong" className="space-y-5">
-        <ArenaSectionHeader
-          eyebrow="ArenaCup"
-          title="Descobrir"
-          hint="A nova área de descoberta reúne caminhos seguros para bolões, campanhas, rankings e conteúdo sem alterar os fluxos antigos."
-        />
-        <div className="flex flex-wrap items-center gap-2">
-          {Object.entries(sectionLabels).map(([href, label]) => (
-            <Link
-              key={href}
-              to={href}
-              className={cn(
-                "min-w-0 whitespace-normal rounded-full border px-3 py-2 text-center text-sm font-semibold leading-tight transition-colors",
-                currentSection === label
-                  ? "border-primary/45 bg-primary/15 text-primary"
-                  : "border-white/10 bg-white/[0.04] text-zinc-300 hover:border-white/20 hover:text-white",
+    <button
+      onClick={onClick}
+      className={cn(
+        "group flex min-h-[72px] w-full items-center justify-between gap-3 rounded-[22px] border px-4 py-3 text-left transition-all",
+        isLive
+          ? "border-green-500/35 bg-green-500/[0.06] hover:bg-green-500/[0.1]"
+          : "border-white/10 bg-white/[0.035] hover:border-white/20 hover:bg-white/[0.06]",
+      )}
+    >
+      {/* Status badge */}
+      <div className="shrink-0">
+        {isLive ? (
+          <span className="flex items-center gap-1.5 rounded-full border border-green-500/30 bg-green-950/60 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-green-400">
+            <Radio className="h-2.5 w-2.5 animate-pulse" />
+            {t('matches.status.live')}
+          </span>
+        ) : (
+          <span className="text-[11px] font-black uppercase tracking-[0.14em] text-zinc-500">
+            {kickoff}
+          </span>
+        )}
+      </div>
+
+      {/* Match */}
+      <div className="flex flex-1 items-center justify-center gap-3 text-sm font-semibold text-white">
+        <span className="min-w-[2.5rem] text-right">{home}</span>
+        {isLive || status === "finished" ? (
+          <span className="rounded-[10px] border border-white/15 bg-white/10 px-2.5 py-0.5 text-lg font-black tabular-nums">
+            {homeScore ?? "?"} — {awayScore ?? "?"}
+          </span>
+        ) : (
+          <span className="text-zinc-500">vs</span>
+        )}
+        <span className="min-w-[2.5rem] text-left">{away}</span>
+      </div>
+
+      {/* Arrow */}
+      <ChevronRight className="h-4 w-4 shrink-0 text-zinc-600 transition group-hover:translate-x-0.5 group-hover:text-white/50" />
+    </button>
+  );
+}
+
+// ─── Open Bolão Card ───────────────────────────────────────────────────────
+
+function OpenBolaoCard({ bolao }: { bolao: BolaoListingCard }) {
+  const { t } = useTranslation('arena');
+  return (
+    <motion.article variants={item} className="flex flex-col justify-between rounded-[22px] border border-white/10 bg-white/[0.035] p-4 transition hover:border-primary/25 hover:bg-primary/[0.05]">
+      <div>
+        <p className="text-lg font-semibold leading-tight text-white">
+          {bolao.name}
+        </p>
+        {bolao.description ? (
+          <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-zinc-400">
+            {bolao.description}
+          </p>
+        ) : null}
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-zinc-400">
+            {bolao.is_paid ? t('open_boloes.card.paid') : t('open_boloes.card.free')}
+          </span>
+          <span className="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-primary">
+            {bolao.status}
+          </span>
+        </div>
+      </div>
+      <Link
+        to={`/b/${bolao.invite_code}`}
+        aria-label={t('open_boloes.card.cta') + " " + bolao.name}
+        className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-[16px] bg-primary px-4 py-3 text-[11px] font-black uppercase tracking-[0.12em] text-black transition hover:brightness-105 active:scale-95"
+      >
+        <Zap className="h-3.5 w-3.5" />
+        {t('open_boloes.card.cta')}
+      </Link>
+    </motion.article>
+  );
+}
+
+// ─── Main page ─────────────────────────────────────────────────────────────
+
+export default function Descobrir() {
+  const { t } = useTranslation('arena');
+  const navigate = useNavigate();
+  const { user } = useAuth();
+  const { current: championship } = useChampionship();
+  const { data: allMatches, isLoading: matchesLoading } = useDashboardMatches();
+
+  // ── Live / upcoming matches filtered to current championship ──────────────
+  const relevantMatches = useMemo(() => {
+    return allMatches
+      .filter(
+        (m) =>
+          (m.status === "live" || m.status === "upcoming") &&
+          m.championshipId === championship.id,
+      )
+      .slice(0, 5);
+  }, [allMatches, championship.id]);
+
+  // ── Open bolões (public, user not yet member) ─────────────────────────────
+  const [openBoloes, setOpenBoloes] = useState<BolaoListingCard[]>([]);
+  const [boloesLoading, setBoloesLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    setBoloesLoading(true);
+    listUserBoloes()
+      .then((result) => {
+        if (!cancelled) {
+          setOpenBoloes(result.discoverBoloes.slice(0, 6));
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setOpenBoloes([]);
+      })
+      .finally(() => {
+        if (!cancelled) setBoloesLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // ── Global ranking top 5 + my position ───────────────────────────────────
+  const [rankRows, setRankRows] = useState<UserStanding[]>([]);
+  const [rankLoading, setRankLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const snap = await getDocs(
+          query(collection(db, "bolao_rankings"), orderBy("total_points", "desc")),
+        );
+        const totals = new Map<string, number>();
+        snap.docs.forEach((d) => {
+          const uid = d.data().user_id as string;
+          totals.set(uid, (totals.get(uid) ?? 0) + ((d.data().total_points as number) ?? 0));
+        });
+        const sorted = [...totals.entries()]
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 8);
+        if (!sorted.length) {
+          if (!cancelled) setRankRows([]);
+          return;
+        }
+        const profileMap = await getPublicProfilesByIds(sorted.map(([id]) => id));
+        if (!cancelled) {
+          setRankRows(
+            sorted.map(([userId, points]) => {
+              const p = profileMap.get(userId);
+              return {
+                userId,
+                name: p?.name ?? p?.nickname ?? "Jogador",
+                avatar: p?.avatar_url ?? "",
+                points,
+              };
+            }),
+          );
+        }
+      } catch {
+        if (!cancelled) setRankRows([]);
+      } finally {
+        if (!cancelled) setRankLoading(false);
+      }
+    };
+    void load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const myRankPosition = useMemo(() => {
+    if (!user?.id) return null;
+    const idx = rankRows.findIndex((r) => r.userId === user.id);
+    return idx === -1 ? null : { rank: idx + 1, ...rankRows[idx] };
+  }, [rankRows, user?.id]);
+
+  // ─────────────────────────────────────────────────────────────────────────
+
+  return (
+    <div className="arena-screen space-y-5">
+      {/* Ambient glow */}
+      <div className="pointer-events-none fixed inset-x-0 top-0 z-0 h-[420px] bg-[radial-gradient(circle_at_50%_-8%,rgba(145,255,59,0.14),transparent_40%),radial-gradient(circle_at_80%_20%,rgba(255,197,77,0.08),transparent_30%)]" />
+
+      <motion.div
+        variants={container}
+        initial="hidden"
+        animate="show"
+        className="relative z-10 space-y-5"
+      >
+        {/* ── HEADER ─────────────────────────────────────────────────────── */}
+        <motion.div variants={item}>
+          <p className="arena-kicker text-primary">{t('eyebrow')}</p>
+          <h1 className="mt-1 text-[2.5rem] font-bold leading-tight text-white sm:text-[3.8rem]">
+            {t('title')}
+          </h1>
+          <p className="mt-2 text-sm leading-6 text-zinc-400">
+            {t('description')}
+          </p>
+        </motion.div>
+
+        {/* ── JOGOS AO VIVO / PRÓXIMOS ───────────────────────────────────── */}
+        <motion.div variants={item}>
+          <ArenaPanel className="p-5">
+            <ArenaSectionHeader
+              eyebrow={championship.name}
+              title={t('matches.title')}
+              action={
+                <button
+                  onClick={() =>
+                    navigate(
+                      championship.id === "wc2026"
+                        ? "/copa"
+                        : `/campeonato/${championship.id}`,
+                    )
+                  }
+                  className="inline-flex min-h-10 items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-4 text-sm font-bold text-white transition hover:bg-white/[0.07]"
+                >
+                  {t('matches.action')}
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              }
+            />
+
+            {matchesLoading ? (
+              <SkeletonRows count={3} />
+            ) : relevantMatches.length === 0 ? (
+              <EmptyState
+                icon="⚽"
+                title={t('matches.empty.title')}
+                description={t('matches.empty.description', { championship: championship.name })}
+                className="mt-4 rounded-[22px] border border-dashed border-white/10 bg-white/[0.03]"
+                glowColor="green"
+              />
+            ) : (
+              <div className="mt-4 space-y-2">
+                {relevantMatches.map((m) => (
+                  <LiveMatchPill
+                    key={m.id}
+                    home={m.homeTeamCode}
+                    away={m.awayTeamCode}
+                    homeScore={m.homeScore}
+                    awayScore={m.awayScore}
+                    status={m.status}
+                    matchDate={m.matchDate}
+                    onClick={() =>
+                      navigate(
+                        championship.id === "wc2026"
+                          ? "/copa"
+                          : `/campeonato/${championship.id}`,
+                      )
+                    }
+                  />
+                ))}
+              </div>
+            )}
+          </ArenaPanel>
+        </motion.div>
+
+        {/* ── RANKINGS ───────────────────────────────────────────────────── */}
+        <motion.div variants={item}>
+          <ArenaPanel className="p-5">
+            <ArenaSectionHeader
+              eyebrow="Temporada 2026"
+              title={t('rankings.title')}
+              action={
+                <Link
+                  to="/ranking"
+                  className="inline-flex min-h-10 items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-4 text-sm font-bold text-primary transition hover:bg-primary/15"
+                >
+                  {t('rankings.action')}
+                  <ChevronRight className="h-4 w-4" />
+                </Link>
+              }
+            />
+
+            {/* My position callout */}
+            {myRankPosition && (
+              <div className="mt-5 grid gap-3 sm:grid-cols-2">
+                <ArenaMetric
+                  label={t('rankings.my_position')}
+                  value={`${myRankPosition.rank}º`}
+                  accent
+                  icon={<Trophy className="h-5 w-5" />}
+                />
+                <ArenaMetric
+                  label={t('rankings.my_points')}
+                  value={myRankPosition.points.toLocaleString("pt-BR")}
+                  icon={<Award className="h-5 w-5" />}
+                />
+              </div>
+            )}
+
+            {/* Top players */}
+            <div className="mt-5 space-y-2">
+              {rankLoading ? (
+                <SkeletonRows count={5} />
+              ) : rankRows.length === 0 ? (
+                <EmptyState
+                  icon="🏆"
+                  title={t('rankings.empty.title')}
+                  description={t('rankings.empty.description')}
+                  className="rounded-[22px] border border-dashed border-white/10 bg-white/[0.03]"
+                  glowColor="gold"
+                />
+              ) : (
+                rankRows.map((row, idx) => (
+                  <RankingListRow
+                    key={row.userId}
+                    row={row}
+                    rank={idx + 1}
+                    level={getArenaLevel(row.points).level}
+                    isCurrentUser={row.userId === user?.id}
+                  />
+                ))
               )}
-            >
-              {label}
-            </Link>
-          ))}
-        </div>
-      </ArenaPanel>
+            </div>
 
-      <ArenaPanel className="space-y-5">
-        <ArenaSectionHeader
-          eyebrow="Caminhos rápidos"
-          title={currentSection}
-          action={
-            <Link
-              to="/boloes"
-              className="inline-flex min-h-11 items-center justify-center rounded-full border border-primary/30 bg-primary/10 px-4 text-sm font-bold text-primary transition hover:bg-primary/15"
-            >
-              Meus bolões
-            </Link>
-          }
-        />
-
-        <div className="grid gap-3 md:grid-cols-2">
-          {discoverCards.map((card) => {
-            const Icon = card.icon;
-            return (
-              <Link
-                key={card.href}
-                to={card.href}
-                className="group flex min-h-[154px] min-w-0 flex-col justify-between whitespace-normal rounded-[18px] border border-white/10 bg-white/[0.035] p-4 break-words transition [overflow-wrap:anywhere] hover:border-primary/35 hover:bg-primary/[0.06]"
-              >
-                <div className="flex items-start gap-3">
-                  <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-primary/25 bg-primary/10 text-primary">
-                    <Icon className="h-5 w-5" />
-                  </span>
-                  <div className="min-w-0">
-                    <h3 className="break-words font-display text-xl font-bold uppercase leading-tight tracking-[0.03em] text-white [overflow-wrap:anywhere]">
-                      {card.title}
-                    </h3>
-                    <p className="mt-2 text-sm leading-relaxed text-zinc-300">{card.description}</p>
-                  </div>
-                </div>
-                <span className="mt-4 inline-flex min-w-0 items-center gap-2 whitespace-normal text-sm font-bold leading-tight text-primary transition group-hover:translate-x-0.5">
-                  {card.cta}
-                </span>
-              </Link>
-            );
-          })}
-        </div>
-      </ArenaPanel>
-
-      <OpportunityRail opportunities={opportunities} title="Para você agora" />
-
-      <ArenaPanel className="space-y-5">
-        <ArenaSectionHeader
-          eyebrow="Bolões"
-          title="Bolões públicos"
-          hint="Cards vindos da mesma listagem pública usada em Bolões. Se não houver dados, a área fica em estado vazio."
-          action={
-            <Link
-              to="/boloes"
-              className="inline-flex min-h-11 min-w-0 items-center justify-center whitespace-normal rounded-full border border-white/10 bg-white/[0.04] px-4 text-center text-sm font-bold leading-tight text-white transition hover:bg-white/[0.07]"
-            >
-              Meus bolões
-            </Link>
-          }
-        />
-
-        {loadingPools ? (
-          <LoadingRow />
-        ) : discoverBoloes.length === 0 ? (
-          <EmptyState
-            icon="⚽"
-            title="Nenhum bolão público disponível agora"
-            description="Quando surgirem bolões abertos, eles aparecem aqui primeiro."
-            className="rounded-[22px] border border-dashed border-white/10 bg-white/[0.03]"
-            glowColor="green"
-          />
-        ) : (
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {discoverBoloes.map((bolao) => (
-              <article key={bolao.id} className="min-w-0 rounded-[20px] border border-white/10 bg-white/[0.04] p-4 break-words [overflow-wrap:anywhere]">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <h3 className="break-words font-display text-xl font-bold uppercase leading-tight tracking-[0.03em] text-white [overflow-wrap:anywhere]">
-                      {bolao.name}
-                    </h3>
-                    {bolao.description ? (
-                      <p className="mt-2 line-clamp-2 text-sm leading-6 text-zinc-300">{bolao.description}</p>
-                    ) : null}
-                  </div>
-                  <Trophy className="h-5 w-5 shrink-0 text-primary" />
-                </div>
-                <div className="mt-4 flex flex-wrap gap-2 text-[11px] font-black uppercase tracking-[0.14em]">
-                  <span className="rounded-full border border-white/10 bg-white/[0.04] px-3 py-1">
-                    {bolao.status}
-                  </span>
-                  <span className="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-primary">
-                    {bolao.is_paid ? "Pago" : "Grátis"}
-                  </span>
-                </div>
-                <Link
-                  to={`/b/${bolao.invite_code}`}
-                  aria-label={`Entrar no bolão ${bolao.name}`}
-                  className="mt-4 inline-flex w-full min-w-0 items-center justify-center whitespace-normal rounded-[16px] bg-primary px-4 py-3 text-center text-[11px] font-black uppercase leading-tight tracking-[0.12em] text-black transition hover:brightness-105"
-                >
-                  Entrar
-                </Link>
-              </article>
-            ))}
-          </div>
-        )}
-      </ArenaPanel>
-
-      <ArenaPanel className="space-y-5">
-        <ArenaSectionHeader
-          eyebrow="Campanhas"
-          title="Campanhas oficiais"
-          hint="Campanhas publicadas existentes em commercial_campaigns. Nenhuma regra comercial nova é criada nesta etapa."
-          action={
-            <Link
-              to="/negocios"
-              className="inline-flex min-h-11 min-w-0 items-center justify-center whitespace-normal rounded-full border border-white/10 bg-white/[0.04] px-4 text-center text-sm font-bold leading-tight text-white transition hover:bg-white/[0.07]"
-            >
-              Negócios
-            </Link>
-          }
-        />
-
-        {loadingCampaigns ? (
-          <LoadingRow />
-        ) : campaigns.length === 0 ? (
-          <EmptyState
-            icon="🎟️"
-            title="Nenhuma campanha disponível agora"
-            description="Campanhas publicadas por negócios parceiros aparecem aqui."
-            className="rounded-[22px] border border-dashed border-white/10 bg-white/[0.03]"
-            glowColor="gold"
-          />
-        ) : (
-          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-            {campaigns.map((campaign) => (
-              <article key={campaign.id} className="min-w-0 rounded-[20px] border border-white/10 bg-white/[0.04] p-4 break-words [overflow-wrap:anywhere]">
-                <p className="break-words text-[11px] font-black uppercase leading-tight tracking-[0.12em] text-primary [overflow-wrap:anywhere]">
-                  {campaign.merchantName}
+            {/* Competitive summary */}
+            {!rankLoading && rankRows.length > 0 && (
+              <div className="mt-4 flex items-center gap-2 rounded-[18px] border border-white/10 bg-white/[0.03] px-4 py-3">
+                <Users className="h-4 w-4 shrink-0 text-zinc-500" />
+                <p className="text-sm text-zinc-400">
+                  <Trans i18nKey="rankings.summary" ns="arena" values={{ count: rankRows.length }}>
+                    <span className="font-bold text-white">{{count}}</span> jogadores no ranking geral desta temporada.
+                  </Trans>
                 </p>
-                <h3 className="mt-2 break-words font-display text-xl font-bold uppercase leading-tight tracking-[0.03em] text-white [overflow-wrap:anywhere]">
-                  {campaign.title}
-                </h3>
-                <p className="mt-2 line-clamp-2 text-sm leading-6 text-zinc-300">{campaign.benefitSummary}</p>
-                {campaign.city || campaign.neighborhood ? (
-                  <p className="mt-3 text-xs font-semibold text-zinc-500">
-                    {[campaign.neighborhood, campaign.city].filter(Boolean).join(" • ")}
-                  </p>
-                ) : null}
+              </div>
+            )}
+          </ArenaPanel>
+        </motion.div>
+
+        {/* ── BOLÕES ABERTOS ─────────────────────────────────────────────── */}
+        <motion.div variants={item}>
+          <ArenaPanel className="p-5">
+            <ArenaSectionHeader
+              eyebrow={t('open_boloes.eyebrow')}
+              title={t('open_boloes.title')}
+              action={
                 <Link
-                  to={`/c/${campaign.shareCode}`}
-                  aria-label={`Ver campanha ${campaign.title}`}
-                  className="mt-4 inline-flex w-full min-w-0 items-center justify-center whitespace-normal rounded-[16px] bg-primary px-4 py-3 text-center text-[11px] font-black uppercase leading-tight tracking-[0.12em] text-black transition hover:brightness-105"
+                  to="/boloes"
+                  className="inline-flex min-h-10 items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.04] px-4 text-sm font-bold text-white transition hover:bg-white/[0.07]"
                 >
-                  Ver campanha
+                  {t('open_boloes.action')}
+                  <ChevronRight className="h-4 w-4" />
                 </Link>
-              </article>
-            ))}
-          </div>
-        )}
-      </ArenaPanel>
+              }
+            />
+            <p className="mt-1 text-sm text-zinc-500">
+              {t('open_boloes.description')}
+            </p>
 
-      <ArenaPanel className="space-y-5">
-        <ArenaSectionHeader
-          eyebrow="Conteúdo"
-          title="Conteúdo em alta"
-          hint="Usa o feed de notícias já existente. Links externos continuam tratados pelo navegador."
-          action={
-            <Link
-              to="/noticias"
-              className="inline-flex min-h-11 min-w-0 items-center justify-center whitespace-normal rounded-full border border-white/10 bg-white/[0.04] px-4 text-center text-sm font-bold leading-tight text-white transition hover:bg-white/[0.07]"
-            >
-              Ver notícias
-            </Link>
-          }
-        />
-
-        {loadingNews ? (
-          <LoadingRow />
-        ) : news.length === 0 ? (
-          <EmptyState
-            icon="📰"
-            title="Nenhum conteúdo em alta agora"
-            description="Quando houver notícias publicadas, elas aparecem aqui."
-            className="rounded-[22px] border border-dashed border-white/10 bg-white/[0.03]"
-            glowColor="none"
-          />
-        ) : (
-          <div className="grid gap-3 md:grid-cols-3">
-            {news.slice(0, 3).map((item) => (
-              <a
-                key={item.id}
-                href={item.url}
-                target="_blank"
-                rel="noreferrer"
-                className="min-w-0 rounded-[20px] border border-white/10 bg-white/[0.04] p-4 break-words transition [overflow-wrap:anywhere] hover:border-white/20 hover:bg-white/[0.06]"
+            {boloesLoading ? (
+              <SkeletonRows count={3} />
+            ) : openBoloes.length === 0 ? (
+              <EmptyState
+                icon="🎯"
+                title={t('open_boloes.empty.title')}
+                description={t('open_boloes.empty.description')}
+                className="mt-4 rounded-[22px] border border-dashed border-white/10 bg-white/[0.03]"
+                glowColor="green"
+                action={
+                  <Link
+                    to="/criar-bolao"
+                    className="inline-flex items-center gap-1.5 rounded-[16px] bg-primary px-4 py-2.5 text-[11px] font-black uppercase tracking-[0.12em] text-black transition hover:brightness-105"
+                  >
+                    <Zap className="h-3.5 w-3.5" />
+                    {t('open_boloes.empty.cta')}
+                  </Link>
+                }
+              />
+            ) : (
+              <motion.div
+                variants={container}
+                className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3"
               >
-                <p className="break-words text-[11px] font-black uppercase leading-tight tracking-[0.12em] text-primary [overflow-wrap:anywhere]">
-                  {item.source_name || item.category || "ArenaCup"}
-                </p>
-                <h3 className="mt-2 break-words font-display text-xl font-bold uppercase leading-tight tracking-[0.03em] text-white [overflow-wrap:anywhere]">
-                  {item.title}
-                </h3>
-                {item.summary || item.description ? (
-                  <p className="mt-2 line-clamp-2 text-sm leading-6 text-zinc-300">
-                    {item.summary || item.description}
-                  </p>
-                ) : null}
-              </a>
-            ))}
-          </div>
-        )}
-      </ArenaPanel>
+                {openBoloes.map((bolao) => (
+                  <OpenBolaoCard key={bolao.id} bolao={bolao} />
+                ))}
+              </motion.div>
+            )}
+          </ArenaPanel>
+        </motion.div>
 
-      <ArenaPanel className="space-y-5">
-        <ArenaSectionHeader
-          eyebrow="Rankings"
-          title="Rankings locais"
-          hint="Nesta etapa, rankings usam o caminho existente. Contextos locais entram depois por feature flag."
-          action={
-            <Link
-              to="/ranking"
-              className="inline-flex min-h-11 min-w-0 items-center justify-center whitespace-normal rounded-full border border-primary/30 bg-primary/10 px-4 text-center text-sm font-bold leading-tight text-primary transition hover:bg-primary/15"
-            >
-              Abrir ranking
-            </Link>
-          }
-        />
-        <EmptyState
-          icon="🏆"
-          title="Rankings contextuais em breve"
-          description="Por enquanto, use o ranking geral enquanto preparamos recortes por cidade, comunidade e campanha."
-          className="rounded-[22px] border border-dashed border-white/10 bg-white/[0.03]"
-          glowColor="gold"
-        />
-      </ArenaPanel>
-
-      <ArenaPanel className="grid gap-3 md:grid-cols-2">
-        <Link
-          to="/comunidades"
-          className="flex min-w-0 items-center gap-3 rounded-[18px] border border-white/10 bg-white/[0.035] p-4 transition hover:border-white/20"
-        >
-          <Users2 className="h-5 w-5 text-primary" />
-          <span className="min-w-0 break-words font-semibold text-white">Comunidades</span>
-        </Link>
-        <Link
-          to="/negocios"
-          className="flex min-w-0 items-center gap-3 rounded-[18px] border border-white/10 bg-white/[0.035] p-4 transition hover:border-white/20"
-        >
-          <Compass className="h-5 w-5 text-primary" />
-          <span className="min-w-0 break-words font-semibold text-white">Negócios</span>
-        </Link>
-      </ArenaPanel>
+        {/* ── CTA CRIAR BOLÃO ────────────────────────────────────────────── */}
+        <motion.div variants={item}>
+          <Link
+            to="/criar-bolao"
+            className="group flex min-h-[96px] w-full items-center justify-between gap-4 rounded-[26px] border border-primary/25 bg-primary/[0.07] px-6 py-5 transition hover:border-primary/40 hover:bg-primary/[0.11]"
+          >
+            <div>
+              <p className="arena-kicker text-primary">{t('cta.eyebrow')}</p>
+              <p className="mt-0.5 text-lg font-semibold leading-tight text-white">
+                {t('cta.title')}
+              </p>
+            </div>
+            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary text-black transition group-hover:scale-105">
+              <Zap className="h-6 w-6" />
+            </span>
+          </Link>
+        </motion.div>
+      </motion.div>
     </div>
   );
 }
 
-function LoadingRow() {
+// ─── Skeleton ──────────────────────────────────────────────────────────────
+
+function SkeletonRows({ count }: { count: number }) {
   return (
-    <div className="flex min-h-32 items-center justify-center rounded-[22px] border border-white/10 bg-white/[0.03]">
-      <Loader2 className="h-6 w-6 animate-spin text-primary" />
+    <div className="mt-4 space-y-2">
+      {Array.from({ length: count }).map((_, i) => (
+        <div
+          key={i}
+          className="h-16 animate-pulse rounded-[22px] border border-white/10 bg-white/[0.03]"
+        />
+      ))}
     </div>
   );
 }

@@ -1,0 +1,47 @@
+{
+  "eyebrow": "ArenaCup",
+  "title": "Arena",
+  "description": "What's happening now in the championship and open disputes.",
+  "matches": {
+    "title": "Live & Upcoming",
+    "action": "View championship",
+    "status": {
+      "live": "LIVE"
+    },
+    "empty": {
+      "title": "No matches now",
+      "description": "There are no live or upcoming {{championship}} matches at the moment. Select another championship to see activity."
+    }
+  },
+  "rankings": {
+    "title": "Rankings",
+    "action": "Full ranking",
+    "my_position": "Your position",
+    "my_points": "Your points",
+    "empty": {
+      "title": "Ranking no data yet",
+      "description": "When predictions are computed, the ranking will appear here."
+    },
+    "summary": "<0>{{count}}</0> players in the overall ranking this season."
+  },
+  "open_boloes": {
+    "title": "Open Bolões",
+    "eyebrow": "Public disputes",
+    "description": "Public bolões you haven't joined yet. Join and start making predictions.",
+    "action": "My bolões",
+    "card": {
+      "paid": "Paid",
+      "free": "Free",
+      "cta": "Join dispute"
+    },
+    "empty": {
+      "title": "No open bolões now",
+      "description": "When public bolões become available, they'll appear here. You can create your own or wait for invites.",
+      "cta": "Create bolão"
+    }
+  },
+  "cta": {
+    "eyebrow": "Be the creator",
+    "title": "Set up your bolão now"
+  }
+}

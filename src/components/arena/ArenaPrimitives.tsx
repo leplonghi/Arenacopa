@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 import { HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 export function ArenaPanel({
   children,
@@ -43,7 +43,7 @@ export function ArenaSectionHeader({
         ) : hint ? (
           <ArenaHint label={`Sobre ${title}`}>{hint}</ArenaHint>
         ) : null}
-        <h2 className="mt-1 break-words font-display text-[1.75rem] font-bold uppercase leading-[1.02] tracking-[0.02em] text-white [overflow-wrap:anywhere] sm:text-[2.3rem]">
+        <h2 className="mt-1 break-words text-xl font-bold leading-[1.15] tracking-[0.01em] text-white [overflow-wrap:anywhere] sm:text-2xl">
           {title}
         </h2>
       </div>
@@ -66,25 +66,23 @@ export function ArenaHint({
   className?: string;
 }) {
   return (
-    <TooltipProvider delayDuration={120}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <button
-            type="button"
-            aria-label={label}
-            className={cn(
-              "inline-flex h-6 w-6 items-center justify-center rounded-full border border-primary/25 bg-primary/10 text-primary transition hover:border-primary/45 hover:bg-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60",
-              className,
-            )}
-          >
-            <HelpCircle className="h-3.5 w-3.5" />
-          </button>
-        </TooltipTrigger>
-        <TooltipContent className="max-w-[270px] rounded-2xl border border-primary/20 bg-[#06110d] px-4 py-3 text-left text-xs leading-relaxed text-zinc-200 shadow-[0_18px_50px_rgba(0,0,0,0.65)]">
-          {children}
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+    <Tooltip delayDuration={200}>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          aria-label={label}
+          className={cn(
+            "inline-flex h-6 w-6 items-center justify-center rounded-full border border-primary/25 bg-primary/10 text-primary transition hover:border-primary/45 hover:bg-primary/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60",
+            className,
+          )}
+        >
+          <HelpCircle className="h-3.5 w-3.5" />
+        </button>
+      </TooltipTrigger>
+      <TooltipContent className="max-w-[270px] rounded-2xl border border-primary/20 bg-[#06110d] px-4 py-3 text-left text-xs leading-relaxed text-zinc-200 shadow-[0_18px_50px_rgba(0,0,0,0.65)]">
+        {children}
+      </TooltipContent>
+    </Tooltip>
   );
 }
 
@@ -94,36 +92,39 @@ export function ArenaMetric({
   accent = false,
   icon,
   className,
+  compact = false,
 }: {
   label: string;
   value: ReactNode;
   accent?: boolean;
   icon?: ReactNode;
   className?: string;
+  compact?: boolean;
 }) {
   return (
     <div
       className={cn(
-        "min-w-0 rounded-[18px] border px-4 py-4 backdrop-blur-xl",
+        "min-w-0 rounded-2xl border backdrop-blur-xl",
+        compact ? "px-3 py-2.5" : "px-4 py-3",
         accent ? "border-primary/30 bg-primary/[0.08]" : "border-[#8d8158]/30 bg-[#061510]/70",
         className,
       )}
     >
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
-          <p className={cn("break-words font-display text-[0.92rem] font-bold uppercase leading-tight tracking-[0.08em]", accent ? "text-[#44df62]" : "text-primary")}>
+          <p className={cn("break-words font-semibold leading-tight tracking-[0.02em]", compact ? "text-[11px] text-zinc-400" : "text-sm text-zinc-400", accent ? "text-[#44df62]" : "text-primary")}>
             {label}
           </p>
           <div
             className={cn(
-              "mt-2 break-words font-display text-[2.15rem] font-bold uppercase leading-tight tracking-[0.02em]",
-              "text-white",
+              "break-words font-bold leading-tight tracking-normal text-white",
+              compact ? "mt-0.5 text-xl" : "mt-1 text-2xl",
             )}
           >
             {value}
           </div>
         </div>
-        {icon ? <div className="shrink-0 text-primary">{icon}</div> : null}
+        {icon ? <div className={cn("shrink-0 text-primary", compact && "scale-75")}>{icon}</div> : null}
       </div>
     </div>
   );
@@ -141,7 +142,7 @@ export function ArenaTabPill({
   return (
     <div
       className={cn(
-        "inline-flex min-w-0 items-center justify-center whitespace-normal rounded-[18px] border px-4 py-2 text-center font-display text-base font-bold uppercase leading-tight tracking-[0.06em] transition",
+        "inline-flex min-w-0 items-center justify-center whitespace-normal rounded-[18px] border px-4 py-2 text-center text-sm font-semibold leading-tight tracking-[0.02em] transition",
         active
           ? "border-primary/50 bg-primary/15 text-primary shadow-[0_0_22px_rgba(145,255,59,0.18)]"
           : "border-white/10 bg-white/[0.04] text-zinc-400",

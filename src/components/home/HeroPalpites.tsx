@@ -32,7 +32,7 @@ export function HeroPalpites({
       <div className="relative z-10 flex min-h-[430px] max-w-[560px] flex-col justify-start pb-7 pt-[calc(7rem+var(--safe-area-top,0px))] sm:min-h-[500px] sm:pt-[calc(8rem+var(--safe-area-top,0px))]">
         <div className="space-y-4">
           <div className="flex items-center gap-2">
-            <span className="arena-kicker text-zinc-300">Você tem</span>
+            <span className="arena-kicker text-zinc-300">Rodada</span>
             {!isPremium ? (
               <button
                 onClick={onOpenElite}
@@ -51,12 +51,12 @@ export function HeroPalpites({
 
           <div>
             <div className="flex items-end gap-3 sm:gap-5">
-              <span className="arena-title text-[7.5rem] font-extrabold text-gradient-gold drop-shadow-[0_0_34px_rgba(255,193,7,0.52)] sm:text-[10.2rem]">
+              <span className="arena-title text-[4rem] font-bold text-white sm:text-[5rem]">
                 {pendingCount}
               </span>
               <div className="pb-4">
-                <p className="arena-title text-[2rem] font-extrabold text-white sm:text-[2.75rem]">jogos</p>
-                <p className="arena-title text-[2rem] font-extrabold text-primary sm:text-[2.75rem]">para marcar!</p>
+                <p className="text-xl font-semibold text-zinc-300 sm:text-2xl">jogos pendentes</p>
+                <p className="text-xl font-semibold text-primary sm:text-2xl">na rodada</p>
               </div>
             </div>
             <p className="max-w-[300px] text-sm font-medium leading-5 text-zinc-300 sm:max-w-[360px]">
@@ -64,9 +64,9 @@ export function HeroPalpites({
             </p>
           </div>
 
-          <Link to={ctaTo} className="arena-button-gold w-full max-w-[440px] rounded-[20px] py-[1.125rem] text-[1.55rem] shadow-[0_0_32px_rgba(255,193,7,0.45),0_18px_42px_-16px_rgba(255,174,0,0.95)] sm:w-auto sm:px-12">
+          <Link to={ctaTo} className="inline-flex items-center justify-center gap-3 rounded-xl bg-primary px-8 py-4 text-base font-semibold text-black transition hover:bg-primary/90 sm:w-auto">
             <Target className="h-7 w-7" />
-            Marcar rodada
+            Ver jogos
           </Link>
         </div>
       </div>

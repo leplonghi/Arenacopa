@@ -17,7 +17,7 @@ describe("Home proactive cards", () => {
         hasFeaturedMatch: true,
       }),
     ).toMatchObject({
-      ctaLabel: "Marcar palpites",
+      ctaLabel: "Marcar chutes",
       ctaRoute: "/boloes/bolao-1",
     });
   });

@@ -256,8 +256,8 @@ export default function Grupos() {
                       {group.emoji}
                     </div>
                     <div className="flex-1">
-                      <p className="font-display text-[1.4rem] font-semibold uppercase leading-none text-white">{group.name}</p>
-                      {group.description ? <p className="mt-2 text-sm leading-6 text-zinc-400">{group.description}</p> : null}
+                      <p className="truncate font-display text-[1.4rem] font-semibold uppercase leading-none text-white">{group.name}</p>
+                      {group.description ? <p className="mt-2 line-clamp-2 text-sm leading-snug text-zinc-400">{group.description}</p> : null}
                     </div>
                     <Users2 className="h-5 w-5 text-zinc-600" />
                   </div>

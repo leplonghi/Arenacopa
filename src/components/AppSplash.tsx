@@ -113,7 +113,7 @@ export function AppSplash() {
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.92, duration: 0.4, ease: "easeOut" }}
             >
-              Palpites, ranking e rodada no mesmo gramado.
+              Chutes, ranking e rodada no mesmo gramado.
             </motion.p>
             <motion.div
               className="mt-7 h-1 w-40 overflow-hidden bg-white/12"

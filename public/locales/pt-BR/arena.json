@@ -1,0 +1,47 @@
+{
+  "eyebrow": "ArenaCup",
+  "title": "Arena",
+  "description": "O que está acontecendo agora no campeonato e nas disputas abertas.",
+  "matches": {
+    "title": "Ao vivo & Próximos",
+    "action": "Ver campeonato",
+    "status": {
+      "live": "AO VIVO"
+    },
+    "empty": {
+      "title": "Nenhum jogo agora",
+      "description": "Não há jogos ao vivo ou próximos do {{championship}} no momento. Selecione outro campeonato para ver atividade."
+    }
+  },
+  "rankings": {
+    "title": "Rankings",
+    "action": "Ranking completo",
+    "my_position": "Sua posição",
+    "my_points": "Seus pontos",
+    "empty": {
+      "title": "Ranking ainda sem dados",
+      "description": "Quando os palpites forem computados, o ranking aparece aqui."
+    },
+    "summary": "<0>{{count}}</0> jogadores no ranking geral desta temporada."
+  },
+  "open_boloes": {
+    "title": "Bolões abertos",
+    "eyebrow": "Disputas públicas",
+    "description": "Bolões públicos que você ainda não entrou. Entre e comece a marcar palpites.",
+    "action": "Meus bolões",
+    "card": {
+      "paid": "Pago",
+      "free": "Grátis",
+      "cta": "Entrar na disputa"
+    },
+    "empty": {
+      "title": "Sem bolões abertos agora",
+      "description": "Quando surgirem bolões públicos disponíveis, eles aparecem aqui. Você pode criar o seu ou aguardar convites.",
+      "cta": "Criar bolão"
+    }
+  },
+  "cta": {
+    "eyebrow": "Seja o criador",
+    "title": "Monte seu bolão agora"
+  }
+}

@@ -10,6 +10,7 @@ import {
   Store,
   Users2,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import { EmptyState } from "@/components/EmptyState";
@@ -34,7 +35,7 @@ const QUICK_ACTIONS = [
     icon: Compass,
     label: "Explorar bolões",
     description: "Públicos e abertos",
-    accent: false,
+    color: "emerald",
   },
   {
     id: "communities",
@@ -42,7 +43,7 @@ const QUICK_ACTIONS = [
     icon: Users2,
     label: "Comunidades",
     description: "Turma recorrente",
-    accent: false,
+    color: "blue",
   },
   {
     id: "creator",
@@ -50,7 +51,7 @@ const QUICK_ACTIONS = [
     icon: Sparkles,
     label: "Creator Pro",
     description: "Divulgação profissional",
-    accent: false,
+    color: "gold",
   },
 ] as const;
 
@@ -161,112 +162,68 @@ export default function Boloes() {
   return (
     <div className="arena-screen space-y-6">
 
-      {/* ── HERO HEADER ──────────────────────────────────────────── */}
-      <div className="relative overflow-hidden rounded-[28px] border border-primary/20 bg-[linear-gradient(145deg,rgba(145,255,59,0.12),rgba(255,197,77,0.06),rgba(0,0,0,0.5))] p-6">
-        {/* Decorative glow orb */}
-        <div className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-primary/10 blur-3xl" />
-
-        <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-          {/* Left: title + stat pills */}
-          <div>
-            <p className="text-[11px] font-black uppercase tracking-[0.22em] text-primary">
-              Seus bolões
-            </p>
-            <h1 className="mt-1.5 font-display text-3xl font-black uppercase leading-none tracking-tight text-white sm:text-4xl">
-              Escolha seu caminho
-            </h1>
-            <p className="mt-2 max-w-md text-sm leading-6 text-zinc-400">
-              Crie bolões para a turma ou ative campanhas para público externo.
-            </p>
-
-            {/* Stat pills */}
-            <div className="mt-5 flex flex-wrap gap-3">
-              <StatPill value={activeCount} label="Ativos" accent />
-              <StatPill value={pendingRequests.length} label="Pendentes" />
-              <StatPill value={discoverBoloes.length} label="Disponíveis" />
-            </div>
-          </div>
-
-          {/* Right: two CTA cards */}
-          <div className="grid gap-3 sm:grid-cols-2 lg:w-[440px] lg:shrink-0">
-            {/* Social pool CTA */}
-            <Link
-              to="/boloes/criar"
-              aria-label="Criar bolão da turma"
-              className="group relative overflow-hidden rounded-[22px] border border-primary/30 bg-primary/10 p-4 transition-all duration-200 hover:border-primary/60 hover:bg-primary/15 hover:-translate-y-0.5 hover:shadow-[0_8px_30px_rgba(145,255,59,0.12)]"
-            >
-              <div className="flex items-center gap-3">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] border border-primary/30 bg-primary/15 text-primary">
-                  <Users2 className="h-5 w-5" />
-                </span>
-                <div className="min-w-0">
-                  <p className="font-display text-sm font-black uppercase tracking-[0.03em] text-white">
-                    Bolão da turma
-                  </p>
-                  <p className="text-[11px] text-zinc-400">Social · Amigos · Ranking</p>
-                </div>
-              </div>
-              <div className="mt-3 flex items-center gap-1.5 text-[11px] font-black uppercase tracking-[0.14em] text-primary">
-                <Plus className="h-3.5 w-3.5" />
-                Criar agora
-                <ArrowRight className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
-              </div>
-            </Link>
-
-            {/* Business CTA */}
-            <Link
-              to="/negocios"
-              aria-label="Bolões para negócios"
-              className="group relative overflow-hidden rounded-[22px] border border-amber-400/25 bg-amber-400/8 p-4 transition-all duration-200 hover:border-amber-400/45 hover:bg-amber-400/12 hover:-translate-y-0.5"
-            >
-              <div className="flex items-center gap-3">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] border border-amber-400/25 bg-amber-400/10 text-amber-300">
-                  <Store className="h-5 w-5" />
-                </span>
-                <div className="min-w-0">
-                  <p className="font-display text-sm font-black uppercase tracking-[0.03em] text-white">
-                    Para negócios
-                  </p>
-                  <p className="text-[11px] text-zinc-400">Campanha · Público · QR</p>
-                </div>
-              </div>
-              <div className="mt-3 flex items-center gap-1.5 text-[11px] font-black uppercase tracking-[0.14em] text-amber-300">
-                <Store className="h-3.5 w-3.5" />
-                Explorar planos
-                <ArrowRight className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-0.5" />
-              </div>
-            </Link>
-          </div>
+      {/* ── PAGE HEADER ──────────────────────────────────────────── */}
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-[0.22em] text-primary">Bolões</p>
+          <h1 className="mt-1 font-display text-2xl font-black uppercase leading-none text-white sm:text-3xl">
+            {myBoloes.length > 0 ? "Sua mesa" : "Comece a jogar"}
+          </h1>
+          <p className="mt-1.5 max-w-sm text-[12px] leading-5 text-zinc-500">
+            {myBoloes.length > 0
+              ? `${activeCount} ativo${activeCount !== 1 ? "s" : ""} · dispute chutes com sua turma`
+              : "Crie um bolão, convide amigos e dispute quem acerta mais."}
+          </p>
         </div>
+        <Link
+          to="/boloes/criar"
+          aria-label="Criar bolão"
+          className="flex shrink-0 items-center gap-2 rounded-[16px] border border-primary/35 bg-primary/10 px-4 py-2.5 text-sm font-black text-primary transition hover:bg-primary/15"
+        >
+          <Plus className="h-4 w-4" />
+          Criar
+        </Link>
+      </div>
+
+      {/* ── METRICS ─────────────────────────────────────────────── */}
+      <div className="flex flex-wrap gap-2 px-0.5">
+        <StatPill value={activeCount} label="Ativos" accent />
+        <StatPill value={pendingRequests.length} label="Pendentes" />
+        <StatPill value={discoverBoloes.length} label="Abertos para entrar" />
       </div>
 
       {/* ── QUICK NAVIGATION ─────────────────────────────────────── */}
-      <div className="grid grid-cols-3 gap-3">
-        {QUICK_ACTIONS.map((action) => (
-          <Link
-            key={action.id}
-            to={action.to}
-            className="group flex flex-col items-center gap-2 rounded-[18px] border border-white/8 bg-white/[0.03] p-4 text-center transition-all duration-200 hover:border-primary/25 hover:bg-primary/[0.05] hover:-translate-y-0.5"
-          >
-            <span className="flex h-10 w-10 items-center justify-center rounded-[14px] border border-white/10 bg-white/5 text-zinc-400 transition-colors duration-200 group-hover:border-primary/30 group-hover:bg-primary/10 group-hover:text-primary">
-              <action.icon className="h-5 w-5" />
-            </span>
-            <div>
-              <p className="text-xs font-black uppercase tracking-[0.08em] text-white">
-                {action.label}
-              </p>
-              <p className="text-[10px] text-zinc-500">{action.description}</p>
-            </div>
-          </Link>
-        ))}
-      </div>
+      <div className="grid grid-cols-3 gap-2.5">
+        {QUICK_ACTIONS.map((action) => {
+          const colorMap = {
+            emerald: "border-emerald-500/20 bg-emerald-500/5 hover:border-emerald-500/40 hover:bg-emerald-500/10 text-emerald-400",
+            blue: "border-blue-500/20 bg-blue-500/5 hover:border-blue-500/40 hover:bg-blue-500/10 text-blue-400",
+            gold: "border-amber-500/20 bg-amber-500/5 hover:border-amber-500/40 hover:bg-amber-500/10 text-amber-400",
+          };
+          const colorClass = colorMap[action.color as keyof typeof colorMap];
 
-      {/* ── OPPORTUNITIES ─────────────────────────────────────────── */}
-      {opportunities.length > 0 && (
-        <div>
-          <OpportunityRail opportunities={opportunities} title="Próximas ações em Bolões" />
-        </div>
-      )}
+          return (
+            <Link
+              key={action.id}
+              to={action.to}
+              className={cn(
+                "group flex flex-col items-center gap-2 rounded-[20px] border p-3 text-center transition-all duration-200 hover:-translate-y-0.5",
+                colorClass
+              )}
+            >
+              <span className="flex h-9 w-9 items-center justify-center rounded-[12px] border border-current/20 bg-current/10">
+                <action.icon className="h-4.5 w-4.5" />
+              </span>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.05em] text-white">
+                  {action.label}
+                </p>
+                <p className="hidden text-[9px] opacity-70 sm:block">{action.description}</p>
+              </div>
+            </Link>
+          );
+        })}
+      </div>
 
       {/* ── MY POOLS ─────────────────────────────────────────────── */}
       <section>

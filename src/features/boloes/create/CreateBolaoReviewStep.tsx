@@ -214,7 +214,7 @@ export function CreateBolaoReviewStep({ flow }: { flow: Flow }) {
           group_binding_mode: structure.groupBindingMode,
           join_mode: structure.accessPolicy.join_mode,
         });
-        navigate(`/boloes/${published.bolaoId}`);
+        navigate(`/boloes/${published.bolaoId}?tab=turma&created=true`);
         return;
       }
 

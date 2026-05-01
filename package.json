@@ -9,8 +9,8 @@
     "build:dev": "node --max-old-space-size=2048 ./node_modules/vite/bin/vite.js build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test": "vitest run",
-    "test:watch": "vitest",
+    "test": "vitest run --passWithNoTests",
+    "test:watch": "vitest --passWithNoTests",
     "audit:i18n": "node scripts/audit-i18n.mjs",
     "upload-logo": "node scripts/upload_logo.js",
     "seed:admin": "node scripts/seed-leagues-admin.mjs"

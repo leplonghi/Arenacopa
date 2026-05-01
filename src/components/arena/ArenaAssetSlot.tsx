@@ -28,7 +28,7 @@ export function ArenaAssetSlot({
     <div
       className={cn(
         isCutout
-          ? "relative flex aspect-square items-center justify-center overflow-visible border-0 bg-transparent shadow-none"
+          ? "relative flex items-center justify-center overflow-visible border-0 bg-transparent shadow-none"
           : "relative flex aspect-square items-center justify-center overflow-hidden rounded-[22px] border border-[#7dff48]/20 bg-[radial-gradient(circle_at_50%_20%,rgba(255,200,40,0.14),transparent_36%),linear-gradient(160deg,rgba(10,45,28,0.82),rgba(2,10,8,0.96))] shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_18px_38px_-28px_rgba(0,0,0,0.85)]",
         className,
       )}

@@ -76,7 +76,7 @@ export function BolaoCard({ bolao, variant = "my" }: BolaoCardProps) {
         {/* Name + description */}
         <div className="min-w-0 flex-1 pt-1">
           <div className="flex items-center gap-2">
-            <p className="break-words font-display text-lg font-black uppercase leading-none tracking-tight text-white group-hover:text-primary transition-colors duration-200">
+            <p className="break-words text-base font-semibold leading-tight text-white group-hover:text-primary transition-colors duration-200">
               {bolao.name}
             </p>
           </div>

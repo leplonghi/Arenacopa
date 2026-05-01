@@ -33,7 +33,7 @@ export function BolaoSharePanel({
     <div className="space-y-4">
       <ArenaPanel className="p-4 sm:p-5">
         <p className="arena-kicker text-primary">Compartilhar</p>
-        <h2 className="mt-2 font-display text-[2.4rem] font-black uppercase leading-[0.92] tracking-[0.02em] text-white">
+        <h2 className="mt-2 break-words font-display text-[2.4rem] font-black uppercase leading-[0.92] tracking-[0.02em] text-white">
           Convide sua turma para {bolaoName}
         </h2>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-300">

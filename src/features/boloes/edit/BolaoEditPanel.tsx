@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { motion, AnimatePresence } from "framer-motion";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { BolaoEditSectionCard } from "@/features/boloes/edit/BolaoEditSectionCard";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDashboardMatches } from "@/hooks/useDashboardMatches";
@@ -37,7 +39,6 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated }: Bo
   const { t } = useTranslation("bolao");
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user } = useAuth();
   const availableFormats = listBolaoFormats();
 
   const [name, setName] = useState("");
@@ -62,8 +63,6 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated }: Bo
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
   const [allowedMatchIds, setAllowedMatchIds] = useState<string[] | "all">("all");
-  const { data: matches } = useDashboardMatches();
-  const [visibleMatchesCount, setVisibleMatchesCount] = useState(20);
 
   const { groups: availableGroups } = useUserGroups(open);
 
@@ -79,7 +78,7 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated }: Bo
     setSelectedGrupoId(bolao.grupo_id || null);
     setJoinMode(bolao.category === "public" ? "public_open" : "private_invite");
     setFormatId((bolao.format_id || "classic") as BolaoFormatSlug);
-    setSelectedMarketIds(getDefaultMarketIdsForFormat(bolao.format_id || "classic") as MarketTemplateSlug[]);
+    setSelectedMarketIds(bolao.scoring_rules?.markets || getDefaultMarketIdsForFormat(bolao.format_id || "classic") as MarketTemplateSlug[]);
     setScoringRules({
       exact: bolao.scoring_rules?.exact ?? 10,
       winner: bolao.scoring_rules?.winner ?? 3,
@@ -182,27 +181,6 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated }: Bo
       toast({
         title: t("edit.sections.identity.success_title"),
         description: t("edit.sections.identity.success_desc"),
-      });
-    } catch {
-      toast({
-        title: t("errors.generic_title"),
-        description: t("errors.try_again_later"),
-        variant: "destructive",
-      });
-    } finally {
-      setSavingKey(null);
-    }
-  };
-
-  const saveAllowedMatchIds = async () => {
-    try {
-      setSavingKey("catalog");
-      const bolaoRef = doc(db, "boloes", bolao.id);
-      await updateDoc(bolaoRef, { allowed_match_ids: allowedMatchIds });
-      updateLocal({ allowed_match_ids: allowedMatchIds });
-      toast({
-        title: t("edit.sections.catalog.success_title"),
-        description: t("edit.sections.catalog.success_desc"),
       });
     } catch {
       toast({
@@ -403,541 +381,528 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated }: Bo
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-4">
-          <BolaoEditSectionCard
-            title={t("edit.sections.identity.title")}
-            description={t("edit.sections.identity.desc")}
-            editable={editableSections.presentation}
-            actionLabel={t("edit.sections.identity.action")}
-            onAction={() => void handleSaveIdentity()}
-            busy={savingKey === "presentation"}
-          />
-          <div className="rounded-3xl border border-white/10 bg-white/5 p-4">
-            <div className="grid gap-3">
-              <input
-                value={name}
-                onChange={(event) => setName(event.target.value)}
-                placeholder={t("edit.sections.identity.name_placeholder")}
-                className="rounded-2xl border border-white/10 bg-[#122117] px-4 py-3 text-sm text-white"
-              />
-              <input
-                value={emoji}
-                onChange={(event) => setEmoji(event.target.value)}
-                placeholder={t("edit.sections.identity.avatar_placeholder")}
-                className="rounded-2xl border border-white/10 bg-[#122117] px-4 py-3 text-sm text-white"
-              />
-              <textarea
-                value={description}
-                onChange={(event) => setDescription(event.target.value)}
-                placeholder={t("edit.sections.identity.desc_placeholder")}
-                className="min-h-[110px] rounded-2xl border border-white/10 bg-[#122117] px-4 py-3 text-sm text-white"
-              />
-            </div>
-          </div>
+        <Tabs defaultValue="general" className="w-full">
+          <TabsList className="grid w-full grid-cols-4 rounded-2xl bg-white/5 p-1">
+            <TabsTrigger value="general" className="rounded-xl py-2 text-xs font-black uppercase tracking-wider transition-all data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
+              {t("edit.tabs.general")}
+            </TabsTrigger>
+            <TabsTrigger value="participation" className="rounded-xl py-2 text-xs font-black uppercase tracking-wider transition-all data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
+              {t("edit.tabs.participation")}
+            </TabsTrigger>
+            <TabsTrigger value="rules" className="rounded-xl py-2 text-xs font-black uppercase tracking-wider transition-all data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
+              {t("edit.tabs.rules")}
+            </TabsTrigger>
+            <TabsTrigger value="finance" className="rounded-xl py-2 text-xs font-black uppercase tracking-wider transition-all data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
+              {t("edit.tabs.finance")}
+            </TabsTrigger>
+          </TabsList>
 
-          <BolaoEditSectionCard
-            title={t("edit.sections.participation.title")}
-            description={t("edit.sections.participation.desc")}
-            editable={participationEditable}
-            actionLabel={participationEditable ? t("edit.sections.participation.action_save") : t("edit.sections.participation.action_duplicate")}
-            onAction={() =>
-              !canSaveParticipation
-                ? toast({
-                    title: t("edit.sections.participation.error_select_group"),
-                    description: t("edit.sections.participation.error_select_group_desc"),
-                    variant: "destructive",
-                  })
-                : participationEditable
-                  ? void saveConfigurationSection(
-                      "participation",
-                      {
-                        context: {
-                          group_binding_mode: groupBindingMode,
-                          grupo_id: groupBindingMode === "none" ? null : selectedGrupoId,
-                        },
-                        access_policy: {
-                          join_mode: joinMode,
-                          visibility: joinMode === "public_open" ? "public" : "private",
-                        },
-                      },
-                      {
-                        category: joinMode === "public_open" ? "public" : "private",
-                        grupo_id: groupBindingMode === "none" ? null : selectedGrupoId,
-                      },
-                      t("edit.sections.participation.success_title"),
-                    )
-                  : void handleDuplicateForSection("participation", {
-                      context: {
-                        group_binding_mode: groupBindingMode,
-                        grupo_id: groupBindingMode === "none" ? null : selectedGrupoId,
-                      },
-                      access_policy: {
-                        join_mode: joinMode,
-                        visibility: joinMode === "public_open" ? "public" : "private",
-                      },
-                      presentation: {
-                        name: `${name.trim() || bolao.name} (cópia)`,
-                      },
-                    })
-            }
-            busy={savingKey === "participation"}
-          />
-          <div className="grid gap-3 rounded-3xl border border-white/10 bg-white/5 p-4 md:grid-cols-2">
-            <label className="grid gap-2 text-sm">
-              <span className="text-zinc-300">{t("edit.sections.participation.group_relation")}</span>
-              <select
-                value={groupBindingMode}
-                onChange={(event) => {
-                  const nextValue = event.target.value as GroupBindingMode;
-                  setGroupBindingMode(nextValue);
-                  if (nextValue === "none") {
-                    setSelectedGrupoId(null);
-                  }
-                }}
-                className="rounded-2xl border border-white/10 bg-[#122117] px-4 py-3 text-white"
-              >
-                <option value="none">{t("edit.sections.participation.no_group")}</option>
-                <option value="linked_discovery">{t("edit.sections.participation.discovery_link")}</option>
-                <option value="group_gated">{t("edit.sections.participation.group_gated")}</option>
-              </select>
-            </label>
-            <label className="grid gap-2 text-sm">
-              <span className="text-zinc-300">{t("edit.sections.participation.linked_group")}</span>
-              <select
-                value={selectedGrupoId || ""}
-                onChange={(event) => setSelectedGrupoId(event.target.value || null)}
-                disabled={groupBindingMode === "none"}
-                className="rounded-2xl border border-white/10 bg-[#122117] px-4 py-3 text-white disabled:opacity-50"
-              >
-                <option value="">{t("edit.sections.participation.select_group")}</option>
-                {availableGroups.map((group) => (
-                  <option key={group.id} value={group.id}>
-                    {group.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="grid gap-2 text-sm">
-              <span className="text-zinc-300">{t("edit.sections.participation.access_policy")}</span>
-              <select
-                value={joinMode}
-                onChange={(event) => setJoinMode(event.target.value as JoinMode)}
-                className="rounded-2xl border border-white/10 bg-[#122117] px-4 py-3 text-white"
-              >
-                <option value="private_invite">{t("edit.sections.participation.private_invite")}</option>
-                <option value="public_open">{t("edit.sections.participation.public_open")}</option>
-              </select>
-            </label>
-          </div>
-
-          <BolaoEditSectionCard
-            title={t("edit.sections.catalog.title")}
-            description={t("edit.sections.catalog.desc")}
-            editable={true}
-            actionLabel={t("edit.sections.catalog.action")}
-            onAction={saveAllowedMatchIds}
-            busy={savingKey === "catalog"}
-          />
-          <div className="grid gap-3 rounded-3xl border border-white/10 bg-white/5 p-4">
-            <div className="flex flex-col gap-2">
-              <label className="flex items-center gap-2 text-sm text-white cursor-pointer hover:opacity-80">
-                <input
-                  type="checkbox"
-                  checked={allowedMatchIds === "all"}
-                  onChange={(e) => setAllowedMatchIds(e.target.checked ? "all" : [])}
-                  className="rounded border-white/20 bg-black/50"
-                />
-                {t("edit.sections.catalog.include_all")}
-              </label>
-              
-              {allowedMatchIds !== "all" && matches && matches.length > 0 && (
-                <div 
-                  className="mt-2 flex max-h-60 flex-col gap-2 overflow-y-auto rounded-xl border border-white/5 bg-black/20 p-2 custom-scrollbar"
-                  onScroll={(e) => {
-                    const target = e.target as HTMLDivElement;
-                    if (target.scrollHeight - target.scrollTop <= target.clientHeight * 1.5) {
-                      setVisibleMatchesCount(c => Math.min(c + 20, matches.length));
-                    }
-                  }}
+          <div className="mt-6 max-h-[60vh] overflow-y-auto px-1 custom-scrollbar">
+            <AnimatePresence mode="wait">
+              <TabsContent value="general" key="general" className="m-0 focus-visible:outline-none">
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="grid gap-6 pb-4"
                 >
-                  {matches.slice(0, visibleMatchesCount).map((m) => (
-                    <label key={m.id} className="flex items-center justify-between gap-2 text-xs text-zinc-300 cursor-pointer hover:bg-white/5 p-2 rounded-lg transition-colors">
-                      <div className="flex items-center gap-3">
-                        <input
-                          type="checkbox"
-                          checked={allowedMatchIds.includes(m.id)}
-                          onChange={(e) => {
-                            if (e.target.checked) {
-                              setAllowedMatchIds([...allowedMatchIds, m.id]);
-                            } else {
-                              setAllowedMatchIds(allowedMatchIds.filter((id) => id !== m.id));
-                            }
-                          }}
-                          className="rounded border-white/20 bg-black/50"
-                        />
-                        <div className="flex items-center gap-2">
-                          <img src={m.homeCrest || ""} alt="" className="w-4 h-4 rounded-full object-cover" />
-                          <span>{m.homeTeamName}</span>
-                          <span className="text-zinc-500">vs</span>
-                          <img src={m.awayCrest || ""} alt="" className="w-4 h-4 rounded-full object-cover" />
-                          <span>{m.awayTeamName}</span>
+                  <div className="grid gap-4">
+                    <BolaoEditSectionCard
+                      title={t("edit.sections.identity.title")}
+                      description={t("edit.sections.identity.desc")}
+                      editable={editableSections.presentation}
+                      actionLabel={t("edit.sections.identity.action")}
+                      onAction={() => void handleSaveIdentity()}
+                      busy={savingKey === "presentation"}
+                    />
+                    <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
+                      <div className="grid gap-4">
+                        <div className="grid gap-2">
+                          <span className="text-[10px] font-black uppercase tracking-[0.15em] text-zinc-500 pl-1">
+                            {t("edit.sections.identity.name_placeholder")}
+                          </span>
+                          <input
+                            value={name}
+                            onChange={(event) => setName(event.target.value)}
+                            placeholder={t("edit.sections.identity.name_placeholder")}
+                            className="rounded-2xl border border-white/10 bg-[#0a1a11] px-4 py-3.5 text-sm text-white focus:border-primary/30 focus:outline-none transition-colors"
+                          />
+                        </div>
+                        <div className="grid gap-2">
+                          <span className="text-[10px] font-black uppercase tracking-[0.15em] text-zinc-500 pl-1">
+                            {t("edit.sections.identity.avatar_placeholder")}
+                          </span>
+                          <input
+                            value={emoji}
+                            onChange={(event) => setEmoji(event.target.value)}
+                            placeholder={t("edit.sections.identity.avatar_placeholder")}
+                            className="rounded-2xl border border-white/10 bg-[#0a1a11] px-4 py-3.5 text-sm text-white focus:border-primary/30 focus:outline-none transition-colors"
+                          />
+                        </div>
+                        <div className="grid gap-2">
+                          <span className="text-[10px] font-black uppercase tracking-[0.15em] text-zinc-500 pl-1">
+                            {t("edit.sections.identity.desc_placeholder")}
+                          </span>
+                          <textarea
+                            value={description}
+                            onChange={(event) => setDescription(event.target.value)}
+                            placeholder={t("edit.sections.identity.desc_placeholder")}
+                            className="min-h-[110px] rounded-2xl border border-white/10 bg-[#0a1a11] px-4 py-3.5 text-sm text-white focus:border-primary/30 focus:outline-none transition-colors resize-none"
+                          />
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        {new Date(m.matchDate).getTime() > Date.now() && new Date(m.matchDate).getTime() < Date.now() + 7 * 24 * 60 * 60 * 1000 && (
-                          <span className="rounded-full border border-[#D5FF5C]/30 bg-[#D5FF5C]/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-[#D5FF5C]">
-                            Próximo
-                          </span>
-                        )}
-                        <span className="text-[10px] text-zinc-500">
-                          {new Date(m.matchDate).toLocaleDateString("pt-BR", {
-                            day: "2-digit",
-                            month: "short",
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </span>
-                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4">
+                    <BolaoEditSectionCard
+                      title={t("edit.sections.operation.title")}
+                      description={t("edit.sections.operation.desc")}
+                      editable={true}
+                    />
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        onClick={() => void handleLifecycleAction("finish")}
+                        disabled={savingKey !== null}
+                        className="rounded-2xl border border-white/10 bg-white/5 py-3 text-[11px] font-black uppercase tracking-[0.15em] text-white/80 hover:bg-white/10 hover:text-white transition-all disabled:opacity-50"
+                      >
+                        {t("edit.sections.operation.action_finish")}
+                      </button>
+                      <button
+                        onClick={() => void handleLifecycleAction("archive")}
+                        disabled={savingKey !== null}
+                        className="rounded-2xl border border-white/10 bg-white/5 py-3 text-[11px] font-black uppercase tracking-[0.15em] text-white/80 hover:bg-white/10 hover:text-white transition-all disabled:opacity-50"
+                      >
+                        {t("edit.sections.operation.action_archive")}
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4">
+                    <BolaoEditSectionCard
+                      title={t("edit.sections.danger.title")}
+                      description={t("edit.sections.danger.desc")}
+                      editable={true}
+                    />
+                    <div className="grid gap-3">
+                      {bolao.integrity?.is_structure_locked ? (
+                        <div className="grid gap-3">
+                           <button
+                            onClick={() => {
+                              if (!cancelConfirmOpen) {
+                                setCancelConfirmOpen(true);
+                                return;
+                              }
+                              void handleCancelBolao();
+                            }}
+                            disabled={savingKey === "cancel"}
+                            className="rounded-2xl border border-red-500/20 bg-red-500/10 py-3.5 text-[11px] font-black uppercase tracking-[0.15em] text-red-400 hover:bg-red-500/20 transition-all disabled:opacity-50"
+                          >
+                            {savingKey === "cancel"
+                              ? t("edit.sections.danger.canceling")
+                              : cancelConfirmOpen
+                                ? t("edit.sections.danger.confirm_cancel")
+                                : t("edit.sections.danger.cancel_bolao")}
+                          </button>
+                          {cancelConfirmOpen && (
+                            <div className="grid gap-2">
+                              <p className="rounded-2xl border border-red-300/20 bg-black/20 px-4 py-3 text-xs text-red-100/85">
+                                {t("edit.sections.danger.cancel_warning")}
+                              </p>
+                              <button
+                                type="button"
+                                onClick={() => setCancelConfirmOpen(false)}
+                                className="text-xs text-zinc-400 underline hover:text-white"
+                              >
+                                {t("edit.sections.danger.give_up")}
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="grid gap-3">
+                          <button
+                            onClick={() => {
+                              if (!deleteConfirmOpen) {
+                                setDeleteConfirmOpen(true);
+                                return;
+                              }
+                              void handleDeleteBolao();
+                            }}
+                            disabled={savingKey === "delete"}
+                            className="rounded-2xl border border-red-500/20 bg-red-500/10 py-3.5 text-[11px] font-black uppercase tracking-[0.15em] text-red-400 hover:bg-red-500/20 transition-all disabled:opacity-50"
+                          >
+                            {savingKey === "delete"
+                              ? t("edit.sections.danger.deleting")
+                              : deleteConfirmOpen
+                                ? t("edit.sections.danger.confirm_delete")
+                                : t("edit.sections.danger.delete")}
+                          </button>
+                          {deleteConfirmOpen && (
+                            <div className="grid gap-2">
+                              <p className="rounded-2xl border border-red-300/20 bg-black/20 px-4 py-3 text-xs text-red-100/85">
+                                {t("edit.sections.danger.delete_warning")}
+                              </p>
+                              <button
+                                type="button"
+                                onClick={() => setDeleteConfirmOpen(false)}
+                                className="text-xs text-zinc-400 underline hover:text-white"
+                              >
+                                {t("edit.sections.danger.give_up")}
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              </TabsContent>
+
+              <TabsContent value="participation" key="participation" className="m-0 focus-visible:outline-none">
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="grid gap-4 pb-4"
+                >
+                  <BolaoEditSectionCard
+                    title={t("edit.sections.participation.title")}
+                    description={t("edit.sections.participation.desc")}
+                    editable={participationEditable}
+                    actionLabel={participationEditable ? t("edit.sections.participation.action_save") : t("edit.sections.participation.action_duplicate")}
+                    onAction={() =>
+                      !canSaveParticipation
+                        ? toast({
+                            title: t("edit.sections.participation.error_select_group"),
+                            description: t("edit.sections.participation.error_select_group_desc"),
+                            variant: "destructive",
+                          })
+                        : participationEditable
+                          ? void saveConfigurationSection(
+                              "participation",
+                              {
+                                context: {
+                                  group_binding_mode: groupBindingMode,
+                                  grupo_id: groupBindingMode === "none" ? null : selectedGrupoId,
+                                },
+                                access_policy: {
+                                  join_mode: joinMode,
+                                  visibility: joinMode === "public_open" ? "public" : "private",
+                                },
+                              },
+                              {
+                                category: joinMode === "public_open" ? "public" : "private",
+                                grupo_id: groupBindingMode === "none" ? null : selectedGrupoId,
+                              },
+                              t("edit.sections.participation.success_title"),
+                            )
+                          : void handleDuplicateForSection("participation", {
+                              context: {
+                                group_binding_mode: groupBindingMode,
+                                grupo_id: groupBindingMode === "none" ? null : selectedGrupoId,
+                              },
+                              access_policy: {
+                                join_mode: joinMode,
+                                visibility: joinMode === "public_open" ? "public" : "private",
+                              },
+                              presentation: {
+                                name: `${name.trim() || bolao.name} (cópia)`,
+                              },
+                            })
+                    }
+                    busy={savingKey === "participation"}
+                  />
+                  <div className="grid gap-4 rounded-3xl border border-white/10 bg-white/5 p-5">
+                    <label className="grid gap-2 text-sm">
+                      <span className="text-[10px] font-black uppercase tracking-[0.15em] text-zinc-500 pl-1">
+                        {t("edit.sections.participation.group_relation")}
+                      </span>
+                      <select
+                        value={groupBindingMode}
+                        onChange={(event) => {
+                          const nextValue = event.target.value as GroupBindingMode;
+                          setGroupBindingMode(nextValue);
+                          if (nextValue === "none") {
+                            setSelectedGrupoId(null);
+                          }
+                        }}
+                        className="rounded-2xl border border-white/10 bg-[#0a1a11] px-4 py-3.5 text-white focus:border-primary/30 focus:outline-none transition-colors"
+                      >
+                        <option value="none">{t("edit.sections.participation.no_group")}</option>
+                        <option value="linked_discovery">{t("edit.sections.participation.discovery_link")}</option>
+                        <option value="group_gated">{t("edit.sections.participation.group_gated")}</option>
+                      </select>
                     </label>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          <BolaoEditSectionCard
-            title={t("edit.sections.rules.title")}
-            description={t("edit.sections.rules.desc")}
-            editable={editableSections.competition_rules}
-            actionLabel={editableSections.competition_rules ? t("edit.sections.rules.action_save") : t("edit.sections.rules.action_duplicate")}
-            onAction={() =>
-              !canSaveRules
-                ? toast({
-                    title: t("edit.sections.rules.error_markets"),
-                    description: t("edit.sections.rules.error_markets_desc"),
-                    variant: "destructive",
-                  })
-                : editableSections.competition_rules
-                  ? void saveConfigurationSection(
-                      "rules",
-                      {
-                        competition_rules: {
-                          format: formatId,
-                          scoring_mode: bolao.scoring_mode || "default",
-                          scoring_rules: scoringRules,
-                          markets: selectedMarketIds,
-                        },
-                      },
-                      {
-                        format_id: formatId as BolaoData["format_id"],
-                        scoring_rules: scoringRules,
-                      },
-                      t("edit.sections.rules.success_title"),
-                    )
-                  : void handleDuplicateForSection("rules", {
-                      competition_rules: {
-                        format: formatId,
-                        scoring_mode: bolao.scoring_mode || "default",
-                        scoring_rules: scoringRules,
-                        markets: selectedMarketIds,
-                      },
-                      presentation: {
-                        name: `${name.trim() || bolao.name} (cópia)`,
-                      },
-                    })
-            }
-            busy={savingKey === "rules"}
-          />
-          <div className="grid gap-3 rounded-3xl border border-white/10 bg-white/5 p-4 md:grid-cols-2">
-            <label className="grid gap-2 text-sm">
-              <span className="text-zinc-300">{t("edit.sections.rules.format")}</span>
-              <select
-                value={formatId}
-                onChange={(event) => {
-                  const nextFormat = event.target.value as BolaoFormatSlug;
-                  setFormatId(nextFormat);
-                  setSelectedMarketIds(getDefaultMarketIdsForFormat(nextFormat) as MarketTemplateSlug[]);
-                }}
-                className="rounded-2xl border border-white/10 bg-[#122117] px-4 py-3 text-white"
-              >
-                {availableFormats.map((format) => (
-                  <option key={format.id} value={format.id}>
-                    {format.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <div className="rounded-2xl border border-white/10 bg-[#122117] px-4 py-3 text-sm text-zinc-300">
-              {availableFormats.find((format) => format.id === formatId)?.description || "Formato atual do bolão."}
-            </div>
-            <div className="rounded-2xl border border-white/10 bg-[#122117] px-4 py-3 text-sm text-zinc-300 md:col-span-2">
-              <p className="mb-3 font-black text-white">{t("edit.sections.rules.markets")}</p>
-              <div className="flex flex-wrap gap-2">
-                {(getDefaultMarketIdsForFormat(formatId) as MarketTemplateSlug[]).map((marketId) => {
-                  const checked = selectedMarketIds.includes(marketId);
-                  return (
-                    <button
-                      key={marketId}
-                      type="button"
-                      onClick={() =>
-                        setSelectedMarketIds((current) =>
-                          checked ? current.filter((id) => id !== marketId) : [...current, marketId],
-                        )
-                      }
-                      className={`rounded-full border px-3 py-2 text-xs font-bold ${
-                        checked ? "border-primary bg-primary/15 text-primary" : "border-white/10 text-zinc-300"
-                      }`}
-                    >
-                      {marketId}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-            <label className="grid gap-2 text-sm">
-              <span className="text-zinc-300">{t("edit.sections.rules.exact_points")}</span>
-              <input
-                type="number"
-                value={scoringRules.exact}
-                onChange={(event) =>
-                  setScoringRules((current) => ({ ...current, exact: Number(event.target.value || 0) }))
-                }
-                className="rounded-2xl border border-white/10 bg-[#122117] px-4 py-3 text-white"
-              />
-            </label>
-            <label className="grid gap-2 text-sm">
-              <span className="text-zinc-300">{t("edit.sections.rules.winner_points")}</span>
-              <input
-                type="number"
-                value={scoringRules.winner}
-                onChange={(event) =>
-                  setScoringRules((current) => ({ ...current, winner: Number(event.target.value || 0) }))
-                }
-                className="rounded-2xl border border-white/10 bg-[#122117] px-4 py-3 text-white"
-              />
-            </label>
-            <label className="grid gap-2 text-sm">
-              <span className="text-zinc-300">{t("edit.sections.rules.draw_points")}</span>
-              <input
-                type="number"
-                value={scoringRules.draw}
-                onChange={(event) =>
-                  setScoringRules((current) => ({ ...current, draw: Number(event.target.value || 0) }))
-                }
-                className="rounded-2xl border border-white/10 bg-[#122117] px-4 py-3 text-white"
-              />
-            </label>
-            <label className="grid gap-2 text-sm">
-              <span className="text-zinc-300">{t("edit.sections.rules.participation_points")}</span>
-              <input
-                type="number"
-                value={scoringRules.participation ?? 0}
-                onChange={(event) =>
-                  setScoringRules((current) => ({ ...current, participation: Number(event.target.value || 0) }))
-                }
-                className="rounded-2xl border border-white/10 bg-[#122117] px-4 py-3 text-white"
-              />
-            </label>
-          </div>
-
-          <BolaoEditSectionCard
-            title={t("edit.sections.finance.title")}
-            description={t("edit.sections.finance.desc")}
-            editable={editableSections.finance_rules}
-            actionLabel={editableSections.finance_rules ? t("edit.sections.finance.action_save") : t("edit.sections.finance.action_duplicate")}
-            onAction={() =>
-              editableSections.finance_rules
-                ? void saveConfigurationSection(
-                    "finance",
-                    {
-                      finance_rules: {
-                        finance_mode: financeMode,
-                        entry_fee_amount: financeMode === "paid_external" && entryFee ? Number(entryFee) : null,
-                        distribution_custom_text: prizeDistribution.trim(),
-                        payment_details: paymentDetails.trim(),
-                      },
-                    },
-                    {
-                      is_paid: financeMode === "paid_external",
-                      entry_fee: financeMode === "paid_external" && entryFee ? Number(entryFee) : null,
-                      payment_details: paymentDetails.trim() || null,
-                      prize_distribution: prizeDistribution.trim() || null,
-                    },
-                    t("edit.sections.finance.success_title"),
-                  )
-                : void handleDuplicateForSection("finance", {
-                    finance_rules: {
-                      finance_mode: financeMode,
-                      entry_fee_amount: financeMode === "paid_external" && entryFee ? Number(entryFee) : null,
-                      distribution_custom_text: prizeDistribution.trim(),
-                      payment_details: paymentDetails.trim(),
-                    },
-                    presentation: {
-                      name: `${name.trim() || bolao.name} (cópia)`,
-                    },
-                  })
-            }
-            busy={savingKey === "finance"}
-          />
-          <div className="grid gap-3 rounded-3xl border border-white/10 bg-white/5 p-4 md:grid-cols-2">
-            <label className="grid gap-2 text-sm">
-              <span className="text-zinc-300">{t("edit.sections.finance.mode")}</span>
-              <select
-                value={financeMode}
-                onChange={(event) => setFinanceMode(event.target.value as FinanceMode)}
-                className="rounded-2xl border border-white/10 bg-[#122117] px-4 py-3 text-white"
-              >
-                <option value="free">{t("edit.sections.finance.mode_free")}</option>
-                <option value="paid_external">{t("edit.sections.finance.mode_paid")}</option>
-              </select>
-            </label>
-            <label className="grid gap-2 text-sm">
-              <span className="text-zinc-300">{t("edit.sections.finance.entry_fee")}</span>
-              <input
-                value={entryFee}
-                onChange={(event) => setEntryFee(event.target.value)}
-                placeholder={t("edit.sections.finance.entry_fee_placeholder")}
-                className="rounded-2xl border border-white/10 bg-[#122117] px-4 py-3 text-white"
-              />
-            </label>
-            <label className="grid gap-2 text-sm md:col-span-2">
-              <span className="text-zinc-300">{t("edit.sections.finance.payment_method")}</span>
-              <textarea
-                value={paymentDetails}
-                onChange={(event) => setPaymentDetails(event.target.value)}
-                placeholder={t("edit.sections.finance.payment_placeholder")}
-                className="min-h-[90px] rounded-2xl border border-white/10 bg-[#122117] px-4 py-3 text-white"
-              />
-            </label>
-            <label className="grid gap-2 text-sm md:col-span-2">
-              <span className="text-zinc-300">{t("edit.sections.finance.prize_dist")}</span>
-              <textarea
-                value={prizeDistribution}
-                onChange={(event) => setPrizeDistribution(event.target.value)}
-                placeholder={t("edit.sections.finance.prize_placeholder")}
-                className="min-h-[90px] rounded-2xl border border-white/10 bg-[#122117] px-4 py-3 text-white"
-              />
-            </label>
-          </div>
-
-          <BolaoEditSectionCard
-            title={t("edit.sections.operation.title")}
-            description={t("edit.sections.operation.desc")}
-            editable={Boolean(editableSections.operation)}
-            actionLabel={t("edit.sections.operation.action_finish")}
-            onAction={() => void handleLifecycleAction("finish")}
-            busy={savingKey === "finish"}
-          />
-          <div className="grid gap-3 rounded-3xl border border-white/10 bg-white/5 p-4 md:grid-cols-2">
-            <button
-              onClick={() => void handleLifecycleAction("finish")}
-              disabled={savingKey === "finish" || savingKey === "archive" || savingKey === "delete"}
-              className="rounded-2xl border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm font-black text-amber-300 disabled:opacity-50"
-            >
-              {t("edit.sections.operation.action_finish")}
-            </button>
-            <button
-              onClick={() => void handleLifecycleAction("archive")}
-              disabled={savingKey === "finish" || savingKey === "archive" || savingKey === "delete"}
-              className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-black text-white disabled:opacity-50"
-            >
-              {t("edit.sections.operation.action_archive")}
-            </button>
-          </div>
-
-          <div className="rounded-3xl border border-red-500/20 bg-red-500/10 p-4">
-            {editableSections.operation && bolao.integrity?.is_structure_locked ? (
-              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                <div>
-                  <p className="text-sm font-black text-red-200">{t("edit.sections.danger.cancel_bolao")}</p>
-                  <p className="mt-1 text-xs leading-5 text-red-100/75">
-                    {t("edit.sections.danger.cancel_desc")}
-                  </p>
-                </div>
-                <div className="flex flex-col items-end gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (!cancelConfirmOpen) {
-                        setCancelConfirmOpen(true);
-                        return;
-                      }
-                      void handleCancelBolao();
-                    }}
-                    disabled={savingKey === "cancel"}
-                    className="min-w-[160px] rounded-2xl border border-red-300/30 bg-red-400/15 px-4 py-3 text-sm font-black text-red-100 transition-colors hover:bg-red-400/25 disabled:opacity-50"
-                  >
-                    {savingKey === "cancel"
-                      ? t("edit.sections.danger.canceling")
-                      : cancelConfirmOpen
-                        ? t("edit.sections.danger.confirm_cancel")
-                        : t("edit.sections.danger.cancel_bolao")}
-                  </button>
-                  {cancelConfirmOpen && (
-                    <>
-                      <p className="max-w-xs rounded-2xl border border-red-300/20 bg-black/20 px-4 py-3 text-xs text-red-100/85">
-                        {t("edit.sections.danger.cancel_warning")}
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => setCancelConfirmOpen(false)}
-                        className="text-xs text-zinc-400 underline hover:text-white"
+                    <label className="grid gap-2 text-sm">
+                      <span className="text-[10px] font-black uppercase tracking-[0.15em] text-zinc-500 pl-1">
+                        {t("edit.sections.participation.linked_group")}
+                      </span>
+                      <select
+                        value={selectedGrupoId || ""}
+                        onChange={(event) => setSelectedGrupoId(event.target.value || null)}
+                        disabled={groupBindingMode === "none"}
+                        className="rounded-2xl border border-white/10 bg-[#0a1a11] px-4 py-3.5 text-white focus:border-primary/30 focus:outline-none transition-colors disabled:opacity-30"
                       >
-                        {t("edit.sections.danger.give_up")}
-                      </button>
-                    </>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <p className="text-sm font-black text-red-200">{t("edit.sections.danger.risk_zone")}</p>
-                  <p className="mt-1 text-xs leading-5 text-red-100/75">
-                    {t("edit.sections.danger.risk_desc")}
-                  </p>
-                </div>
-                <div className="flex flex-col items-end gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (!deleteConfirmOpen) {
-                        setDeleteConfirmOpen(true);
-                        return;
-                      }
-                      void handleDeleteBolao();
-                    }}
-                    disabled={savingKey === "delete"}
-                    className="min-w-[160px] rounded-2xl border border-red-300/30 bg-red-400/15 px-4 py-3 text-sm font-black text-red-100 transition-colors hover:bg-red-400/25 disabled:opacity-50"
-                  >
-                    {savingKey === "delete"
-                      ? t("edit.sections.danger.deleting")
-                      : deleteConfirmOpen
-                        ? t("edit.sections.danger.confirm_delete")
-                        : t("edit.sections.danger.delete")}
-                  </button>
-                  {deleteConfirmOpen && (
-                    <>
-                      <p className="max-w-xs rounded-2xl border border-red-300/20 bg-black/20 px-4 py-3 text-xs text-red-100/85">
-                        {t("edit.sections.danger.delete_warning")}
-                      </p>
-                      <button
-                        type="button"
-                        onClick={() => setDeleteConfirmOpen(false)}
-                        className="text-xs text-zinc-400 underline hover:text-white"
+                        <option value="">{t("edit.sections.participation.select_group")}</option>
+                        {availableGroups.map((group) => (
+                          <option key={group.id} value={group.id}>
+                            {group.name}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label className="grid gap-2 text-sm">
+                      <span className="text-[10px] font-black uppercase tracking-[0.15em] text-zinc-500 pl-1">
+                        {t("edit.sections.participation.access_policy")}
+                      </span>
+                      <select
+                        value={joinMode}
+                        onChange={(event) => setJoinMode(event.target.value as JoinMode)}
+                        className="rounded-2xl border border-white/10 bg-[#0a1a11] px-4 py-3.5 text-white focus:border-primary/30 focus:outline-none transition-colors"
                       >
-                        {t("edit.sections.danger.give_up")}
-                      </button>
-                    </>
-                  )}
-                </div>
-              </div>
-            )}
+                        <option value="private_invite">{t("edit.sections.participation.private_invite")}</option>
+                        <option value="public_open">{t("edit.sections.participation.public_open")}</option>
+                      </select>
+                    </label>
+                  </div>
+                </motion.div>
+              </TabsContent>
+
+              <TabsContent value="rules" key="rules" className="m-0 focus-visible:outline-none">
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="grid gap-4 pb-4"
+                >
+                  <BolaoEditSectionCard
+                    title={t("edit.sections.rules.title")}
+                    description={t("edit.sections.rules.desc")}
+                    editable={editableSections.competition_rules}
+                    actionLabel={editableSections.competition_rules ? t("edit.sections.rules.action_save") : t("edit.sections.rules.action_duplicate")}
+                    onAction={() =>
+                      !canSaveRules
+                        ? toast({
+                            title: t("edit.sections.rules.error_markets"),
+                            description: t("edit.sections.rules.error_markets_desc"),
+                            variant: "destructive",
+                          })
+                        : editableSections.competition_rules
+                          ? void saveConfigurationSection(
+                              "rules",
+                              {
+                                competition_rules: {
+                                  format: formatId,
+                                  scoring_mode: bolao.scoring_mode || "default",
+                                  scoring_rules: scoringRules,
+                                  markets: selectedMarketIds,
+                                },
+                              },
+                              {
+                                format_id: formatId as BolaoData["format_id"],
+                                scoring_rules: scoringRules,
+                              },
+                              t("edit.sections.rules.success_title"),
+                            )
+                          : void handleDuplicateForSection("rules", {
+                              competition_rules: {
+                                format: formatId,
+                                scoring_mode: bolao.scoring_mode || "default",
+                                scoring_rules: scoringRules,
+                                markets: selectedMarketIds,
+                              },
+                              presentation: {
+                                name: `${name.trim() || bolao.name} (cópia)`,
+                              },
+                            })
+                    }
+                    busy={savingKey === "rules"}
+                  />
+                  
+                  <div className="grid gap-4 rounded-3xl border border-white/10 bg-white/5 p-5">
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="grid gap-2">
+                        <span className="text-[10px] font-black uppercase tracking-[0.15em] text-zinc-500 pl-1">
+                          {t("edit.sections.rules.format")}
+                        </span>
+                        <select
+                          value={formatId}
+                          onChange={(event) => {
+                            const newFormat = event.target.value as BolaoFormatSlug;
+                            setFormatId(newFormat);
+                            setSelectedMarketIds(getDefaultMarketIdsForFormat(newFormat) as MarketTemplateSlug[]);
+                          }}
+                          className="rounded-2xl border border-white/10 bg-[#0a1a11] px-4 py-3.5 text-white focus:border-primary/30 focus:outline-none transition-colors"
+                        >
+                          {availableFormats.map((f) => (
+                            <option key={f.slug} value={f.slug}>
+                              {f.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="grid gap-2 text-sm">
+                        <span className="text-[10px] font-black uppercase tracking-[0.15em] text-zinc-500 pl-1">
+                          {t("edit.sections.rules.exact_points")}
+                        </span>
+                        <input
+                          type="number"
+                          value={scoringRules.exact}
+                          onChange={(e) => setScoringRules({ ...scoringRules, exact: Number(e.target.value) })}
+                          className="rounded-2xl border border-white/10 bg-[#0a1a11] px-4 py-3.5 text-white focus:border-primary/30 focus:outline-none transition-colors"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="grid gap-2 text-sm">
+                        <span className="text-[10px] font-black uppercase tracking-[0.15em] text-zinc-500 pl-1">
+                          {t("edit.sections.rules.winner")}
+                        </span>
+                        <input
+                          type="number"
+                          value={scoringRules.winner}
+                          onChange={(e) => setScoringRules({ ...scoringRules, winner: Number(e.target.value) })}
+                          className="rounded-2xl border border-white/10 bg-[#0a1a11] px-4 py-3.5 text-white focus:border-primary/30 focus:outline-none transition-colors"
+                        />
+                      </div>
+                      <div className="grid gap-2 text-sm">
+                        <span className="text-[10px] font-black uppercase tracking-[0.15em] text-zinc-500 pl-1">
+                          {t("edit.sections.rules.draw")}
+                        </span>
+                        <input
+                          type="number"
+                          value={scoringRules.draw}
+                          onChange={(e) => setScoringRules({ ...scoringRules, draw: Number(e.target.value) })}
+                          className="rounded-2xl border border-white/10 bg-[#0a1a11] px-4 py-3.5 text-white focus:border-primary/30 focus:outline-none transition-colors"
+                        />
+                      </div>
+                      <div className="grid gap-2 text-sm">
+                        <span className="text-[10px] font-black uppercase tracking-[0.15em] text-zinc-500 pl-1">
+                          {t("edit.sections.rules.participation")}
+                        </span>
+                        <input
+                          type="number"
+                          value={scoringRules.participation}
+                          onChange={(e) => setScoringRules({ ...scoringRules, participation: Number(e.target.value) })}
+                          className="rounded-2xl border border-white/10 bg-[#0a1a11] px-4 py-3.5 text-white focus:border-primary/30 focus:outline-none transition-colors"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </motion.div>
+              </TabsContent>
+
+              <TabsContent value="finance" key="finance" className="m-0 focus-visible:outline-none">
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="grid gap-4 pb-4"
+                >
+                  <BolaoEditSectionCard
+                    title={t("edit.sections.finance.title")}
+                    description={t("edit.sections.finance.desc")}
+                    editable={editableSections.finance_rules}
+                    actionLabel={editableSections.finance_rules ? t("edit.sections.finance.action_save") : t("edit.sections.finance.action_duplicate")}
+                    onAction={() =>
+                      editableSections.finance_rules
+                        ? void saveConfigurationSection(
+                            "finance",
+                            {
+                              finance_rules: {
+                                is_paid: financeMode === "paid_external",
+                                entry_fee: Number(entryFee) || 0,
+                                payment_details: paymentDetails.trim(),
+                                prize_distribution: prizeDistribution.trim(),
+                              },
+                            },
+                            {
+                              is_paid: financeMode === "paid_external",
+                              entry_fee: Number(entryFee) || 0,
+                              payment_details: paymentDetails.trim(),
+                              prize_distribution: prizeDistribution.trim(),
+                            },
+                            t("edit.sections.finance.success_title"),
+                          )
+                        : void handleDuplicateForSection("finance", {
+                            finance_rules: {
+                              is_paid: financeMode === "paid_external",
+                              entry_fee: Number(entryFee) || 0,
+                              payment_details: paymentDetails.trim(),
+                              prize_distribution: prizeDistribution.trim(),
+                            },
+                            presentation: {
+                              name: `${name.trim() || bolao.name} (cópia)`,
+                            },
+                          })
+                    }
+                    busy={savingKey === "finance"}
+                  />
+                  <div className="grid gap-4 rounded-3xl border border-white/10 bg-white/5 p-5">
+                    <label className="grid gap-2 text-sm">
+                      <span className="text-[10px] font-black uppercase tracking-[0.15em] text-zinc-500 pl-1">
+                        {t("edit.sections.finance.mode")}
+                      </span>
+                      <select
+                        value={financeMode}
+                        onChange={(event) => setFinanceMode(event.target.value as FinanceMode)}
+                        className="rounded-2xl border border-white/10 bg-[#0a1a11] px-4 py-3.5 text-white focus:border-primary/30 focus:outline-none transition-colors"
+                      >
+                        <option value="free">{t("edit.sections.finance.free")}</option>
+                        <option value="paid_external">{t("edit.sections.finance.paid_external")}</option>
+                      </select>
+                    </label>
+                    {financeMode === "paid_external" && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        className="grid gap-4 overflow-hidden"
+                      >
+                        <label className="grid gap-2 text-sm">
+                          <span className="text-[10px] font-black uppercase tracking-[0.15em] text-zinc-500 pl-1">
+                            {t("edit.sections.finance.entry_fee")}
+                          </span>
+                          <input
+                            type="number"
+                            value={entryFee}
+                            onChange={(event) => setEntryFee(event.target.value)}
+                            placeholder="0.00"
+                            className="rounded-2xl border border-white/10 bg-[#0a1a11] px-4 py-3.5 text-white focus:border-primary/30 focus:outline-none transition-colors"
+                          />
+                        </label>
+                        <label className="grid gap-2 text-sm">
+                          <span className="text-[10px] font-black uppercase tracking-[0.15em] text-zinc-500 pl-1">
+                            {t("edit.sections.finance.payment_details")}
+                          </span>
+                          <textarea
+                            value={paymentDetails}
+                            onChange={(event) => setPaymentDetails(event.target.value)}
+                            placeholder={t("edit.sections.finance.payment_details_placeholder")}
+                            className="min-h-[80px] rounded-2xl border border-white/10 bg-[#0a1a11] px-4 py-3.5 text-white focus:border-primary/30 focus:outline-none transition-colors resize-none"
+                          />
+                        </label>
+                        <label className="grid gap-2 text-sm">
+                          <span className="text-[10px] font-black uppercase tracking-[0.15em] text-zinc-500 pl-1">
+                            {t("edit.sections.finance.prize_distribution")}
+                          </span>
+                          <textarea
+                            value={prizeDistribution}
+                            onChange={(event) => setPrizeDistribution(event.target.value)}
+                            placeholder={t("edit.sections.finance.prize_distribution_placeholder")}
+                            className="min-h-[80px] rounded-2xl border border-white/10 bg-[#0a1a11] px-4 py-3.5 text-white focus:border-primary/30 focus:outline-none transition-colors resize-none"
+                          />
+                        </label>
+                      </motion.div>
+                    )}
+                  </div>
+                </motion.div>
+              </TabsContent>
+            </AnimatePresence>
           </div>
-        </div>
+        </Tabs>
       </DialogContent>
     </Dialog>
   );
 }
-
-

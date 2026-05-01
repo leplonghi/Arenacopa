@@ -1074,112 +1074,133 @@ export default function CampeonatoHub() {
 
   return (
     <div className="arena-screen pb-24">
-      <div className="mx-auto max-w-6xl px-4 pt-6">
-        <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
-          <ArenaPanel tone="strong" className="overflow-hidden p-5 sm:p-6">
+      <div className="mx-auto max-w-6xl px-4 pt-0">
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+          <ArenaPanel tone="strong" className="overflow-hidden p-4 sm:p-5">
             <div
-              className="absolute inset-0 opacity-[0.18]"
+              className="absolute inset-0 opacity-[0.14]"
               style={{
                 background: `radial-gradient(circle at 78% 24%, ${color}55, transparent 22%), linear-gradient(135deg, ${from}88, transparent 50%)`,
               }}
             />
-            <div className="relative grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
-              <div>
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => navigate("/campeonatos")}
-                    className="surface-card-soft flex h-12 w-12 items-center justify-center rounded-[18px]"
-                  >
-                    <ArrowLeft className="h-5 w-5" />
-                  </button>
-                  <span className={cn("inline-flex items-center gap-1 rounded-full border px-3 py-1 text-[10px] font-bold uppercase tracking-wider", statusColor)}>
-                    {championship.status === "live" && <Radio className="w-2.5 h-2.5 animate-pulse" />}
-                    {championship.status === "upcoming" && <Clock className="w-2.5 h-2.5" />}
-                    {statusLabel}
-                  </span>
-                </div>
-
-                <div className="mt-5 flex items-start gap-4">
-                  <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-[26px] border border-white/10 bg-black/20 shadow-[0_0_0_1px_rgba(255,255,255,0.04)_inset]">
-                    {championship.logoUrl ? (
-                      <img src={championship.logoUrl} alt={championship.shortName} className="h-14 w-14 object-contain" />
-                    ) : (
-                      <span className="text-5xl">{championship.logo}</span>
-                    )}
+            <div className="relative">
+              {/* Top row: back + status + metrics inline on desktop */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => navigate("/campeonatos")}
+                  className="surface-card-soft flex h-9 w-9 items-center justify-center rounded-xl"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                </button>
+                <span className={cn("inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider", statusColor)}>
+                  {championship.status === "live" && <Radio className="w-2.5 h-2.5 animate-pulse" />}
+                  {championship.status === "upcoming" && <Clock className="w-2.5 h-2.5" />}
+                  {statusLabel}
+                </span>
+                <div className="ml-auto hidden items-center gap-3 lg:flex">
+                  <div className="flex items-center gap-1.5 text-xs text-zinc-400">
+                    <Calendar className="h-3.5 w-3.5 text-primary" />
+                    <span className="font-bold text-white">{championship.status === "upcoming" ? `${countdownDays}d` : timelineLabel}</span>
                   </div>
-                  <div className="min-w-0">
-                    <p className="arena-kicker" style={{ color }}>
-                      {championship.confederation ?? championship.country} · {championship.season}
-                    </p>
-                    <h1 className="mt-2 font-display text-[3.1rem] font-black uppercase leading-[0.88] tracking-[0.02em] text-white sm:text-[4rem]">
-                      {championship.name}
-                    </h1>
-                    <p className="mt-3 max-w-2xl text-sm leading-relaxed text-zinc-300 sm:text-base">
-                      {championship.status === "upcoming"
-                        ? `Tudo preparado para a abertura. Veja formato, calendário, notícias e crie seu bolão antes da estreia.`
-                        : `Acompanhe jogos, classificação, notícias e bolões sem sair do contexto deste campeonato.`}
-                    </p>
+                  <div className="flex items-center gap-1.5 text-xs text-zinc-400">
+                    <Users className="h-3.5 w-3.5 text-primary" />
+                    <span className="font-bold text-white">{championship.maxTeams}</span>
                   </div>
-                </div>
-
-                <div className="mt-6 flex flex-wrap gap-3">
-                  <button
-                    onClick={() => setTab("jogos")}
-                    className="arena-button-gold"
-                  >
-                    Ver jogos
-                  </button>
-                  <button
-                    onClick={() => setTab("boloes")}
-                    className="arena-button-green"
-                  >
-                    Ver bolões
-                  </button>
+                  <div className="flex items-center gap-1.5 text-xs text-zinc-400">
+                    <TrendingUp className="h-3.5 w-3.5 text-primary" />
+                    <span className="font-bold text-white">{formatLabel}</span>
+                  </div>
                 </div>
               </div>
 
-              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-1">
-                <ArenaMetric
-                  label={championship.status === "upcoming" ? "Faltam" : "Janela"}
-                  value={championship.status === "upcoming" ? `${countdownDays} dias` : timelineLabel}
-                  accent
-                  icon={<Calendar className="h-5 w-5" />}
-                />
-                <ArenaMetric
-                  label={t("championships:hub.stats.teams", { defaultValue: "Times" })}
-                  value={championship.maxTeams}
-                  icon={<Users className="h-5 w-5" />}
-                />
-                <ArenaMetric
-                  label={t("championships:hub.stats.format", { defaultValue: "Formato" })}
-                  value={formatLabel}
-                  icon={<TrendingUp className="h-5 w-5" />}
-                  className="sm:col-span-2 lg:col-span-1"
-                />
+              {/* Main info: logo + title + actions */}
+              <div className="mt-3 flex items-start gap-3 sm:gap-4">
+                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-white/10 bg-black/20 shadow-[0_0_0_1px_rgba(255,255,255,0.04)_inset]">
+                  {championship.logoUrl ? (
+                    <img src={championship.logoUrl} alt={championship.shortName} className="h-10 w-10 object-contain" />
+                  ) : (
+                    <span className="text-3xl">{championship.logo}</span>
+                  )}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-[10px] font-black uppercase tracking-[0.18em]" style={{ color }}>
+                    {championship.confederation ?? championship.country} · {championship.season}
+                  </p>
+                  <h1 className="mt-0.5 font-display text-2xl font-black uppercase leading-[0.95] tracking-[0.02em] text-white sm:text-3xl">
+                    {championship.name}
+                  </h1>
+                  <p className="mt-1 max-w-xl text-xs leading-relaxed text-zinc-400">
+                    {championship.status === "upcoming"
+                      ? "Tudo preparado para a abertura. Veja formato, calendário, notícias e crie seu bolão."
+                      : "Acompanhe jogos, classificação, notícias e bolões deste campeonato."}
+                  </p>
+                  <div className="mt-2.5 flex flex-wrap gap-2">
+                    <button
+                      onClick={() => setTab("jogos")}
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-primary/15 px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.12em] text-primary transition hover:bg-primary/25"
+                    >
+                      <CalendarDays className="h-3.5 w-3.5" />
+                      Jogos
+                    </button>
+                    <button
+                      onClick={() => setTab("boloes")}
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500/15 px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.12em] text-amber-400 transition hover:bg-amber-500/25"
+                    >
+                      <Trophy className="h-3.5 w-3.5" />
+                      Bolões
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Mobile-only metric pills */}
+              <div className="mt-3 flex flex-wrap gap-2 lg:hidden">
+                <span className="inline-flex items-center gap-1 rounded-lg border border-primary/20 bg-primary/8 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-primary">
+                  <Calendar className="h-3 w-3" />
+                  {championship.status === "upcoming" ? `${countdownDays} dias` : timelineLabel}
+                </span>
+                <span className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+                  <Users className="h-3 w-3" />
+                  {championship.maxTeams} times
+                </span>
+                <span className="inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/[0.04] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-zinc-400">
+                  <TrendingUp className="h-3 w-3" />
+                  {formatLabel}
+                </span>
               </div>
             </div>
           </ArenaPanel>
         </motion.div>
 
         <div
-          className="sticky z-10 mt-5 border-b border-white/[0.08] bg-[#07140d]/82 pb-3 pt-1 backdrop-blur-xl"
-          style={{ top: "calc(3.5rem + var(--safe-area-top, 0px))" }}
+          className="sticky z-10 -mx-4 border-y border-white/[0.06] bg-[#050505]/90 px-4 py-2 backdrop-blur-xl sm:-mx-0 sm:mt-5 sm:rounded-2xl sm:border sm:border-white/[0.08]"
+          style={{ top: "calc(4.6rem + var(--safe-area-top, 0px))" }}
         >
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <div className="flex items-center justify-between gap-1 sm:gap-2">
             {tabs.map((tabItem) => {
               const isActive = tab === tabItem.id;
               return (
-                <button key={tabItem.id} onClick={() => setTab(tabItem.id)} aria-current={isActive ? "page" : undefined}>
-                  <ArenaTabPill
-                    active={isActive}
-                    className={cn(
-                      "flex min-h-[60px] w-full flex-col gap-1 rounded-[22px] px-3 py-3",
-                      !isActive && "hover:border-white/20 hover:bg-white/[0.06] hover:text-white",
-                    )}
-                  >
-                    <span className={cn("transition-transform duration-200", isActive && "scale-110")}>{tabItem.icon}</span>
-                    <span className="text-[10px] tracking-[0.16em]">{tabItem.label}</span>
-                  </ArenaTabPill>
+                <button
+                  key={tabItem.id}
+                  onClick={() => setTab(tabItem.id)}
+                  aria-current={isActive ? "page" : undefined}
+                  className={cn(
+                    "group relative flex flex-1 items-center justify-center gap-1.5 rounded-xl px-2 py-2.5 text-[11px] font-black uppercase tracking-[0.14em] transition-all sm:gap-2 sm:px-4 sm:py-3 sm:text-xs",
+                    isActive
+                      ? "bg-primary/15 text-primary"
+                      : "text-zinc-500 hover:bg-white/[0.04] hover:text-zinc-300",
+                  )}
+                >
+                  <span className={cn("transition-transform duration-200", isActive && "scale-110")}>
+                    {tabItem.icon}
+                  </span>
+                  <span className="hidden sm:inline">{tabItem.label}</span>
+                  <span className="sm:hidden">
+                    {tabItem.id === "classificacao" ? "Tab." : tabItem.id === "noticias" ? "Not." : tabItem.label}
+                  </span>
+                  {isActive && (
+                    <span className="absolute bottom-0 left-1/2 h-[2px] w-6 -translate-x-1/2 rounded-full bg-primary sm:w-8" />
+                  )}
                 </button>
               );
             })}

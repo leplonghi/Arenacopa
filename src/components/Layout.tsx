@@ -1,5 +1,5 @@
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
-import { Trophy, Bell, ChevronLeft, Compass, User } from "lucide-react";
+import { Bell, ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -11,12 +11,16 @@ import { FabWithPending } from "@/components/FabWithPending";
 import { MobileMenuSheet } from "@/components/MobileMenuSheet";
 import { BrandWordmark } from "@/components/BrandWordmark";
 import {
+  ArenaPulseIcon,
+  BolaoArenaIcon,
   ChampionshipBadgeIcon,
   CupTrophyIcon,
   GroupsArenaIcon,
   HomeArenaIcon,
   MenuArenaIcon,
   NewsPulseIcon,
+  ProfileArenaIcon,
+  RankingArenaIcon,
 } from "@/components/AppNavIcons";
 import {
   Sidebar,
@@ -45,19 +49,20 @@ const navIconMap: Record<AppNavIconKey, React.ComponentType<{ className?: string
   home: HomeArenaIcon,
   copa: CupTrophyIcon,
   championships: ChampionshipBadgeIcon,
-  bolao: Trophy,
-  discover: Compass,
+  bolao: BolaoArenaIcon,
+  discover: ArenaPulseIcon,
   news: NewsPulseIcon,
   guia: NewsPulseIcon,
   groups: GroupsArenaIcon,
-  profile: User,
+  profile: ProfileArenaIcon,
   menu: MenuArenaIcon,
+  ranking: RankingArenaIcon,
 };
 
 function Header({ className }: { className?: string }) {
   const location = useLocation();
   const navigate = useNavigate();
-  const isSubpage = location.pathname.split("/").filter(Boolean).length > 1;
+  const canGoBack = location.pathname !== "/";
 
   const { user } = useAuth();
   const [profile, setProfile] = useState<{ name: string; avatar?: string } | null>(null);
@@ -134,7 +139,7 @@ function Header({ className }: { className?: string }) {
   return (
     <header className={cn("arena-header-shell fixed inset-x-0 top-0 z-30 safe-top", className)}>
       <div className="arena-header-inner mx-auto flex h-[72px] w-full max-w-7xl items-center justify-between px-4">
-        {isSubpage ? (
+        {canGoBack ? (
           <button
             aria-label={t('actions.back')}
             onClick={() => navigate(-1)}
@@ -156,7 +161,7 @@ function Header({ className }: { className?: string }) {
 
         {/* Desktop Title & Mobile Subpage Title */}
         <div className="flex items-center gap-3">
-          {isSubpage && (
+          {canGoBack && (
             <button aria-label={t('actions.back')} onClick={() => navigate(-1)} className="hidden h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-black/35 text-white/90 backdrop-blur-xl md:flex">
               <ChevronLeft className="w-5 h-5" />
             </button>
@@ -164,7 +169,7 @@ function Header({ className }: { className?: string }) {
           {title && (
             <div className={cn(
               "font-display font-semibold uppercase tracking-[0.04em] text-white transition-all",
-              isSubpage
+              canGoBack
                 ? "text-[1.2rem] absolute left-1/2 -translate-x-1/2 md:relative md:left-0 md:translate-x-0 md:text-[1.35rem]"
                 : "hidden text-[1.35rem] md:block"
             )}>
@@ -230,7 +235,7 @@ function BottomTabs({ className }: { className?: string }) {
   return (
     <nav className={cn("fixed bottom-0 inset-x-0 z-30 overflow-visible safe-bottom", className)}>
       <div
-        className="relative mx-auto grid h-[94px] max-w-md items-end overflow-visible rounded-t-[30px] border border-b-0 border-[#496653]/75 bg-[linear-gradient(180deg,rgba(6,24,17,0.98)_0%,rgba(2,12,9,1)_72%,rgba(1,8,7,1)_100%)] px-2 pb-3 pt-2 shadow-[0_-22px_70px_-34px_rgba(8,255,93,0.45),0_-18px_58px_-26px_rgba(0,0,0,0.95)] before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-[linear-gradient(90deg,transparent,rgba(139,255,87,0.42),transparent)]"
+        className="relative mx-auto grid h-[94px] max-w-md items-end overflow-visible rounded-t-[30px] border border-b-0 border-[#496653]/75 bg-[linear-gradient(180deg,rgba(6,24,17,0.98)_0%,rgba(2,12,9,1)_72%,rgba(1,8,7,1)_100%)] px-2 pb-3 pt-2 shadow-[0_-8px_32px_-8px_rgba(0,0,0,0.6)] before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-white/[0.06]"
         style={{ gridTemplateColumns: `repeat(${tabs.length}, minmax(0, 1fr))` }}
       >
         {tabs.map((tab) => {
@@ -271,27 +276,27 @@ function BottomTabs({ className }: { className?: string }) {
                     className={cn(
                       iconShellClass,
                       isActive
-                        ? "scale-105 border border-primary/45 bg-[radial-gradient(circle_at_50%_20%,rgba(255,205,0,0.25),rgba(117,255,72,0.12)_42%,rgba(4,22,13,0.18)_100%)] shadow-[0_0_22px_rgba(255,205,0,0.20),inset_0_0_18px_rgba(117,255,72,0.08)]"
+                        ? "scale-105 border border-primary/30 bg-primary/[0.08] shadow-[0_0_12px_rgba(139,255,87,0.12)]"
                         : "scale-[0.98] border border-transparent bg-white/[0.025] group-hover:border-white/10 group-hover:bg-white/[0.06]"
                     )}
                   >
                     <span className={cn(
                       "absolute -bottom-1 h-1.5 w-7 rounded-full transition-all duration-300",
-                      isActive ? "bg-primary shadow-[0_0_16px_rgba(255,205,0,0.52)]" : "bg-transparent"
+                      isActive ? "bg-primary" : "bg-transparent"
                     )} />
                     <Icon
                       className={cn(
                         "relative z-10 h-[30px] w-[30px] transition-all duration-300",
                         isActive
-                          ? "drop-shadow-[0_0_14px_rgba(255,205,0,0.46)]"
-                          : "drop-shadow-[0_0_10px_rgba(255,255,255,0.10)]"
+                          ? "text-primary"
+                          : "text-zinc-400"
                       )}
                       strokeWidth={isActive ? 2.35 : 2.05}
                     />
                   </span>
                   <span className={cn(
-                    "font-display text-[15px] leading-none tracking-[0.01em]",
-                    isActive ? "font-black text-primary" : "font-semibold"
+                    "text-[13px] font-medium leading-none tracking-[0.01em]",
+                    isActive ? "font-semibold text-primary" : "text-zinc-400"
                   )}>
                     {t(tab.labelKey)}
                   </span>
@@ -332,7 +337,7 @@ function AppSidebar({ className }: { className?: string }) {
           <SidebarGroupContent className="mt-4">
             <SidebarMenu>
               {tabs.map((tab) => {
-                const Icon = navIconMap[tab.iconKey];
+                const Icon = navIconMap[tab.iconKey] || HomeArenaIcon;
                 const isActive = isNavigationItemActive(location.pathname, tab);
                 return (
                 <SidebarMenuItem key={tab.path}>

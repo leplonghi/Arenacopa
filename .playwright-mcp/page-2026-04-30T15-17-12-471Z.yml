@@ -1,0 +1,37 @@
+- generic [ref=e2]:
+  - region "Notifications (F8)":
+    - list
+  - region "Notifications alt+T"
+  - status "ArenaCopa" [ref=e3]:
+    - generic [ref=e8]:
+      - generic [ref=e12]: Bolão em campo
+      - generic "ARENACUP" [ref=e15]:
+        - generic [ref=e16]: ARENA
+        - generic [ref=e17]: CUP
+      - paragraph [ref=e18]: Palpites, ranking e rodada no mesmo gramado.
+  - generic [ref=e21]:
+    - generic [ref=e22]:
+      - img "ArenaCUP" [ref=e24]
+      - heading "ARENACUP" [level=1] [ref=e25]:
+        - generic "ARENACUP" [ref=e26]:
+          - generic [ref=e27]: ARENA
+          - generic [ref=e28]: CUP
+      - paragraph [ref=e29]: Bolões para vários campeonatos
+    - generic [ref=e30]:
+      - generic [ref=e31]:
+        - button "Entrar" [ref=e32] [cursor=pointer]
+        - button "Criar Conta" [ref=e33] [cursor=pointer]
+      - button "Entrar com Google" [ref=e34] [cursor=pointer]:
+        - img [ref=e35]
+        - text: Entrar com Google
+      - generic [ref=e42]: ou
+      - generic [ref=e44]:
+        - generic [ref=e45]:
+          - img [ref=e46]
+          - textbox "Email" [ref=e49]
+        - generic [ref=e50]:
+          - img [ref=e51]
+          - textbox "Senha" [ref=e54]
+          - button "Mostrar senha" [ref=e55] [cursor=pointer]:
+            - img [ref=e56]
+        - button "Entrar" [ref=e59] [cursor=pointer]

@@ -64,7 +64,7 @@ export function RankingBreakdownCard({
         <div className="rounded-[32px] border border-white/10 bg-white/[0.04] p-6">
             <div className="mb-5">
                 <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">{title}</p>
-                <p className="mt-2 text-sm text-zinc-400">{description}</p>
+                <p className="mt-2 line-clamp-2 text-sm text-zinc-400">{description}</p>
             </div>
 
             <div className="grid gap-3 md:grid-cols-4">

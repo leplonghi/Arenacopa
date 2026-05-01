@@ -118,7 +118,7 @@ const getCheckoutSiteUrl = () => {
     return origin;
   }
 
-  return "https://arenacopa.app";
+  return "https://arenacopa-web-2026.web.app";
 };
 
 async function callPremiumFunction<T>(functionName: string, payload: Record<string, unknown>): Promise<T> {

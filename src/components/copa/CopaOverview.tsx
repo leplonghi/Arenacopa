@@ -135,7 +135,7 @@ function FeaturedFixture({
       </div>
 
       <div className="mt-5 flex items-center justify-between border-t border-white/10 pt-4">
-        <p className="text-sm text-zinc-400">Toque para abrir detalhes, palpite e contexto da partida.</p>
+        <p className="text-sm text-zinc-400">Toque para abrir detalhes, chute e contexto da partida.</p>
         <ArrowRight className="h-5 w-5 text-white/40 transition group-hover:translate-x-1 group-hover:text-white/80" />
       </div>
     </button>
@@ -182,72 +182,60 @@ export function CopaOverview() {
 
   return (
     <div className="space-y-5 pb-20">
-      <ArenaPanel tone="strong" className="overflow-hidden p-5 sm:p-6">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_78%_22%,rgba(255,194,0,0.24),transparent_22%),radial-gradient(circle_at_15%_5%,rgba(145,255,59,0.12),transparent_28%)]" />
-        <div className="relative grid gap-6 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+      <ArenaPanel tone="strong" className="overflow-hidden p-4 sm:p-5">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_78%_22%,rgba(255,194,0,0.18),transparent_24%),radial-gradient(circle_at_15%_5%,rgba(145,255,59,0.09),transparent_30%)]" />
+        <div className="relative grid gap-4 lg:grid-cols-[1fr_auto] lg:items-center">
           <div>
-            <p className="arena-kicker text-primary">FIFA · 2026</p>
-            <h1 className="mt-2 font-display text-[3.5rem] font-black uppercase leading-[0.88] tracking-[0.02em] text-white sm:text-[4.6rem]">
+            <div className="flex items-center gap-2">
+              <p className="arena-kicker text-primary">FIFA · 2026</p>
+              <span className="arena-badge border-amber-400/30 text-amber-300 text-[10px] py-0.5 px-2">
+                <Clock3 className="h-3 w-3" />
+                Em breve
+              </span>
+            </div>
+            <h1 className="mt-1 font-display text-3xl font-black uppercase leading-[0.92] tracking-[0.02em] text-white sm:text-4xl">
               Copa do Mundo 2026
             </h1>
-            <div className="mt-4">
-              <div className="arena-badge border-amber-400/30 text-amber-300">
-                <Clock3 className="h-3.5 w-3.5" />
-                Em breve
-              </div>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              <span className="arena-badge bg-primary/12 border-primary/30 text-primary text-[10px] py-0.5 px-2">48 seleções</span>
+              <span className="arena-badge text-[10px] py-0.5 px-2">16 cidades</span>
+              <span className="arena-badge text-[10px] py-0.5 px-2">3 países-sede</span>
             </div>
-            <div className="mt-4 flex flex-wrap gap-2">
-              <span className="arena-badge bg-primary/12 border-primary/30 text-primary">48 seleções</span>
-              <span className="arena-badge">16 cidades</span>
-              <span className="arena-badge">3 países-sede</span>
-            </div>
-            <p className="mt-4 max-w-xl text-sm leading-relaxed text-zinc-300 sm:text-base">
-              Acompanhe a preparação completa da Copa: fases, grupos, calendário e entrada nos bolões sem ficar pulando entre telas.
+            <p className="mt-2 max-w-lg text-xs leading-relaxed text-zinc-400">
+              Acompanhe a preparação completa: fases, grupos, calendário e bolões.
             </p>
-            <div className="mt-5 flex flex-col gap-3 sm:flex-row">
+            <div className="mt-3 flex flex-wrap gap-2">
               <button
                 onClick={() => navigate("/copa/calendario")}
-                className="arena-button-green"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-primary/15 px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.12em] text-primary transition hover:bg-primary/25"
               >
-                Ver calendário
+                <Calendar className="h-3.5 w-3.5" />
+                Calendário
               </button>
               <button
                 onClick={() => navigate("/boloes/criar", { state: { championship_id: "wc2026" } })}
-                className="arena-button-gold"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-amber-500/15 px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.12em] text-amber-400 transition hover:bg-amber-500/25"
               >
-                Entrar na Copa
+                <Trophy className="h-3.5 w-3.5" />
+                Criar bolão
               </button>
             </div>
           </div>
 
-          <div className="relative flex min-h-[260px] items-center justify-center">
-            <div className="absolute h-52 w-52 rounded-full bg-amber-400/20 blur-3xl" />
-            <div className="absolute h-40 w-40 rounded-full border border-amber-300/25" />
+          <div className="relative hidden min-h-[180px] items-center justify-center lg:flex">
+            <div className="absolute h-40 w-40 rounded-full bg-amber-400/15 blur-3xl" />
             <ArenaAssetSlot
               name="wc2026-trophy.png"
               label="Troféu Copa do Mundo 2026"
               src={getArenaAssetSrc("wc2026-trophy.png")}
               variant="cutout"
-              className="relative h-72 w-56 border-amber-300/20 bg-transparent shadow-none"
-              imgClassName="p-0 object-contain drop-shadow-[0_0_44px_rgba(255,215,0,0.38)]"
+              className="relative h-48 w-36 border-amber-300/15 bg-transparent shadow-none"
+              imgClassName="p-0 object-contain drop-shadow-[0_0_30px_rgba(255,215,0,0.3)]"
               fallbackClassName="scale-75"
             />
-            <ArenaAssetSlot
-              name="world-cup-badge.png"
-              label="Selo Copa 2026"
-              src={getArenaAssetSrc("world-cup-badge.png")}
-              variant="cutout"
-              className="absolute left-2 top-2 h-20 w-20 bg-transparent shadow-none"
-              imgClassName="p-1 object-contain"
-              fallbackClassName="scale-[0.6]"
-            />
-            <div className="absolute bottom-3 left-3 rounded-[20px] border border-white/10 bg-black/35 px-4 py-3 backdrop-blur-xl">
-              <p className="arena-kicker text-zinc-400">Abertura</p>
-              <p className="font-display text-[1.8rem] font-semibold uppercase leading-none text-white">11 jun</p>
-            </div>
-            <div className="absolute right-3 top-3 rounded-[20px] border border-primary/20 bg-primary/10 px-4 py-3 backdrop-blur-xl">
-              <p className="arena-kicker text-primary">Meta</p>
-              <p className="font-display text-[1.8rem] font-semibold uppercase leading-none text-white">Top ranking</p>
+            <div className="absolute bottom-2 left-2 rounded-xl border border-white/10 bg-black/35 px-3 py-2 backdrop-blur-xl">
+              <p className="text-[9px] font-black uppercase tracking-wider text-zinc-400">Abertura</p>
+              <p className="text-sm font-bold uppercase text-white">11 jun</p>
             </div>
           </div>
         </div>
@@ -314,7 +302,7 @@ export function CopaOverview() {
 
       <ArenaPanel className="p-5">
         <ArenaSectionHeader
-          eyebrow="Grupos"
+          eyebrow="Comunidades"
           title="Panorama inicial"
           action={<button onClick={() => navigate("/copa/grupos")} className="arena-button-green px-4 py-2 text-sm">Ver grupos</button>}
         />

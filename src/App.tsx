@@ -135,6 +135,12 @@ function LegacyCopaRedirect() {
   return <Navigate to={legacyCopaMap[slug] ?? "/copa"} replace />;
 }
 
+function LegacyGrupoRedirect() {
+  const { grupoId } = useParams();
+  const location = useLocation();
+  return <Navigate to={`/grupos/${grupoId}${location.search}${location.hash}`} replace />;
+}
+
 function LegacyGuiaRedirect() {
   const location = useLocation();
   const slug = location.pathname.split("/").filter(Boolean)[1] ?? "";
@@ -240,9 +246,7 @@ const AppRoutes = () => (
     <Route path="/privacidade" element={<Privacidade />} />
     <Route path="/termos" element={<Termos />} />
     <Route path="/excluir-conta" element={<ExcluirConta />} />
-    <Route path="/privacy" element={<LegacyRedirect to="/privacidade" />} />
-    <Route path="/terms" element={<LegacyRedirect to="/termos" />} />
-    <Route path="/news" element={<ProtectedRoute><LegacyRedirect to="/noticias" /></ProtectedRoute>} />
+    {/* Legacy English redirects removed — Play Store and all external links now use PT paths */}
     <Route path="/" element={<ProtectedRoute><Layout><Index /></Layout></ProtectedRoute>} />
     <Route path="/copa" element={<ProtectedRoute><Layout><Copa /></Layout></ProtectedRoute>} />
     <Route path="/copa/overview" element={<ProtectedRoute><LegacyRedirect to="/copa" /></ProtectedRoute>} />
@@ -253,30 +257,20 @@ const AppRoutes = () => (
     <Route path="/copa/:subtab" element={<ProtectedRoute><Layout><Copa /></Layout></ProtectedRoute>} />
     <Route path="/cup" element={<ProtectedRoute><LegacyRedirect to="/copa" /></ProtectedRoute>} />
     <Route path="/cup/:subtab" element={<ProtectedRoute><LegacyCopaRedirect /></ProtectedRoute>} />
-    <Route path="/simulator" element={<ProtectedRoute><LegacyRedirect to="/copa/simulacao" /></ProtectedRoute>} />
-    <Route path="/copas/central" element={<ProtectedRoute><LegacyRedirect to="/copa" /></ProtectedRoute>} />
     {/* Championship hub — replaces the old /copa tab */}
     <Route path="/campeonatos" element={<ProtectedRoute><Layout><Campeonatos /></Layout></ProtectedRoute>} />
     {/* Placeholder for individual championship pages (Phase 1 builds these) */}
     <Route path="/campeonato/:championshipId" element={<ProtectedRoute><Layout><CampeonatoHub /></Layout></ProtectedRoute>} />
     <Route path="/descobrir" element={<ProtectedRoute><Layout><Descobrir /></Layout></ProtectedRoute>} />
-    <Route path="/descobrir/boloes" element={<ProtectedRoute><Layout><Descobrir /></Layout></ProtectedRoute>} />
-    <Route path="/descobrir/locais" element={<ProtectedRoute><Layout><Descobrir /></Layout></ProtectedRoute>} />
-    <Route path="/descobrir/campanhas" element={<ProtectedRoute><Layout><Descobrir /></Layout></ProtectedRoute>} />
-    <Route path="/descobrir/rankings" element={<ProtectedRoute><Layout><Descobrir /></Layout></ProtectedRoute>} />
+    {/* Fake discover sub-routes removed — Descobrir uses internal state, not URL segments */}
     <Route path="/boloes" element={<ProtectedRoute><Layout><Boloes /></Layout></ProtectedRoute>} />
     <Route path="/boloes/creator" element={<ProtectedRoute><Layout><CreatorPro /></Layout></ProtectedRoute>} />
     <Route path="/boloes/rapido" element={<ProtectedRoute><Layout><BolaoRapido /></Layout></ProtectedRoute>} />
     <Route path="/boloes/criar" element={<ProtectedRoute><Layout><CriarBolao /></Layout></ProtectedRoute>} />
     <Route path="/boloes/:id" element={<ProtectedRoute><Layout><BolaoDetail /></Layout></ProtectedRoute>} />
-    <Route path="/bares" element={<ProtectedRoute><Layout><BaresLanding /></Layout></ProtectedRoute>} />
-    <Route path="/bares/campanhas/criar" element={<ProtectedRoute><Layout><CriarCampanhaBar /></Layout></ProtectedRoute>} />
-    <Route path="/bares/campanhas/:campaignId" element={<ProtectedRoute><Layout><CampanhaBarDetail /></Layout></ProtectedRoute>} />
-    <Route path="/campanhas" element={<ProtectedRoute><Layout><BaresLanding /></Layout></ProtectedRoute>} />
-    <Route path="/campanhas/criar" element={<ProtectedRoute><Layout><CriarCampanhaBar /></Layout></ProtectedRoute>} />
-    <Route path="/campanhas/:campaignId" element={<ProtectedRoute><Layout><CampanhaBarDetail /></Layout></ProtectedRoute>} />
+    {/* Business routes consolidated under /negocios */}
     <Route path="/negocios" element={<ProtectedRoute><Layout><BaresLanding /></Layout></ProtectedRoute>} />
-    <Route path="/negocios/criar" element={<ProtectedRoute><LegacyRedirect to="/campanhas/criar" /></ProtectedRoute>} />
+    <Route path="/negocios/criar" element={<ProtectedRoute><Layout><CriarCampanhaBar /></Layout></ProtectedRoute>} />
     <Route path="/negocios/campanhas" element={<ProtectedRoute><Layout><BaresLanding /></Layout></ProtectedRoute>} />
     <Route path="/negocios/campanhas/:campaignId" element={<ProtectedRoute><Layout><CampanhaBarDetail /></Layout></ProtectedRoute>} />
     <Route path="/criar-bolao" element={<ProtectedRoute><LegacyRedirectWithSearch to="/boloes/criar" /></ProtectedRoute>} />
@@ -286,9 +280,9 @@ const AppRoutes = () => (
     <Route path="/grupos" element={<ProtectedRoute><Layout><Grupos /></Layout></ProtectedRoute>} />
     <Route path="/grupos/criar" element={<ProtectedRoute><Layout><CriarGrupo /></Layout></ProtectedRoute>} />
     <Route path="/grupos/:grupoId" element={<ProtectedRoute><Layout><GrupoDetail /></Layout></ProtectedRoute>} />
-    <Route path="/comunidades" element={<ProtectedRoute><Layout><Grupos /></Layout></ProtectedRoute>} />
-    <Route path="/comunidades/criar" element={<ProtectedRoute><LegacyRedirectWithSearch to="/grupos/criar" /></ProtectedRoute>} />
-    <Route path="/comunidades/:grupoId" element={<ProtectedRoute><Layout><GrupoDetail /></Layout></ProtectedRoute>} />
+    <Route path="/comunidades" element={<ProtectedRoute><Navigate to="/grupos" replace /></ProtectedRoute>} />
+    <Route path="/comunidades/criar" element={<ProtectedRoute><Navigate to="/grupos/criar" replace /></ProtectedRoute>} />
+    <Route path="/comunidades/:grupoId" element={<ProtectedRoute><LegacyGrupoRedirect /></ProtectedRoute>} />
     <Route path="/guia" element={<ProtectedRoute><LegacyRedirect to="/copa/guia" /></ProtectedRoute>} />
     <Route path="/guia/historia" element={<ProtectedRoute><LegacyRedirect to="/copa/historia" /></ProtectedRoute>} />
     <Route path="/guia/:subtab" element={<ProtectedRoute><LegacyGuiaRedirect /></ProtectedRoute>} />
@@ -297,13 +291,11 @@ const AppRoutes = () => (
     <Route path="/team/:code" element={<ProtectedRoute><Layout><TeamDetails /></Layout></ProtectedRoute>} />
     <Route path="/menu" element={<ProtectedRoute><Layout><MenuPage /></Layout></ProtectedRoute>} />
     <Route path="/perfil" element={<ProtectedRoute><Layout><Perfil /></Layout></ProtectedRoute>} />
-    <Route path="/profile" element={<ProtectedRoute><LegacyRedirect to="/perfil" /></ProtectedRoute>} />
-    <Route path="/account" element={<ProtectedRoute><LegacyRedirect to="/perfil" /></ProtectedRoute>} />
-    <Route path="/conta" element={<ProtectedRoute><LegacyRedirect to="/perfil" /></ProtectedRoute>} />
+    {/* Legacy profile/account redirects removed */}
     <Route path="/ranking" element={<ProtectedRoute><Layout><Ranking /></Layout></ProtectedRoute>} />
     <Route path="/noticias" element={<ProtectedRoute><Layout><Noticias /></Layout></ProtectedRoute>} />
     <Route path="/regras" element={<ProtectedRoute><Layout><Rules /></Layout></ProtectedRoute>} />
-    <Route path="/rules" element={<ProtectedRoute><LegacyRedirect to="/regras" /></ProtectedRoute>} />
+    {/* Legacy /rules redirect removed */}
     <Route path="/premium" element={<ProtectedRoute><Layout><Premium /></Layout></ProtectedRoute>} />
     <Route path="*" element={<ProtectedRoute><NotFound /></ProtectedRoute>} />
   </Routes>
@@ -311,7 +303,7 @@ const AppRoutes = () => (
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
+    <TooltipProvider delayDuration={200} skipDelayDuration={0}>
       <Toaster />
       <Sonner />
       <AuthProvider>

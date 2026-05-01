@@ -21,12 +21,12 @@ export function FabWithPending({
         className={cn(
           "absolute -top-[38px] left-1/2 flex items-center justify-center rounded-full transition-all duration-300 -translate-x-1/2",
           isActive
-            ? "shadow-[0_12px_42px_rgba(91,255,66,0.68)]"
-            : "shadow-[0_12px_34px_rgba(91,255,66,0.46)]"
+            ? "shadow-[0_8px_24px_rgba(91,255,66,0.35)]"
+            : "shadow-[0_6px_18px_rgba(91,255,66,0.22)]"
         )}
         style={{ width: 90, height: 90 }}
       >
-        <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle_at_30%_28%,rgba(255,255,255,0.42),transparent_21%),linear-gradient(160deg,#dcff63_0%,#19ea58_48%,#0b381f_100%)] p-[3px] shadow-[inset_0_0_16px_rgba(255,255,255,0.16),0_0_24px_rgba(79,255,74,0.26)]">
+        <div className="absolute inset-0 rounded-full bg-[linear-gradient(160deg,#b8e08a_0%,#2ecc71_48%,#0d4a28_100%)] p-[2.5px] shadow-[inset_0_0_10px_rgba(255,255,255,0.08)]">
           <div className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-full bg-[#07160d] ring-1 ring-black/55">
             <img
               src={realBallImageUrl}
@@ -46,8 +46,8 @@ export function FabWithPending({
 
       <div className="invisible h-12 w-12" />
       <span className={cn(
-        "font-display text-[15px] leading-none tracking-[0.01em] transition-colors",
-        isActive ? "text-primary font-black" : "font-semibold text-zinc-300"
+        "text-[13px] font-medium leading-none tracking-[0.01em] transition-colors",
+        isActive ? "text-primary font-semibold" : "text-zinc-400"
       )}>
         {t('nav.bolao', { defaultValue: 'Bolões' })}
       </span>

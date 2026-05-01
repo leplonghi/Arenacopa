@@ -99,7 +99,7 @@ export function MatchCard({ match, prediction, compact = false, variant = "defau
         {/* Content Layer */}
         <div className="absolute inset-0 z-20 flex flex-col justify-between p-6">
           {/* Top Bar: Stadium & Phase */}
-          <div className="flex justify-between items-start text-[10px] font-black uppercase tracking-widest text-white/60 pointer-events-none">
+          <div className="flex justify-between items-start text-[10px] font-semibold uppercase tracking-wider text-white/60 pointer-events-none">
             <span className="bg-black/30 backdrop-blur-md px-3 py-1 rounded-full border border-white/5 flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-copa-live animate-pulse" />
               {match.status === "live" ? t('match_card.live') : t('match_card.next_game')}
@@ -123,18 +123,18 @@ export function MatchCard({ match, prediction, compact = false, variant = "defau
                 {/* Reflection effect */}
                 <div className="absolute -bottom-4 left-0 w-full h-4 bg-gradient-to-b from-white/10 to-transparent opacity-30 skew-x-12 blur-md" />
               </motion.div>
-              <span className="text-3xl font-black text-white tracking-tighter drop-shadow-md">{home.code}</span>
+              <span className="text-2xl font-bold text-white tracking-tight">{home.code}</span>
             </div>
 
             <div className="flex flex-col items-center justify-center pt-2 group-hover:scale-105 transition-transform">
               {match.status !== "scheduled" ? (
-                <div className="text-7xl font-black text-white leading-none tracking-tighter tabular-nums flex gap-4 drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]">
+                <div className="text-5xl font-bold text-white leading-none tracking-tight tabular-nums flex gap-4">
                   <span>{match.homeScore}</span>
                   <span className="text-white/20">:</span>
                   <span>{match.awayScore}</span>
                 </div>
               ) : (
-                <span className="text-5xl font-black text-white/20 italic">VS</span>
+                <span className="text-3xl font-bold text-white/20">VS</span>
               )}
               {match.minute && <span className="text-copa-live font-bold animate-pulse mt-2 text-sm">{match.minute}'</span>}
             </div>
@@ -151,7 +151,7 @@ export function MatchCard({ match, prediction, compact = false, variant = "defau
               >
                 <Flag code={away.code} size="xl" className="w-24 h-24 drop-shadow-[0_0_25px_rgba(0,0,0,0.5)]" />
               </motion.div>
-              <span className="text-3xl font-black text-white tracking-tighter drop-shadow-md">{away.code}</span>
+              <span className="text-2xl font-bold text-white tracking-tight">{away.code}</span>
             </div>
           </div>
 
@@ -187,7 +187,7 @@ export function MatchCard({ match, prediction, compact = false, variant = "defau
           <motion.span
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="text-[11px] font-black px-3 py-1 rounded-full bg-copa-live text-white uppercase tracking-wider"
+            className="text-[11px] font-semibold px-3 py-1 rounded-full bg-copa-live text-white uppercase tracking-wider"
           >
             {t('match_card.live_badge')} • {match.minute}'
           </motion.span>
@@ -202,14 +202,14 @@ export function MatchCard({ match, prediction, compact = false, variant = "defau
             <div className="w-16 h-16 rounded-full bg-secondary/80 border-2 border-border/50 flex items-center justify-center overflow-hidden">
               <Flag code={home.code} size="xl" className="w-14 h-14" />
             </div>
-            <span className="text-sm font-black">{home.code}</span>
+            <span className="text-sm font-semibold">{home.code}</span>
           </div>
 
           <div className="flex flex-col items-center">
             <div className="flex items-center gap-3">
-              <span className="text-4xl font-black">{match.homeScore}</span>
+              <span className="text-3xl font-bold">{match.homeScore}</span>
               <span className="text-2xl font-bold text-muted-foreground">-</span>
-              <span className="text-4xl font-black">{match.awayScore}</span>
+              <span className="text-3xl font-bold">{match.awayScore}</span>
             </div>
             {match.group && (
               <span className="text-[10px] uppercase tracking-wider text-muted-foreground mt-1">
@@ -225,15 +225,15 @@ export function MatchCard({ match, prediction, compact = false, variant = "defau
             <div className="w-16 h-16 rounded-full bg-secondary/80 border-2 border-border/50 flex items-center justify-center overflow-hidden">
               <Flag code={away.code} size="xl" className="w-14 h-14" />
             </div>
-            <span className="text-sm font-black">{away.code}</span>
+            <span className="text-sm font-semibold">{away.code}</span>
           </div>
         </div>
 
-        {/* Seu palpite */}
+        {/* Seu chute */}
         {prediction && (
           <div className="border-t border-border/30 px-4 py-3 flex items-center justify-between bg-secondary/30">
             <span className="text-xs text-muted-foreground">
-              {t('match_card.my_prediction')} <span className="font-black text-foreground ml-1">{prediction.homeScore} - {prediction.awayScore}</span>
+              {t('match_card.my_prediction')} <span className="font-bold text-foreground ml-1">{prediction.homeScore} - {prediction.awayScore}</span>
             </span>
             <button className="text-[11px] font-bold px-3 py-1.5 rounded-lg bg-copa-green/20 text-copa-green-light border border-copa-green/30">
               {t('match_card.edit')}
@@ -266,12 +266,12 @@ export function MatchCard({ match, prediction, compact = false, variant = "defau
         <div className="w-10 h-10 rounded-full bg-secondary/80 border border-border/50 flex items-center justify-center overflow-hidden shrink-0">
           <Flag code={home.code} size="md" className="w-8 h-8" />
         </div>
-        <span className="text-sm font-black">{home.code}</span>
+        <span className="text-sm font-semibold">{home.code}</span>
       </div>
 
       <div className="flex flex-col items-center shrink-0 min-w-[52px]">
         {match.status === "finished" ? (
-          <span className="text-base font-black">{match.homeScore} - {match.awayScore}</span>
+          <span className="text-base font-semibold">{match.homeScore} - {match.awayScore}</span>
         ) : (
           <span className="text-xs font-bold px-2.5 py-1 rounded-md bg-secondary border border-border/50 text-foreground">
             {formatMatchTime(match.date)}
@@ -283,7 +283,7 @@ export function MatchCard({ match, prediction, compact = false, variant = "defau
         className="flex items-center gap-2.5 flex-1 min-w-0 justify-end cursor-pointer hover:underline"
         onClick={handleTeamClick(away.code)}
       >
-        <span className="text-sm font-black">{away.code}</span>
+        <span className="text-sm font-semibold">{away.code}</span>
         <div className="w-10 h-10 rounded-full bg-secondary/80 border border-border/50 flex items-center justify-center overflow-hidden shrink-0">
           <Flag code={away.code} size="md" className="w-8 h-8" />
         </div>

@@ -34,7 +34,7 @@ export function TodayArenaCard({
 
       <div className="mt-4 grid gap-2 sm:grid-cols-3">
         <DailyStatCard
-          label="Palpites"
+          label="Chutes"
           value={pendingCount}
           caption={pendingCount === 1 ? "pendente agora" : "pendentes agora"}
           to="/boloes"
@@ -62,24 +62,34 @@ export function NextActionCard({
   firstPendingBolaoId,
   poolCount,
   hasFeaturedMatch,
+  pendingJoinRequestCount = 0,
+  firstPendingRequestBolaoId,
 }: {
   pendingCount: number;
   firstPendingBolaoId?: string;
   poolCount: number;
   hasFeaturedMatch: boolean;
+  pendingJoinRequestCount?: number;
+  firstPendingRequestBolaoId?: string | null;
 }) {
   const action = getHomeNextAction({
     pendingCount,
     firstPendingBolaoId,
     poolCount,
     hasFeaturedMatch,
+    pendingJoinRequestCount,
+    firstPendingRequestBolaoId,
   });
 
+  const hasUrgentJoinRequest = pendingJoinRequestCount > 0;
+
   return (
-    <ArenaPanel className="p-4 sm:p-5">
+    <ArenaPanel className={["p-4 sm:p-5", hasUrgentJoinRequest ? "border-red-500/20 bg-red-500/[0.04]" : ""].join(" ")}>
       <div className="grid gap-4 md:grid-cols-[1.15fr_0.85fr] md:items-center">
         <div>
-          <p className="arena-kicker text-primary">Próxima ação</p>
+          <p className={["arena-kicker", hasUrgentJoinRequest ? "text-red-400" : "text-primary"].join(" ")}>
+            {hasUrgentJoinRequest ? "⚠️ Atenção necessária" : "Próxima ação"}
+          </p>
           <h2 className="mt-2 font-display text-[2.25rem] font-bold uppercase leading-[0.9] tracking-[0.035em] text-white">
             {action.title}
           </h2>
@@ -88,7 +98,12 @@ export function NextActionCard({
 
         <Link
           to={action.ctaRoute}
-          className="inline-flex min-h-14 items-center justify-center gap-2 rounded-[18px] bg-primary px-5 font-display text-[1.45rem] font-bold uppercase tracking-[0.04em] text-black transition hover:brightness-105"
+          className={[
+            "inline-flex min-h-14 items-center justify-center gap-2 rounded-[18px] px-5 font-display text-[1.45rem] font-bold uppercase tracking-[0.04em] transition hover:brightness-105",
+            hasUrgentJoinRequest
+              ? "bg-red-500 text-white"
+              : "bg-primary text-black",
+          ].join(" ")}
         >
           <Target className="h-5 w-5" />
           {action.ctaLabel}
@@ -135,7 +150,7 @@ export function DailyStatCard({
 export function CuriosityCard({ match }: { match: MatchFeedItem | null }) {
   const title = match ? `${match.homeTeamName} x ${match.awayTeamName}` : "Conteúdo para você";
   const description = match
-    ? `Partida em foco para acompanhar contexto, rodada e possíveis palpites.`
+    ? `Partida em foco para acompanhar contexto, rodada e possíveis chutes.`
     : "Notícias, estatísticas e curiosidades ajudam você a voltar mesmo fora do momento de palpitar.";
 
   return (
@@ -150,7 +165,7 @@ export function CuriosityCard({ match }: { match: MatchFeedItem | null }) {
             <h2 className="mt-1 truncate font-display text-[1.9rem] font-bold uppercase tracking-[0.035em] text-white">
               {title}
             </h2>
-            <p className="mt-2 text-sm leading-6 text-zinc-300">{description}</p>
+            <p className="mt-2 line-clamp-2 text-sm leading-snug text-zinc-300">{description}</p>
           </div>
         </div>
         <Link

@@ -108,6 +108,15 @@ const Perfil = () => {
   const displayName = profile?.name || user?.email?.split("@")[0] || t('default_user_name');
   const initials = displayName.slice(0, 2).toUpperCase();
   const levelInfo = getArenaLevel(stats?.points);
+
+  const getTier = (level: number) => {
+    if (level < 5) return { name: 'Amador', color: 'text-[#cd7f32]', bg: 'bg-[#cd7f32]/10', border: 'border-[#cd7f32]/30' };
+    if (level < 15) return { name: 'Bronze', color: 'text-[#d4af37]', bg: 'bg-[#d4af37]/10', border: 'border-[#d4af37]/30' };
+    if (level < 30) return { name: 'Prata', color: 'text-[#e3e4e5]', bg: 'bg-[#e3e4e5]/10', border: 'border-[#e3e4e5]/30' };
+    if (level < 50) return { name: 'Ouro', color: 'text-[#ffd700]', bg: 'bg-[#ffd700]/10', border: 'border-[#ffd700]/30' };
+    return { name: 'Lenda', color: 'text-[#00ffff]', bg: 'bg-[#00ffff]/10', border: 'border-[#00ffff]/30' };
+  };
+  const tier = getTier(levelInfo.level);
   const achievements = [
     { id: "primeiro_palpite", title: t('achievements.first_prediction.title'), description: (stats?.totalPredictions || 0) > 0 ? t('achievements.first_prediction.desc') : t('achievements.locked'), icon: <Goal className="w-6 h-6" />, unlocked: (stats?.totalPredictions || 0) > 0 },
     { id: "placar_exato", title: t('achievements.exact_score.title'), description: (stats?.exactScores || 0) > 0 ? t('achievements.exact_score.desc') : t('achievements.locked'), icon: <Target className="w-6 h-6 text-blue-400" />, unlocked: (stats?.exactScores || 0) > 0 },
@@ -182,10 +191,10 @@ const Perfil = () => {
             <h1 className="font-display text-[3.2rem] font-black uppercase leading-[0.9] text-white">
               {displayName}
             </h1>
-            <div className="inline-flex items-center gap-2 rounded-full border border-primary/35 bg-primary/12 px-4 py-2 text-primary">
+            <div className={cn("inline-flex items-center gap-2 rounded-full border px-4 py-2", tier.bg, tier.border, tier.color)}>
               <Star className="h-4 w-4 fill-current" />
               <span className="font-display text-xl font-black uppercase">
-                Nível {levelInfo.level} • Participante
+                Nível {levelInfo.level} • {tier.name}
               </span>
             </div>
             <p className="text-2xl font-black text-zinc-200">

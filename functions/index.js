@@ -68,7 +68,12 @@ function applyCors(req, res) {
 }
 
 function getRuntimeConfig() {
-    const runtimeConfig = functions.config();
+    let runtimeConfig = {};
+    try {
+        runtimeConfig = functions.config();
+    } catch (e) {
+        functions.logger.warn("functions.config() not available, using env vars only", { error: e?.message });
+    }
 
     return {
         stripeSecretKey: runtimeConfig?.stripe?.secret_key || process.env.STRIPE_SECRET_KEY || "",

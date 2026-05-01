@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Loader2, LogOut, Share2, Star, UserMinus } from "lucide-react";
+import { ArrowLeft, Loader2, LogOut, MessageCircle, Share2, Star, UserMinus } from "lucide-react";
 import { collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -66,6 +66,7 @@ export default function GrupoDetail() {
   const [members, setMembers] = useState<MemberRow[]>([]);
   const [requests, setRequests] = useState<RequestRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<'feed' | 'boloes' | 'members'>('feed');
 
   const loadData = useCallback(async () => {
     if (!grupoId) {
@@ -381,86 +382,111 @@ export default function GrupoDetail() {
         </div>
       </div>
 
-      <div className="grid gap-6">
-        <FeaturedBolaoCard bolao={featuredBolao} />
+      <div className="mt-6 flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+        <button onClick={() => setActiveTab('feed')} className={`rounded-full px-5 py-2.5 text-[11px] font-black uppercase tracking-widest transition-all ${activeTab === 'feed' ? 'bg-primary text-black' : 'bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white'}`}>Resenha</button>
+        <button onClick={() => setActiveTab('boloes')} className={`rounded-full px-5 py-2.5 text-[11px] font-black uppercase tracking-widest transition-all ${activeTab === 'boloes' ? 'bg-primary text-black' : 'bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white'}`}>Bolões ({boloes.length})</button>
+        <button onClick={() => setActiveTab('members')} className={`rounded-full px-5 py-2.5 text-[11px] font-black uppercase tracking-widest transition-all ${activeTab === 'members' ? 'bg-primary text-black' : 'bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white'}`}>Membros ({members.length})</button>
+      </div>
 
-        {isManager ? (
-          <AdmissionInbox
-            title="Solicitações para entrar"
-            description="Aqui ficam só as entradas pendentes, sem misturar com os bolões da comunidade."
-            emptyTitle="Nenhuma solicitação pendente"
-            emptyDescription="Quando alguém pedir entrada, ela aparece aqui."
-            items={requestItems}
-          />
-        ) : null}
+      <div className="mt-6 grid gap-6">
+        {activeTab === 'feed' && (
+          <div className="rounded-[32px] border border-white/10 bg-white/5 p-8 text-center flex flex-col items-center justify-center">
+             <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-primary/10 text-primary mb-4">
+                <MessageCircle className="h-10 w-10" />
+             </div>
+             <h3 className="font-display text-[1.8rem] font-semibold text-white">Resenha da Comunidade</h3>
+             <p className="mt-2 text-sm text-zinc-400 max-w-sm">Em breve: um espaço dedicado para zoar os amigos, comentar as rodadas e compartilhar palpites diretamente com a sua turma.</p>
+             <button disabled className="mt-6 rounded-2xl bg-white/5 px-6 py-3 text-[11px] font-black uppercase tracking-widest text-white opacity-50 cursor-not-allowed">Mural em desenvolvimento</button>
+          </div>
+        )}
 
-        <section className="rounded-[32px] border border-white/10 bg-white/5 p-5">
-          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">Bolões da comunidade</p>
-          <p className="mt-2 text-sm text-zinc-400">
-            A comunidade pode ter vários bolões, mas só um fica em destaque para não poluir a experiência.
-          </p>
+        {activeTab === 'boloes' && (
+          <>
+            <FeaturedBolaoCard bolao={featuredBolao} />
 
-          {boloes.length === 0 ? (
-            <div className="mt-4">
-              <EmptyState icon="⚽" title="Nenhum bolão ainda" description="Crie um bolão e vincule a esta comunidade." />
-            </div>
-          ) : (
-            <div className="mt-4 grid gap-3 md:grid-cols-2">
-              {boloes.map((bolao) => {
-                const isFeatured = featuredBolao?.id === bolao.id;
-                return (
-                  <div key={bolao.id} className="rounded-3xl border border-white/10 bg-[#0c1811] p-4">
-                    <div className="flex items-start justify-between gap-3">
-                      <Link to={`/boloes/${bolao.id}`} className="flex-1">
-                        <p className="font-black">{bolao.name}</p>
-                        {bolao.description ? <p className="mt-1 text-sm text-zinc-400">{bolao.description}</p> : null}
-                        <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-black uppercase tracking-[0.14em]">
-                          <span className="rounded-full bg-white/10 px-3 py-1">{bolao.category === "public" ? "Público" : "Privado"}</span>
-                          {bolao.is_paid ? <span className="rounded-full bg-white/10 px-3 py-1">Pago</span> : null}
+            <section className="rounded-[32px] border border-white/10 bg-white/5 p-5">
+              <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">Bolões da comunidade</p>
+              <p className="mt-2 text-sm text-zinc-400">
+                A comunidade pode ter vários bolões, mas só um fica em destaque para não poluir a experiência.
+              </p>
+
+              {boloes.length === 0 ? (
+                <div className="mt-4">
+                  <EmptyState icon="⚽" title="Nenhum bolão ainda" description="Crie um bolão e vincule a esta comunidade." />
+                </div>
+              ) : (
+                <div className="mt-4 grid gap-3 md:grid-cols-2">
+                  {boloes.map((bolao) => {
+                    const isFeatured = featuredBolao?.id === bolao.id;
+                    return (
+                      <div key={bolao.id} className="rounded-3xl border border-white/10 bg-[#0c1811] p-4">
+                        <div className="flex items-start justify-between gap-3">
+                          <Link to={`/boloes/${bolao.id}`} className="flex-1">
+                            <p className="font-black">{bolao.name}</p>
+                            {bolao.description ? <p className="mt-1 text-sm text-zinc-400">{bolao.description}</p> : null}
+                            <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-black uppercase tracking-[0.14em]">
+                              <span className="rounded-full bg-white/10 px-3 py-1">{bolao.category === "public" ? "Público" : "Privado"}</span>
+                              {bolao.is_paid ? <span className="rounded-full bg-white/10 px-3 py-1">Pago</span> : null}
+                            </div>
+                          </Link>
+                          {isManager ? (
+                            <button
+                              onClick={() => void handleFeature(isFeatured ? null : bolao.id)}
+                              className={`rounded-2xl p-3 ${isFeatured ? "bg-primary text-black" : "bg-white/10 text-white"}`}
+                            >
+                              <Star className={`h-4 w-4 ${isFeatured ? "fill-current" : ""}`} />
+                            </button>
+                          ) : null}
                         </div>
-                      </Link>
-                      {isManager ? (
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+          </>
+        )}
+
+        {activeTab === 'members' && (
+          <>
+            {isManager ? (
+              <AdmissionInbox
+                title="Solicitações para entrar"
+                description="Aqui ficam só as entradas pendentes, sem misturar com os bolões da comunidade."
+                emptyTitle="Nenhuma solicitação pendente"
+                emptyDescription="Quando alguém pedir entrada, ela aparece aqui."
+                items={requestItems}
+              />
+            ) : null}
+
+            <section className="rounded-[32px] border border-white/10 bg-white/5 p-5">
+              <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">Membros ({members.length})</p>
+              <div className="mt-4 space-y-2">
+                {members.map((member) => (
+                  <div key={member.user_id} className="flex items-center justify-between rounded-2xl bg-[#0c1811] px-4 py-3">
+                    <div>
+                      <p className="text-sm font-bold">{member.display_name}</p>
+                      <p className="text-xs text-zinc-500">{member.user_id.substring(0, 8)}…</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="rounded-full bg-white/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-zinc-300">
+                        {member.role === "admin" ? "Admin" : "Membro"}
+                      </span>
+                      {isManager && member.user_id !== grupo.creator_id && member.user_id !== user?.id ? (
                         <button
-                          onClick={() => void handleFeature(isFeatured ? null : bolao.id)}
-                          className={`rounded-2xl p-3 ${isFeatured ? "bg-primary text-black" : "bg-white/10 text-white"}`}
+                          onClick={() => void handleRemoveMember(member.user_id)}
+                          className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 text-zinc-400 transition-colors hover:border-red-500/30 hover:text-red-400"
                         >
-                          <Star className={`h-4 w-4 ${isFeatured ? "fill-current" : ""}`} />
+                          <UserMinus className="h-4 w-4" />
                         </button>
                       ) : null}
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          )}
-        </section>
-
-        <section className="rounded-[32px] border border-white/10 bg-white/5 p-5">
-          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">Membros</p>
-          <div className="mt-4 space-y-2">
-            {members.map((member) => (
-              <div key={member.user_id} className="flex items-center justify-between rounded-2xl bg-[#0c1811] px-4 py-3">
-                <div>
-                  <p className="text-sm font-bold">{member.display_name}</p>
-                  <p className="text-xs text-zinc-500">{member.user_id.substring(0, 8)}…</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="rounded-full bg-white/10 px-3 py-1 text-[10px] font-black uppercase tracking-[0.16em] text-zinc-300">
-                    {member.role === "admin" ? "Admin" : "Membro"}
-                  </span>
-                  {isManager && member.user_id !== grupo.creator_id && member.user_id !== user?.id ? (
-                    <button
-                      onClick={() => void handleRemoveMember(member.user_id)}
-                      className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-white/10 text-zinc-400 transition-colors hover:border-red-500/30 hover:text-red-400"
-                    >
-                      <UserMinus className="h-4 w-4" />
-                    </button>
-                  ) : null}
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </section>
+            </section>
+          </>
+        )}
       </div>
     </div>
   );

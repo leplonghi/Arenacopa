@@ -12,8 +12,8 @@ const SLOT_META = {
   0: {
     place: 1,
     icon: Crown,
-    shell: "border-primary/45 bg-[radial-gradient(circle_at_top,rgba(255,193,7,0.16),transparent_42%),linear-gradient(180deg,rgba(255,255,255,0.08),rgba(255,255,255,0.03))] shadow-[0_34px_90px_-42px_rgba(255,193,7,0.5)]",
-    avatar: "border-primary bg-[#0c2517] text-primary shadow-[0_0_44px_rgba(255,193,7,0.26)]",
+    shell: "border-primary/35 bg-[radial-gradient(circle_at_top,rgba(99,255,52,0.1),transparent_42%),linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.03))] shadow-[0_12px_40px_-20px_rgba(99,255,52,0.25)]",
+    avatar: "border-primary bg-[#0c2517] text-primary shadow-[0_0_16px_rgba(99,255,52,0.15)]",
     number: "text-primary",
     points: "text-primary",
     order: "md:order-2 md:-translate-y-5",

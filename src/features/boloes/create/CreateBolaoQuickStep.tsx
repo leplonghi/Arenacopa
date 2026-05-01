@@ -62,7 +62,7 @@ const socialPresets: SocialPreset[] = [
   },
 ];
 
-const howItWorksSteps = ["Criar bolão", "Convidar participantes", "Dar palpites", "Ver ranking"];
+const howItWorksSteps = ["Criar bolão", "Convidar participantes", "Dar chutes", "Ver ranking"];
 
 export function CreateBolaoQuickStep({ flow }: { flow: Flow }) {
   const tone = getToneClasses(1);
@@ -221,7 +221,7 @@ export function CreateBolaoQuickStep({ flow }: { flow: Flow }) {
             atualizado conforme os resultados forem apurados.
           </p>
           <p className="mt-4 text-xs leading-5 text-zinc-500">
-            O ArenaCup organiza palpites, regras e rankings. O app não processa apostas nem
+            O ArenaCup organiza chutes, regras e rankings. O app não processa apostas nem
             premiações em dinheiro.
           </p>
         </div>

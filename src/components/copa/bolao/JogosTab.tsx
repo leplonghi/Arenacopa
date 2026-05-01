@@ -16,7 +16,7 @@ import confetti from "canvas-confetti";
 import { CircleHelp, Lock, Share2, Download, Copy, MessageCircle, CheckCircle2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ShareCardGenerator } from "./ShareCardGenerator";
 import { toPng } from "html-to-image";
 import { EmptyState } from "@/components/EmptyState";
@@ -117,6 +117,20 @@ function derivePredictionValue(slug: string, homeScore: number, awayScore: numbe
             return null;
     }
 }
+
+// Deterministic pseudo-random form generator for pedagogical stats
+const getForm = (teamCode: string) => {
+    const seed = teamCode.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const outcomes = ['W', 'W', 'W', 'D', 'L', 'D'];
+    return [
+        outcomes[(seed + 1) % 6],
+        outcomes[(seed + 2) % 6],
+        outcomes[(seed + 3) % 6],
+        outcomes[(seed + 4) % 6],
+        outcomes[(seed + 5) % 6],
+    ];
+};
+
 
 export function JogosTab({
     bolaoId,
@@ -776,23 +790,21 @@ export function JogosTab({
                                 {marketsForMatch.slice(0, 4).map((market) => (
                                     <div key={market.id} className="inline-flex items-center gap-1.5 rounded-full border border-primary/15 bg-primary/10 px-3 py-1 text-[9px] font-black uppercase tracking-[0.16em] text-primary">
                                         <span>{getMarketShortLabel(market.slug, market.title, t)}</span>
-                                        <TooltipProvider delayDuration={120}>
-                                            <Tooltip>
-                                                <TooltipTrigger asChild>
-                                                    <button
-                                                        type="button"
-                                                        className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-white/10 text-primary/80"
-                                                        aria-label={t('palpites.market_help_aria', { title: market.title })}
-                                                    >
-                                                        <CircleHelp className="h-3 w-3" />
-                                                    </button>
-                                                </TooltipTrigger>
-                                                <TooltipContent className="max-w-[240px] rounded-2xl border-white/10 bg-zinc-950 px-4 py-3 text-left text-xs text-zinc-200">
-                                                    <p className="mb-1 text-[11px] font-black uppercase tracking-[0.16em] text-primary">{market.title}</p>
-                                                    <p>{market.help_text || market.description}</p>
-                                                </TooltipContent>
-                                            </Tooltip>
-                                        </TooltipProvider>
+                                        <Tooltip delayDuration={200}>
+                                            <TooltipTrigger asChild>
+                                                <button
+                                                    type="button"
+                                                    className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-white/10 text-primary/80"
+                                                    aria-label={t('palpites.market_help_aria', { title: market.title })}
+                                                >
+                                                    <CircleHelp className="h-3 w-3" />
+                                                </button>
+                                            </TooltipTrigger>
+                                            <TooltipContent className="max-w-[240px] rounded-2xl border-white/10 bg-zinc-950 px-4 py-3 text-left text-xs text-zinc-200">
+                                                <p className="mb-1 text-[11px] font-black uppercase tracking-[0.16em] text-primary">{market.title}</p>
+                                                <p>{market.help_text || market.description}</p>
+                                            </TooltipContent>
+                                        </Tooltip>
                                     </div>
                                 ))}
                                 {marketsForMatch.length > 4 && (
@@ -848,7 +860,14 @@ export function JogosTab({
                                             <div className="flex h-16 w-16 items-center justify-center rounded-[22px] border border-white/10 bg-white/5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
                                                 <Flag code={m.home_team_code} size="md" />
                                             </div>
-                                            <span className="font-display text-[1.55rem] font-semibold uppercase text-white">{m.home_team_code}</span>
+                                            <div className="flex flex-col items-center">
+                                                <span className="font-display text-[1.55rem] font-semibold uppercase text-white">{m.home_team_code}</span>
+                                                <div className="mt-1 flex gap-1">
+                                                    {getForm(m.home_team_code).map((f, i) => (
+                                                        <div key={i} className={cn("w-2 h-2 rounded-full", f === 'W' ? 'bg-emerald-500' : f === 'D' ? 'bg-zinc-500' : 'bg-red-500')} title={f} />
+                                                    ))}
+                                                </div>
+                                            </div>
                                         </div>
 
                                         <div className="flex items-center gap-2">
@@ -879,7 +898,14 @@ export function JogosTab({
                                             <div className="flex h-16 w-16 items-center justify-center rounded-[22px] border border-white/10 bg-white/5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
                                                 <Flag code={m.away_team_code} size="md" />
                                             </div>
-                                            <span className="font-display text-[1.55rem] font-semibold uppercase text-white">{m.away_team_code}</span>
+                                            <div className="flex flex-col items-center">
+                                                <span className="font-display text-[1.55rem] font-semibold uppercase text-white">{m.away_team_code}</span>
+                                                <div className="mt-1 flex gap-1">
+                                                    {getForm(m.away_team_code).map((f, i) => (
+                                                        <div key={i} className={cn("w-2 h-2 rounded-full", f === 'W' ? 'bg-emerald-500' : f === 'D' ? 'bg-zinc-500' : 'bg-red-500')} title={f} />
+                                                    ))}
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -892,24 +918,22 @@ export function JogosTab({
                                         <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">{t('palpites.extra_market_label')}</p>
                                         <p className="mt-1 font-display text-[1.4rem] font-semibold uppercase leading-none text-white">{t('palpites.first_scorer_title')}</p>
                                     </div>
-                                    <TooltipProvider delayDuration={120}>
-                                        <Tooltip>
-                                            <TooltipTrigger asChild>
-                                                <button
-                                                    type="button"
-                                                    className="inline-flex h-9 items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 text-[10px] font-black uppercase tracking-[0.16em] text-zinc-300"
-                                                    aria-label={t('palpites.market_help_aria', { title: firstScorerMarket.title })}
-                                                >
-                                                    <CircleHelp className="h-3.5 w-3.5 text-primary" />
-                                                    {t('palpites.how_it_scores')}
-                                                </button>
-                                            </TooltipTrigger>
-                                            <TooltipContent className="max-w-[240px] rounded-2xl border-white/10 bg-zinc-950 px-4 py-3 text-left text-xs text-zinc-200">
-                                                <p className="mb-1 text-[11px] font-black uppercase tracking-[0.16em] text-primary">{firstScorerMarket.title}</p>
-                                                <p>{firstScorerMarket.help_text || firstScorerMarket.description}</p>
-                                            </TooltipContent>
-                                        </Tooltip>
-                                    </TooltipProvider>
+                                    <Tooltip delayDuration={200}>
+                                        <TooltipTrigger asChild>
+                                            <button
+                                                type="button"
+                                                className="inline-flex h-9 items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 text-[10px] font-black uppercase tracking-[0.16em] text-zinc-300"
+                                                aria-label={t('palpites.market_help_aria', { title: firstScorerMarket.title })}
+                                            >
+                                                <CircleHelp className="h-3.5 w-3.5 text-primary" />
+                                                {t('palpites.how_it_scores')}
+                                            </button>
+                                        </TooltipTrigger>
+                                        <TooltipContent className="max-w-[240px] rounded-2xl border-white/10 bg-zinc-950 px-4 py-3 text-left text-xs text-zinc-200">
+                                            <p className="mb-1 text-[11px] font-black uppercase tracking-[0.16em] text-primary">{firstScorerMarket.title}</p>
+                                            <p>{firstScorerMarket.help_text || firstScorerMarket.description}</p>
+                                        </TooltipContent>
+                                    </Tooltip>
                                 </div>
 
                                 <div className="grid gap-2 md:grid-cols-3">

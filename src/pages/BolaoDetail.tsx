@@ -1,6 +1,6 @@
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { ArrowLeft, ChevronDown, Crown, Info, LockKeyhole, Share2, Trophy, Users } from "lucide-react";
+import { ArrowLeft, ChevronDown, Crown, Info, LockKeyhole, PenLine, Share2, Trophy, Users } from "lucide-react";
 import confetti from "canvas-confetti";
 import type { TFunction } from "i18next";
 import { db } from "@/integrations/firebase/client";
@@ -39,7 +39,7 @@ import { ArenaMetric, ArenaPanel, ArenaTabPill } from "@/components/arena/ArenaP
 import { buildBolaoInviteUrl, buildBolaoWhatsAppMessage } from "@/utils/bolao-share";
 import { BolaoSharePanel } from "@/components/copa/bolao/BolaoSharePanel";
 
-type BolaoDetailTab = "palpites" | "ranking" | "pessoas" | "resumo" | "compartilhar";
+type BolaoDetailTab = "palpites" | "ranking" | "turma";
 
 type PoolJoinRequestRow = {
   id: string;
@@ -109,13 +109,11 @@ function normalizeBolaoTab(tab: string | null): BolaoDetailTab | null {
       return "ranking";
     case "galera":
     case "pessoas":
-      return "pessoas";
     case "config":
     case "resumo":
-      return "resumo";
     case "share":
     case "compartilhar":
-      return "compartilhar";
+      return "turma";
     default:
       return null;
   }
@@ -171,6 +169,24 @@ export default function BolaoDetail() {
     mountedRef.current = true;
     return () => { mountedRef.current = false; };
   }, []);
+
+  useEffect(() => {
+    if (searchParams.get("created") === "true") {
+      confetti({
+        particleCount: 150,
+        spread: 80,
+        origin: { y: 0.6 },
+        zIndex: 9999,
+      });
+      toast({
+        title: "Bolão criado com sucesso!",
+        description: "Convide seus amigos para participarem.",
+      });
+      const newParams = new URLSearchParams(searchParams);
+      newParams.delete("created");
+      navigate(`?${newParams.toString()}`, { replace: true });
+    }
+  }, [searchParams, navigate, toast]);
 
   const isCreator = bolao?.creator_id === user?.id;
   const championMarket = bolaoMarkets.find((market) => market.slug === "champion");
@@ -243,8 +259,8 @@ export default function BolaoDetail() {
 
     const summaryParts = [
       pendingMatches > 0 ? `${pendingMatches} ${pendingMatches === 1 ? "jogo" : "jogos"}` : null,
-      pendingPhase > 0 ? `${pendingPhase} ${pendingPhase === 1 ? "mercado de fase" : "mercados de fase"}` : null,
-      pendingTournament > 0 ? `${pendingTournament} ${pendingTournament === 1 ? "mercado de campeonato" : "mercados de campeonato"}` : null,
+      pendingPhase > 0 ? `${pendingPhase} ${pendingPhase === 1 ? "desafio de fase" : "desafios de fase"}` : null,
+      pendingTournament > 0 ? `${pendingTournament} ${pendingTournament === 1 ? "desafio de campeonato" : "desafios de campeonato"}` : null,
       pendingSpecial > 0 ? `${pendingSpecial} ${pendingSpecial === 1 ? "especial" : "especiais"}` : null,
     ].filter(Boolean) as string[];
 
@@ -266,11 +282,7 @@ export default function BolaoDetail() {
         id: request.id,
         title: request.display_name,
         subtitle: "Quer entrar neste bolão.",
-        meta: request.updated_at
-          ? `Atualizado em ${new Date(request.updated_at).toLocaleString("pt-BR")}`
-          : request.created_at
-            ? `Solicitado em ${new Date(request.created_at).toLocaleString("pt-BR")}`
-            : null,
+        createdAt: request.created_at,
         status: "Pendente",
         primaryActionLabel: "Aprovar",
         secondaryActionLabel: "Recusar",
@@ -484,11 +496,15 @@ export default function BolaoDetail() {
     let unsubscribeRequests: (() => void) | null = null;
     if (isCreator) {
       const requestsRef = collection(db, "bolao_join_requests");
-      const qRequests = query(requestsRef, where("bolao_id", "==", id));
+      // Filter server-side to only truly pending requests. Never use || 'pending' as
+      // it would include any document missing the field (e.g., direct-entry records).
+      const qRequests = query(
+        requestsRef,
+        where("bolao_id", "==", id),
+        where("request_status", "==", "pending"),
+      );
       unsubscribeRequests = onSnapshot(qRequests, async (snapshot) => {
-        const pendingDocs = snapshot.docs.filter(
-          (requestDoc) => String(requestDoc.data().request_status || "pending") === "pending",
-        );
+        const pendingDocs = snapshot.docs;
         const profileIds = Array.from(new Set(pendingDocs.map((requestDoc) => String(requestDoc.data().user_id))));
         const profiles = await getPublicProfilesByIds(profileIds);
 
@@ -768,13 +784,16 @@ export default function BolaoDetail() {
         label: highlightedMatch
           ? t('bolao_detail.tab_palpitar_pending', { defaultValue: "Jogos para marcar" })
           : t('bolao_detail.tab_palpite', { defaultValue: "Jogos" }),
+        badge: null as number | null,
       },
-      { id: "ranking" as const, label: t('bolao_detail.tab_ranking', { defaultValue: "Ranking" }) },
-      { id: "pessoas" as const, label: t('bolao_detail.tab_people', { defaultValue: "Participantes" }) },
-      { id: "resumo" as const, label: t('bolao_detail.tab_summary', { defaultValue: "Organização" }) },
-      { id: "compartilhar" as const, label: t('bolao_detail.tab_share', { defaultValue: "Compartilhar" }) },
+      { id: "ranking" as const, label: t('bolao_detail.tab_ranking', { defaultValue: "Ranking" }), badge: null as number | null },
+      {
+        id: "turma" as const,
+        label: t('bolao_detail.tab_turma', { defaultValue: "Turma" }),
+        badge: isCreator && bolao?.category === "private" && joinRequests.length > 0 ? joinRequests.length : null,
+      },
     ],
-    [highlightedMatch, t]
+    [highlightedMatch, isCreator, bolao?.category, joinRequests.length, t]
   );
 
   const [galeraView, setGaleraView] = useState("rivais");
@@ -787,7 +806,7 @@ export default function BolaoDetail() {
 
   useEffect(() => {
     const fallbackTab: BolaoDetailTab =
-      highlightedMatch || pendingOverview.totalPending > 0 ? "palpites" : "resumo";
+      highlightedMatch || pendingOverview.totalPending > 0 ? "palpites" : "turma";
     const nextTab = requestedTab ?? fallbackTab;
 
     if (!initialTabHydratedRef.current || requestedTab) {
@@ -826,150 +845,130 @@ export default function BolaoDetail() {
         />
       </Suspense>
 
-      <ArenaPanel tone="strong" className="mb-6 overflow-hidden p-5 sm:p-6">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_82%_18%,rgba(255,196,0,0.18),transparent_22%),radial-gradient(circle_at_15%_0%,rgba(145,255,59,0.12),transparent_28%)]" />
+      <ArenaPanel tone="strong" className="mb-4 overflow-hidden p-4 sm:p-5">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_82%_18%,rgba(255,196,0,0.14),transparent_24%),radial-gradient(circle_at_15%_0%,rgba(145,255,59,0.09),transparent_30%)]" />
         <div className="relative">
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="flex items-start gap-3">
-              <button
-                aria-label={t('bolao_detail.back_button_aria')}
-                onClick={() => navigate("/boloes")}
-                className="surface-card-soft flex h-12 w-12 items-center justify-center rounded-[20px]"
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </button>
+          <div className="flex items-start gap-2.5">
+            <button
+              aria-label={t('bolao_detail.back_button_aria')}
+              onClick={() => navigate("/boloes")}
+              className="surface-card-soft flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </button>
 
-              <div className="flex items-start gap-4">
-                <BolaoAvatar
-                  avatarUrl={bolao.avatar_url}
-                  alt={bolao.name}
-                  className="surface-card-soft flex h-20 w-20 shrink-0 items-center justify-center rounded-[28px] text-4xl"
-                />
-                <div className="min-w-0">
-                  <p className="arena-kicker text-primary">
-                    {bolao.category === "public" ? t('bolao_detail.category_public') : t('bolao_detail.category_private')}
-                  </p>
-                  <div className="group relative mt-2 pr-8">
-                    <h1 className="font-display text-[3rem] font-black uppercase leading-[0.9] tracking-[0.02em] text-white sm:text-[3.8rem]">
-                      {bolao.name}
-                    </h1>
-                    {bolao.description ? (
-                      <p className="mt-3 max-w-2xl text-sm leading-relaxed text-zinc-300 sm:text-base">
-                        {bolao.description}
-                      </p>
-                    ) : null}
+            <BolaoAvatar
+              avatarUrl={bolao.avatar_url}
+              alt={bolao.name}
+              className="surface-card-soft flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-2xl"
+            />
 
-                    {isCreator && (
-                      <button
-                        onClick={() => setShowEditPanel(true)}
-                        className="absolute right-0 top-1 rounded-lg p-2 text-zinc-500 opacity-100 transition-opacity hover:bg-white/5 hover:text-white sm:opacity-0 sm:group-hover:opacity-100"
-                        title="Editar bolão"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></svg>
-                      </button>
-                    )}
-                  </div>
-                </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">
+                  {bolao.category === "public" ? t('bolao_detail.category_public') : t('bolao_detail.category_private')}
+                </p>
+                {isCreator && (
+                  <button
+                    onClick={() => setShowEditPanel(true)}
+                    className="rounded-md p-1 text-zinc-500 transition hover:bg-white/5 hover:text-white"
+                    title="Editar bolão"
+                  >
+                    <PenLine className="h-3 w-3" />
+                  </button>
+                )}
               </div>
+              <h1 className="font-display text-xl font-black uppercase leading-[0.95] tracking-[0.02em] text-white sm:text-2xl">
+                {bolao.name}
+              </h1>
+              {bolao.description ? (
+                <p className="mt-0.5 max-w-xl text-xs leading-relaxed text-zinc-400 line-clamp-2">
+                  {bolao.description}
+                </p>
+              ) : null}
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
-              {championMarket && !myChampion && (
-                <button
-                  onClick={() => setChampionOpen(true)}
-                  className="arena-button-gold px-4 py-3 text-sm"
-                >
-                  <Crown className="h-4 w-4" />
-                  {t('bolao_detail.bet_champion_btn')}
-                </button>
-              )}
-
-              {championMarket && myChampion && (
-                <div className="arena-badge rounded-[18px] px-4 py-3 text-[11px]">
-                  <Trophy className="h-4 w-4" />
-                  {t('bolao_detail.my_champion_label', { champion: myChampion })}
-                </div>
-              )}
-
+            <div className="flex shrink-0 items-center gap-1.5">
               <button
                 onClick={handleShareInvite}
-                className="arena-button-green px-4 py-3 text-sm"
+                className="inline-flex h-8 items-center gap-1 rounded-lg bg-primary/15 px-2.5 text-[10px] font-black uppercase tracking-[0.12em] text-primary transition hover:bg-primary/25"
               >
-                <Share2 className="h-4 w-4" />
-                Compartilhar
+                <Share2 className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">Convidar</span>
               </button>
-
               <button
                 aria-label={t('bolao_detail.info_button_aria')}
                 onClick={() => setInfoOpen(true)}
-                className="surface-card-soft flex h-12 w-12 items-center justify-center rounded-[20px]"
+                className="surface-card-soft flex h-8 w-8 items-center justify-center rounded-lg"
               >
-                <Info className="h-5 w-5" />
+                <Info className="h-4 w-4" />
               </button>
             </div>
           </div>
 
-          <div className="mt-5 flex flex-wrap gap-2 text-sm text-zinc-300">
-            <div className="arena-badge">
-              <Users className="h-3.5 w-3.5" />
-              {memberCount} {t('bolao_detail.members_label')}
-            </div>
-            <div className="arena-badge">
-              <Share2 className="h-3.5 w-3.5" />
-              código {bolao.invite_code}
-            </div>
+          <div className="mt-2.5 flex flex-wrap gap-1.5">
+            <span className="arena-badge text-[10px] py-0.5 px-2">
+              <Users className="h-3 w-3" />
+              {memberCount}
+            </span>
+            <span className="arena-badge text-[10px] py-0.5 px-2">
+              <Share2 className="h-3 w-3" />
+              {bolao.invite_code}
+            </span>
             {formatLabel ? (
-              <div className="arena-badge">
-                <Trophy className="h-3.5 w-3.5" />
-                {t('bolao_detail.format_label', { format: formatLabel })}
-              </div>
+              <span className="arena-badge text-[10px] py-0.5 px-2">
+                <Trophy className="h-3 w-3" />
+                {formatLabel}
+              </span>
             ) : null}
             {bolaoMarkets.length > 0 ? (
-              <div className="arena-badge">
-                <Info className="h-3.5 w-3.5" />
-                {t('bolao_detail.active_markets_count', { count: bolaoMarkets.length })}
-              </div>
+              <span className="arena-badge text-[10px] py-0.5 px-2">
+                <Info className="h-3 w-3" />
+                {bolaoMarkets.length} desafios
+              </span>
             ) : null}
             {isCreator ? (
-              <button onClick={() => setActiveTab('resumo')} className="arena-badge border-orange-400/30 text-orange-300">
-                <Crown className="h-3.5 w-3.5" />
-                {t('bolao_detail.admin_badge')}
-              </button>
+              <span className="arena-badge border-orange-400/30 text-orange-300 text-[10px] py-0.5 px-2">
+                <Crown className="h-3 w-3" />
+                Admin
+              </span>
             ) : null}
+            {championMarket && myChampion && (
+              <span className="arena-badge text-[10px] py-0.5 px-2">
+                <Trophy className="h-3 w-3 text-amber-400" />
+                {myChampion}
+              </span>
+            )}
           </div>
         </div>
       </ArenaPanel>
 
-      <div className="mb-6 grid gap-3 lg:grid-cols-[1.2fr_0.8fr]">
-        <ArenaPanel className="p-5">
-          <p className="arena-kicker text-primary">
+      <div className="mb-4 grid gap-3 lg:grid-cols-[1.2fr_0.8fr]">
+        <ArenaPanel className="p-4">
+          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">
             {t("bolao_detail.next_play_kicker", { defaultValue: "Próxima jogada" })}
           </p>
-          <h2 className="mt-2 font-display text-[2.5rem] font-black uppercase leading-[0.92] tracking-[0.02em] text-white sm:text-[3.2rem]">
+          <h2 className="mt-1 font-display text-xl font-black uppercase leading-[0.95] tracking-[0.02em] text-white sm:text-2xl">
             {pendingOverview.totalPending > 0
-              ? t("bolao_detail.pending_title", {
-                  defaultValue: "{{count}} jogos para resolver",
-                  count: pendingOverview.totalPending,
-                })
-              : t("bolao_detail.caught_up_title", {
-                  defaultValue: "Você está em dia neste bolão",
-                })}
+              ? `${pendingOverview.totalPending} jogos para resolver`
+              : "Você está em dia"}
           </h2>
-          <p className="mt-3 max-w-2xl text-sm leading-relaxed text-zinc-300">
+          <p className="mt-1 max-w-xl text-xs leading-relaxed text-zinc-400">
             {pendingOverview.totalPending > 0
-              ? pendingOverview.summary || t("bolao_detail.pending_desc_fallback", { defaultValue: "Abra os jogos e salve seus resultados antes do prazo." })
-              : t("bolao_detail.caught_up_desc", {
-                  defaultValue: "Agora você pode acompanhar ranking, participantes e escolhas já fechadas.",
-                })}
+              ? pendingOverview.summary || "Abra os jogos e salve seus resultados antes do prazo."
+              : "Acompanhe ranking, participantes e escolhas já fechadas."}
           </p>
-          <div className="mt-5">
+          <div className="mt-3">
             <button
               onClick={() => setActiveTab(pendingOverview.totalPending > 0 ? "palpites" : "ranking")}
-              className={pendingOverview.totalPending > 0 ? "arena-button-gold" : "arena-button-green"}
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.12em] transition",
+                pendingOverview.totalPending > 0
+                  ? "bg-amber-500/15 text-amber-400 hover:bg-amber-500/25"
+                  : "bg-primary/15 text-primary hover:bg-primary/25"
+              )}
             >
-              {pendingOverview.totalPending > 0
-                ? t("bolao_detail.go_to_predictions", { defaultValue: "Marcar agora" })
-                : t("bolao_detail.go_to_ranking", { defaultValue: "Ver ranking" })}
+              {pendingOverview.totalPending > 0 ? "Marcar agora" : "Ver ranking"}
             </button>
           </div>
         </ArenaPanel>
@@ -1005,11 +1004,16 @@ export default function BolaoDetail() {
             <ArenaTabPill
               active={activeTab === tab.id}
               className={cn(
-                "flex min-h-[58px] w-full rounded-[22px] px-4 py-3 text-[11px] tracking-[0.16em]",
+                "relative flex min-h-[58px] w-full rounded-[22px] px-4 py-3 text-[11px] tracking-[0.16em]",
                 activeTab !== tab.id && "hover:border-white/20 hover:bg-white/[0.06] hover:text-white",
               )}
             >
               {tab.label}
+              {tab.badge !== null && tab.badge > 0 && (
+                <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[9px] font-black text-white shadow-[0_0_10px_rgba(239,68,68,0.6)] animate-pulse">
+                  {tab.badge}
+                </span>
+              )}
             </ArenaTabPill>
           </button>
         ))}
@@ -1092,54 +1096,50 @@ export default function BolaoDetail() {
           </Suspense>
         )}
 
-        {/* ── Pessoas: Rivais + Membros ── */}
-        {activeTab === "pessoas" && (
-          <Suspense fallback={<DetailSectionFallback />}>
-            <div className="space-y-4">
-              {isCreator ? (
-                <AdmissionInbox
-                  title="Solicitações para entrar"
-                  description="Quem pediu acesso a este bolão aparece aqui, sem se perder no resto da tela."
-                  emptyTitle="Nenhuma solicitação pendente"
-                  emptyDescription="Quando alguém pedir entrada, ela aparece aqui."
-                  items={joinRequestItems}
-                />
-              ) : null}
-              <div className="mb-4 flex gap-2">
-                <button onClick={() => setGaleraView("rivais")}
-                  className={cn("rounded-2xl px-4 py-2 text-sm font-black transition-all", galeraView === "rivais" ? "bg-white text-black" : "surface-card-soft text-zinc-400")}>
-                  {t('bolao_detail.rivals_tab')}
-                </button>
-                <button onClick={() => setGaleraView("membros")}
-                  className={cn("rounded-2xl px-4 py-2 text-sm font-black transition-all", galeraView === "membros" ? "bg-white text-black" : "surface-card-soft text-zinc-400")}>
-                  {t('bolao_detail.members_tab')}
-                </button>
-              </div>
-              {galeraView === "rivais" && <PublicPalpitesTab bolaoId={bolao.id} />}
-              {galeraView === "membros" && <MembrosTab members={members} userId={user!.id} bolaoId={bolao.id} isCreator={isCreator} isPaid={Boolean(bolao.is_paid)} onRefresh={() => {}} />}
-            </div>
-          </Suspense>
-        )}
-
-        {/* ── Resumo: Overview + Admin ── */}
-        {activeTab === "resumo" && bolao && (
+        {/* ── Turma: Share + Overview + Pessoas + Admin ── */}
+        {activeTab === "turma" && bolao && (
           <Suspense fallback={<DetailSectionFallback />}>
             <div className="space-y-6">
-              <ArenaPanel className="p-4 sm:p-5">
-                <div className="flex items-start gap-3">
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] border border-primary/25 bg-primary/10 text-primary">
-                    <LockKeyhole className="h-4 w-4" />
-                  </span>
-                  <div>
-                    <p className="font-bold text-white">Regras e estrutura</p>
-                    <p className="mt-1 text-sm leading-6 text-zinc-400">
-                      Esta regra está travada para preservar a justiça da disputa. Para mudar a estrutura,
-                      duplique o bolão e crie uma nova edição.
-                    </p>
-                  </div>
-                </div>
-              </ArenaPanel>
+              {/* Share Panel — primary CTA */}
+              <BolaoSharePanel
+                bolaoName={bolao.name}
+                inviteCode={bolao.invite_code}
+                inviteUrl={bolaoInviteUrl}
+                shareText={bolaoShareText}
+                onNativeShare={handleShareInvite}
+              />
+
+              {/* Overview */}
               <OverviewTab bolao={bolao} members={members} palpites={myPalpites} userId={user!.id} isCreator={isCreator} markets={bolaoMarkets} marketPredictions={allMarketPredictions} activityFeed={activityFeed} onShare={handleShareInvite} />
+
+              {/* Admission Inbox */}
+              {isCreator && bolao.category === "private" && (
+                <AdmissionInbox
+                  title={joinRequests.length > 0 ? `${joinRequests.length} solicitação${joinRequests.length > 1 ? "ões" : ""} pendente${joinRequests.length > 1 ? "s" : ""}` : "Solicitações para entrar"}
+                  description="Quem pediu acesso a este bolão aparece aqui."
+                  emptyTitle="Nenhuma solicitação pendente"
+                  emptyDescription="Quando alguém pedir entrada, ela aparece aqui com foto, nome e tempo de espera."
+                  items={joinRequestItems}
+                />
+              )}
+
+              {/* Rivais / Membros */}
+              <div className="space-y-4">
+                <div className="mb-4 flex gap-2">
+                  <button onClick={() => setGaleraView("rivais")}
+                    className={cn("rounded-2xl px-4 py-2 text-sm font-black transition-all", galeraView === "rivais" ? "bg-white text-black" : "surface-card-soft text-zinc-400")}>
+                    {t('bolao_detail.rivals_tab')}
+                  </button>
+                  <button onClick={() => setGaleraView("membros")}
+                    className={cn("rounded-2xl px-4 py-2 text-sm font-black transition-all", galeraView === "membros" ? "bg-white text-black" : "surface-card-soft text-zinc-400")}>
+                    {t('bolao_detail.members_tab')}
+                  </button>
+                </div>
+                {galeraView === "rivais" && <PublicPalpitesTab bolaoId={bolao.id} />}
+                {galeraView === "membros" && <MembrosTab members={members} userId={user!.id} bolaoId={bolao.id} isCreator={isCreator} isPaid={Boolean(bolao.is_paid)} onRefresh={() => {}} />}
+              </div>
+
+              {/* Admin panels */}
               <div className="border-t border-white/10 pt-6">
                  <p className="mb-4 text-xs font-black uppercase tracking-widest text-zinc-400">{t('bolao_detail.caixinha_header')}</p>
                 <CaixinhaPanel bolao={bolao} isCreator={isCreator} />
@@ -1159,16 +1159,6 @@ export default function BolaoDetail() {
               )}
             </div>
           </Suspense>
-        )}
-
-        {activeTab === "compartilhar" && bolao && (
-          <BolaoSharePanel
-            bolaoName={bolao.name}
-            inviteCode={bolao.invite_code}
-            inviteUrl={bolaoInviteUrl}
-            shareText={bolaoShareText}
-            onNativeShare={handleShareInvite}
-          />
         )}
       </ArenaPanel>
 

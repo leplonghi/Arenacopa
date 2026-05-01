@@ -3,7 +3,7 @@
   "pending": {
     "title_one": "You have {{count}} pending prediction",
     "title_other": "You have {{count}} pending predictions",
-    "subtitle": "Tap to bet before the matches"
+    "subtitle": "Tap to predict before the matches"
   },
   "stats": {
     "rank": "Rank",
