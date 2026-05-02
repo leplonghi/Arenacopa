@@ -34,9 +34,24 @@ export function BolaoHeader({
   const navigate = useNavigate();
 
   return (
-    <ArenaPanel tone="strong" className="mb-4 overflow-hidden p-4 sm:p-5">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_82%_18%,rgba(255,196,0,0.14),transparent_24%),radial-gradient(circle_at_15%_0%,rgba(145,255,59,0.09),transparent_30%)]" />
-      <div className="relative">
+    <ArenaPanel tone="strong" className="mb-4 overflow-hidden p-4 sm:p-5 relative">
+      {/* Background image — right-anchored */}
+      <img
+        src={bolao.is_paid ? "/fundo%20bolao%20negocios.png" : "/fundo%20bolao%20pessoal.png"}
+        alt=""
+        aria-hidden
+        className="pointer-events-none absolute inset-y-0 right-0 h-full w-[55%] select-none object-cover object-right"
+        style={{ opacity: bolao.is_paid ? 0.25 : 0.2 }}
+      />
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background: bolao.is_paid
+            ? "linear-gradient(to right, #1a1508 40%, #1a150899 65%, transparent)"
+            : "linear-gradient(to right, #0c1912 40%, #0c191299 65%, transparent)",
+        }}
+      />
+      <div className="relative z-10">
         <div className="flex items-start gap-2.5">
           <button
             aria-label={t('bolao_detail.back_button_aria')}

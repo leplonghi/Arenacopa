@@ -189,6 +189,7 @@ export function RealtimeRankingTab({ bolaoId, rules, variant = "default" }: { bo
                         {t('ranking.filter_friends', { defaultValue: "Turma" })}
                     </button>
                 </div>
+                </div>
             )}
             {/* Top 3 Podium - Layered & Fragmented Design */}
             {filteredRankings.length >= 3 ? (

@@ -9,7 +9,7 @@ import { useTranslation } from "react-i18next";
 import { getSiteUrl } from "@/utils/site-url";
 import { EmptyState } from "@/components/EmptyState";
 import { getPublicProfilesByIds } from "@/services/profile/profile.service";
-import { FeaturedBolaoCard } from "@/components/boloes/FeaturedBolaoCard";
+import { FeaturedBolaoCard } from "@/features/groups/FeaturedBolaoCard";
 import { CommunityFeed } from "@/features/social/CommunityFeed";
 import { AdmissionInbox } from "@/features/social/AdmissionInbox";
 import {

@@ -41,6 +41,10 @@ export function BolaoCard({ bolao, variant = "my" }: BolaoCardProps) {
   const statusCfg = getStatusConfig(bolao.status);
   const isActive = ["active", "open", "published", "live"].includes(bolao.status);
 
+  const bgImage = bolao.is_paid
+    ? "/fundo%20bolao%20negocios.png"
+    : "/fundo%20bolao%20pessoal.png";
+
   const cardContent = (
     <div className="relative z-10">
       {/* Status LED bar at top with enhanced glow */}
@@ -153,13 +157,38 @@ export function BolaoCard({ bolao, variant = "my" }: BolaoCardProps) {
     "transition-all duration-500 ease-out",
     isActive
       ? "border-primary/20 bg-gradient-to-br from-[#122117]/90 to-black/80 hover:border-primary/50 hover:shadow-[0_20px_40px_-12px_rgba(0,0,0,0.5),0_0_20px_rgba(145,255,59,0.05)]"
-      : "border-white/5 bg-white/[0.02] hover:border-white/20 hover:bg-white/[0.04]",
+      : bolao.is_paid
+        ? "border-amber-400/20 bg-black/90 hover:border-amber-400/40 hover:shadow-[0_20px_40px_-12px_rgba(0,0,0,0.6),0_0_20px_rgba(234,179,8,0.08)]"
+        : "border-white/5 bg-white/[0.02] hover:border-white/20 hover:bg-white/[0.04]",
     "hover:-translate-y-1 hover:z-20",
   ].join(" ");
+
+  const bgLayer = (
+    <>
+      {/* Card background image — right-anchored */}
+      <img
+        src={bgImage}
+        alt=""
+        aria-hidden
+        className="pointer-events-none absolute inset-y-0 right-0 h-full w-[65%] object-cover object-right select-none"
+        style={{ opacity: bolao.is_paid ? 0.28 : 0.22 }}
+      />
+      {/* Gradient mask so content on the left stays readable */}
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background: bolao.is_paid
+            ? "linear-gradient(to right, #0a0800 38%, #0a080099 60%, transparent)"
+            : "linear-gradient(to right, #08140d 38%, #08140d99 60%, transparent)",
+        }}
+      />
+    </>
+  );
 
   if (variant === "my") {
     return (
       <Link to={`/boloes/${bolao.id}`} className={containerClasses}>
+        {bgLayer}
         {cardContent}
       </Link>
     );
@@ -167,6 +196,7 @@ export function BolaoCard({ bolao, variant = "my" }: BolaoCardProps) {
 
   return (
     <div className={containerClasses}>
+      {bgLayer}
       {cardContent}
     </div>
   );
