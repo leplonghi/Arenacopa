@@ -36,12 +36,13 @@ import {
 
 import { useTranslation } from "react-i18next";
 import { getProfile } from "@/services/profile/profile.service";
+import { useCurrentProfile } from "@/hooks/useCurrentProfile";
 import { useQuery } from "@tanstack/react-query";
 import { listNotifications } from "@/services/notifications/notifications.service";
 import { appNavigationItems, isNavigationItemActive, type AppNavIconKey } from "@/config/navigation";
 import { BRAND_MARK_SRC } from "@/lib/brand-assets";
 import { useProfileStats } from "@/hooks/useProfileStats";
-import { getArenaLevel } from "@/lib/profile-level";
+import { getArenaLevel, useLevelNotifier } from "@/lib/profile-level";
 
 const logoUrl = BRAND_MARK_SRC;
 
@@ -65,23 +66,7 @@ function Header({ className }: { className?: string }) {
   const canGoBack = location.pathname !== "/";
 
   const { user } = useAuth();
-  const [profile, setProfile] = useState<{ name: string; avatar?: string } | null>(null);
-  useEffect(() => {
-    if (!user) return;
-
-    const fetchProfile = async () => {
-      try {
-        const profileData = await getProfile(user.id);
-        if (profileData) {
-          setProfile({ name: profileData.name, avatar: profileData.avatar_url || undefined });
-        }
-      } catch (error) {
-        console.error("Error fetching profile:", error);
-      }
-    };
-
-    fetchProfile();
-  }, [user]);
+  const { data: profile } = useCurrentProfile();
 
   const { t } = useTranslation('common');
   const brandName = t('brand.name');
@@ -102,6 +87,8 @@ function Header({ className }: { className?: string }) {
   const unreadCount = (rawNotifications as Array<{ read: boolean }>).filter(n => !n.read).length;
   const { data: stats } = useProfileStats(user?.id);
   const levelInfo = useMemo(() => getArenaLevel(stats?.points), [stats?.points]);
+  
+  useLevelNotifier(stats?.points);
 
   const getTitle = () => {
     const path = location.pathname;
@@ -246,7 +233,10 @@ function BottomTabs({ className }: { className?: string }) {
           if (tab.path === "#menu") {
             return (
               <MobileMenuSheet key={tab.path}>
-                <button className={cn(itemBaseClass, "text-zinc-300 hover:text-white focus-visible:ring-2 focus-visible:ring-primary/70")}>
+                <button 
+                  className={cn(itemBaseClass, "text-zinc-300 hover:text-white focus-visible:ring-2 focus-visible:ring-primary/70")}
+                  aria-label={t(tab.labelKey)}
+                >
                   <span className={cn(iconShellClass, "scale-[0.98] border border-transparent bg-white/[0.025] group-hover:border-white/10 group-hover:bg-white/[0.06]")}>
                     <span className="absolute inset-1 rounded-[15px] bg-[radial-gradient(circle_at_50%_20%,rgba(255,255,255,0.08),transparent_58%)]" />
                     <Icon className="relative z-10 h-[30px] w-[30px] drop-shadow-[0_0_10px_rgba(255,255,255,0.12)]" strokeWidth={2.15} />
@@ -261,6 +251,7 @@ function BottomTabs({ className }: { className?: string }) {
               key={tab.path}
               to={tab.path}
               end={tab.path === "/"}
+              aria-label={t(tab.labelKey)}
               className={({ isActive }) =>
                 cn(
                   itemBaseClass,

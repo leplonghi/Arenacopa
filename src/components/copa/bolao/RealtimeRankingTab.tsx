@@ -12,7 +12,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
-import { Trophy, Target, Award, Crown, TrendingUp, Minus, Check, Share2 } from "lucide-react";
+import { Trophy, Target, Award, Crown, TrendingUp, Minus, Check, Share2, Users } from "lucide-react";
 import { staggerContainer, staggerItem } from "../animations";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -21,6 +21,7 @@ import type { ScoringRules } from "@/types/bolao";
 import { RankingBreakdownCard, type RankingBreakdown } from "./ranking/RankingBreakdownCard";
 import { RankingLegend } from "./ranking/RankingLegend";
 import { getPublicProfilesByIds } from "@/services/profile/profile.service";
+import { useFriendIds } from "@/hooks/useFriendIds";
 
 type RankingProfile = {
     user_id: string;
@@ -66,19 +67,29 @@ function normalizeBreakdown(row: RankingRow): RankingBreakdown {
     };
 }
 
-export function RealtimeRankingTab({ bolaoId, rules }: { bolaoId: string; rules?: ScoringRules }) {
+export function RealtimeRankingTab({ bolaoId, rules, variant = "default" }: { bolaoId: string; rules?: ScoringRules; variant?: "default" | "tv" }) {
     const { t } = useTranslation('bolao');
     const { toast } = useToast();
     const [rankings, setRankings] = useState<RankingRow[]>([]);
     const [loading, setLoading] = useState(true);
     const [hasError, setHasError] = useState(false);
+    const [filter, setFilter] = useState<"all" | "friends">("all");
     const { user } = useAuth();
+    const { friendIds } = useFriendIds();
 
     // Default scoring rules for legend
     const exactPts = rules?.exact ?? 5;
     const winnerPts = rules?.winner ?? 3;
     const drawPts = rules?.draw ?? 2;
+    
+    const filteredRankings = useMemo(() => {
+        if (filter === "all") return rankings;
+        return rankings.filter(r => friendIds.has(r.user_id));
+    }, [rankings, filter, friendIds]);
+
     const myRanking = useMemo(() => rankings.find((ranking) => ranking.user_id === user?.id) ?? null, [rankings, user?.id]);
+
+    const isTv = variant === "tv";
 
     useEffect(() => {
         const rankingsRef = collection(db, 'bolao_rankings');
@@ -155,8 +166,32 @@ export function RealtimeRankingTab({ bolaoId, rules }: { bolaoId: string; rules?
             animate="visible"
             className="space-y-8"
         >
+            {!isTv && (
+                <div className="flex justify-center mb-6">
+                <div className="inline-flex items-center p-1 rounded-2xl bg-white/5 border border-white/10">
+                    <button
+                        onClick={() => setFilter("all")}
+                        className={cn(
+                            "px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all",
+                            filter === "all" ? "bg-white text-black shadow-lg" : "text-zinc-500 hover:text-zinc-300"
+                        )}
+                    >
+                        {t('ranking.filter_all', { defaultValue: "Geral" })}
+                    </button>
+                    <button
+                        onClick={() => setFilter("friends")}
+                        className={cn(
+                            "px-6 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all flex items-center gap-2",
+                            filter === "friends" ? "bg-white text-black shadow-lg" : "text-zinc-500 hover:text-zinc-300"
+                        )}
+                    >
+                        <Users className="w-3.5 h-3.5" />
+                        {t('ranking.filter_friends', { defaultValue: "Turma" })}
+                    </button>
+                </div>
+            )}
             {/* Top 3 Podium - Layered & Fragmented Design */}
-            {rankings.length >= 3 && (
+            {filteredRankings.length >= 3 ? (
                 <div className="pt-24 pb-12 px-2 relative min-h-[380px] perspective-1000">
                     <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-copa-gold/10 rounded-full blur-[100px] z-0" />
                     
@@ -171,9 +206,9 @@ export function RealtimeRankingTab({ bolaoId, rules }: { bolaoId: string; rules?
                                 <div className="w-16 h-16 rounded-2xl p-0.5 bg-gradient-to-br from-gray-300 via-gray-400 to-gray-600 shadow-2xl transition-transform">
                                     <div className="w-full h-full rounded-[14px] bg-zinc-950 flex items-center justify-center text-xs font-black overflow-hidden border border-white/5 relative">
                                         <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
-                                        {rankings[1].profile?.avatar_url ?
-                                            <img src={rankings[1].profile.avatar_url} alt="" className="w-full h-full object-cover" /> :
-                                            <span className="text-gray-400">{(rankings[1].profile?.name || "??").slice(0, 2).toUpperCase()}</span>}
+                                        {filteredRankings[1].profile?.avatar_url ?
+                                            <img src={filteredRankings[1].profile.avatar_url} alt="" className="w-full h-full object-cover" /> :
+                                            <span className="text-gray-400">{(filteredRankings[1].profile?.name || "??").slice(0, 2).toUpperCase()}</span>}
                                     </div>
                                 </div>
                                 <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full bg-zinc-400 text-xs font-black flex items-center justify-center text-zinc-950 border-4 border-[#0a0a0a] shadow-xl">
@@ -182,10 +217,10 @@ export function RealtimeRankingTab({ bolaoId, rules }: { bolaoId: string; rules?
                             </div>
                             <div className="text-center mt-2 group">
                                 <span className="text-[10px] font-black uppercase tracking-widest block truncate text-zinc-500 mb-1 font-display">
-                                    {(rankings[1].profile?.name || t('ranking.default_user')).split(" ")[0]}
+                                    {(filteredRankings[1].profile?.name || t('ranking.default_user')).split(" ")[0]}
                                 </span>
                                 <span className="text-lg font-black text-white font-display leading-none">
-                                    {rankings[1].total_points}<span className="text-[10px] ml-0.5 text-zinc-600">{t('ranking.points_abbr')}</span>
+                                    {filteredRankings[1].total_points}<span className="text-[10px] ml-0.5 text-zinc-600">{t('ranking.points_abbr')}</span>
                                 </span>
                             </div>
                             <div className="w-full h-24 bg-gradient-to-t from-zinc-800/40 via-zinc-800/10 to-transparent backdrop-blur-xl rounded-t-3xl border-x border-t border-white/5 flex items-center justify-center shadow-inner pt-4">
@@ -213,9 +248,9 @@ export function RealtimeRankingTab({ bolaoId, rules }: { bolaoId: string; rules?
                                     <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/10 to-transparent h-1/2 w-full animate-pulse-slow pointer-events-none" />
                                     <div className="w-full h-full rounded-[22px] bg-zinc-950 flex items-center justify-center text-sm font-black overflow-hidden border border-white/10 relative">
                                         <div className="absolute inset-0 opacity-[0.05] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
-                                        {rankings[0].profile?.avatar_url ?
-                                            <img src={rankings[0].profile.avatar_url} alt="" className="w-full h-full object-cover" /> :
-                                            <span className="text-copa-gold text-lg">{(rankings[0].profile?.name || "??").slice(0, 2).toUpperCase()}</span>}
+                                        {filteredRankings[0].profile?.avatar_url ?
+                                            <img src={filteredRankings[0].profile.avatar_url} alt="" className="w-full h-full object-cover" /> :
+                                            <span className="text-copa-gold text-lg">{(filteredRankings[0].profile?.name || "??").slice(0, 2).toUpperCase()}</span>}
                                     </div>
                                 </div>
                                 <div className="absolute -bottom-3 -right-3 w-12 h-12 rounded-full bg-copa-gold text-base font-black flex items-center justify-center text-zinc-950 border-4 border-[#0a0a0a] shadow-2xl z-20">
@@ -225,10 +260,10 @@ export function RealtimeRankingTab({ bolaoId, rules }: { bolaoId: string; rules?
 
                             <div className="text-center mt-4">
                                 <span className="text-[11px] font-black uppercase tracking-[0.3em] block truncate text-copa-gold mb-1 font-display">
-                                    {(rankings[0].profile?.name || t('ranking.default_user')).split(" ")[0]}
+                                    {(filteredRankings[0].profile?.name || t('ranking.default_user')).split(" ")[0]}
                                 </span>
                                 <span className="text-3xl font-black text-white font-display tracking-tight leading-none">
-                                    {rankings[0].total_points}<span className="text-[12px] ml-1 text-zinc-500 font-sans tracking-normal font-bold">{t('ranking.points_abbr')}</span>
+                                    {filteredRankings[0].total_points}<span className="text-[12px] ml-1 text-zinc-500 font-sans tracking-normal font-bold">{t('ranking.points_abbr')}</span>
                                 </span>
                             </div>
                             
@@ -248,9 +283,9 @@ export function RealtimeRankingTab({ bolaoId, rules }: { bolaoId: string; rules?
                                 <div className="w-16 h-16 rounded-2xl p-0.5 bg-gradient-to-br from-amber-600 via-amber-700 to-orange-900 shadow-2xl transition-transform">
                                     <div className="w-full h-full rounded-[14px] bg-zinc-950 flex items-center justify-center text-xs font-black overflow-hidden border border-white/5 relative">
                                         <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
-                                        {rankings[2].profile?.avatar_url ?
-                                            <img src={rankings[2].profile.avatar_url} alt="" className="w-full h-full object-cover" /> :
-                                            <span className="text-amber-700">{(rankings[2].profile?.name || "??").slice(0, 2).toUpperCase()}</span>}
+                                        {filteredRankings[2].profile?.avatar_url ?
+                                            <img src={filteredRankings[2].profile.avatar_url} alt="" className="w-full h-full object-cover" /> :
+                                            <span className="text-amber-700">{(filteredRankings[2].profile?.name || "??").slice(0, 2).toUpperCase()}</span>}
                                     </div>
                                 </div>
                                 <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full bg-amber-700 text-xs font-black flex items-center justify-center text-white border-4 border-[#0a0a0a] shadow-xl">
@@ -259,10 +294,10 @@ export function RealtimeRankingTab({ bolaoId, rules }: { bolaoId: string; rules?
                             </div>
                             <div className="text-center mt-2">
                                 <span className="text-[10px] font-black uppercase tracking-widest block truncate text-amber-800 mb-1 font-display">
-                                    {(rankings[2].profile?.name || t('ranking.default_user')).split(" ")[0]}
+                                    {(filteredRankings[2].profile?.name || t('ranking.default_user')).split(" ")[0]}
                                 </span>
                                 <span className="text-lg font-black text-white font-display leading-none">
-                                    {rankings[2].total_points}<span className="text-[10px] ml-0.5 text-zinc-600">{t('ranking.points_abbr')}</span>
+                                    {filteredRankings[2].total_points}<span className="text-[10px] ml-0.5 text-zinc-600">{t('ranking.points_abbr')}</span>
                                 </span>
                             </div>
                             <div className="w-full h-16 bg-gradient-to-t from-amber-900/40 via-amber-900/10 to-transparent backdrop-blur-xl rounded-t-3xl border-x border-t border-white/5 flex items-center justify-center shadow-inner pt-2">
@@ -271,9 +306,17 @@ export function RealtimeRankingTab({ bolaoId, rules }: { bolaoId: string; rules?
                         </motion.div>
                     </div>
                 </div>
-            )}
+            ) : filteredRankings.length === 0 && filter === "friends" ? (
+                <div className="py-12 px-4 text-center">
+                    <EmptyState
+                        icon="👥"
+                        title={t('ranking.no_friends_title', { defaultValue: "Ninguém da sua turma aqui" })}
+                        description={t('ranking.no_friends_desc', { defaultValue: "Seus amigos ainda não entraram neste bolão." })}
+                    />
+                </div>
+            ) : null}
 
-            {myRanking && (
+            {!isTv && myRanking && (
                 <motion.div variants={staggerItem}>
                     <RankingBreakdownCard
                         breakdown={normalizeBreakdown(myRanking)}
@@ -298,9 +341,9 @@ export function RealtimeRankingTab({ bolaoId, rules }: { bolaoId: string; rules?
             </div>
 
             <div className="grid grid-cols-1 gap-3 pb-20 px-1 perspective-1000">
-                {rankings.map((r, i) => {
+                {filteredRankings.map((r, i) => {
                     const name = r.profile?.name || t('ranking.default_user');
-                    const isTop3 = i < 3;
+                    const isTop3 = i < 3 && filteredRankings.length >= 3;
                     const isMe = r.user_id === user?.id;
                     const breakdown = normalizeBreakdown(r);
                     const breakdownItems = [
@@ -317,18 +360,18 @@ export function RealtimeRankingTab({ bolaoId, rules }: { bolaoId: string; rules?
                             whileHover={{ scale: 1.02, translateX: isMe ? 0 : 8, translateZ: "10px", rotateY: isMe ? 0 : -2 }}
                             className={cn(
                                 "flex items-center gap-4 px-6 py-5 rounded-[28px] border transition-all cursor-default relative overflow-hidden group transform-3d shadow-sm",
-                                i === 0 ? "bg-gradient-to-r from-copa-gold/20 via-copa-gold/[0.05] to-transparent border-copa-gold/40 shadow-[0_10px_30px_rgba(234,179,8,0.15)] ring-1 ring-copa-gold/20" :
-                                    i === 1 ? "bg-gradient-to-r from-zinc-400/15 via-zinc-400/[0.05] to-transparent border-zinc-400/40" :
-                                        i === 2 ? "bg-gradient-to-r from-amber-700/15 via-amber-700/[0.05] to-transparent border-amber-800/40" :
+                                (i === 0 && filteredRankings.length >= 3) ? "bg-gradient-to-r from-copa-gold/20 via-copa-gold/[0.05] to-transparent border-copa-gold/40 shadow-[0_10px_30px_rgba(234,179,8,0.15)] ring-1 ring-copa-gold/20" :
+                                    (i === 1 && filteredRankings.length >= 3) ? "bg-gradient-to-r from-zinc-400/15 via-zinc-400/[0.05] to-transparent border-zinc-400/40" :
+                                        (i === 2 && filteredRankings.length >= 3) ? "bg-gradient-to-r from-amber-700/15 via-amber-700/[0.05] to-transparent border-amber-800/40" :
                                             isMe ? "bg-copa-green/10 border-copa-green-light/40 shadow-lg" : "bg-zinc-900/40 border-white/5 hover:border-white/10 hover:bg-zinc-800/60"
                             )}
                         >
                             <div className="w-10 shrink-0 flex items-center justify-center relative">
                                 <span className={cn(
                                     "text-2xl font-black font-display italic tracking-tighter transition-all group-hover:scale-110",
-                                    i === 0 ? "text-copa-gold drop-shadow-sm" :
-                                        i === 1 ? "text-zinc-400" :
-                                            i === 2 ? "text-amber-700" :
+                                    (i === 0 && filteredRankings.length >= 3) ? "text-copa-gold drop-shadow-sm" :
+                                        (i === 1 && filteredRankings.length >= 3) ? "text-zinc-400" :
+                                            (i === 2 && filteredRankings.length >= 3) ? "text-amber-700" :
                                                 isMe ? "text-copa-green-light" : "text-zinc-700 group-hover:text-zinc-400"
                                 )}>
                                     {String(i + 1).padStart(2, '0')}
@@ -338,7 +381,7 @@ export function RealtimeRankingTab({ bolaoId, rules }: { bolaoId: string; rules?
                             <div className="relative shrink-0 transition-transform group-hover:scale-105 group-hover:rotate-3">
                                 <div className={cn(
                                     "w-12 h-12 rounded-2xl flex items-center justify-center p-0.5",
-                                    isTop3 ? (i === 0 ? "bg-copa-gold/50" : i === 1 ? "bg-zinc-400/50" : "bg-amber-700/50") : isMe ? "bg-copa-green-light/50" : "bg-white/10"
+                                    (isTop3 && filteredRankings.length >= 3) ? (i === 0 ? "bg-copa-gold/50" : i === 1 ? "bg-zinc-400/50" : "bg-amber-700/50") : isMe ? "bg-copa-green-light/50" : "bg-white/10"
                                 )}>
                                     <div className="w-full h-full rounded-[14px] bg-zinc-950 flex items-center justify-center text-[10px] font-black overflow-hidden border border-zinc-800 relative">
                                         <div className="absolute inset-0 opacity-[0.05] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
@@ -356,12 +399,13 @@ export function RealtimeRankingTab({ bolaoId, rules }: { bolaoId: string; rules?
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 mb-1">
                                     <span className={cn(
-                                        "text-base font-black truncate tracking-tight transition-colors font-display",
+                                        "font-black truncate tracking-tight transition-colors font-display",
+                                        isTv ? "text-3xl" : "text-base",
                                         isTop3 || isMe ? "text-white" : "text-zinc-400 group-hover:text-white"
                                     )}>
                                         {name} {isMe && <span className="text-[10px] text-copa-green-light ml-1 opacity-80">({t("ranking.you_badge")})</span>}
                                     </span>
-                                    {i === 0 && (
+                                    {(i === 0 && filteredRankings.length >= 3) && (
                                         <div className="flex items-center gap-1.5 bg-copa-gold/20 px-2 py-0.5 rounded-full border border-copa-gold/30">
                                             <Crown className="w-2.5 h-2.5 text-copa-gold shrink-0" />
                                             <span className="text-[8px] font-black text-copa-gold uppercase tracking-tighter">{t("ranking.leader_badge")}</span>
@@ -394,14 +438,16 @@ export function RealtimeRankingTab({ bolaoId, rules }: { bolaoId: string; rules?
 
                             <div className="text-right">
                                 <div className={cn(
-                                    "px-5 py-2.5 rounded-2xl border-2 transition-all group-hover:shadow-[0_0_20px_rgba(254,215,170,0.1)]",
-                                    i === 0 ? "bg-copa-gold/30 border-copa-gold shadow-xl rotate-1" :
-                                        i === 1 ? "bg-zinc-400/20 border-zinc-400 shadow-lg -rotate-1" :
-                                            i === 2 ? "bg-amber-700/20 border-amber-800 shadow-md rotate-1" :
+                                    "px-5 py-2.5 rounded-2xl border-2 transition-all",
+                                    !isTv && "group-hover:shadow-[0_0_20px_rgba(254,215,170,0.1)]",
+                                    (i === 0 && filteredRankings.length >= 3) ? "bg-copa-gold/30 border-copa-gold shadow-xl rotate-1" :
+                                        (i === 1 && filteredRankings.length >= 3) ? "bg-zinc-400/20 border-zinc-400 shadow-lg -rotate-1" :
+                                            (i === 2 && filteredRankings.length >= 3) ? "bg-amber-700/20 border-amber-800 shadow-md rotate-1" :
                                                 isMe ? "bg-copa-green/30 border-copa-green-light/50" : "bg-white/5 border-white/5 group-hover:border-white/20"
                                 )}>
                                     <span className={cn(
-                                        "text-xl font-black block leading-none tracking-tight font-display mb-0.5",
+                                        "font-black block leading-none tracking-tight font-display mb-0.5",
+                                        isTv ? "text-4xl" : "text-xl",
                                         isTop3 || isMe ? "text-white" : "text-zinc-300 group-hover:text-white"
                                     )}>
                                         {r.total_points}
@@ -414,62 +460,66 @@ export function RealtimeRankingTab({ bolaoId, rules }: { bolaoId: string; rules?
                 })}
             </div>
 
-            <div className="flex justify-center mt-2 mb-8 perspective-1000">
-                <motion.button
-                    variants={staggerItem}
-                    whileHover={{ scale: 1.05, translateZ: "20px" }}
-                    onClick={async () => {
-                        const topText = rankings.slice(0, 3).map((r, i) => `${i+1}º ${r.profile?.name?.split(' ')[0] || 'Anônimo'} ${r.total_points}pts`).join('\n');
-                        const myPos = rankings.findIndex(r => r.user_id === user?.id) + 1;
-                        let text = `🏆 RANKING DO BOLÃO 🏆\n\n${topText}\n\n`;
-                        if (myPos > 0 && myPos > 3) {
-                            text += t("ranking.share_my_position", { position: myPos }) + "\n";
-                        } else if (myPos > 0 && myPos <= 3) {
-                            text += t("ranking.share_podium", { position: myPos }) + "\n";
-                        }
-                        text += `\n${t("ranking.share_cta")}\n`;
-                        const url = window.location.href;
-                        
-                        try {
-                            if (navigator.share) {
-                                await navigator.share({
-                                    title: t("ranking.share_title"),
-                                    text: text,
-                                    url: url
-                                });
-                            } else {
-                                await navigator.clipboard.writeText(text + url);
-                                toast({ title: t("ranking.share_copied"), className: "bg-emerald-500 text-white font-black border-none" });
-                            }
-                        } catch (e) {
-                            console.error(e);
-                        }
-                    }}
-                    className="flex w-full sm:w-auto items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-copa-gold via-yellow-400 to-amber-500 text-black px-8 py-5 font-black uppercase tracking-[0.2em] transition-all shadow-[0_10px_40px_rgba(234,179,8,0.3)] hover:shadow-[0_15px_60px_rgba(234,179,8,0.5)] transform-3d"
-                >
-                    <Share2 className="w-5 h-5 flex-shrink-0" />
-                    <span className="truncate">{t("ranking.share_action")}</span>
-                </motion.button>
-            </div>
+            {!isTv && (
+                <>
+                    <div className="flex justify-center mt-2 mb-8 perspective-1000">
+                        <motion.button
+                            variants={staggerItem}
+                            whileHover={{ scale: 1.05, translateZ: "20px" }}
+                            onClick={async () => {
+                                const topText = rankings.slice(0, 3).map((r, i) => `${i+1}º ${r.profile?.name?.split(' ')[0] || 'Anônimo'} ${r.total_points}pts`).join('\n');
+                                const myPos = rankings.findIndex(r => r.user_id === user?.id) + 1;
+                                let text = `🏆 RANKING DO BOLÃO 🏆\n\n${topText}\n\n`;
+                                if (myPos > 0 && myPos > 3) {
+                                    text += t("ranking.share_my_position", { position: myPos }) + "\n";
+                                } else if (myPos > 0 && myPos <= 3) {
+                                    text += t("ranking.share_podium", { position: myPos }) + "\n";
+                                }
+                                text += `\n${t("ranking.share_cta")}\n`;
+                                const url = window.location.href;
+                                
+                                try {
+                                    if (navigator.share) {
+                                        await navigator.share({
+                                            title: t("ranking.share_title"),
+                                            text: text,
+                                            url: url
+                                        });
+                                    } else {
+                                        await navigator.clipboard.writeText(text + url);
+                                        toast({ title: t("ranking.share_copied"), className: "bg-emerald-500 text-white font-black border-none" });
+                                    }
+                                } catch (e) {
+                                    console.error(e);
+                                }
+                            }}
+                            className="flex w-full sm:w-auto items-center justify-center gap-3 rounded-2xl bg-gradient-to-r from-copa-gold via-yellow-400 to-amber-500 text-black px-8 py-5 font-black uppercase tracking-[0.2em] transition-all shadow-[0_10px_40px_rgba(234,179,8,0.3)] hover:shadow-[0_15px_60px_rgba(234,179,8,0.5)] transform-3d"
+                        >
+                            <Share2 className="w-5 h-5 flex-shrink-0" />
+                            <span className="truncate">{t("ranking.share_action")}</span>
+                        </motion.button>
+                    </div>
 
-            <motion.div variants={staggerItem}>
-                <RankingLegend
-                    exactLabel={t("ranking.legend_exact")}
-                    winnerLabel={t("ranking.legend_winner")}
-                    drawLabel={t("ranking.legend_draw")}
-                    exactPoints={exactPts}
-                    winnerPoints={winnerPts}
-                    drawPoints={drawPts}
-                    rulesTitle={t("ranking.legend_rules")}
-                    categoriesTitle={t("ranking.legend_categories")}
-                    categoryLabels={{
-                        match: t("ranking.category_match"),
-                        phase: t("ranking.category_phase"),
-                        tournament: t("ranking.category_tournament"),
-                        special: t("ranking.category_special"),
-                    }}
-                />
-            </motion.div>
+                    <motion.div variants={staggerItem}>
+                        <RankingLegend
+                            exactLabel={t("ranking.legend_exact")}
+                            winnerLabel={t("ranking.legend_winner")}
+                            drawLabel={t("ranking.legend_draw")}
+                            exactPoints={exactPts}
+                            winnerPoints={winnerPts}
+                            drawPoints={drawPts}
+                            rulesTitle={t("ranking.legend_rules")}
+                            categoriesTitle={t("ranking.legend_categories")}
+                            categoryLabels={{
+                                match: t("ranking.category_match"),
+                                phase: t("ranking.category_phase"),
+                                tournament: t("ranking.category_tournament"),
+                                special: t("ranking.category_special"),
+                            }}
+                        />
+                    </motion.div>
+                </>
+            )}
         </motion.div>
     );
 }

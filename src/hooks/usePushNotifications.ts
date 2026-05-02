@@ -1,84 +1,95 @@
-import { useEffect, useRef } from 'react';
-import { PushNotifications } from '@capacitor/push-notifications';
+import { useEffect, useState } from 'react';
+import { PushNotifications, Token, PushNotificationSchema, ActionPerformed } from '@capacitor/push-notifications';
 import { Capacitor } from '@capacitor/core';
-import { useAuth } from '@/contexts/AuthContext';
 import { db } from '@/integrations/firebase/client';
-import { doc, setDoc } from 'firebase/firestore';
-import type { PluginListenerHandle } from '@capacitor/core';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
-export const usePushNotifications = () => {
-    const { user } = useAuth();
-    // Store resolved handles so the cleanup can remove them synchronously,
-    // regardless of whether the effect is still resolving when unmount fires.
-    const handlesRef = useRef<PluginListenerHandle[]>([]);
+export function usePushNotifications() {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [token, setToken] = useState<string | null>(null);
 
-    useEffect(() => {
-        if (!Capacitor.isNativePlatform() || !user?.id) {
-            return;
+  useEffect(() => {
+    // Push notifications are only supported on native devices (iOS/Android) via Capacitor
+    if (!Capacitor.isNativePlatform() || !user?.id) {
+      return;
+    }
+
+    let isSubscribed = true;
+
+    const registerPush = async () => {
+      try {
+        // Request permissions
+        let permStatus = await PushNotifications.checkPermissions();
+        if (permStatus.receive === 'prompt') {
+          permStatus = await PushNotifications.requestPermissions();
         }
 
-        let isMounted = true;
+        if (permStatus.receive !== 'granted') {
+          console.log('User denied push notification permissions');
+          return;
+        }
 
-        const setup = async () => {
-            // ── 1. Permission ──────────────────────────────────────────────────
-            let permStatus = await PushNotifications.checkPermissions();
-            if (permStatus.receive === 'prompt') {
-                permStatus = await PushNotifications.requestPermissions();
+        // Register with Apple / Google to receive token
+        await PushNotifications.register();
+
+        // On success, we should be able to receive notifications
+        PushNotifications.addListener('registration', async (t: Token) => {
+          console.log('Push registration success, token: ' + t.value);
+          if (isSubscribed) {
+            setToken(t.value);
+            // Save the token to Firestore
+            try {
+              const tokenDocRef = doc(db, 'users', user.id, 'tokens', t.value);
+              await setDoc(tokenDocRef, {
+                token: t.value,
+                platform: Capacitor.getPlatform(),
+                createdAt: serverTimestamp(),
+                updatedAt: serverTimestamp(),
+                isActive: true
+              });
+            } catch (err) {
+              console.error('Failed to save push token to Firestore', err);
             }
-            if (permStatus.receive !== 'granted') {
-                console.warn('User denied push notification permissions');
-                return;
-            }
-            if (!isMounted) return; // component unmounted while awaiting permission
+          }
+        });
 
-            await PushNotifications.register();
-            if (!isMounted) return;
+        PushNotifications.addListener('registrationError', (error: any) => {
+          console.error('Error on push registration: ' + JSON.stringify(error));
+        });
 
-            // ── 2. Listeners ───────────────────────────────────────────────────
-            // Resolve all 4 listener handles in parallel and stash them in the
-            // ref so the cleanup can remove them even if unmount races setup.
-            const handles = await Promise.all([
-                PushNotifications.addListener('registration', async (token) => {
-                    console.log('Push registration success, token:', token.value);
-                    try {
-                        const docId = `${user.id}_${token.value}`;
-                        await setDoc(doc(db, 'native_push_tokens', docId), {
-                            user_id: user.id,
-                            token: token.value,
-                            platform: Capacitor.getPlatform(),
-                            updated_at: new Date().toISOString(),
-                        }, { merge: true });
-                    } catch (e) {
-                        console.error('Could not save FCM token to Firestore', e);
-                    }
-                }),
-                PushNotifications.addListener('registrationError', (error) => {
-                    console.error('Push registration error:', JSON.stringify(error));
-                }),
-                PushNotifications.addListener('pushNotificationReceived', (notification) => {
-                    console.log('Push received:', JSON.stringify(notification));
-                }),
-                PushNotifications.addListener('pushNotificationActionPerformed', (notification) => {
-                    console.log('Push action performed:', JSON.stringify(notification));
-                }),
-            ]);
+        PushNotifications.addListener('pushNotificationReceived', (notification: PushNotificationSchema) => {
+          console.log('Push received: ' + JSON.stringify(notification));
+          toast({
+            title: notification.title || 'Nova Notificação',
+            description: notification.body || '',
+          });
+        });
 
-            if (!isMounted) {
-                // Component unmounted while listeners were being registered — remove immediately.
-                handles.forEach((h) => h.remove());
-                return;
-            }
+        PushNotifications.addListener('pushNotificationActionPerformed', (notification: ActionPerformed) => {
+          console.log('Push action performed: ' + JSON.stringify(notification));
+          // Route user depending on notification data if needed
+          const data = notification.notification.data;
+          if (data && data.path) {
+            // Can trigger a router navigation here, or use a context pattern
+            window.location.href = data.path;
+          }
+        });
 
-            handlesRef.current = handles;
-        };
+      } catch (error) {
+        console.error('Push Notifications setup failed', error);
+      }
+    };
 
-        setup();
+    registerPush();
 
-        return () => {
-            isMounted = false;
-            // Remove any handles that were already resolved at cleanup time.
-            handlesRef.current.forEach((h) => h.remove());
-            handlesRef.current = [];
-        };
-    }, [user?.id]);
-};
+    return () => {
+      isSubscribed = false;
+      PushNotifications.removeAllListeners();
+    };
+  }, [user?.id, toast]);
+
+  return { token };
+}

@@ -117,24 +117,25 @@ function QuickStats({
   return (
     <div className="grid grid-cols-3 gap-2">
       {stats.map(({ icon: Icon, value, label, to, accent }) => (
-        <Link
-          key={label}
-          to={to}
-          className={cn(
-            "group flex flex-col gap-1.5 rounded-[18px] border p-3 transition",
-            accent
-              ? "border-primary/30 bg-primary/[0.07] hover:bg-primary/[0.11]"
-              : "border-white/[0.07] bg-white/[0.02] hover:border-white/[0.12] hover:bg-white/[0.04]"
-          )}
-        >
-          <Icon className={cn("h-4 w-4", accent ? "text-primary" : "text-zinc-500")} />
-          <p className={cn("text-2xl font-black leading-none", accent ? "text-primary" : "text-white")}>
-            {value}
-          </p>
-          <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-600 leading-tight">
-            {label}
-          </p>
-        </Link>
+        <motion.div key={label} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
+          <Link
+            to={to}
+            className={cn(
+              "flex flex-col gap-1.5 rounded-[18px] border p-3 h-full transition",
+              accent
+                ? "border-primary/30 bg-primary/[0.07] hover:bg-primary/[0.11]"
+                : "border-white/[0.07] bg-white/[0.02] hover:border-white/[0.12] hover:bg-white/[0.04]"
+            )}
+          >
+            <Icon className={cn("h-4 w-4", accent ? "text-primary" : "text-zinc-500")} />
+            <p className={cn("text-2xl font-black leading-none", accent ? "text-primary" : "text-white")}>
+              {value}
+            </p>
+            <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-600 leading-tight">
+              {label}
+            </p>
+          </Link>
+        </motion.div>
       ))}
     </div>
   );
@@ -186,20 +187,22 @@ function DiscoverTile({
   color: string;
 }) {
   return (
-    <Link
-      to={to}
-      className={cn(
-        "group flex flex-col gap-2.5 rounded-[18px] border p-3.5 transition hover:-translate-y-0.5",
-        color
-      )}
-    >
-      <Icon className="h-5 w-5" />
-      <div>
-        <p className="text-sm font-black text-white">{label}</p>
-        <p className="text-[11px] text-zinc-500 leading-snug mt-0.5">{description}</p>
-      </div>
-      <ArrowRight className="h-3.5 w-3.5 text-current opacity-50 transition group-hover:translate-x-0.5 group-hover:opacity-100" />
-    </Link>
+    <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+      <Link
+        to={to}
+        className={cn(
+          "group flex flex-col gap-2.5 rounded-[18px] border p-3.5 transition hover:-translate-y-0.5",
+          color
+        )}
+      >
+        <Icon className="h-5 w-5" />
+        <div>
+          <p className="text-sm font-black text-white">{label}</p>
+          <p className="text-[11px] text-zinc-500 leading-snug mt-0.5">{description}</p>
+        </div>
+        <ArrowRight className="h-3.5 w-3.5 text-current opacity-50 transition group-hover:translate-x-0.5 group-hover:opacity-100" />
+      </Link>
+    </motion.div>
   );
 }
 
@@ -394,7 +397,7 @@ const Index = () => {
                   </div>
                 </Link>
                 <Link
-                  to="/descobrir/boloes"
+                  to="/descobrir"
                   className="group flex flex-col items-start gap-2 rounded-[18px] border border-white/[0.07] bg-white/[0.02] p-3.5 transition hover:border-white/[0.14] hover:bg-white/[0.05]"
                 >
                   <Flame className="h-5 w-5 text-zinc-400" />

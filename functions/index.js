@@ -3126,3 +3126,6 @@ async function recreateMarketsForBolao(db, bolaoId, bolaoData, dryRun) {
         championship_id: championshipId,
     };
 }
+
+exports.socialProxy = require("./features/socialProxy").socialProxy;
+exports.sitemapProxy = require("./features/seo/sitemap").sitemapProxy;

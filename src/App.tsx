@@ -15,6 +15,8 @@ import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { MonetizationProvider } from "@/contexts/MonetizationContext";
 import { ChampionshipProvider } from "@/contexts/ChampionshipContext";
 import { AppSplash } from "@/components/AppSplash";
+import { GlobalAchievementTracker } from "@/components/GlobalAchievementTracker";
+import { BolaoDetailSkeleton } from "@/features/boloes/detail/BolaoDetailSkeleton";
 import FieldBackground from "@/components/FieldBackground";
 import { useLanguage } from "@/i18n/useLanguage";
 import { BRAND_MARK_SRC } from "@/lib/brand-assets";
@@ -77,6 +79,7 @@ const BaresLanding = lazyWithReloadRetry("BaresLanding", () => import("./pages/B
 const CriarCampanhaBar = lazyWithReloadRetry("CriarCampanhaBar", () => import("./pages/CriarCampanhaBar"));
 const CampanhaBarDetail = lazyWithReloadRetry("CampanhaBarDetail", () => import("./pages/CampanhaBarDetail"));
 const PublicCommercialCampaign = lazyWithReloadRetry("PublicCommercialCampaign", () => import("./pages/PublicCommercialCampaign"));
+const ArenaTV = lazyWithReloadRetry("ArenaTV", () => import("./pages/ArenaTV"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -158,10 +161,11 @@ function DeepLinkListener() {
   const navigate = useNavigate();
   useEffect(() => {
     const listener = CapacitorApp.addListener('appUrlOpen', data => {
-      console.log('App opened with URL:', data);
       const url = new URL(data.url);
       const path = url.pathname;
-      if (path && path !== '/') {
+      // Sanitize against open redirect vulnerabilities and javascript injections
+      // Ensure path starts with / and is not an external URL (//)
+      if (path && path.startsWith('/') && !path.startsWith('//')) {
         navigate(path);
       }
     });
@@ -240,6 +244,7 @@ const AppRoutes = () => (
     {/* /b/:inviteCode — shareable invite link. Public so unauthenticated users can see the "Join" screen. */}
     <Route path="/b/:inviteCode" element={<PublicInvite />} />
     <Route path="/c/:shareCode" element={<PublicCommercialCampaign />} />
+    <Route path="/tv/:shareCode" element={<ArenaTV />} />
     <Route path="/grupos/entrar/:inviteCode" element={<PublicGroupInvite />} />
     {/* Legal / compliance pages — intentionally PUBLIC (Play Store / App Store requirement).
         /excluir-conta must be public so unauthenticated users can still request deletion. */}
@@ -267,7 +272,7 @@ const AppRoutes = () => (
     <Route path="/boloes/creator" element={<ProtectedRoute><Layout><CreatorPro /></Layout></ProtectedRoute>} />
     <Route path="/boloes/rapido" element={<ProtectedRoute><Layout><BolaoRapido /></Layout></ProtectedRoute>} />
     <Route path="/boloes/criar" element={<ProtectedRoute><Layout><CriarBolao /></Layout></ProtectedRoute>} />
-    <Route path="/boloes/:id" element={<ProtectedRoute><Layout><BolaoDetail /></Layout></ProtectedRoute>} />
+    <Route path="/boloes/:id" element={<ProtectedRoute><Layout><Suspense fallback={<BolaoDetailSkeleton />}><BolaoDetail /></Suspense></Layout></ProtectedRoute>} />
     {/* Business routes consolidated under /negocios */}
     <Route path="/negocios" element={<ProtectedRoute><Layout><BaresLanding /></Layout></ProtectedRoute>} />
     <Route path="/negocios/criar" element={<ProtectedRoute><Layout><CriarCampanhaBar /></Layout></ProtectedRoute>} />
@@ -313,6 +318,7 @@ const App = () => (
               <LanguageRuntime />
               <FieldBackground />
               <AppSplash />
+              <GlobalAchievementTracker />
               <BrowserRouter>
                 <DeepLinkListener />
                 <PushNotificationListener />

@@ -161,7 +161,7 @@ export function getOpportunities(input: OpportunitiesInput): Opportunity[] {
       title: "Encontre uma disputa para entrar",
       description: "Explore bolões públicos, convites e campanhas antes de criar uma nova mesa.",
       ctaLabel: "Abrir Descobrir",
-      ctaRoute: "/descobrir/boloes",
+      ctaRoute: "/descobrir",
     });
   }
 

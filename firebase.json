@@ -27,6 +27,18 @@
     ],
     "rewrites": [
       {
+        "source": "/sitemap.xml",
+        "function": "sitemapProxy"
+      },
+      {
+        "source": "/boloes/entrar/**",
+        "function": "socialProxy"
+      },
+      {
+        "source": "/grupos/entrar/**",
+        "function": "socialProxy"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }

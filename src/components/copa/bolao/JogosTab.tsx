@@ -144,7 +144,7 @@ export function JogosTab({
     rules?: unknown;
     markets?: BolaoMarket[];
     predictions?: BolaoPrediction[];
-    bolao?: Pick<BolaoData, "scoring_mode" | "allowed_match_ids"> | null;
+    bolao?: Pick<BolaoData, "scoring_mode" | "allowed_match_ids" | "championship_id"> | null;
 }) {
     const { t, i18n } = useTranslation('bolao');
     const { user } = useAuth();
@@ -231,7 +231,13 @@ export function JogosTab({
         // Load Matches
         const loadMatches = async () => {
             const matchesRef = collection(db, "matches");
-            const q = query(matchesRef, orderBy("match_date", "asc"));
+            let q = query(matchesRef, orderBy("match_date", "asc"));
+            
+            // Se o bolão for de um campeonato específico e não tiver lista restrita de IDs, filtrar no Firestore
+            if (bolao?.championship_id) {
+                q = query(matchesRef, where("championship_id", "==", bolao.championship_id), orderBy("match_date", "asc"));
+            }
+            
             const snapshot = await getDocs(q);
             const mData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as JogosTabMatch));
             setMatches(mData);
@@ -287,7 +293,7 @@ export function JogosTab({
              unsubscribe();
              unsubscribeAll();
         };
-    }, [bolaoId, bolao?.scoring_mode, t, toast, user]);
+    }, [bolaoId, bolao?.scoring_mode, bolao?.championship_id, t, toast, user]);
 
     const getCurrentPalpite = useMemo(() => {
         return (matchId: string): EditablePalpite => {
@@ -545,11 +551,37 @@ export function JogosTab({
         }
     };
 
-    const uniqueTeams = Array.from(new Set(matches.flatMap(m => [m.home_team_code, m.away_team_code]))).filter(Boolean).sort();
-    const uniqueStages = Array.from(new Set(matches.map(m => m.stage))).filter(Boolean);
+    const allowedMatches = useMemo(() => {
+        // Identificamos quais jogos possuem mercados ou palpites salvos (para suporte a boloes legado ou customizados)
+        const matchesWithMarkets = new Set(matchMarkets.map(m => m.match_id).filter(Boolean) as string[]);
+        const matchesWithSavedPalpites = new Set(Object.keys(savedPalpites));
 
-    const filteredMatches = matches.filter(m => {
-        if (bolao?.allowed_match_ids && bolao.allowed_match_ids !== "all" && !bolao.allowed_match_ids.includes(m.id)) return false;
+        if (!bolao?.allowed_match_ids || bolao.allowed_match_ids === "all") {
+            // Se for "all", filtramos apenas para mostrar jogos que tenham mercados OU que o usuário já palpitou
+            // Isso evita mostrar o calendário inteiro de um campeonato se o bolão só usa uma parte.
+            return matches.filter(m => matchesWithMarkets.has(m.id) || matchesWithSavedPalpites.has(m.id));
+        }
+
+        // Se houver uma lista restrita, respeitamos ela rigorosamente
+        return matches.filter(m => bolao.allowed_match_ids.includes(m.id));
+    }, [matches, bolao?.allowed_match_ids, matchMarkets, savedPalpites]);
+
+    const uniqueTeams = useMemo(() => 
+        Array.from(new Set(allowedMatches.flatMap(m => [m.home_team_code, m.away_team_code])))
+            .filter(Boolean)
+            .sort(),
+        [allowedMatches]
+    );
+
+    const uniqueStages = useMemo(() => {
+        const stages = allowedMatches.map(m => m.stage);
+        const dates = allowedMatches.map(m => new Date(m.match_date).toLocaleDateString(currentLanguage));
+        return Array.from(new Set([...stages, ...dates]))
+            .filter(Boolean)
+            .sort();
+    }, [allowedMatches, currentLanguage]);
+
+    const filteredMatches = allowedMatches.filter(m => {
         if (filterTeam !== "all" && m.home_team_code !== filterTeam && m.away_team_code !== filterTeam) return false;
         if (filterStage !== "all" && m.stage !== filterStage && new Date(m.match_date).toLocaleDateString(currentLanguage) !== filterStage) return false;
         return true;

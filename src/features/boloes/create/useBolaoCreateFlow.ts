@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { getDefaultMarketIdsForFormat } from "@/services/boloes/bolao-format.service";
 import type { BolaoFormatSlug, MarketTemplateSlug, ScoringRules } from "@/types/bolao";
 
-export type CreateStep = "quick" | "catalog" | "context" | "type" | "admission" | "review";
+export type CreateStep = "mode" | "quick" | "catalog" | "context" | "type" | "admission" | "review";
 export type PoolContextMode = "standalone" | "existing_group" | "new_group";
 export type GroupBindingMode = "none" | "linked_discovery" | "group_gated";
 export type FinanceMode = "free" | "paid_external";
@@ -84,7 +84,7 @@ export function mapWizardStateToBolaoStructure(state: WizardState) {
 
 export function useBolaoCreateFlow(initialGrupoId: string | null) {
   const initialType = poolTypeConfig.rapid;
-  const [step, setStep] = useState<CreateStep>("quick");
+  const [step, setStep] = useState<CreateStep>("mode");
   const [draftId, setDraftId] = useState<string | null>(null);
   const [draftConfigVersion, setDraftConfigVersion] = useState<number | null>(null);
   const [state, setState] = useState<WizardState>({
@@ -117,6 +117,8 @@ export function useBolaoCreateFlow(initialGrupoId: string | null) {
   });
 
   const canAdvance = useMemo(() => {
+    if (step === "mode") return false; // mode step uses its own navigation
+
     if (step === "quick") {
       if (state.audienceMode === "business") {
         return true;

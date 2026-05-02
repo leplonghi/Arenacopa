@@ -10,7 +10,7 @@ import {
   Users,
   Zap,
 } from "lucide-react";
-import { collection, getDocs, orderBy, query } from "firebase/firestore";
+import { collection, getDocs, limit, orderBy, query, where } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { cn } from "@/lib/utils";
 import { ArenaMetric, ArenaPanel, ArenaSectionHeader } from "@/components/arena/ArenaPrimitives";
@@ -22,6 +22,7 @@ import { useDashboardMatches } from "@/hooks/useDashboardMatches";
 import { getPublicProfilesByIds } from "@/services/profile/profile.service";
 import { listUserBoloes, type BolaoListingCard } from "@/services/boloes/bolao-listing.service";
 import { getArenaLevel } from "@/lib/profile-level";
+import { useFriendIds } from "@/hooks/useFriendIds";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -196,14 +197,69 @@ export default function Descobrir() {
   // ── Global ranking top 5 + my position ───────────────────────────────────
   const [rankRows, setRankRows] = useState<UserStanding[]>([]);
   const [rankLoading, setRankLoading] = useState(true);
+  const [rankFilter, setRankFilter] = useState<"all" | "friends">("all");
+  const { friendIds } = useFriendIds();
 
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
+      setRankLoading(true);
       try {
-        const snap = await getDocs(
-          query(collection(db, "bolao_rankings"), orderBy("total_points", "desc")),
-        );
+        let snap;
+        if (rankFilter === "all") {
+          snap = await getDocs(
+            query(collection(db, "bolao_rankings"), orderBy("total_points", "desc"), limit(100)),
+          );
+        } else {
+          // If filtering by friends, we need to fetch specifically for those IDs
+          // and then aggregate points (since bolao_rankings is per bolao)
+          const fids = Array.from(friendIds);
+          if (fids.length === 0) {
+            if (!cancelled) {
+              setRankRows([]);
+              setRankLoading(false);
+            }
+            return;
+          }
+          
+          // Chunked query for 'in' operator (limit 30)
+          const allDocs: any[] = [];
+          for (let i = 0; i < fids.length; i += 30) {
+            const chunk = fids.slice(i, i + 30);
+            const chunkSnap = await getDocs(
+              query(collection(db, "bolao_rankings"), where("user_id", "in", chunk))
+            );
+            allDocs.push(...chunkSnap.docs);
+          }
+          
+          const totals = new Map<string, number>();
+          allDocs.forEach((d) => {
+            const uid = d.data().user_id as string;
+            totals.set(uid, (totals.get(uid) ?? 0) + ((d.data().total_points as number) ?? 0));
+          });
+          
+          const sorted = [...totals.entries()]
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 10);
+            
+          const profileMap = await getPublicProfilesByIds(sorted.map(([id]) => id));
+          if (!cancelled) {
+            setRankRows(
+              sorted.map(([userId, points]) => {
+                const p = profileMap.get(userId);
+                return {
+                  userId,
+                  name: p?.name ?? p?.nickname ?? "Jogador",
+                  avatar: p?.avatar_url ?? "",
+                  points,
+                };
+              }),
+            );
+          }
+          setRankLoading(false);
+          return;
+        }
+
         const totals = new Map<string, number>();
         snap.docs.forEach((d) => {
           const uid = d.data().user_id as string;
@@ -230,7 +286,8 @@ export default function Descobrir() {
             }),
           );
         }
-      } catch {
+      } catch (err) {
+        console.error("Error loading ranking:", err);
         if (!cancelled) setRankRows([]);
       } finally {
         if (!cancelled) setRankLoading(false);
@@ -240,7 +297,7 @@ export default function Descobrir() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [rankFilter, friendIds.size]);
 
   const myRankPosition = useMemo(() => {
     if (!user?.id) return null;
@@ -346,6 +403,31 @@ export default function Descobrir() {
                 </Link>
               }
             />
+
+            {/* Filter Toggle */}
+            <div className="mt-6 flex justify-center">
+              <div className="inline-flex items-center p-1 rounded-2xl bg-white/5 border border-white/10">
+                <button
+                  onClick={() => setRankFilter("all")}
+                  className={cn(
+                    "px-5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all",
+                    rankFilter === "all" ? "bg-white text-black shadow-lg" : "text-zinc-500 hover:text-zinc-300"
+                  )}
+                >
+                  {t('rankings.filter_all', { defaultValue: "Geral" })}
+                </button>
+                <button
+                  onClick={() => setRankFilter("friends")}
+                  className={cn(
+                    "px-5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2",
+                    rankFilter === "friends" ? "bg-white text-black shadow-lg" : "text-zinc-500 hover:text-zinc-300"
+                  )}
+                >
+                  <Users className="w-3 h-3" />
+                  {t('rankings.filter_friends', { defaultValue: "Turma" })}
+                </button>
+              </div>
+            </div>
 
             {/* My position callout */}
             {myRankPosition && (

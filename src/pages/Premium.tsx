@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ChevronLeft, CheckCircle2, Crown, Loader2, ShieldCheck, Trophy, Map, Dices, Users2, Zap, Star } from "lucide-react";
+import { ChevronLeft, CheckCircle2, Crown, Loader2, ShieldCheck, Map, Users2, Zap, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useMonetization } from "@/contexts/MonetizationContext";
 import { motion } from "framer-motion";
@@ -20,36 +20,7 @@ export default function Premium() {
   const canStartPremiumCheckout =
     monetizationEnv.enablePremiumSimulation || monetizationEnv.premiumCheckoutEnabled;
   const supportMailto = getPremiumSupportMailto();
-  const priceLabel = monetizationEnv.premiumPriceLabel || "R$ 19,90";
-  const pillars = [
-    {
-      icon: Trophy,
-      color: "text-amber-400",
-      bg: "bg-amber-500/15",
-      border: "border-amber-500/20",
-      title: t("pillars.info.title"),
-      subtitle: t("pillars.info.subtitle"),
-      perks: t("pillars.info.perks", { returnObjects: true }) as string[],
-    },
-    {
-      icon: Map,
-      color: "text-sky-400",
-      bg: "bg-sky-500/15",
-      border: "border-sky-500/20",
-      title: t("pillars.guide.title"),
-      subtitle: t("pillars.guide.subtitle"),
-      perks: t("pillars.guide.perks", { returnObjects: true }) as string[],
-    },
-    {
-      icon: Dices,
-      color: "text-primary",
-      bg: "bg-primary/15",
-      border: "border-primary/20",
-      title: t("pillars.pool.title"),
-      subtitle: t("pillars.pool.subtitle"),
-      perks: t("pillars.pool.perks", { returnObjects: true }) as string[],
-    },
-  ];
+
 
   useEffect(() => {
     const checkoutState = searchParams.get("checkout");
@@ -137,97 +108,138 @@ export default function Premium() {
           </motion.div>
         ) : (
           <>
-            {/* 3-pillar cards */}
-            <div className="grid grid-cols-3 gap-3 mb-8">
-              {pillars.map((pillar, idx) => (
-                <motion.div
-                  key={pillar.title}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.08 }}
-                  className={`rounded-2xl border ${pillar.border} ${pillar.bg} p-3 flex flex-col gap-2`}
-                >
-                  <div className={`w-9 h-9 rounded-xl bg-black/20 flex items-center justify-center`}>
-                    <pillar.icon className={`w-5 h-5 ${pillar.color}`} />
+            {/* Planos B2B */}
+            <div className="space-y-4 mb-8">
+              
+              {/* Plano Bar / Restaurante */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="rounded-2xl border border-primary/20 bg-primary/5 p-5 relative overflow-hidden"
+              >
+                <div className="absolute top-0 right-0 bg-primary/20 px-3 py-1 rounded-bl-xl text-[10px] font-bold text-primary uppercase">Mais Popular</div>
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
+                    <Map className="w-5 h-5 text-primary" />
                   </div>
                   <div>
-                    <p className="font-black text-sm leading-none">{pillar.title}</p>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">{pillar.subtitle}</p>
+                    <h3 className="font-black text-lg">Bar / Restaurante</h3>
+                    <p className="text-xs text-muted-foreground">Atraia clientes em dias de jogo</p>
                   </div>
-                  <ul className="space-y-1 mt-1">
-                    {pillar.perks.map((perk) => (
-                      <li key={perk} className="flex items-center gap-1">
-                        <CheckCircle2 className={`w-3 h-3 shrink-0 ${pillar.color}`} />
-                        <span className="text-[10px] text-muted-foreground leading-tight">{perk}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </motion.div>
-              ))}
+                </div>
+                
+                <div className="flex items-end gap-1 mb-4">
+                  <span className="text-3xl font-black text-white">R$ 89,90</span>
+                  <span className="text-[10px] text-muted-foreground mb-1.5 uppercase">/ Copa Toda</span>
+                </div>
+
+                <ul className="space-y-2 mb-5">
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="w-4 h-4 shrink-0 text-primary mt-0.5" />
+                    <span className="text-xs text-muted-foreground"><strong>QR Code & Convite Premium:</strong> Cartaz digital lindo para impressão e WhatsApp.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="w-4 h-4 shrink-0 text-primary mt-0.5" />
+                    <span className="text-xs text-muted-foreground"><strong>Bolão Patrocinado:</strong> Sua marca em destaque no app.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="w-4 h-4 shrink-0 text-primary mt-0.5" />
+                    <span className="text-xs text-muted-foreground">Aba extra para link do cardápio ou promoções.</span>
+                  </li>
+                </ul>
+
+                <Button
+                  onClick={async () => {
+                    if (window.plausible) window.plausible("Copa Pass Click", { props: { plan: 'bar' } });
+                    if (!canStartPremiumCheckout) {
+                      window.location.href = supportMailto;
+                      return;
+                    }
+                    const started = await purchasePremium();
+                    if (!started) setFeedback(t("feedback.checkout_error"));
+                  }}
+                  disabled={isLoading}
+                  className="w-full bg-primary text-black font-bold h-12 shadow-[0_0_20px_rgba(34,197,94,0.2)] hover:scale-[1.02] transition-transform"
+                >
+                  {isLoading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "Ativar Modo Bar"}
+                </Button>
+              </motion.div>
+
+              {/* Plano Empresa / RH */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="rounded-2xl border border-white/10 bg-white/5 p-5"
+              >
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center">
+                    <Users2 className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="font-black text-lg">Empresa / RH</h3>
+                    <p className="text-xs text-muted-foreground">Engajamento real para suas equipes</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-end gap-1 mb-4">
+                  <span className="text-3xl font-black text-white">R$ 149,90</span>
+                  <span className="text-[10px] text-muted-foreground mb-1.5 uppercase">/ Copa Toda</span>
+                </div>
+
+                <ul className="space-y-2 mb-5">
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="w-4 h-4 shrink-0 text-white/70 mt-0.5" />
+                    <span className="text-xs text-muted-foreground"><strong>Múltiplos Bolões:</strong> Até 5 bolões simultâneos por setor.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="w-4 h-4 shrink-0 text-white/70 mt-0.5" />
+                    <span className="text-xs text-muted-foreground"><strong>White-label:</strong> Logo da empresa no topo do bolão.</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="w-4 h-4 shrink-0 text-white/70 mt-0.5" />
+                    <span className="text-xs text-muted-foreground">Dashboard de engajamento em PDF para premiações.</span>
+                  </li>
+                </ul>
+
+                <Button
+                  onClick={async () => {
+                    if (window.plausible) window.plausible("Copa Pass Click", { props: { plan: 'rh' } });
+                    if (!canStartPremiumCheckout) {
+                      window.location.href = supportMailto;
+                      return;
+                    }
+                    const started = await purchasePremium();
+                    if (!started) setFeedback(t("feedback.checkout_error"));
+                  }}
+                  disabled={isLoading}
+                  variant="outline"
+                  className="w-full h-12 border-white/20 bg-white/5 text-white hover:bg-white/10"
+                >
+                  {isLoading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : "Ativar Modo RH"}
+                </Button>
+              </motion.div>
+
+              {/* Plano Enterprise */}
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="rounded-2xl border border-white/5 bg-transparent p-5 text-center"
+              >
+                <h3 className="font-bold text-sm mb-1">Enterprise / Redes</h3>
+                <p className="text-xs text-muted-foreground mb-3">Participantes e bolões ilimitados. Multimarcas e franquias.</p>
+                <a href={supportMailto} className="text-xs font-bold text-primary hover:underline">Falar com vendas →</a>
+              </motion.div>
+
             </div>
 
             {/* Social proof strip */}
-            <div className="flex items-center justify-center gap-4 mb-8 text-xs text-muted-foreground">
-              <span className="flex items-center gap-1"><Users2 className="w-3.5 h-3.5 text-primary" /> {t("social_proof.community")}</span>
+            <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground pb-4">
+              <span className="flex items-center gap-1"><ShieldCheck className="w-3.5 h-3.5 text-amber-400" /> Pagamento Seguro</span>
               <span className="w-1 h-1 rounded-full bg-white/20" />
-              <span className="flex items-center gap-1"><ShieldCheck className="w-3.5 h-3.5 text-amber-400" /> {t("social_proof.secure_payment")}</span>
-              <span className="w-1 h-1 rounded-full bg-white/20" />
-              <span className="flex items-center gap-1"><Star className="w-3.5 h-3.5 text-violet-400" /> {t("social_proof.lifetime")}</span>
+              <span className="flex items-center gap-1"><Star className="w-3.5 h-3.5 text-violet-400" /> Acesso vitalício à Copa</span>
             </div>
-
-            {/* Price + CTA */}
-            <div className="glass-card p-5 border-primary/20 mb-4">
-              <div className="flex items-end justify-center gap-1 mb-1">
-                <span className="text-4xl font-black text-primary">
-                  {priceLabel}
-                </span>
-                <span className="text-sm text-muted-foreground mb-1.5">{t("price.suffix")}</span>
-              </div>
-              <p className="text-center text-[11px] text-muted-foreground mb-4">{t("price.note")}</p>
-
-              <Button
-                onClick={async () => {
-                  if (window.plausible) window.plausible("Copa Pass Click");
-                  if (!canStartPremiumCheckout) {
-                    window.location.href = supportMailto;
-                    return;
-                  }
-
-                  const startedCheckout = await purchasePremium();
-                  if (!startedCheckout) {
-                    setFeedback(t("feedback.checkout_error"));
-                  }
-                }}
-                disabled={isLoading}
-                className="w-full h-14 bg-gradient-to-r from-primary to-[hsl(var(--copa-gold))] text-black font-black uppercase text-sm rounded-xl shadow-[0_0_30px_rgba(34,197,94,0.35)] hover:scale-[1.02] transition-transform"
-              >
-                {isLoading ? (
-                  <Loader2 className="w-5 h-5 animate-spin mx-auto" />
-                ) : canStartPremiumCheckout ? (
-                  `${t("cta.buy")} — ${priceLabel}`
-                ) : (
-                  t("cta.notify")
-                )}
-              </Button>
-
-              {!canStartPremiumCheckout && (
-                <Button
-                  asChild
-                  variant="outline"
-                  className="mt-3 w-full h-12 border-white/15 bg-white/[0.03] text-white hover:bg-white/[0.08]"
-                >
-                  <a href={supportMailto}>{t("cta.support")}</a>
-                </Button>
-              )}
-            </div>
-
-            <p className="text-center text-[10px] text-muted-foreground">
-              {canStartPremiumCheckout
-                ? t("status_copy.checkout_ready", {
-                    status: subscriptionStatus === "pending" ? t("status_copy.pending") : t("status_copy.ready"),
-                  })
-                : t("status_copy.checkout_preparing")}
-            </p>
           </>
         )}
       </div>

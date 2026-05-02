@@ -61,6 +61,24 @@
     --surface-fill-soft: linear-gradient(160deg, rgba(9, 43, 30, 0.72) 0%, rgba(3, 17, 12, 0.9) 100%);
     --arena-neon: 103 83% 54%;
     --arena-orange: 29 100% 50%;
+
+    /* Typography Tokens */
+    --text-arena-xs: 0.625rem;  /* 10px */
+    --text-arena-sm: 0.75rem;   /* 12px */
+    --text-arena-base: 0.875rem; /* 14px */
+    --text-arena-md: 1rem;      /* 16px */
+    --text-arena-lg: 1.125rem;  /* 18px */
+    --text-arena-xl: 1.25rem;   /* 20px */
+    --text-arena-2xl: 1.5rem;   /* 24px */
+    --text-arena-3xl: 1.875rem; /* 30px */
+
+    /* Border Radius Tokens */
+    --radius-arena-sm: 0.5rem;
+    --radius-arena-md: 0.75rem;
+    --radius-arena-lg: 1rem;
+    --radius-arena-xl: 1.25rem;
+    --radius-arena-2xl: 1.5rem;
+    --radius-arena-3xl: 2rem;
   }
 }
 
@@ -119,7 +137,7 @@
 @layer utilities {
   .surface-card {
     background: var(--surface-fill);
-    @apply rounded-[24px] border backdrop-blur-xl;
+    @apply rounded-3xl border backdrop-blur-xl;
     border-color: var(--surface-border);
     box-shadow:
       0 20px 50px -20px rgba(0, 0, 0, 0.6),
@@ -129,7 +147,7 @@
 
   .surface-card-soft {
     background: var(--surface-fill-soft);
-    @apply rounded-[24px] border backdrop-blur-md;
+    @apply rounded-3xl border backdrop-blur-md;
     border-color: rgba(255, 255, 255, 0.06);
     box-shadow:
       0 12px 32px -16px rgba(0, 0, 0, 0.4),
@@ -138,7 +156,7 @@
 
   .surface-card-strong {
     background: var(--surface-fill-strong);
-    @apply rounded-[32px] border backdrop-blur-2xl;
+    @apply rounded-[2rem] border backdrop-blur-2xl;
     border-color: var(--surface-border-strong);
     box-shadow:
       0 28px 60px -22px rgba(0, 0, 0, 0.72),
@@ -147,7 +165,7 @@
   }
 
   .glass-card {
-    @apply rounded-[24px] border backdrop-blur-xl transition-all duration-300;
+    @apply rounded-3xl border backdrop-blur-xl transition-all duration-300;
     background: rgba(0, 0, 0, 0.25);
     border-color: rgba(255, 255, 255, 0.06);
     box-shadow: 
@@ -156,7 +174,7 @@
   }
 
   .glass-card-strong {
-    @apply rounded-[32px] border backdrop-blur-2xl transition-all duration-300;
+    @apply rounded-[2rem] border backdrop-blur-2xl transition-all duration-300;
     background: rgba(0, 0, 0, 0.45);
     border-color: rgba(255, 255, 255, 0.1);
     box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.45);
@@ -189,7 +207,7 @@
 
   .surface-dialog {
     background: var(--surface-fill-strong);
-    @apply border backdrop-blur-2xl text-white rounded-[32px];
+    @apply border backdrop-blur-2xl text-white rounded-[2rem];
     border-color: var(--surface-border-strong);
     box-shadow:
       0 28px 80px -26px rgba(0, 0, 0, 0.78),
@@ -199,7 +217,7 @@
   /* Premium card variation for distinct items like featured matches */
   .glass-card-premium {
     background: linear-gradient(135deg, rgba(35, 70, 52, 0.7) 0%, rgba(8, 20, 14, 0.85) 100%);
-    @apply backdrop-blur-2xl border border-copa-gold/25 rounded-[32px] transition-all duration-300;
+    @apply backdrop-blur-2xl border border-copa-gold/25 rounded-[2rem] transition-all duration-300;
     box-shadow:
       0 12px 48px -8px rgba(0, 0, 0, 0.6),
       0 4px 16px -2px rgba(0, 0, 0, 0.3),
@@ -250,7 +268,19 @@
   }
 
   .arena-kicker {
-    @apply text-sm font-medium tracking-[0.04em] text-zinc-400;
+    @apply text-[10px] font-black uppercase tracking-[0.18em] text-zinc-400;
+  }
+
+  .arena-title-xl {
+    @apply font-display text-2xl font-black uppercase leading-[0.95] tracking-[0.02em] text-white sm:text-3xl;
+  }
+
+  .arena-title-lg {
+    @apply font-display text-xl font-black uppercase leading-[0.95] tracking-[0.02em] text-white sm:text-2xl;
+  }
+
+  .arena-title-md {
+    @apply font-display text-lg font-black uppercase leading-[0.95] tracking-[0.02em] text-white;
   }
 
   .arena-title {

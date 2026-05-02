@@ -1,4 +1,4 @@
-import { Copy, Link2, MessageCircle, Share2 } from "lucide-react";
+import { Copy, Image as ImageIcon, Link2, MessageCircle, Share2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ArenaPanel } from "@/components/arena/ArenaPrimitives";
 
@@ -8,6 +8,7 @@ type BolaoSharePanelProps = {
   inviteUrl: string;
   shareText: string;
   onNativeShare: () => void | Promise<void>;
+  onGenerateVipCard?: () => void;
 };
 
 export function BolaoSharePanel({
@@ -107,8 +108,17 @@ export function BolaoSharePanel({
           <div>
             <p className="font-bold text-white">Materiais de divulgação</p>
             <p className="mt-1 text-sm leading-6 text-zinc-400">
-              O botão Compartilhar no topo continua disponível. QR, card e cartaz seguem no fluxo existente de compartilhamento.
+              Crie cartões personalizados e imagens exclusivas para aumentar as adesões.
             </p>
+            {onGenerateVipCard && (
+              <button
+                onClick={onGenerateVipCard}
+                className="mt-4 flex items-center gap-2 rounded-xl bg-copa-gold px-4 py-2 text-xs font-black uppercase tracking-widest text-black shadow-lg shadow-copa-gold/20 transition hover:scale-105 active:scale-95"
+              >
+                <ImageIcon className="h-4 w-4" />
+                Gerar Cartão VIP
+              </button>
+            )}
           </div>
         </div>
       </ArenaPanel>

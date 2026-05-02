@@ -5,10 +5,12 @@ import { collection, doc, getDoc, getDocs, query, where } from "firebase/firesto
 import { db } from "@/integrations/firebase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
+import { useTranslation } from "react-i18next";
 import { getSiteUrl } from "@/utils/site-url";
 import { EmptyState } from "@/components/EmptyState";
 import { getPublicProfilesByIds } from "@/services/profile/profile.service";
-import { FeaturedBolaoCard } from "@/features/groups/FeaturedBolaoCard";
+import { FeaturedBolaoCard } from "@/components/boloes/FeaturedBolaoCard";
+import { CommunityFeed } from "@/features/social/CommunityFeed";
 import { AdmissionInbox } from "@/features/social/AdmissionInbox";
 import {
   approveGroupJoin,
@@ -61,6 +63,7 @@ export default function GrupoDetail() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { toast } = useToast();
+  const { t } = useTranslation(['common']);
   const [grupo, setGrupo] = useState<GroupData | null>(null);
   const [boloes, setBoloes] = useState<BolaoRow[]>([]);
   const [members, setMembers] = useState<MemberRow[]>([]);
@@ -153,8 +156,8 @@ export default function GrupoDetail() {
     } catch (error) {
       console.error(error);
       toast({
-        title: "Não foi possível carregar a comunidade",
-        description: "Tente novamente em alguns instantes.",
+        title: t('common:groups.load_error'),
+        description: t('common:groups.load_error_desc'),
         variant: "destructive",
       });
     } finally {
@@ -216,11 +219,11 @@ export default function GrupoDetail() {
                   latency_minutes: latencyMinutes,
                 });
               }
-              toast({ title: "Solicitação aprovada" });
+              toast({ title: t('common:groups.request_approved') });
               void loadData();
             } catch {
               toast({
-                title: "Não foi possível aprovar",
+                title: t('common:groups.request_approve_error'),
                 variant: "destructive",
               });
             }
@@ -234,11 +237,11 @@ export default function GrupoDetail() {
                   request_id: request.id,
                 },
               });
-              toast({ title: "Solicitação recusada" });
+              toast({ title: t('common:groups.request_rejected') });
               void loadData();
             } catch {
               toast({
-                title: "Não foi possível recusar",
+                title: t('common:groups.request_reject_error'),
                 variant: "destructive",
               });
             }
@@ -258,7 +261,7 @@ export default function GrupoDetail() {
     }
 
     await navigator.clipboard.writeText(url);
-    toast({ title: "Link copiado" });
+    toast({ title: t('common:actions.link_copied') });
   };
 
   const handleFeature = async (bolaoId: string | null) => {
@@ -273,11 +276,11 @@ export default function GrupoDetail() {
           bolao_id: bolaoId,
         },
       });
-      toast({ title: "Bolão em destaque atualizado" });
+      toast({ title: t('common:groups.featured_updated') });
       void loadData();
     } catch {
       toast({
-        title: "Não foi possível atualizar o destaque",
+        title: t('common:groups.feature_update_error'),
         variant: "destructive",
       });
     }
@@ -294,12 +297,12 @@ export default function GrupoDetail() {
           group_id: grupoId,
         },
       });
-      toast({ title: "Você saiu da comunidade" });
-      navigate("/comunidades");
+      toast({ title: t('common:groups.left_success') });
+      navigate("/grupos");
     } catch {
       toast({
-        title: "Não foi possível sair",
-        description: "Verifique se você não é o criador da comunidade.",
+        title: t('common:groups.left_error'),
+        description: t('common:groups.left_error_desc'),
         variant: "destructive",
       });
     }
@@ -318,11 +321,11 @@ export default function GrupoDetail() {
           reason_code: "group_admin_removed_member",
         },
       });
-      toast({ title: "Membro removido" });
+      toast({ title: t('common:groups.member_removed') });
       void loadData();
     } catch {
       toast({
-        title: "Não foi possível remover",
+        title: t('common:groups.member_remove_error'),
         variant: "destructive",
       });
     }
@@ -333,7 +336,7 @@ export default function GrupoDetail() {
   }
 
   if (!grupo) {
-    return <EmptyState icon="👥" title="Comunidade não encontrada" description="Verifique o link ou volte para a lista." />;
+    return <EmptyState icon="👥" title={t('common:groups.not_found_title')} description={t('common:groups.not_found_desc')} />;
   }
 
   return (
@@ -390,14 +393,7 @@ export default function GrupoDetail() {
 
       <div className="mt-6 grid gap-6">
         {activeTab === 'feed' && (
-          <div className="rounded-[32px] border border-white/10 bg-white/5 p-8 text-center flex flex-col items-center justify-center">
-             <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-primary/10 text-primary mb-4">
-                <MessageCircle className="h-10 w-10" />
-             </div>
-             <h3 className="font-display text-[1.8rem] font-semibold text-white">Resenha da Comunidade</h3>
-             <p className="mt-2 text-sm text-zinc-400 max-w-sm">Em breve: um espaço dedicado para zoar os amigos, comentar as rodadas e compartilhar palpites diretamente com a sua turma.</p>
-             <button disabled className="mt-6 rounded-2xl bg-white/5 px-6 py-3 text-[11px] font-black uppercase tracking-widest text-white opacity-50 cursor-not-allowed">Mural em desenvolvimento</button>
-          </div>
+          <CommunityFeed groupId={grupoId!} />
         )}
 
         {activeTab === 'boloes' && (

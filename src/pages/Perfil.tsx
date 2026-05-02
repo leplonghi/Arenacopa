@@ -19,8 +19,9 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Flag as FlagIcon } from "lucide-react";
-import { getProfile, updateFavoriteTeam, updateProfile, uploadAvatar } from "@/services/profile/profile.service";
+import { updateFavoriteTeam, updateProfile, uploadAvatar } from "@/services/profile/profile.service";
 import type { ProfileRecord } from "@/services/profile/profile.types";
+import { useCurrentProfile } from "@/hooks/useCurrentProfile";
 import { setStoredFavoriteTeam } from "@/lib/favorite-team";
 import { ArenaMetric, ArenaPanel, ArenaSectionHeader } from "@/components/arena/ArenaPrimitives";
 import { getArenaLevel } from "@/lib/profile-level";
@@ -64,30 +65,22 @@ const Perfil = () => {
 
   const { data: stats } = useProfileStats(user?.id);
 
-  const fetchProfile = useCallback(async () => {
-    if (!user) return;
-    try {
-      const data = await getProfile(user.id);
-      if (data) {
-        setProfile(data);
-        setEditForm({
-          name: data.name || "",
-          nickname: data.nickname || "",
-          bio: data.bio || "",
-          birth_date: data.birth_date || "",
-          gender: data.gender || "",
-          nationality: data.nationality || ""
-        });
-      }
-    } catch (error) {
-      console.error(error);
-    }
-    setLoading(false);
-  }, [user]);
+  const { data: currentProfile, isLoading: profileLoading } = useCurrentProfile();
 
   useEffect(() => {
-    fetchProfile();
-  }, [fetchProfile]);
+    if (currentProfile) {
+      setProfile(currentProfile);
+      setEditForm({
+        name: currentProfile.name || "",
+        nickname: currentProfile.nickname || "",
+        bio: currentProfile.bio || "",
+        birth_date: currentProfile.birth_date || "",
+        gender: currentProfile.gender || "",
+        nationality: currentProfile.nationality || ""
+      });
+      setLoading(false);
+    }
+  }, [currentProfile]);
 
   const handleSignOut = async () => {
     await signOut();
@@ -367,8 +360,8 @@ const Perfil = () => {
 
       <ArenaPanel className="p-5">
         <ArenaSectionHeader
-          eyebrow="Identidade"
-          title="Resumo do perfil"
+          eyebrow={t('identity_title')}
+          title={t('profile_summary_title')}
         />
         <div className="mt-4 grid gap-3 md:grid-cols-3">
           <ArenaMetric label={t('nickname')} value={profile?.nickname || "-"} />
@@ -389,7 +382,7 @@ const Perfil = () => {
         <ArenaSectionHeader
           eyebrow={t('performance_title')}
           title={t('achievements_title')}
-          action={<button className="text-sm font-black uppercase tracking-[0.12em] text-primary">Ver todas</button>}
+          action={<button onClick={() => toast({ title: "Em breve", description: "A lista completa de conquistas estará disponível na próxima atualização." })} className="text-sm font-black uppercase tracking-[0.12em] text-primary">Ver todas</button>}
         />
         <div className="mt-5">
           <AchievementRail items={achievements} />
@@ -398,8 +391,8 @@ const Perfil = () => {
 
       <ArenaPanel className="p-5">
         <ArenaSectionHeader
-          eyebrow="Histórico"
-          title="Seu desempenho acumulado"
+          eyebrow={t('history_title')}
+          title={t('history_subtitle')}
         />
         <div className="mt-5">
           <HistoryStatList items={historyItems} />
@@ -409,7 +402,7 @@ const Perfil = () => {
       <ArenaPanel className="p-5">
         <ArenaSectionHeader
           eyebrow={t('my_team')}
-          title="Time favorito"
+          title={t('favorite_team_title')}
           action={
             <button
               onClick={() => setShowTeamPicker(!showTeamPicker)}
@@ -615,12 +608,13 @@ const Perfil = () => {
       </ArenaPanel>
 
       <ArenaPanel className="p-5">
-        <ArenaSectionHeader eyebrow={t('support_title')} title="Apoie o ArenaCup" />
+        <ArenaSectionHeader eyebrow={t('support_title')} title={t('support_app_title')} />
         <div className="mt-4 space-y-3 rounded-[28px] border border-white/10 bg-white/[0.03] p-4 text-center">
           <p className="text-[12px] leading-6 text-zinc-400">{t('support_desc')}</p>
           <button
             onClick={() => {
-              navigator.clipboard.writeText("suporte@arenacup.com"); // Reemplazar con clave PIX real
+              const emailSupport = t('support_email', { defaultValue: 'suporte@arenacup.com' });
+              navigator.clipboard.writeText(emailSupport); // Copia o email oficial de suporte
               toast({ title: t('support_copied_title'), description: t('support_copied_desc') });
             }}
             className="arena-button-green w-full justify-center"
@@ -631,7 +625,7 @@ const Perfil = () => {
       </ArenaPanel>
 
       <ArenaPanel className="p-5">
-        <ArenaSectionHeader eyebrow={t('help_title')} title="Ajuda e informações" />
+        <ArenaSectionHeader eyebrow={t('help_title')} title={t('help_and_info')} />
         <div className="mt-4 flex flex-col divide-y divide-white/8 rounded-[28px] border border-white/10 bg-white/[0.03]">
           <button onClick={() => navigate('/regras')} className="p-4 text-left text-sm font-bold text-white hover:bg-white/5 transition-colors">{t('help_rules')}</button>
           <button onClick={() => navigate('/termos')} className="p-4 text-left text-sm font-bold text-white hover:bg-white/5 transition-colors">{t('help_terms')}</button>
@@ -647,7 +641,7 @@ const Perfil = () => {
         {t('logout')}
       </button>
 
-      <p className="text-center text-[10px] text-muted-foreground">{t('version')} 2.4.0</p>
+      <p className="text-center text-[10px] text-muted-foreground">{t('version')} {import.meta.env.VITE_APP_VERSION || "2.4.0"}</p>
     </div>
   );
 };

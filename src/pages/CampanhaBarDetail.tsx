@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
-import { Loader2, MessageCircle, Share2, Ticket, WalletCards } from "lucide-react";
+import { Loader2, MessageCircle, Share2, Ticket, WalletCards, MonitorPlay, Image as ImageIcon, Settings2 } from "lucide-react";
 import { ArenaPanel, ArenaSectionHeader } from "@/components/arena/ArenaPrimitives";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -178,6 +178,45 @@ export default function CampanhaBarDetail() {
           </button>
         </ArenaPanel>
       ) : null}
+
+      <div className="mt-5 grid gap-5 lg:grid-cols-[0.9fr,1.1fr]">
+        <ArenaPanel className="p-5">
+          <ArenaSectionHeader eyebrow="Ao Vivo" title="ArenaTV" hint="Exiba o QR Code e o Ranking em tempo real em uma TV ou monitor do bar." />
+          <div className="mt-5">
+            <Link
+              to={`/tv/${campaign.shareCode}`}
+              target="_blank"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-[20px] bg-primary px-5 py-4 text-[12px] font-black uppercase tracking-[0.18em] text-black shadow-[0_0_20px_rgba(34,197,94,0.3)]"
+            >
+              <MonitorPlay className="h-4 w-4" />
+              Abrir ArenaTV (Nova Aba)
+            </Link>
+          </div>
+          <div className="mt-4 break-all rounded-[18px] border border-white/10 bg-white/[0.03] p-3 text-xs text-zinc-300 text-center">
+            {window.location.origin}/tv/{campaign.shareCode}
+          </div>
+        </ArenaPanel>
+
+        <ArenaPanel className="p-5">
+          <ArenaSectionHeader eyebrow="Personalização" title="Configurações (Em Breve)" hint="Atualize o prêmio e o logo do estabelecimento." />
+          <div className="mt-5 grid gap-3">
+            <button
+              disabled
+              className="inline-flex w-full items-center justify-center gap-2 rounded-[18px] border border-white/10 bg-white/[0.04] px-4 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-zinc-500 opacity-70"
+            >
+              <ImageIcon className="h-4 w-4" />
+              Upload de Logo/Banner
+            </button>
+            <button
+              disabled
+              className="inline-flex w-full items-center justify-center gap-2 rounded-[18px] border border-white/10 bg-white/[0.04] px-4 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-zinc-500 opacity-70"
+            >
+              <Settings2 className="h-4 w-4" />
+              Editar Prêmio e Regras
+            </button>
+          </div>
+        </ArenaPanel>
+      </div>
 
       <div className="mt-5 grid gap-5 lg:grid-cols-[0.9fr,1.1fr]">
         <ArenaPanel className="p-5">
