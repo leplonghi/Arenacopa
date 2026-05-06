@@ -50,31 +50,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } satisfies User;
     };
 
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        setSession(firebaseUser); // Using Firebase user as session object
-        const mappedUser = mapUser(firebaseUser);
-        setUser(mappedUser);
-        setIsAppAdmin(isAppAdminEmail(mappedUser?.email));
+    let timeoutId: NodeJS.Timeout;
+    let unsubscribe: () => void = () => {};
 
-        if (mappedUser) {
-          ensureProfile({
-            id: mappedUser.id,
-            email: mappedUser.email,
-            user_metadata: mappedUser.user_metadata,
-          }).catch((error) => {
-            logger.error("Error ensuring profile", { userId: mappedUser.id, error });
-          });
+    try {
+      // Force loading to false if Firebase auth hangs for more than 3 seconds
+      timeoutId = setTimeout(() => {
+        logger.warn("Firebase auth initialization timeout - forcing load state to false");
+        setLoading(false);
+      }, 3000);
+
+      unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+        clearTimeout(timeoutId);
+        if (firebaseUser) {
+          setSession(firebaseUser); // Using Firebase user as session object
+          const mappedUser = mapUser(firebaseUser);
+          setUser(mappedUser);
+          setIsAppAdmin(isAppAdminEmail(mappedUser?.email));
+
+          if (mappedUser) {
+            ensureProfile({
+              id: mappedUser.id,
+              email: mappedUser.email,
+              user_metadata: mappedUser.user_metadata,
+            }).catch((error) => {
+              logger.error("Error ensuring profile", { userId: mappedUser.id, error });
+            });
+          }
+        } else {
+          setSession(null);
+          setUser(null);
+          setIsAppAdmin(false);
         }
-      } else {
-        setSession(null);
-        setUser(null);
-        setIsAppAdmin(false);
-      }
+        setLoading(false);
+      });
+    } catch (error) {
+      logger.error("Error initializing auth listener", { error });
+      clearTimeout(timeoutId);
       setLoading(false);
-    });
+    }
 
-    return () => unsubscribe();
+    return () => {
+      clearTimeout(timeoutId);
+      unsubscribe();
+    };
   }, []);
 
 
