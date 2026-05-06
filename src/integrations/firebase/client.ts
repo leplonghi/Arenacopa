@@ -23,12 +23,15 @@ if (typeof window !== "undefined" && !Capacitor.isNativePlatform()) {
     if (import.meta.env.DEV) {
       (window as any).FIREBASE_APPCHECK_DEBUG_TOKEN = true;
     }
-    // We use a fallback key to not break local development if env var is missing
-    const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY || "missing-site-key";
-    initializeAppCheck(app, {
-      provider: new ReCaptchaEnterpriseProvider(siteKey),
-      isTokenAutoRefreshEnabled: true
-    });
+    const siteKey = import.meta.env.VITE_RECAPTCHA_SITE_KEY;
+    if (siteKey && siteKey !== "missing-site-key") {
+      initializeAppCheck(app, {
+        provider: new ReCaptchaEnterpriseProvider(siteKey),
+        isTokenAutoRefreshEnabled: true
+      });
+    } else {
+      console.warn("App Check initialization skipped: VITE_RECAPTCHA_SITE_KEY is missing.");
+    }
   } catch (err) {
     console.warn("Could not initialize App Check:", err);
   }
