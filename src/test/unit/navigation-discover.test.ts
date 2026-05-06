@@ -11,12 +11,12 @@ describe("discover navigation rollout", () => {
       expect(isFeatureEnabled("discoverEnabled")).toBe(true);
     });
 
-  it("uses Discover as the fourth mobile tab while keeping Groups out of the bottom nav", () => {
+  it("uses Noticias as the fourth mobile tab while keeping Groups out of the bottom nav", () => {
     const mobilePaths = appNavigationItems
       .filter((item) => item.mobile)
       .map((item) => item.path);
 
-    expect(mobilePaths).toEqual(["/", "/campeonatos", "/boloes", "/descobrir", "#menu"]);
+    expect(mobilePaths).toEqual(["/", "/campeonatos", "/boloes", "/noticias", "#menu"]);
     expect(appNavigationItems.find((item) => item.path === "/grupos")?.mobile).not.toBe(true);
   });
 

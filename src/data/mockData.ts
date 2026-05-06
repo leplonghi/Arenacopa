@@ -283,7 +283,6 @@ export const teams: Team[] = [
   },
 ];
 
-<<<<<<< HEAD
 function createFallbackTeam(code: string): Team {
   const normalizedCode = code?.trim().toUpperCase() || "---";
 
@@ -311,9 +310,6 @@ function createFallbackTeam(code: string): Team {
 }
 
 export const getTeam = (code: string) => teams.find(t => t.code === code) ?? createFallbackTeam(code);
-=======
-export const getTeam = (code: string) => teams.find(t => t.code === code) as typeof teams[0];
->>>>>>> origin/claude/analyze-app-layers-K1iaJ
 export const getGroupTeams = (group: string) => teams.filter(t => t.group === group);
 export const groups = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"];
 
