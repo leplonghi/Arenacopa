@@ -11,8 +11,13 @@ import {
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
+<<<<<<< HEAD
 import { motion, AnimatePresence } from "framer-motion";
 import { Trophy, Target, Award, Crown, TrendingUp, Minus, Check, Share2, Users } from "lucide-react";
+=======
+import { motion } from "framer-motion";
+import { Trophy, Target, Award, Crown, Check } from "lucide-react";
+>>>>>>> origin/claude/analyze-app-layers-K1iaJ
 import { staggerContainer, staggerItem } from "../animations";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";

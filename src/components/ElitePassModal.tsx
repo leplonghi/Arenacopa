@@ -13,7 +13,7 @@ import {
 export function ElitePassModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
     const { purchasePremium, isLoading, isPremium } = useMonetization();
     const { toast } = useToast();
-    const { t, i18n } = useTranslation('premium');
+    const [isHovering, setIsHovering] = useState(false);
     const canStartPremiumCheckout = monetizationEnv.enablePremiumSimulation || monetizationEnv.premiumCheckoutEnabled;
     const supportMailto = getPremiumSupportMailto();
     const benefits = t('elite.benefits', { returnObjects: true }) as Array<{ title: string; desc: string }>;
@@ -39,7 +39,7 @@ export function ElitePassModal({ isOpen, onClose }: { isOpen: boolean; onClose: 
                 return;
             }
             onClose();
-        } catch (e) {
+        } catch {
             toast({
                 title: t('elite.transaction_error_title'),
                 description: t('elite.transaction_error_desc'),

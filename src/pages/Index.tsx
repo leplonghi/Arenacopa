@@ -215,9 +215,76 @@ const Index = () => {
 
   const [myBoloes, setMyBoloes] = useState<DashboardBolaoSummary[]>([]);
   const [loading, setLoading] = useState(true);
+<<<<<<< HEAD
+=======
+  const [dashboardRefreshKey] = useState(0);
+>>>>>>> origin/claude/analyze-app-layers-K1iaJ
   const [profile, setProfile] = useState<{ name: string; avatar?: string } | null>(null);
   const [isEliteModalOpen, setIsEliteModalOpen] = useState(false);
   const { isPremium } = useMonetization();
+<<<<<<< HEAD
+=======
+  const [newsTab, setNewsTab] = useState<"copa" | "team">("copa");
+  const [showNewsPrefPanel, setShowNewsPrefPanel] = useState(false);
+
+  // Shared news categories & preferences (synced with /noticias page prefs)
+  const NEWS_CATEGORIES = [
+    { id: "copa",    label: "Copa 2026", emoji: "🏆" },
+    { id: "teams",   label: "Seleções",  emoji: "🌍" },
+    { id: "general", label: "Futebol",   emoji: "⚽" },
+    { id: "matches", label: "Partidas",  emoji: "🎯" },
+    { id: "travel",  label: "Viagem",    emoji: "✈️" },
+    { id: "tickets", label: "Ingressos", emoji: "🎟️" },
+  ];
+  const HOME_PREFS_KEY = "arenacopa_home_news_prefs";
+  const [homeNewsPrefs, setHomeNewsPrefs] = useState<string[]>(() => {
+    try { return JSON.parse(localStorage.getItem(HOME_PREFS_KEY) || '["copa","teams"]'); }
+    catch { return ["copa", "teams"]; }
+  });
+  const toggleNewsPref = (id: string) => {
+    setHomeNewsPrefs(prev => {
+      const next = prev.includes(id) ? prev.filter(c => c !== id) : [...prev, id];
+      localStorage.setItem(HOME_PREFS_KEY, JSON.stringify(next));
+      return next;
+    });
+  };
+
+  // Copa 2026 general news — real-time listener
+  const { news: copaNewsRaw, isLoading: copaNewsLoading } = useRealtimeNews({ limitCount: 8 });
+  // Favourite-team news — real-time listener (separate Firestore query)
+  const { news: teamNewsRaw, isLoading: teamNewsLoading } = useRealtimeNews({
+    limitCount: 8,
+    countryFilter: favoriteTeamCode || null,
+  });
+
+  const newsLoading = newsTab === "copa" ? copaNewsLoading : teamNewsLoading;
+
+  const mapNews = (items: typeof copaNewsRaw) =>
+    items.map((item) => ({
+      id: item.id,
+      title: item.title,
+      category: item.source_name || item.category || "Geral",
+      publishedAt: item.published_at,
+      imageUrl: item.url_to_image || null,
+      url: item.url,
+    }));
+
+  // Copa tab: filter by user prefs (if any), else show all; limit to 4
+  const miniNews = useMemo(() => {
+    const all = mapNews(copaNewsRaw);
+    if (homeNewsPrefs.length === 0) return all.slice(0, 4);
+    const filtered = all.filter(item => homeNewsPrefs.some(p => item.category?.toLowerCase().includes(p)));
+    return (filtered.length > 0 ? filtered : all).slice(0, 4);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [copaNewsRaw, homeNewsPrefs]);
+
+  // "Para você" tab: team-specific news first, then pref-filtered; limit to 4
+  const teamNews = useMemo(() => {
+    const all = mapNews(teamNewsRaw);
+    return all.slice(0, 4);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [teamNewsRaw]);
+>>>>>>> origin/claude/analyze-app-layers-K1iaJ
 
   useEffect(() => {
     if (!user) { setProfile(null); setMyBoloes([]); setLoading(false); return; }

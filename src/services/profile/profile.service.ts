@@ -19,6 +19,7 @@ import type {
   ProfileUpdateInput,
   PublicProfileRecord,
 } from "@/services/profile/profile.types";
+import { mapFirebaseError } from "@/services/errors/AppError";
 
 const MAX_AVATAR_SIZE_BYTES = 5 * 1024 * 1024;
 const ALLOWED_AVATAR_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
@@ -72,78 +73,89 @@ type EnsureProfileUser = {
 };
 
 export async function getProfile(userId: string) {
-  const docRef = doc(db, "profiles", userId);
-  const docSnap = await getDoc(docRef);
-  
-  if (docSnap.exists()) {
-    return docSnap.data() as ProfileRecord;
+  try {
+    const docRef = doc(db, "profiles", userId);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      return docSnap.data() as ProfileRecord;
+    }
+    return null;
+  } catch (error) {
+    throw mapFirebaseError(error, "PROFILE_FETCH_FAILED");
   }
-  return null;
 }
 
 export async function ensureProfile(user: EnsureProfileUser) {
-  const docRef = doc(db, "profiles", user.id);
-  const docSnap = await getDoc(docRef);
-  const resolvedName =
-    user.user_metadata?.full_name ||
-    user.user_metadata?.name ||
-    user.email?.split("@")[0] ||
-    DEFAULT_PROFILE_NAME;
-  const createdAt = new Date().toISOString();
+  try {
+    const docRef = doc(db, "profiles", user.id);
+    const docSnap = await getDoc(docRef);
+    const resolvedName =
+      user.user_metadata?.full_name ||
+      user.user_metadata?.name ||
+      user.email?.split("@")[0] ||
+      DEFAULT_PROFILE_NAME;
+    const createdAt = new Date().toISOString();
 
-  if (!docSnap.exists()) {
-    const payload = {
-      user_id: user.id,
+    if (!docSnap.exists()) {
+      const payload = {
+        user_id: user.id,
+        name: resolvedName,
+        avatar_url: user.user_metadata?.avatar_url || null,
+        created_at: createdAt,
+      };
+      await setDoc(docRef, payload);
+    }
+
+    await syncPublicProfile(user.id, {
       name: resolvedName,
       avatar_url: user.user_metadata?.avatar_url || null,
       created_at: createdAt,
-    };
-    await setDoc(docRef, payload);
+    });
+  } catch (error) {
+    throw mapFirebaseError(error, "PROFILE_ENSURE_FAILED");
   }
-
-  await syncPublicProfile(user.id, {
-    name: resolvedName,
-    avatar_url: user.user_metadata?.avatar_url || null,
-    created_at: createdAt,
-  });
 }
 
 export async function updateProfile(userId: string, updates: ProfileUpdateInput) {
-  const docRef = doc(db, "profiles", userId);
-  const existingProfile = await getDoc(docRef);
-  let nextProfile: ProfileRecord | null = null;
+  try {
+    const docRef = doc(db, "profiles", userId);
+    const existingProfile = await getDoc(docRef);
+    let nextProfile: ProfileRecord | null = null;
 
-  if (!existingProfile.exists()) {
-    const createdProfile = {
-      user_id: userId,
-      name: DEFAULT_PROFILE_NAME,
-      avatar_url: null,
-      created_at: new Date().toISOString(),
-      ...updates,
-    };
-    await setDoc(docRef, createdProfile);
-    nextProfile = createdProfile as ProfileRecord;
-  } else {
-    await updateDoc(docRef, updates as UpdateData<ProfileRecord>);
-    nextProfile = {
-      ...(existingProfile.data() as ProfileRecord),
-      ...updates,
-    };
+    if (!existingProfile.exists()) {
+      const createdProfile = {
+        user_id: userId,
+        name: DEFAULT_PROFILE_NAME,
+        avatar_url: null,
+        created_at: new Date().toISOString(),
+        ...updates,
+      };
+      await setDoc(docRef, createdProfile);
+      nextProfile = createdProfile as ProfileRecord;
+    } else {
+      await updateDoc(docRef, updates as UpdateData<ProfileRecord>);
+      nextProfile = {
+        ...(existingProfile.data() as ProfileRecord),
+        ...updates,
+      };
+    }
+    
+    const updatedSnap = await getDoc(docRef);
+    const updatedProfile = (updatedSnap.data() as ProfileRecord | null) ?? nextProfile;
+
+    if (updatedProfile) {
+      await syncPublicProfile(userId, {
+        name: updatedProfile.name,
+        nickname: updatedProfile.nickname,
+        avatar_url: updatedProfile.avatar_url,
+        created_at: "created_at" in updatedProfile ? String((updatedProfile as Record<string, unknown>).created_at ?? "") : undefined,
+      });
+    }
+
+    return updatedProfile;
+  } catch (error) {
+    throw mapFirebaseError(error, "PROFILE_UPDATE_FAILED");
   }
-  
-  const updatedSnap = await getDoc(docRef);
-  const updatedProfile = (updatedSnap.data() as ProfileRecord | null) ?? nextProfile;
-
-  if (updatedProfile) {
-    await syncPublicProfile(userId, {
-      name: updatedProfile.name,
-      nickname: updatedProfile.nickname,
-      avatar_url: updatedProfile.avatar_url,
-      created_at: "created_at" in updatedProfile ? String((updatedProfile as Record<string, unknown>).created_at ?? "") : undefined,
-    });
-  }
-
-  return updatedProfile;
 }
 
 export async function updatePreferredLanguage(userId: string, language: PreferredLanguage) {
@@ -177,14 +189,18 @@ export async function uploadAvatar(userId: string, file: File) {
     throw new Error("Extensão de imagem não permitida.");
   }
 
-  const filePath = `avatars/${userId}/${crypto.randomUUID()}.${extension}`;
-  const storageRef = ref(storage, filePath);
-  
-  await uploadBytes(storageRef, file);
-  const publicUrl = await getDownloadURL(storageRef);
+  try {
+    const filePath = `avatars/${userId}/${crypto.randomUUID()}.${extension}`;
+    const storageRef = ref(storage, filePath);
+    
+    await uploadBytes(storageRef, file);
+    const publicUrl = await getDownloadURL(storageRef);
 
-  await updateProfile(userId, { avatar_url: publicUrl });
-  return publicUrl;
+    await updateProfile(userId, { avatar_url: publicUrl });
+    return publicUrl;
+  } catch (error) {
+    throw mapFirebaseError(error, "PROFILE_UPLOAD_AVATAR_FAILED");
+  }
 }
 
 export async function getPublicProfilesByIds(userIds: string[]) {

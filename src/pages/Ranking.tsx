@@ -89,7 +89,12 @@ export default function Ranking() {
     };
 
     load();
+<<<<<<< HEAD
   }, [t]);
+=======
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+>>>>>>> origin/claude/analyze-app-layers-K1iaJ
 
   // ── Bolão filter ──────────────────────────────────────────────────────────
   const [selectedBolaoId, setSelectedBolaoId] = useState<string | null>(null);

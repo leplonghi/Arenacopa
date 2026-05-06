@@ -8,6 +8,8 @@ import {
   updateDoc, 
   writeBatch 
 } from "firebase/firestore";
+import { mapFirebaseError } from "@/services/errors/AppError";
+import { logger } from "@/lib/logger";
 
 export type NotificationRecord = {
   id: string;
@@ -37,8 +39,8 @@ export async function listNotifications(userId: string) {
           new Date(right.created_at).getTime() - new Date(left.created_at).getTime()
       );
   } catch (error) {
-    console.error("Error listing notifications:", error);
-    throw error;
+    logger.error("Error listing notifications", { userId, error });
+    throw mapFirebaseError(error, "UNKNOWN");
   }
 }
 
@@ -47,8 +49,8 @@ export async function markNotificationAsRead(notificationId: string, userId: str
     const docRef = doc(db, "notifications", notificationId);
     await updateDoc(docRef, { read: true });
   } catch (error) {
-    console.error("Error marking notification as read:", error);
-    throw error;
+    logger.error("Error marking notification as read", { notificationId, userId, error });
+    throw mapFirebaseError(error, "UNKNOWN");
   }
 }
 
@@ -59,17 +61,17 @@ export async function markAllNotificationsAsRead(userId: string) {
       where("user_id", "==", userId)
     );
     const querySnapshot = await getDocs(q);
-    
+
     const batch = writeBatch(db);
     querySnapshot.docs.forEach((doc) => {
       if (doc.data().read === false) {
         batch.update(doc.ref, { read: true });
       }
     });
-    
+
     await batch.commit();
   } catch (error) {
-    console.error("Error marking all notifications as read:", error);
-    throw error;
+    logger.error("Error marking all notifications as read", { userId, error });
+    throw mapFirebaseError(error, "UNKNOWN");
   }
 }

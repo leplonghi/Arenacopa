@@ -19,448 +19,12 @@ const social = require("./features/social");
 admin.initializeApp();
 
 const db = admin.firestore();
-const DEFAULT_SITE_URL = "https://arenacopa.app";
-const STRIPE_API_BASE_URL = "https://api.stripe.com/v1";
-const STRIPE_API_VERSION = "2026-02-25.clover";
 
-const LEAGUE_CHAMPIONSHIPS = [
-    { id: "brasileirao2026", fdoId: 2013, name: "Brasileirão", season: "2026" },
-    { id: "libertadores2026", fdoId: 2152, name: "Libertadores", season: "2026" },
-    { id: "bundesliga2526", fdoId: 2002, name: "Bundesliga", season: "2025" },
-    { id: "ligue12526", fdoId: 2015, name: "Ligue 1", season: "2025" },
-    { id: "ucl2526", fdoId: 2001, name: "Champions League", season: "2025" },
-    { id: "laliga2526", fdoId: 2014, name: "La Liga", season: "2025" },
-    { id: "premier2526", fdoId: 2021, name: "Premier League", season: "2025" },
-];
-let footballDataRequestCount = 0;
-let footballDataWindowStartedAt = Date.now();
-
-function sleep(ms) {
-    return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-function getAllowedOrigins(configuredSiteUrl = DEFAULT_SITE_URL) {
-    const configuredOrigin = configuredSiteUrl.replace(/\/$/, "");
-    return new Set([
-        configuredOrigin,
-        "https://arenacopa-web-2026.web.app",
-        "https://arenacup.net",
-        "http://localhost",
-        "http://localhost:5173",
-        "http://localhost:8080",
-        "http://127.0.0.1:5173",
-        "http://127.0.0.1:8080",
-        "capacitor://localhost",
-    ]);
-}
-
-function applyCors(req, res) {
-    const origin = typeof req?.headers?.origin === "string" ? req.headers.origin.replace(/\/$/, "") : null;
-    const { siteUrl } = getRuntimeConfig();
-    const allowedOrigins = getAllowedOrigins(siteUrl);
-
-    if (origin && allowedOrigins.has(origin)) {
-        res.set("Access-Control-Allow-Origin", origin);
-        res.set("Vary", "Origin");
-    }
-    res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
-    res.set("Access-Control-Allow-Methods", "POST, OPTIONS");
-}
-
-function getRuntimeConfig() {
-    let runtimeConfig = {};
-    try {
-        runtimeConfig = functions.config();
-    } catch (e) {
-        functions.logger.warn("functions.config() not available, using env vars only", { error: e?.message });
-    }
-
-    return {
-        stripeSecretKey: runtimeConfig?.stripe?.secret_key || process.env.STRIPE_SECRET_KEY || "",
-        stripePremiumPriceId: runtimeConfig?.stripe?.premium_price_id || process.env.STRIPE_PREMIUM_PRICE_ID || "",
-        stripeCommercialCampaignPriceIds: {
-            single_match:
-                runtimeConfig?.stripe?.commercial_match_price_id ||
-                process.env.STRIPE_COMMERCIAL_MATCH_PRICE_ID ||
-                runtimeConfig?.stripe?.commercial_campaign_price_id ||
-                process.env.STRIPE_COMMERCIAL_CAMPAIGN_PRICE_ID ||
-                "",
-            five_matches:
-                runtimeConfig?.stripe?.commercial_five_matches_price_id ||
-                process.env.STRIPE_COMMERCIAL_FIVE_MATCHES_PRICE_ID ||
-                "",
-            short_championship:
-                runtimeConfig?.stripe?.commercial_short_championship_price_id ||
-                process.env.STRIPE_COMMERCIAL_SHORT_CHAMPIONSHIP_PRICE_ID ||
-                "",
-            full_cup:
-                runtimeConfig?.stripe?.commercial_full_cup_price_id ||
-                process.env.STRIPE_COMMERCIAL_FULL_CUP_PRICE_ID ||
-                "",
-        },
-        siteUrl: runtimeConfig?.app?.site_url || process.env.SITE_URL || DEFAULT_SITE_URL,
-        footballDataApiKey: runtimeConfig?.football_data?.api_key || process.env.FOOTBALL_DATA_API_KEY || "",
-        seedToken: runtimeConfig?.seed?.token || process.env.SEED_ADMIN_TOKEN || "",
-    };
-}
-
-function mapAuthedOperationError(error) {
-    const code = error?.message || "internal";
-    if (code === "auth_required") {
-        return { status: 401, error: code };
-    }
-    if (code === "permission_denied") {
-        return { status: 403, error: code };
-    }
-    if (["not_found"].includes(code)) {
-        return { status: 404, error: code };
-    }
-    if (["config_conflict", "exclusive_score_taken"].includes(code)) {
-        return { status: 409, error: code };
-    }
-    if (["payment_required"].includes(code)) {
-        return { status: 402, error: code };
-    }
-    if (["already_member", "existing_request"].includes(code)) {
-        return { status: 409, error: code };
-    }
-    if (
-        [
-            "blocked_commercial_reward_language",
-            "invalid_campaign_period",
-            "invalid_cep",
-            "invalid_phone",
-            "invalid_state",
-            "match_not_future",
-            "structure_locked",
-            "member_protected",
-            "removal_blocked",
-            "validation_failed",
-            "join_requires_group",
-            "commercial_participant_limit_reached",
-            "creator_cannot_leave",
-            "cannot_remove_creator",
-            "invalid_featured_bolao",
-        ].includes(code)
-    ) {
-        return { status: 400, error: code };
-    }
-
-    return { status: 500, error: "internal" };
-}
-
-function createAuthedEndpoint(handler) {
-    return functions.region("us-central1").https.onRequest(async (req, res) => {
-        applyCors(req, res);
-
-        if (req.method === "OPTIONS") {
-            return res.status(204).send("");
-        }
-
-        if (req.method !== "POST") {
-            return res.status(405).json({ error: "Método não permitido." });
-        }
-
-        try {
-            const auth = await verifyHttpUser(req);
-            const nowIso = new Date().toISOString();
-            const payload = await handler({
-                req,
-                res,
-                auth,
-                nowIso,
-            });
-
-            if (res.headersSent) {
-                return null;
-            }
-
-            return res.status(200).json(payload);
-        } catch (error) {
-            const mapped = mapAuthedOperationError(error);
-            functions.logger.error("Bolao operation failed", {
-                error: error?.message || error,
-                route: req.path,
-                body: req.body,
-            });
-
-            return res.status(mapped.status).json({ error: mapped.error });
-        }
-    });
-}
-
-exports.resolvePublicInvite = functions.region("us-central1").https.onRequest(async (req, res) => {
-    applyCors(req, res);
-
-    if (req.method === "OPTIONS") {
-        return res.status(204).send("");
-    }
-
-    if (req.method !== "POST") {
-        return res.status(405).json({ error: "Método não permitido." });
-    }
-
-    try {
-        const inviteCode = typeof req.body?.inviteCode === "string" ? req.body.inviteCode.trim().toUpperCase() : "";
-        const kind = req.body?.kind;
-
-        if (!inviteCode || !["bolao", "group"].includes(kind)) {
-            return res.status(400).json({ error: "Payload inválido." });
-        }
-
-        if (kind === "bolao") {
-            const bolaoSnapshot = await db
-                .collection("boloes")
-                .where("invite_code", "==", inviteCode)
-                .limit(1)
-                .get();
-
-            if (bolaoSnapshot.empty) {
-                return res.status(404).json({ found: false });
-            }
-
-            const bolaoDoc = bolaoSnapshot.docs[0];
-            const bolaoData = bolaoDoc.data();
-            if (
-                bolaoData.lifecycle?.status === "deleted" ||
-                bolaoData.status === "deleted"
-            ) {
-                return res.status(404).json({ found: false });
-            }
-            const grupoId = bolaoData.context?.grupo_id || bolaoData.grupo_id || null;
-            const requiredGroupSnapshot = grupoId
-                ? await db.collection("grupos").doc(grupoId).get()
-                : null;
-            const membersSnapshot = await db
-                .collection("bolao_members")
-                .where("bolao_id", "==", bolaoDoc.id)
-                .get();
-            const joinMode =
-                bolaoData.access_policy?.join_mode ||
-                (bolaoData.category === "public" ? "public_open" : "private_invite");
-            const admissionMode =
-                bolaoData.access_policy?.admission_mode ||
-                (joinMode === "public_open" ? "direct_open" : "approval");
-            const visibility =
-                bolaoData.access_policy?.visibility ||
-                (bolaoData.category === "public" ? "public" : "private");
-            const groupBindingMode = bolaoData.context?.group_binding_mode || "none";
-
-            return res.status(200).json({
-                found: true,
-                data: {
-                    id: bolaoDoc.id,
-                    name: bolaoData.name || "",
-                    description: bolaoData.description || null,
-                    avatar_url: bolaoData.avatar_url || null,
-                    category: bolaoData.category || null,
-                    is_paid: Boolean(bolaoData.is_paid),
-                    memberCount: membersSnapshot.size,
-                    visibility,
-                    admission_mode: admissionMode,
-                    join_mode: joinMode,
-                    group_binding_mode: groupBindingMode,
-                    grupo_id: grupoId,
-                    required_group_id: groupBindingMode === "group_gated" ? grupoId : null,
-                    required_group_invite_code:
-                        groupBindingMode === "group_gated" && requiredGroupSnapshot?.exists
-                            ? requiredGroupSnapshot.data().invite_code || null
-                            : null,
-                    can_join_direct:
-                        joinMode === "public_open" &&
-                        ["direct_open", "direct_code_or_invite"].includes(admissionMode),
-                },
-            });
-        }
-
-        const groupSnapshot = await db
-            .collection("grupos")
-            .where("invite_code", "==", inviteCode)
-            .limit(1)
-            .get();
-
-        if (groupSnapshot.empty) {
-            return res.status(404).json({ found: false });
-        }
-
-        const groupDoc = groupSnapshot.docs[0];
-        const groupData = groupDoc.data();
-        const membersSnapshot = await db
-            .collection("grupo_members")
-            .where("grupo_id", "==", groupDoc.id)
-            .get();
-        const visibility = groupData.visibility || (groupData.category === "public" ? "public" : "private");
-        const admissionMode =
-            groupData.admission_mode ||
-            (visibility === "public" ? "direct_code_or_invite" : "approval");
-
-        return res.status(200).json({
-            found: true,
-            data: {
-                id: groupDoc.id,
-                name: groupData.name || "",
-                description: groupData.description || null,
-                emoji: groupData.emoji || "👥",
-                category: groupData.category || null,
-                memberCount: membersSnapshot.size,
-                visibility,
-                admission_mode: admissionMode,
-                featured_bolao_id: groupData.featured_bolao_id || null,
-                objective: groupData.objective || "friends",
-                can_join_direct:
-                    visibility === "public" &&
-                    ["direct_open", "direct_code_or_invite"].includes(admissionMode),
-            },
-        });
-    } catch (error) {
-        functions.logger.error("Could not resolve public invite", {
-            error: error?.message || error,
-            body: req.body,
-        });
-        return res.status(500).json({ error: "Não foi possível resolver o convite." });
-    }
-});
-
-async function verifyHttpUser(req) {
-    const authHeader = req.headers.authorization || "";
-    if (!authHeader.startsWith("Bearer ")) {
-        throw new Error("auth_required");
-    }
-
-    const idToken = authHeader.slice("Bearer ".length).trim();
-    return admin.auth().verifyIdToken(idToken);
-}
-
-async function stripeApiRequest({ method, path, params = null, idempotencyKey = null }) {
-    const { stripeSecretKey } = getRuntimeConfig();
-    if (!stripeSecretKey) {
-        throw new Error("STRIPE_SECRET_KEY não configurada nas Cloud Functions.");
-    }
-
-    const headers = {
-        Authorization: `Bearer ${stripeSecretKey}`,
-        "Stripe-Version": STRIPE_API_VERSION,
-    };
-    if (idempotencyKey) {
-        headers["Idempotency-Key"] = idempotencyKey;
-    }
-
-    let url = `${STRIPE_API_BASE_URL}${path}`;
-    const requestInit = {
-        method,
-        headers,
-    };
-
-    if (method === "GET" && params) {
-        url += `?${new URLSearchParams(params).toString()}`;
-    } else if (params) {
-        headers["Content-Type"] = "application/x-www-form-urlencoded";
-        requestInit.body = new URLSearchParams(params).toString();
-    }
-
-    const response = await fetch(url, requestInit);
-    const data = await response.json();
-
-    if (!response.ok) {
-        throw new Error(data?.error?.message || "Falha ao comunicar com o Stripe.");
-    }
-
-    return data;
-}
-
-function mapStripeSessionStatus(session) {
-    if (session.status === "complete" && session.payment_status === "paid") {
-        return "active";
-    }
-
-    if (session.status === "expired") {
-        return "expired";
-    }
-
-    if (session.status === "open") {
-        return "pending";
-    }
-
-    return "failed";
-}
-
-async function upsertPremiumSubscriptionFromSession({ session, userId }) {
-    const subscriptionData = {
-        user_id: userId,
-        status: mapStripeSessionStatus(session),
-        stripe_checkout_session_id: session.id,
-        checkout_url: session.url || null,
-        stripe_payment_intent_id: session.payment_intent || null,
-        stripe_customer_id: session.customer || null,
-        amount_total: session.amount_total ?? null,
-        currency: session.currency ?? null,
-        payment_status: session.payment_status || null,
-        customer_email: session.customer_details?.email || session.customer_email || null,
-        updated_at: admin.firestore.FieldValue.serverTimestamp(),
-        activated_at:
-            session.status === "complete" && session.payment_status === "paid"
-                ? admin.firestore.FieldValue.serverTimestamp()
-                : null,
-    };
-
-    const existingSnapshot = await db
-        .collection("premium_subscriptions")
-        .where("stripe_checkout_session_id", "==", session.id)
-        .limit(1)
-        .get();
-
-    if (!existingSnapshot.empty) {
-        await existingSnapshot.docs[0].ref.set(subscriptionData, { merge: true });
-        return existingSnapshot.docs[0].ref.id;
-    }
-
-    const created = await db.collection("premium_subscriptions").add({
-        ...subscriptionData,
-        created_at: admin.firestore.FieldValue.serverTimestamp(),
-    });
-
-    return created.id;
-}
-
-async function getReusablePendingPremiumSession(userId) {
-    const existingSnapshot = await db
-        .collection("premium_subscriptions")
-        .where("user_id", "==", userId)
-        .where("status", "==", "pending")
-        .orderBy("created_at", "desc")
-        .limit(1)
-        .get();
-
-    if (existingSnapshot.empty) {
-        return null;
-    }
-
-    const existingData = existingSnapshot.docs[0].data();
-    if (!existingData?.stripe_checkout_session_id) {
-        return null;
-    }
-
-    try {
-        const session = await stripeApiRequest({
-            method: "GET",
-            path: `/checkout/sessions/${existingData.stripe_checkout_session_id}`,
-        });
-
-        if (session.status === "open" && typeof session.url === "string") {
-            return {
-                url: session.url,
-                sessionId: session.id,
-            };
-        }
-    } catch (error) {
-        functions.logger.warn("Could not reuse pending premium checkout session", {
-            userId,
-            error: error?.message || error,
-        });
-    }
-
-    return null;
-}
+const SCORING = {
+    EXACT: 5,
+    WINNER: 3,
+    DRAW: 2,
+};
 
 function chunkArray(items, size) {
     const chunks = [];
@@ -1623,143 +1187,151 @@ async function recalculateBolaoRankingForUser({ bolaoId, userId }) {
 exports.onMatchResultUpdated = functions.firestore
     .document("matches/{matchId}")
     .onUpdate(async (change, context) => {
-        const newValue = change.after.data();
-        const previousValue = change.before.data();
+        try {
+            const newValue = change.after.data();
+            const previousValue = change.before.data();
 
-        const newStatus = newValue.status ? String(newValue.status).toUpperCase() : "";
-        const prevStatus = previousValue ? (previousValue.status ? String(previousValue.status).toUpperCase() : "") : "";
+            const newStatus = newValue.status ? String(newValue.status).toUpperCase() : "";
+            const prevStatus = previousValue ? (previousValue.status ? String(previousValue.status).toUpperCase() : "") : "";
 
-        const statusChangedToFinished = newStatus === "FINISHED" && prevStatus !== "FINISHED";
-        const scoreChangedWhileFinished =
-            newStatus === "FINISHED" &&
-            (newValue.home_score !== previousValue.home_score || newValue.away_score !== previousValue.away_score);
+            const statusChangedToFinished = newStatus === "FINISHED" && prevStatus !== "FINISHED";
+            const scoreChangedWhileFinished =
+                newStatus === "FINISHED" &&
+                (newValue.home_score !== previousValue.home_score || newValue.away_score !== previousValue.away_score);
 
-        if (!statusChangedToFinished && !scoreChangedWhileFinished) {
-            return null;
-        }
-
-        const matchId = context.params.matchId;
-        const matchHomeScore = newValue.home_score;
-        const matchAwayScore = newValue.away_score;
-
-        if (matchHomeScore === null || matchAwayScore === null || typeof matchHomeScore !== "number" || typeof matchAwayScore !== "number") {
-            return null;
-        }
-
-        functions.logger.info(`Processing match ${matchId} result`, {
-            matchId,
-            home: matchHomeScore,
-            away: matchAwayScore,
-        });
-
-        const batch = db.batch();
-        const affectedRankings = new Set();
-        const legacyPredictionsSnapshot = await db.collection("bolao_palpites").where("match_id", "==", matchId).get();
-        const legacyBolaoIds = Array.from(
-            new Set(
-                legacyPredictionsSnapshot.docs
-                    .map((docSnapshot) => docSnapshot.data()?.bolao_id)
-                    .filter(Boolean)
-            )
-        );
-        const scoringRulesByBolao = await loadBolaoScoringRulesMap(legacyBolaoIds);
-
-        for (const docSnapshot of legacyPredictionsSnapshot.docs) {
-            const palpite = docSnapshot.data();
-            const userId = palpite.user_id;
-            const bolaoId = palpite.bolao_id;
-            const predictionHomeScore = palpite.home_score;
-            const predictionAwayScore = palpite.away_score;
-
-            if (typeof predictionHomeScore !== "number" || typeof predictionAwayScore !== "number" || !userId || !bolaoId) {
-                continue;
+            if (!statusChangedToFinished && !scoreChangedWhileFinished) {
+                return null;
             }
 
-            const { points, type } = resolveLegacyMatchPredictionPoints({
-                predictionHomeScore,
-                predictionAwayScore,
-                matchHomeScore,
-                matchAwayScore,
-                scoringRules: scoringRulesByBolao.get(bolaoId),
-                isPowerPlay: Boolean(palpite.is_power_play),
-            });
+            const matchId = context.params.matchId;
+            const matchHomeScore = newValue.home_score;
+            const matchAwayScore = newValue.away_score;
 
-            batch.update(docSnapshot.ref, {
-                points,
-                type,
-                processed_at: admin.firestore.FieldValue.serverTimestamp(),
-            });
-
-            affectedRankings.add(`${userId}__${bolaoId}`);
-        }
-
-        const modernMarketsSnapshot = await db.collection("bolao_markets").where("match_id", "==", matchId).get();
-        const modernMatchMarkets = modernMarketsSnapshot.docs
-            .map((docSnapshot) => ({ id: docSnapshot.id, ...docSnapshot.data() }))
-            .filter((market) => market.scope === "match");
-
-        if (modernMatchMarkets.length > 0) {
-            const marketIds = modernMatchMarkets.map((market) => market.id);
-            const marketMap = new Map(modernMatchMarkets.map((market) => [market.id, market]));
-            const predictionChunks = [];
-
-            for (const chunk of chunkArray(marketIds, 10)) {
-                predictionChunks.push(
-                    db.collection("bolao_predictions")
-                        .where("market_id", "in", chunk)
-                        .get()
-                );
+            if (matchHomeScore === null || matchAwayScore === null || typeof matchHomeScore !== "number" || typeof matchAwayScore !== "number") {
+                return null;
             }
 
-            const predictionSnapshots = await Promise.all(predictionChunks);
-            predictionSnapshots.forEach((snapshot) => {
-                snapshot.docs.forEach((docSnapshot) => {
-                    const prediction = docSnapshot.data();
-                    const market = marketMap.get(prediction.market_id);
-                    if (!market) return;
+            functions.logger.info(`Processing match ${matchId} result`, {
+                matchId,
+                home: matchHomeScore,
+                away: matchAwayScore,
+            });
 
-                    const resolution = resolveMatchMarketPoints({
-                        market,
-                        predictionValue: prediction.prediction_value,
-                        matchData: newValue,
-                    });
+            const batch = db.batch();
+            const affectedRankings = new Set();
+            const legacyPredictionsSnapshot = await db.collection("bolao_palpites").where("match_id", "==", matchId).get();
+            const legacyBolaoIds = Array.from(
+                new Set(
+                    legacyPredictionsSnapshot.docs
+                        .map((docSnapshot) => docSnapshot.data()?.bolao_id)
+                        .filter(Boolean)
+                )
+            );
+            const scoringRulesByBolao = await loadBolaoScoringRulesMap(legacyBolaoIds);
 
-                    if (!resolution.resolved) {
-                        batch.set(docSnapshot.ref, {
-                            resolved: false,
-                            updated_at: admin.firestore.FieldValue.serverTimestamp(),
-                        }, { merge: true });
-                    } else {
-                        batch.set(docSnapshot.ref, {
-                            points_awarded: resolution.points,
-                            resolved: true,
-                            resolved_at: admin.firestore.FieldValue.serverTimestamp(),
-                            updated_at: admin.firestore.FieldValue.serverTimestamp(),
-                        }, { merge: true });
-                    }
+            for (const docSnapshot of legacyPredictionsSnapshot.docs) {
+                const palpite = docSnapshot.data();
+                const userId = palpite.user_id;
+                const bolaoId = palpite.bolao_id;
+                const predictionHomeScore = palpite.home_score;
+                const predictionAwayScore = palpite.away_score;
 
-                    if (prediction.user_id && prediction.bolao_id) {
-                        affectedRankings.add(`${prediction.user_id}__${prediction.bolao_id}`);
-                    }
+                if (typeof predictionHomeScore !== "number" || typeof predictionAwayScore !== "number" || !userId || !bolaoId) {
+                    continue;
+                }
+
+                const { points, type } = resolveLegacyMatchPredictionPoints({
+                    predictionHomeScore,
+                    predictionAwayScore,
+                    matchHomeScore,
+                    matchAwayScore,
+                    scoringRules: scoringRulesByBolao.get(bolaoId),
+                    isPowerPlay: Boolean(palpite.is_power_play),
                 });
+
+                batch.update(docSnapshot.ref, {
+                    points,
+                    type,
+                    processed_at: admin.firestore.FieldValue.serverTimestamp(),
+                });
+
+                affectedRankings.add(`${userId}__${bolaoId}`);
+            }
+
+            const modernMarketsSnapshot = await db.collection("bolao_markets").where("match_id", "==", matchId).get();
+            const modernMatchMarkets = modernMarketsSnapshot.docs
+                .map((docSnapshot) => ({ id: docSnapshot.id, ...docSnapshot.data() }))
+                .filter((market) => market.scope === "match");
+
+            if (modernMatchMarkets.length > 0) {
+                const marketIds = modernMatchMarkets.map((market) => market.id);
+                const marketMap = new Map(modernMatchMarkets.map((market) => [market.id, market]));
+                const predictionChunks = [];
+
+                for (const chunk of chunkArray(marketIds, 10)) {
+                    predictionChunks.push(
+                        db.collection("bolao_predictions")
+                            .where("market_id", "in", chunk)
+                            .get()
+                    );
+                }
+
+                const predictionSnapshots = await Promise.all(predictionChunks);
+                predictionSnapshots.forEach((snapshot) => {
+                    snapshot.docs.forEach((docSnapshot) => {
+                        const prediction = docSnapshot.data();
+                        const market = marketMap.get(prediction.market_id);
+                        if (!market) return;
+
+                        const resolution = resolveMatchMarketPoints({
+                            market,
+                            predictionValue: prediction.prediction_value,
+                            matchData: newValue,
+                        });
+
+                        if (!resolution.resolved) {
+                            batch.set(docSnapshot.ref, {
+                                resolved: false,
+                                updated_at: admin.firestore.FieldValue.serverTimestamp(),
+                            }, { merge: true });
+                        } else {
+                            batch.set(docSnapshot.ref, {
+                                points_awarded: resolution.points,
+                                resolved: true,
+                                resolved_at: admin.firestore.FieldValue.serverTimestamp(),
+                                updated_at: admin.firestore.FieldValue.serverTimestamp(),
+                            }, { merge: true });
+                        }
+
+                        if (prediction.user_id && prediction.bolao_id) {
+                            affectedRankings.add(`${prediction.user_id}__${prediction.bolao_id}`);
+                        }
+                    });
+                });
+            }
+
+            await batch.commit();
+
+            await Promise.all(
+                Array.from(affectedRankings).map((key) => {
+                    const [userId, bolaoId] = key.split("__");
+                    return recalculateBolaoRankingForUser({ bolaoId, userId });
+                })
+            );
+
+            functions.logger.info(`Successfully processed match predictions for ${matchId}`, {
+                legacyPredictions: legacyPredictionsSnapshot.size,
+                modernMarkets: modernMatchMarkets.length,
+                affectedRankings: affectedRankings.size,
             });
+            return null;
+        } catch (err) {
+            functions.logger.error("onMatchResultUpdated: Unhandled error", {
+                matchId: context.params.matchId,
+                error: err && err.message ? err.message : String(err),
+            });
+            return null;
         }
-
-        await batch.commit();
-
-        await Promise.all(
-            Array.from(affectedRankings).map((key) => {
-                const [userId, bolaoId] = key.split("__");
-                return recalculateBolaoRankingForUser({ bolaoId, userId });
-            })
-        );
-
-        functions.logger.info(`Successfully processed match predictions for ${matchId}`, {
-            legacyPredictions: legacyPredictionsSnapshot.size,
-            modernMarkets: modernMatchMarkets.length,
-            affectedRankings: affectedRankings.size,
-        });
-        return null;
     });
 
 /**
@@ -1768,53 +1340,61 @@ exports.onMatchResultUpdated = functions.firestore
 exports.onBolaoMarketWrite = functions.firestore
     .document("bolao_markets/{marketId}")
     .onWrite(async (change, context) => {
-        const afterData = change.after.exists ? change.after.data() : null;
-        const beforeData = change.before.exists ? change.before.data() : null;
-        const marketData = afterData || beforeData;
-        const marketId = context.params.marketId;
+        try {
+            const afterData = change.after.exists ? change.after.data() : null;
+            const beforeData = change.before.exists ? change.before.data() : null;
+            const marketData = afterData || beforeData;
+            const marketId = context.params.marketId;
 
-        if (!marketData || marketData.scope === "match") {
-            return null;
-        }
+            if (!marketData || marketData.scope === "match") {
+                return null;
+            }
 
-        const resolutionChanged =
-            JSON.stringify(afterData?.resolution_value ?? null) !== JSON.stringify(beforeData?.resolution_value ?? null);
-        const statusChanged = afterData?.status !== beforeData?.status;
+            const resolutionChanged =
+                JSON.stringify(afterData?.resolution_value ?? null) !== JSON.stringify(beforeData?.resolution_value ?? null);
+            const statusChanged = afterData?.status !== beforeData?.status;
 
-        if (!resolutionChanged && !statusChanged) {
-            return null;
-        }
+            if (!resolutionChanged && !statusChanged) {
+                return null;
+            }
 
-        const predictionsSnapshot = await db.collection("bolao_predictions").where("market_id", "==", marketId).get();
-        if (predictionsSnapshot.empty) {
-            return null;
-        }
+            const predictionsSnapshot = await db.collection("bolao_predictions").where("market_id", "==", marketId).get();
+            if (predictionsSnapshot.empty) {
+                return null;
+            }
 
-        const shouldResolve =
-            Boolean(afterData) &&
-            afterData.status === "resolved" &&
-            hasResolutionValue(afterData.resolution_value);
+            const shouldResolve =
+                Boolean(afterData) &&
+                afterData.status === "resolved" &&
+                hasResolutionValue(afterData.resolution_value);
 
-        const batch = db.batch();
-        const affectedRankings = new Set();
+            const batch = db.batch();
+            const affectedRankings = new Set();
 
-        predictionsSnapshot.forEach((docSnapshot) => {
-            const prediction = docSnapshot.data();
+            predictionsSnapshot.forEach((docSnapshot) => {
+                const prediction = docSnapshot.data();
 
-            if (shouldResolve) {
-                const resolution = resolveConfiguredMarketPoints({
-                    market: afterData,
-                    predictionValue: prediction.prediction_value,
-                    resolutionValue: afterData.resolution_value,
-                });
+                if (shouldResolve) {
+                    const resolution = resolveConfiguredMarketPoints({
+                        market: afterData,
+                        predictionValue: prediction.prediction_value,
+                        resolutionValue: afterData.resolution_value,
+                    });
 
-                if (resolution.resolved) {
-                    batch.set(docSnapshot.ref, {
-                        points_awarded: resolution.points,
-                        resolved: true,
-                        resolved_at: admin.firestore.FieldValue.serverTimestamp(),
-                        updated_at: admin.firestore.FieldValue.serverTimestamp(),
-                    }, { merge: true });
+                    if (resolution.resolved) {
+                        batch.set(docSnapshot.ref, {
+                            points_awarded: resolution.points,
+                            resolved: true,
+                            resolved_at: admin.firestore.FieldValue.serverTimestamp(),
+                            updated_at: admin.firestore.FieldValue.serverTimestamp(),
+                        }, { merge: true });
+                    } else {
+                        batch.set(docSnapshot.ref, {
+                            points_awarded: null,
+                            resolved: false,
+                            updated_at: admin.firestore.FieldValue.serverTimestamp(),
+                        }, { merge: true });
+                    }
                 } else {
                     batch.set(docSnapshot.ref, {
                         points_awarded: null,
@@ -1822,40 +1402,40 @@ exports.onBolaoMarketWrite = functions.firestore
                         updated_at: admin.firestore.FieldValue.serverTimestamp(),
                     }, { merge: true });
                 }
-            } else {
-                batch.set(docSnapshot.ref, {
-                    points_awarded: null,
-                    resolved: false,
-                    updated_at: admin.firestore.FieldValue.serverTimestamp(),
-                }, { merge: true });
-            }
 
-            if (prediction.user_id && prediction.bolao_id) {
-                affectedRankings.add(`${prediction.user_id}__${prediction.bolao_id}`);
-            }
-        });
-
-        await batch.commit();
-
-        await Promise.all(
-            Array.from(affectedRankings).map((key) => {
-                const [userId, bolaoId] = key.split("__");
-                return recalculateBolaoRankingForUser({ bolaoId, userId });
-            })
-        );
-
-        if (shouldResolve) {
-            await createBolaoActivity({
-                bolaoId: afterData.bolao_id,
-                userId: afterData.resolved_by || null,
-                type: "market_resolved",
-                title: `Resultado oficial definido em ${afterData.title}`,
-                description: "O mercado foi resolvido e os pontos da liga foram recalculados.",
-                marketId,
+                if (prediction.user_id && prediction.bolao_id) {
+                    affectedRankings.add(`${prediction.user_id}__${prediction.bolao_id}`);
+                }
             });
-        }
 
-        return null;
+            await batch.commit();
+
+            await Promise.all(
+                Array.from(affectedRankings).map((key) => {
+                    const [userId, bolaoId] = key.split("__");
+                    return recalculateBolaoRankingForUser({ bolaoId, userId });
+                })
+            );
+
+            if (shouldResolve) {
+                await createBolaoActivity({
+                    bolaoId: afterData.bolao_id,
+                    userId: afterData.resolved_by || null,
+                    type: "market_resolved",
+                    title: `Resultado oficial definido em ${afterData.title}`,
+                    description: "O mercado foi resolvido e os pontos da liga foram recalculados.",
+                    marketId,
+                });
+            }
+
+            return null;
+        } catch (err) {
+            functions.logger.error("onBolaoMarketWrite: Unhandled error", {
+                marketId: context.params.marketId,
+                error: err && err.message ? err.message : String(err),
+            });
+            return null;
+        }
     });
 
 /**
@@ -1865,51 +1445,59 @@ exports.onBolaoMarketWrite = functions.firestore
 exports.onNewBolaoMember = functions.firestore
     .document("bolao_members/{memberId}")
     .onCreate(async (snap) => {
-        const data = snap.data();
-        const userId = data.user_id;
-        const bolaoId = data.bolao_id;
+        try {
+            const data = snap.data();
+            const userId = data.user_id;
+            const bolaoId = data.bolao_id;
 
-        if (!userId || !bolaoId) return null;
+            if (!validateUserAndBolao(userId, bolaoId, "onNewBolaoMember")) return null;
 
-        const rankingRef = db.collection("bolao_rankings").doc(`${userId}_${bolaoId}`);
-        const rankingDoc = await rankingRef.get();
+            const rankingRef = db.collection("bolao_rankings").doc(`${userId}_${bolaoId}`);
+            const rankingDoc = await rankingRef.get();
 
-        if (!rankingDoc.exists) {
-            await rankingRef.set({
-                user_id: userId,
-                bolao_id: bolaoId,
-                total_points: 0,
-                exact_matches: 0,
-                correct_results: 0,
-                draws: 0,
-                palpites_count: 0,
-                match_points: 0,
-                phase_points: 0,
-                tournament_points: 0,
-                special_points: 0,
-                points_breakdown: {
-                    match: 0,
-                    phase: 0,
-                    tournament: 0,
-                    special: 0,
-                },
-                rank: 0,
-                created_at: admin.firestore.FieldValue.serverTimestamp(),
-                updated_at: admin.firestore.FieldValue.serverTimestamp(),
-            });
-            functions.logger.info(`Initialized ranking for user ${userId} in bolão ${bolaoId}`);
-            await createBolaoActivity({
-                bolaoId,
-                userId,
-                type: "member_joined",
-                title: "Novo participante entrou na liga",
-                description: "A arena ganhou mais um competidor.",
+            if (!rankingDoc.exists) {
+                await rankingRef.set({
+                    user_id: userId,
+                    bolao_id: bolaoId,
+                    total_points: 0,
+                    exact_matches: 0,
+                    correct_results: 0,
+                    draws: 0,
+                    palpites_count: 0,
+                    match_points: 0,
+                    phase_points: 0,
+                    tournament_points: 0,
+                    special_points: 0,
+                    points_breakdown: {
+                        match: 0,
+                        phase: 0,
+                        tournament: 0,
+                        special: 0,
+                    },
+                    rank: 0,
+                    created_at: admin.firestore.FieldValue.serverTimestamp(),
+                    updated_at: admin.firestore.FieldValue.serverTimestamp(),
+                });
+                functions.logger.info(`Initialized ranking for user ${userId} in bolão ${bolaoId}`);
+                await createBolaoActivity({
+                    bolaoId,
+                    userId,
+                    type: "member_joined",
+                    title: "Novo participante entrou na liga",
+                    description: "A arena ganhou mais um competidor.",
+                });
+                return null;
+            }
+
+            await recalculateBolaoRankingForUser({ bolaoId, userId });
+            return null;
+        } catch (err) {
+            functions.logger.error("onNewBolaoMember: Unhandled error", {
+                memberId: snap.id,
+                error: err && err.message ? err.message : String(err),
             });
             return null;
         }
-
-        await recalculateBolaoRankingForUser({ bolaoId, userId });
-        return null;
     });
 
 /**
@@ -1918,36 +1506,43 @@ exports.onNewBolaoMember = functions.firestore
 exports.onBolaoPalpiteWrite = functions.firestore
     .document("bolao_palpites/{palpiteId}")
     .onWrite(async (change) => {
-        const afterData = change.after.exists ? change.after.data() : null;
-        const beforeData = change.before.exists ? change.before.data() : null;
-        const userId = afterData?.user_id || beforeData?.user_id;
-        const bolaoId = afterData?.bolao_id || beforeData?.bolao_id;
+        try {
+            const afterData = change.after.exists ? change.after.data() : null;
+            const beforeData = change.before.exists ? change.before.data() : null;
+            const userId = afterData?.user_id || beforeData?.user_id;
+            const bolaoId = afterData?.bolao_id || beforeData?.bolao_id;
 
-        if (!userId || !bolaoId) {
+            if (!validateUserAndBolao(userId, bolaoId, "onBolaoPalpiteWrite")) {
+                return null;
+            }
+
+            await recalculateBolaoRankingForUser({ bolaoId, userId });
+
+            const predictionChanged =
+                change.after.exists &&
+                (
+                    JSON.stringify(afterData?.home_score ?? null) !== JSON.stringify(beforeData?.home_score ?? null) ||
+                    JSON.stringify(afterData?.away_score ?? null) !== JSON.stringify(beforeData?.away_score ?? null)
+                );
+
+            if (predictionChanged && afterData) {
+                await createBolaoActivity({
+                    bolaoId,
+                    userId,
+                    type: "legacy_prediction_saved",
+                    title: "Palpite de jogo atualizado",
+                    description: "Um palpite clássico de partida foi salvo na liga.",
+                    matchId: afterData.match_id || null,
+                });
+            }
+
+            return null;
+        } catch (err) {
+            functions.logger.error("onBolaoPalpiteWrite: Unhandled error", {
+                error: err && err.message ? err.message : String(err),
+            });
             return null;
         }
-
-        await recalculateBolaoRankingForUser({ bolaoId, userId });
-
-        const predictionChanged =
-            change.after.exists &&
-            (
-                JSON.stringify(afterData?.home_score ?? null) !== JSON.stringify(beforeData?.home_score ?? null) ||
-                JSON.stringify(afterData?.away_score ?? null) !== JSON.stringify(beforeData?.away_score ?? null)
-            );
-
-        if (predictionChanged && afterData) {
-            await createBolaoActivity({
-                bolaoId,
-                userId,
-                type: "legacy_prediction_saved",
-                title: "Palpite de jogo atualizado",
-                description: "Um palpite clássico de partida foi salvo na liga.",
-                matchId: afterData.match_id || null,
-            });
-        }
-
-        return null;
     });
 
 /**
@@ -1956,43 +1551,50 @@ exports.onBolaoPalpiteWrite = functions.firestore
 exports.onBolaoPredictionWrite = functions.firestore
     .document("bolao_predictions/{predictionId}")
     .onWrite(async (change) => {
-        const afterData = change.after.exists ? change.after.data() : null;
-        const beforeData = change.before.exists ? change.before.data() : null;
-        const userId = afterData?.user_id || beforeData?.user_id;
-        const bolaoId = afterData?.bolao_id || beforeData?.bolao_id;
+        try {
+            const afterData = change.after.exists ? change.after.data() : null;
+            const beforeData = change.before.exists ? change.before.data() : null;
+            const userId = afterData?.user_id || beforeData?.user_id;
+            const bolaoId = afterData?.bolao_id || beforeData?.bolao_id;
 
-        if (!userId || !bolaoId) {
-            return null;
-        }
-
-        await recalculateBolaoRankingForUser({ bolaoId, userId });
-
-        const predictionChanged =
-            change.after.exists &&
-            JSON.stringify(afterData?.prediction_value ?? null) !== JSON.stringify(beforeData?.prediction_value ?? null);
-
-        if (predictionChanged && afterData) {
-            let marketTitle = "Mercado";
-            try {
-                const marketSnapshot = await db.collection("bolao_markets").doc(afterData.market_id).get();
-                if (marketSnapshot.exists) {
-                    marketTitle = marketSnapshot.data()?.title || marketTitle;
-                }
-            } catch (error) {
-                functions.logger.warn("Could not load market title for bolao activity", { marketId: afterData.market_id, error: error?.message || error });
+            if (!validateUserAndBolao(userId, bolaoId, "onBolaoPredictionWrite")) {
+                return null;
             }
 
-            await createBolaoActivity({
-                bolaoId,
-                userId,
-                type: "prediction_saved",
-                title: `Palpite salvo em ${marketTitle}`,
-                description: "Um mercado moderno do bolão recebeu nova aposta.",
-                marketId: afterData.market_id || null,
-            });
-        }
+            await recalculateBolaoRankingForUser({ bolaoId, userId });
 
-        return null;
+            const predictionChanged =
+                change.after.exists &&
+                JSON.stringify(afterData?.prediction_value ?? null) !== JSON.stringify(beforeData?.prediction_value ?? null);
+
+            if (predictionChanged && afterData) {
+                let marketTitle = "Mercado";
+                try {
+                    const marketSnapshot = await db.collection("bolao_markets").doc(afterData.market_id).get();
+                    if (marketSnapshot.exists) {
+                        marketTitle = marketSnapshot.data()?.title || marketTitle;
+                    }
+                } catch (error) {
+                    functions.logger.warn("Could not load market title for bolao activity", { marketId: afterData.market_id, error: error?.message || error });
+                }
+
+                await createBolaoActivity({
+                    bolaoId,
+                    userId,
+                    type: "prediction_saved",
+                    title: `Palpite salvo em ${marketTitle}`,
+                    description: "Um mercado moderno do bolão recebeu nova aposta.",
+                    marketId: afterData.market_id || null,
+                });
+            }
+
+            return null;
+        } catch (err) {
+            functions.logger.error("onBolaoPredictionWrite: Unhandled error", {
+                error: err && err.message ? err.message : String(err),
+            });
+            return null;
+        }
     });
 
 
@@ -2898,7 +2500,7 @@ exports.archiveBolao = createAuthedEndpoint(async ({ auth, nowIso, req }) => {
     return {
         bolao_id: updated.id,
         ...updated,
-  };
+    };
 });
 
 exports.deleteBolao = createAuthedEndpoint(async ({ auth, nowIso, req }) => {

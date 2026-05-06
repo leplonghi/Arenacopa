@@ -1,7 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+<<<<<<< HEAD
 import { Copy, Loader2, Plus, Search, Share2, Users2 } from "lucide-react";
 import { collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
+=======
+import { Loader2, Plus, Users2, X, Crown, CheckCircle2 } from "lucide-react";
+import {
+  collection, query, where, getDocs, addDoc,
+  doc, setDoc, getDoc, limit,
+} from "firebase/firestore";
+>>>>>>> origin/claude/analyze-app-layers-K1iaJ
 import { db } from "@/integrations/firebase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
@@ -32,6 +40,12 @@ type PendingRequest = {
 
 export default function Grupos() {
   const { user } = useAuth();
+<<<<<<< HEAD
+=======
+  const { purchasePremium, isLoading: isPurchasing } = useMonetization();
+  const canStartCheckout = monetizationEnv.enablePremiumSimulation || monetizationEnv.premiumCheckoutEnabled;
+  const { canCreateGrupo } = usePlanLimits();
+>>>>>>> origin/claude/analyze-app-layers-K1iaJ
   const { toast } = useToast();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -39,6 +53,14 @@ export default function Grupos() {
   const [pendingRequests, setPendingRequests] = useState<PendingRequest[]>([]);
   const [joinCode, setJoinCode] = useState("");
   const [joining, setJoining] = useState(false);
+<<<<<<< HEAD
+=======
+  const [creating, setCreating] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [newEmoji, setNewEmoji] = useState("👥");
+  const [newDesc, setNewDesc] = useState("");
+  const [newCategory] = useState<"private" | "public">("private");
+>>>>>>> origin/claude/analyze-app-layers-K1iaJ
 
   const loadGroups = useCallback(async () => {
     if (!user?.id) {
@@ -180,6 +202,7 @@ export default function Grupos() {
         description: "Revise o código e tente novamente.",
         variant: "destructive",
       });
+<<<<<<< HEAD
     } finally {
       setJoining(false);
     }
@@ -192,6 +215,36 @@ export default function Grupos() {
       title: "Link copiado",
       description: "Agora é só compartilhar com a turma.",
     });
+=======
+      toast({ title: t('grupos.created'), className: "bg-emerald-500 text-white font-black" });
+      setShowCreate(false); setNewName(""); setNewDesc("");
+      navigate(`/grupos/${grupoRef.id}`);
+    } catch {
+      toast({ title: t('grupos.create_error'), variant: "destructive" });
+    } finally { setCreating(false); }
+  };
+
+  const handleJoin = async () => {
+    if (!user || !joinCode.trim()) return;
+    setJoining(true);
+    try {
+      const code = joinCode.trim().toUpperCase();
+      const snap = await getDocs(query(collection(db, "grupos"), where("invite_code", "==", code), limit(1)));
+      if (snap.empty) throw new Error(t('grupos.invalid_code'));
+      const gDoc = snap.docs[0];
+      const memberId = `${user.id}_${gDoc.id}`;
+      const existing = await getDoc(doc(db, "grupo_members", memberId));
+      if (existing.exists()) { toast({ title: t('grupos.already_member') }); return; }
+      await setDoc(doc(db, "grupo_members", memberId), {
+        grupo_id: gDoc.id, user_id: user.id, role: "member", joined_at: new Date().toISOString(),
+      });
+      toast({ title: t('grupos.joined'), className: "bg-emerald-500 text-white font-black" });
+      setShowJoin(false); setJoinCode("");
+      navigate(`/grupos/${gDoc.id}`);
+    } catch {
+      toast({ title: t('grupos.invalid_code'), description: t('grupos.invalid_code_desc'), variant: "destructive" });
+    } finally { setJoining(false); }
+>>>>>>> origin/claude/analyze-app-layers-K1iaJ
   };
 
   return (

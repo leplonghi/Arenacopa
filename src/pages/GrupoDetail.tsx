@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Loader2, LogOut, MessageCircle, Share2, Star, UserMinus } from "lucide-react";
 import { collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
@@ -190,6 +190,7 @@ export default function GrupoDetail() {
     return boloes.find((bolao) => ["open", "active"].includes(bolao.status)) || boloes[0] || null;
   }, [boloes, grupo]);
 
+<<<<<<< HEAD
   const requestItems = useMemo(
     () =>
       requests.map((request) => ({
@@ -249,6 +250,9 @@ export default function GrupoDetail() {
       })),
     [grupoId, loadData, requests, toast],
   );
+=======
+  const _isCreator = grupo?.creator_id === user?.id;
+>>>>>>> origin/claude/analyze-app-layers-K1iaJ
 
   const handleShare = async () => {
     if (!grupo) {

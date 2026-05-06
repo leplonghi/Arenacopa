@@ -1,13 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
 import { db } from "@/integrations/firebase/client";
-import { 
-  collection, 
-  query, 
-  where, 
-  getDocs, 
+import {
+  collection,
+  query,
+  where,
+  getDocs,
   getCountFromServer,
-  limit
+  limit,
 } from "firebase/firestore";
+import { logger } from "@/lib/logger";
 
 export function useProfileStats(userId: string | undefined) {
   return useQuery({
@@ -64,7 +65,7 @@ export function useProfileStats(userId: string | undefined) {
           totalPredictions: totalPredictions || 0,
         };
       } catch (error) {
-        console.error("Error fetching profile stats from Firestore:", error);
+        logger.error("Error fetching profile stats from Firestore", { userId, error });
         throw error;
       }
     },

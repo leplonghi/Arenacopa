@@ -15,6 +15,7 @@ export function FabWithPending({
 }) {
   const { t } = useTranslation("bolao");
 
+
   const fabButton = (
     <div className="relative flex h-full flex-col items-center justify-end gap-1 py-2">
       <div

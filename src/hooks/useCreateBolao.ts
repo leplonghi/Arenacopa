@@ -12,7 +12,6 @@ import { Haptics, ImpactStyle } from "@capacitor/haptics";
 import { db } from "@/integrations/firebase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { useTranslation } from "react-i18next";
 import { buildBolaoMarkets } from "@/services/boloes/bolao-market.service";
 import type { BolaoFormatSlug, MarketTemplateSlug, ScoringRules } from "@/types/bolao";
 
@@ -44,7 +43,6 @@ export interface CreateBolaoResult {
 
 export function useCreateBolao() {
   const { user } = useAuth();
-  const { t } = useTranslation('bolao');
   const { toast } = useToast();
   const [creating, setCreating] = useState(false);
   const mountedRef = useRef(true);

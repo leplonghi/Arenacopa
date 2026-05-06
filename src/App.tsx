@@ -1,4 +1,3 @@
-import { useTranslation } from 'react-i18next';
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -85,7 +84,7 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 5 * 60 * 1000,   // 5 min — don't re-fetch while data is fresh
-      gcTime:    10 * 60 * 1000,  // 10 min — keep in cache after unmount
+      gcTime: 10 * 60 * 1000,  // 10 min — keep in cache after unmount
       retry: 1,
       refetchOnWindowFocus: false, // don't spam Firestore on tab switch
     },
@@ -161,6 +160,7 @@ function DeepLinkListener() {
   const navigate = useNavigate();
   useEffect(() => {
     const listener = CapacitorApp.addListener('appUrlOpen', data => {
+      console.log('App opened with URL:', data);
       const url = new URL(data.url);
       const path = url.pathname;
       // Sanitize against open redirect vulnerabilities and javascript injections
@@ -218,14 +218,14 @@ const LoadingScreen = () => (
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const location = useLocation();
-  
+
   if (loading) return <LoadingScreen />;
-  
+
   if (!user) {
     const redirectTo = encodeURIComponent(location.pathname + location.search);
     return <Navigate to={`/auth?redirect=${redirectTo}`} replace />;
   }
-  
+
   return <TermsGuard>{children}</TermsGuard>;
 }
 

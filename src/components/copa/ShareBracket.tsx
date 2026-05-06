@@ -32,7 +32,12 @@ export function ShareBracket({ bracketRef }: ShareBracketProps) {
     } finally {
       setIsGenerating(false);
     }
+<<<<<<< HEAD
   }, [bracketRef, t]);
+=======
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bracketRef]);
+>>>>>>> origin/claude/analyze-app-layers-K1iaJ
 
   const handleDownload = useCallback(async () => {
     const blob = await generateImage();
@@ -45,6 +50,10 @@ export function ShareBracket({ bracketRef }: ShareBracketProps) {
     URL.revokeObjectURL(url);
     toast.success(t('share_bracket.saved'));
     setIsOpen(false);
+<<<<<<< HEAD
+=======
+     
+>>>>>>> origin/claude/analyze-app-layers-K1iaJ
   }, [generateImage, t]);
 
   const handleNativeShare = useCallback(async () => {
@@ -66,6 +75,10 @@ export function ShareBracket({ bracketRef }: ShareBracketProps) {
     } else {
       toast.error(t('share_bracket.not_supported'));
     }
+<<<<<<< HEAD
+=======
+     
+>>>>>>> origin/claude/analyze-app-layers-K1iaJ
   }, [generateImage, t]);
 
   const handleWhatsApp = useCallback(async () => {
@@ -87,6 +100,10 @@ export function ShareBracket({ bracketRef }: ShareBracketProps) {
     }
     toast.success(t('share_bracket.downloaded'));
     setIsOpen(false);
+<<<<<<< HEAD
+=======
+     
+>>>>>>> origin/claude/analyze-app-layers-K1iaJ
   }, [generateImage, t]);
 
   return (

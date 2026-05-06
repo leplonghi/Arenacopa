@@ -34,6 +34,7 @@ export function PWABanner() {
         const { outcome } = await deferredPrompt.userChoice;
 
         if (outcome === 'accepted') {
+            // eslint-disable-next-line no-console
             console.log('User accepted the A2HS prompt');
             if (window.plausible) {
                 window.plausible('PWA_Install', { props: { success: true } });

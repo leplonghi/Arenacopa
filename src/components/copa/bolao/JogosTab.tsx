@@ -281,6 +281,7 @@ export function JogosTab({
             setSavedPalpites(m);
         });
 
+<<<<<<< HEAD
         // If exclusive mode, fetch sanitized score locks to know occupied seats.
         let unsubscribeAll = () => {};
         if (bolao?.scoring_mode === "exclusive") {
@@ -294,6 +295,11 @@ export function JogosTab({
              unsubscribeAll();
         };
     }, [bolaoId, bolao?.scoring_mode, bolao?.championship_id, t, toast, user]);
+=======
+        return () => unsubscribe();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [bolaoId, toast, user]);
+>>>>>>> origin/claude/analyze-app-layers-K1iaJ
 
     const getCurrentPalpite = useMemo(() => {
         return (matchId: string): EditablePalpite => {

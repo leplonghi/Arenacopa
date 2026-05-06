@@ -69,7 +69,7 @@ export function CaixinhaPanel({ bolao, isCreator }: Props) {
         caixinhaValuePerPerson: caixinha && valuePerPerson ? Number(valuePerPerson) : null,
       });
       toast({ title: t('caixinha.saved_ok'), className: "bg-emerald-500 text-white font-black" });
-    } catch (e) {
+    } catch {
       toast({ title: t('caixinha.save_error'), variant: "destructive" });
     } finally {
       setSaving(false);

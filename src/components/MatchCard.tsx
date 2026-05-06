@@ -1,7 +1,6 @@
 import { teams, formatMatchTime, getStadium, type Match } from "@/data/mockData";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
-import { StatusBadge } from "./StatusBadge";
 import { Flag } from "./Flag";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
@@ -33,6 +32,7 @@ const cardVariants = {
   }),
 };
 
+<<<<<<< HEAD
 export function MatchCard({ match, prediction, compact = false, variant = "default", className, index = 0, onClick }: MatchCardProps) {
   const home = teams.find((team) => team.code === match.homeTeam) ?? {
     code: match.homeTeam || "TBD",
@@ -48,6 +48,11 @@ export function MatchCard({ match, prediction, compact = false, variant = "defau
     group: match.group || "",
     confederation: "",
   };
+=======
+export function MatchCard({ match, prediction, compact: _compact = false, variant = "default", className, index = 0, onClick }: MatchCardProps) {
+  const home = getTeam(match.homeTeam);
+  const away = getTeam(match.awayTeam);
+>>>>>>> origin/claude/analyze-app-layers-K1iaJ
   const stadium = getStadium(match.stadium);
   const navigate = useNavigate();
   const { t } = useTranslation('copa');

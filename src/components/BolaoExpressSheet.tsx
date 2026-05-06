@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Loader2, Share2, X, Zap } from "lucide-react";
-import { useTranslation } from "react-i18next";
 import { collection, query, orderBy, where, limit, getDocs } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -52,7 +51,7 @@ export function BolaoExpressSheet({ open, onClose }: Props) {
       finally { setLoadingMatches(false); }
     };
     load();
-  }, [open, selectedMatch]);
+  }, [open]);
 
   const handleSelectMatch = (m: Match) => {
     setSelectedMatch(m);

@@ -4,6 +4,8 @@ import { auth } from "@/integrations/firebase/client";
 import { isAppAdminEmail } from "@/lib/access";
 import { ensureProfile } from "@/services/profile/profile.service";
 import { signOutUser } from "@/services/auth/auth.service";
+import { logger } from "@/lib/logger";
+
 
 export interface User {
   id: string;
@@ -61,7 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             email: mappedUser.email,
             user_metadata: mappedUser.user_metadata,
           }).catch((error) => {
-            console.error("Error ensuring profile:", error);
+            logger.error("Error ensuring profile", { userId: mappedUser.id, error });
           });
         }
       } else {

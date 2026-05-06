@@ -128,7 +128,7 @@ function MatchCard({
   match,
   compact,
   onClick,
-  delay = 0,
+  delay: _delay = 0,
 }: {
   match: KnockoutMatchFull;
   compact?: boolean;
@@ -570,6 +570,7 @@ export function BracketView({
     { key: "quarter" as KnockoutRound, label: t('bracket.rounds.quarter'), matches: data.quarter },
     { key: "semi" as KnockoutRound, label: t('bracket.rounds.semi'), matches: data.semi },
     { key: "final" as KnockoutRound, label: t('bracket.rounds.final'), matches: data.final },
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   ], [data, t]);
 
   const mobileRoundsWithThird = useMemo(() => {
@@ -578,6 +579,7 @@ export function BracketView({
       base.push({ key: "third" as KnockoutRound, label: t('bracket.rounds.third'), matches: data.third });
     }
     return base;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [rounds, data.third, t]);
 
   return (

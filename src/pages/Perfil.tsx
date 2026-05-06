@@ -3,7 +3,11 @@ import { useTranslation } from "react-i18next";
 import { teams, getTeam } from "@/data/mockData";
 import { Flag } from "@/components/Flag";
 import { cn } from "@/lib/utils";
+<<<<<<< HEAD
 import { LogOut, Settings, Bell, Goal, Newspaper, Clock, Loader2, Languages, Target, Star, Crown, Zap, Trophy, Medal, Award, Heart, BookOpen } from "lucide-react";
+=======
+import { LogOut, Settings, Bell, Sparkles, Goal, Newspaper, Clock, Loader2, Languages, Target, Star, Crown, Zap, Trophy, Heart, BookOpen } from "lucide-react";
+>>>>>>> origin/claude/analyze-app-layers-K1iaJ
 import { useAuth } from "@/contexts/AuthContext";
 import { db } from "@/integrations/firebase/client";
 import { useNavigate } from "react-router-dom";

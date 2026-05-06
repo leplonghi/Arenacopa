@@ -9,6 +9,7 @@ import {
   updateProfile,
 } from "firebase/auth";
 import { Capacitor } from "@capacitor/core";
+import { mapFirebaseError } from "@/services/errors/AppError";
 
 const AUTH_FAILURE_WINDOW_MS = 60_000;
 const AUTH_MAX_FAILURES_PER_WINDOW = 10;
@@ -68,7 +69,7 @@ export async function signInWithPassword(email: string, password: string) {
     return userCredential.user;
   } catch (error) {
     registerAuthFailure();
-    throw error;
+    throw mapFirebaseError(error, "AUTH_INVALID_CREDENTIALS");
   }
 }
 
@@ -81,38 +82,47 @@ export async function signUpWithPassword(email: string, password: string, name: 
     return userCredential.user;
   } catch (error) {
     registerAuthFailure();
-    throw error;
+    throw mapFirebaseError(error, "AUTH_UNKNOWN");
   }
 }
 
 export async function signInWithGoogle() {
-  // On Android/iOS use the native Capacitor plugin — avoids WebView OAuth issues
-  if (Capacitor.isNativePlatform()) {
-    const { FirebaseAuthentication } = await import("@capacitor-firebase/authentication");
-    // useCredentialManager: false forces the traditional full-screen Google Sign-In intent.
-    // The default (true) uses Android Credential Manager which fails with
-    // "No credentials available" in some devices/configurations.
-    const signInWithGoogleNative = FirebaseAuthentication.signInWithGoogle as NativeGoogleSignInFn;
-    const result = await signInWithGoogleNative({
-      useCredentialManager: false,
-    });
-    if (!result.credential?.idToken) throw new Error("Google Sign-In: idToken ausente");
-    const credential = GoogleAuthProvider.credential(result.credential.idToken);
-    const userCredential = await signInWithCredential(auth, credential);
-    return userCredential.user;
-  }
+  try {
+    // On Android/iOS use the native Capacitor plugin — avoids WebView OAuth issues
+    if (Capacitor.isNativePlatform()) {
+      const { FirebaseAuthentication } = await import("@capacitor-firebase/authentication");
+      // useCredentialManager: false forces the traditional full-screen Google Sign-In intent.
+      // The default (true) uses Android Credential Manager which fails with
+      // "No credentials available" in some devices/configurations.
+      const signInWithGoogleNative = FirebaseAuthentication.signInWithGoogle as NativeGoogleSignInFn;
+      const result = await signInWithGoogleNative({
+        useCredentialManager: false,
+      });
+      if (!result.credential?.idToken) throw new Error("Google Sign-In: idToken ausente");
+      const credential = GoogleAuthProvider.credential(result.credential.idToken);
+      const userCredential = await signInWithCredential(auth, credential);
+      return userCredential.user;
+    }
 
-  // On web, keep using signInWithPopup normally
-  const provider = new GoogleAuthProvider();
-  provider.setCustomParameters({ prompt: "select_account" });
-  const result = await signInWithPopup(auth, provider);
-  return result.user;
+    // On web, keep using signInWithPopup normally
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: "select_account" });
+    const result = await signInWithPopup(auth, provider);
+    return result.user;
+  } catch (error) {
+    throw mapFirebaseError(error, "AUTH_UNKNOWN");
+  }
 }
 
 export async function signOutUser() {
-  if (Capacitor.isNativePlatform()) {
-    const { FirebaseAuthentication } = await import("@capacitor-firebase/authentication");
-    await FirebaseAuthentication.signOut();
+  try {
+    if (Capacitor.isNativePlatform()) {
+      const { FirebaseAuthentication } = await import("@capacitor-firebase/authentication");
+      await FirebaseAuthentication.signOut();
+    }
+    await signOut(auth);
+  } catch (error) {
+    throw mapFirebaseError(error, "AUTH_UNKNOWN");
   }
-  await signOut(auth);
 }
+

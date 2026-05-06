@@ -37,7 +37,7 @@ describe("getOpportunities", () => {
 
     expect(opportunities[0]).toMatchObject({
       type: "join_pool",
-      ctaRoute: "/descobrir/boloes",
+      ctaRoute: "/descobrir",
     });
   });
 

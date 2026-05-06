@@ -25,9 +25,10 @@ if (localAuthHostRedirect) {
     window.history.replaceState(null, "", nextUrl);
   }
 
-  createRoot(document.getElementById("root")!).render(
+  createRoot(document.getElementById("root") as HTMLElement).render(
     <ErrorBoundary>
       <App />
     </ErrorBoundary>
   );
 }
+

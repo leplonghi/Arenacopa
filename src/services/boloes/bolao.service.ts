@@ -9,6 +9,7 @@ import {
 import type { MemberData, Palpite } from "@/types/bolao";
 import { leaveBolao, updatePoolMemberPaymentStatus } from "@/services/boloes/bolao-config.service";
 import { postAuthedFunction } from "@/services/backend/functions-http";
+import { mapFirebaseError } from "@/services/errors/AppError";
 
 export function buildBolaoPalpiteId(input: {
   userId: string;
@@ -39,7 +40,7 @@ export async function saveBolaoPalpite(input: {
     // We can use a deterministic ID: userId_bolaoId_matchId to avoid duplicates
     const palpiteId = input.existingId || buildBolaoPalpiteId(input);
     const docRef = doc(db, "bolao_palpites", palpiteId);
-    
+
     const payload = {
       bolao_id: input.bolaoId,
       user_id: input.userId,
@@ -63,15 +64,14 @@ export async function saveBolaoPalpite(input: {
 
     const updatedDoc = await getDoc(docRef);
     const data = updatedDoc.data();
-    
+
     return {
       id: updatedDoc.id,
       ...data,
       is_power_play: data?.is_power_play ?? false,
     } as Palpite;
   } catch (error) {
-    console.error("Error saving palpite:", error);
-    throw error;
+    throw mapFirebaseError(error, "BOLAO_SAVE_PALPITE_FAILED");
   }
 }
 
@@ -99,11 +99,15 @@ export async function removeBolaoMember(bolaoId: string, userId: string) {
     throw new Error("validation_failed");
   }
 
-  return leaveBolao({
-    payload: {
-      bolao_id: bolaoId,
-    },
-  });
+  try {
+    return await leaveBolao({
+      payload: {
+        bolao_id: bolaoId,
+      },
+    });
+  } catch (error) {
+    throw mapFirebaseError(error, "BOLAO_REMOVE_MEMBER_FAILED");
+  }
 }
 
 export async function updateBolaoMemberPaymentStatus(input: {
@@ -111,13 +115,17 @@ export async function updateBolaoMemberPaymentStatus(input: {
   userId: string;
   paymentStatus: Extract<NonNullable<MemberData["payment_status"]>, "pending" | "paid" | "exempt">;
 }) {
-  return updatePoolMemberPaymentStatus({
-    payload: {
-      bolao_id: input.bolaoId,
-      member_id: `${input.userId}_${input.bolaoId}`,
-      payment_status: input.paymentStatus,
-    },
-  });
+  try {
+    return await updatePoolMemberPaymentStatus({
+      payload: {
+        bolao_id: input.bolaoId,
+        member_id: `${input.userId}_${input.bolaoId}`,
+        payment_status: input.paymentStatus,
+      },
+    });
+  } catch (error) {
+    throw mapFirebaseError(error, "BOLAO_UPDATE_PAYMENT_FAILED");
+  }
 }
 
 export async function updateBolaoPrizeSettings(input: {
