@@ -216,11 +216,7 @@ export function GuiaTab() {
     );
 }
 
-<<<<<<< HEAD
 function CityCard({ city, idx, onClick, status, t }: { city: HostCity, idx: number, onClick: () => void, status?: CityStatusData, t: TFunction<"sedes"> }) {
-=======
-function CityCard({ city, idx, onClick, status, t }: { city: HostCity, idx: number, onClick: () => void, status?: CityStatusData, t: (key: string, options?: Record<string, unknown>) => string }) {
->>>>>>> origin/claude/analyze-app-layers-K1iaJ
     const bgImage = city.image || "https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?auto=format&fit=crop&w=800&q=80";
 
     return (
@@ -298,11 +294,7 @@ interface TranslatedCityData {
     weather?: string;
 }
 
-<<<<<<< HEAD
 export function CityDetailsModal({ city, dynamicStatus, onClose, t }: { city: HostCity, dynamicStatus?: CityStatusData, onClose: () => void, t: TFunction<"sedes"> }) {
-=======
-export function CityDetailsModal({ city, dynamicStatus, onClose, t }: { city: HostCity, dynamicStatus?: CityStatusData, onClose: () => void, t: (key: string, options?: Record<string, unknown>) => unknown }) {
->>>>>>> origin/claude/analyze-app-layers-K1iaJ
     const [activeTab, setActiveTab] = useState<"geral" | "turismo" | "gastronomia">("geral");
 
     const cityData = t(`cities.${city.id}`, { returnObjects: true }) as TranslatedCityData;

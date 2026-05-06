@@ -55,99 +55,10 @@ export default function PublicInvite() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
-<<<<<<< HEAD
   const loadBolao = useCallback(async () => {
     if (!inviteCode) {
       setLoading(false);
       return;
-=======
-    const [bolao, setBolao] = useState<PublicInviteBolao | null>(null);
-    const [loading, setLoading] = useState(true);
-
-    const loadBolao = useCallback(async () => {
-        if (!inviteCode) return;
-
-        const code = inviteCode.toUpperCase();
-        try {
-            const boloesRef = collection(db, 'boloes');
-            const q = query(boloesRef, where('invite_code', '==', code), limit(1));
-            const querySnapshot = await getDocs(q);
-
-            if (querySnapshot.empty) {
-                toast({ title: t('invite.bolao_not_found'), variant: "destructive" });
-                navigate('/');
-                return;
-            }
-
-            const docSnap = querySnapshot.docs[0];
-            const data = docSnap.data();
-            const bolaoId = docSnap.id;
-
-            // Get member count
-            const membersRef = collection(db, 'bolao_members');
-            const membersCountSnap = await getCountFromServer(query(membersRef, where('bolao_id', '==', bolaoId)));
-            const memberCount = membersCountSnap.data().count;
-
-            if (user) {
-                const memberRef = collection(db, 'bolao_members');
-                const mq = query(memberRef, where('bolao_id', '==', bolaoId), where('user_id', '==', user.id), limit(1));
-                const memberSnap = await getDocs(mq);
-
-                if (!memberSnap.empty) {
-                    navigate(`/boloes/${bolaoId}`);
-                    return;
-                }
-            }
-
-            setBolao({
-                id: bolaoId,
-                name: data.name,
-                description: data.description || null,
-                avatar_url: data.avatar_url || null,
-                category: data.category || null,
-                memberCount
-            });
-        } catch (error) {
-            console.error("Error loading bolao:", error);
-            toast({ title: t('invite.load_error'), variant: "destructive" });
-        } finally {
-            setLoading(false);
-        }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [inviteCode, navigate, toast, user]);
-
-    useEffect(() => {
-        loadBolao();
-    }, [loadBolao]);
-
-    const handleJoin = async () => {
-        if (!bolao) return;
-
-        if (!user) {
-            navigate(`/auth?redirect=/b/${inviteCode}`);
-            return;
-        }
-
-        try {
-            const memberId = `${user.id}_${bolao.id}`;
-            await setDoc(doc(db, 'bolao_members', memberId), {
-                bolao_id: bolao.id,
-                user_id: user.id,
-                role: "member",
-                payment_status: "exempt",
-                joined_at: new Date().toISOString()
-            });
-            toast({ title: t('invite.joined'), className: "bg-emerald-500 text-white" });
-            navigate(`/boloes/${bolao.id}`);
-        } catch (error) {
-            console.error("Error joining bolao:", error);
-            toast({ title: t('invite.join_error'), variant: "destructive" });
-        }
-    };
-
-    if (loading) {
-        return <div className="min-h-screen bg-[#050505] flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
->>>>>>> origin/claude/analyze-app-layers-K1iaJ
     }
 
     try {

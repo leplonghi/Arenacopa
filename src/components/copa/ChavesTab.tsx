@@ -163,7 +163,6 @@ function ListView({
   data: KnockoutData;
   onMatchClick?: (round: KnockoutRound, matchIdx: number, match: KnockoutMatchFull) => void;
 }) {
-  const { t } = useTranslation('copa');
   const navigate = useNavigate();
   const { t } = useTranslation('copa');
   const rounds = [

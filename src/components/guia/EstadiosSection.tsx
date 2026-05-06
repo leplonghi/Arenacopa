@@ -9,11 +9,8 @@ import {
 } from "lucide-react";
 import { Share } from "@capacitor/share";
 import { Geolocation } from "@capacitor/geolocation";
-<<<<<<< HEAD
 import { useTranslation } from "react-i18next";
 import { openSafeExternalUrl } from "@/lib/security";
-=======
->>>>>>> origin/claude/analyze-app-layers-K1iaJ
 import { staggerContainer, staggerItem } from "@/components/copa/animations";
 import { hostCountries, type HostCity } from "@/data/guiaData";
 

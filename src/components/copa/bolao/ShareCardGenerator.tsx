@@ -68,12 +68,7 @@ export const ShareCardGenerator = forwardRef<HTMLDivElement, ShareCardProps>(({ 
         }, 800);
 
         return () => clearTimeout(timer);
-<<<<<<< HEAD
     }, [data, dims.height, dims.width, format, onReady, ref, t, toast, type]);
-=======
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [data, type, format, onReady, ref, dims.width, dims.height]);
->>>>>>> origin/claude/analyze-app-layers-K1iaJ
 
     // We render off-screen with transform scale so it doesn't take space
     return (

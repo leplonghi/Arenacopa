@@ -80,7 +80,6 @@ function formatDate(
 // ── Component ─────────────────────────────────────────────────────────────────
 export default function Noticias() {
   const { user } = useAuth();
-<<<<<<< HEAD
   const { i18n, t } = useTranslation("common");
   const categories: NewsCategory[] = [
     { id: "all", label: t("news_page.categories.all", { defaultValue: "Todos" }), emoji: "📰" },
@@ -91,9 +90,6 @@ export default function Noticias() {
     { id: "travel", label: t("news_page.categories.travel", { defaultValue: "Viagem" }), emoji: "✈️" },
     { id: "tickets", label: t("news_page.categories.tickets", { defaultValue: "Ingressos" }), emoji: "🎟️" },
   ];
-=======
-  useTranslation();
->>>>>>> origin/claude/analyze-app-layers-K1iaJ
 
   // Firestore real-time feed (manually curated / admin-pushed articles)
   const { news: firestoreNews, isLoading: firestoreLoading } = useRealtimeNews({ limitCount: 60 });

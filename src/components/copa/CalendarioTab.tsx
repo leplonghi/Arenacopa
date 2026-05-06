@@ -78,12 +78,7 @@ function CopaCounting() {
 }
 
 export function CalendarioTab() {
-<<<<<<< HEAD
   const { t, i18n } = useTranslation('copa');
-=======
-  const { t } = useTranslation('copa');
-  const { i18n } = useTranslation();
->>>>>>> origin/claude/analyze-app-layers-K1iaJ
   const { data: matchesData = [], isLoading } = useMatches();
 
   // Group matches by date

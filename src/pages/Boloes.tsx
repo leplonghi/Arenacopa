@@ -57,24 +57,6 @@ const fadeUp = {
   }),
 };
 
-<<<<<<< HEAD
-=======
-type PublicBolaoRow = BolaoRow & {
-  leader_score: number;
-};
-
-
-const statusWhitelist = ["open", "active"];
-
-function chunkValues<T>(values: T[], chunkSize: number) {
-  const chunks: T[][] = [];
-  for (let index = 0; index < values.length; index += chunkSize) {
-    chunks.push(values.slice(index, index + chunkSize));
-  }
-  return chunks;
-}
-
->>>>>>> origin/claude/analyze-app-layers-K1iaJ
 export default function Boloes() {
   const { user } = useAuth();
   const { toast } = useToast();
