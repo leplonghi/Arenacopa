@@ -57,7 +57,8 @@ export function useMatches() {
     const { data, isLoading } = useQuery({
         queryKey: ["matches"],
         queryFn: fetchMatches,
-        staleTime: 10 * 60 * 1000, // matches are static for 10 min
+        staleTime: 10 * 60 * 1_000, // matches are static for 10 min
+        gcTime: 30 * 60 * 1_000,    // keep in cache 30 min (tournament data rarely changes)
     });
 
     return { data: data ?? null, isLoading };

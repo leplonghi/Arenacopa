@@ -98,9 +98,12 @@ export default function Boloes() {
     }
   }, [toast, user?.id]);
 
+  // Only fetch when the user enters the traditional view
   useEffect(() => {
-    void loadData();
-  }, [loadData]);
+    if (view === "traditional") {
+      void loadData();
+    }
+  }, [view, loadData]);
 
   const requestItems = useMemo(
     () =>

@@ -70,5 +70,7 @@ export function useProfileStats(userId: string | undefined) {
       }
     },
     enabled: !!userId,
+    staleTime: 5 * 60 * 1_000,  // stats change only after games end
+    gcTime: 10 * 60 * 1_000,
   });
 }

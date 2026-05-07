@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
-import { useEffect, useState } from "react";
+import { memo, useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTranslation } from "react-i18next";
 import { ElitePassModal } from "@/components/ElitePassModal";
@@ -45,16 +45,16 @@ function isCurrentOrUpcomingMatch(matchDate: string) {
 }
 
 /* ─── Zone Label ─── */
-function ZoneLabel({ children }: { children: React.ReactNode }) {
+const ZoneLabel = memo(function ZoneLabel({ children }: { children: React.ReactNode }) {
   return (
     <p className="mb-3 text-[10px] font-black uppercase tracking-[0.22em] text-zinc-600">
       {children}
     </p>
   );
-}
+});
 
 /* ─── Pending CTA Banner ─── */
-function PendingBanner({ count, ctaTo }: { count: number; ctaTo: string }) {
+const PendingBanner = memo(function PendingBanner({ count, ctaTo }: { count: number; ctaTo: string }) {
   const { t } = useTranslation("home");
 
   return (
@@ -76,10 +76,10 @@ function PendingBanner({ count, ctaTo }: { count: number; ctaTo: string }) {
       <ArrowRight className="h-5 w-5 shrink-0 text-primary transition group-hover:translate-x-1" />
     </Link>
   );
-}
+});
 
 /* ─── Join Request Banner ─── */
-function JoinRequestBanner({ count, bolaoId }: { count: number; bolaoId: string | null }) {
+const JoinRequestBanner = memo(function JoinRequestBanner({ count, bolaoId }: { count: number; bolaoId: string | null }) {
   const { t } = useTranslation("home");
 
   return (
@@ -99,10 +99,10 @@ function JoinRequestBanner({ count, bolaoId }: { count: number; bolaoId: string 
       <ChevronRight className="h-4 w-4 shrink-0 text-amber-400" />
     </Link>
   );
-}
+});
 
 /* ─── Quick Stats Row ─── */
-function QuickStats({
+const QuickStats = memo(function QuickStats({
   pending,
   todayCount,
   poolCount,
@@ -143,10 +143,10 @@ function QuickStats({
       ))}
     </div>
   );
-}
+});
 
 /* ─── My Pool Row ─── */
-function MyPoolRow({ bolao }: { bolao: DashboardBolaoSummary }) {
+const MyPoolRow = memo(function MyPoolRow({ bolao }: { bolao: DashboardBolaoSummary }) {
   const { t } = useTranslation("home");
   const hasPending = (bolao.pendingCount ?? 0) > 0;
   return (
@@ -175,7 +175,7 @@ function MyPoolRow({ bolao }: { bolao: DashboardBolaoSummary }) {
       <ChevronRight className="h-4 w-4 shrink-0 text-zinc-700 transition group-hover:text-zinc-400" />
     </Link>
   );
-}
+});
 
 /* ─── Discover Tile ─── */
 function DiscoverTile({

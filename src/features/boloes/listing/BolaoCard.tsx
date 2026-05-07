@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { ChevronRight, Trophy, Lock, Globe, PenLine, Zap, Star, Users, History } from "lucide-react";
@@ -81,7 +82,7 @@ function getBolaoTone(bolao: BolaoListingCard) {
   };
 }
 
-export function BolaoCard({ bolao, variant = "my" }: BolaoCardProps) {
+function BolaoCardInner({ bolao, variant = "my" }: BolaoCardProps) {
   const { t } = useTranslation("bolao");
   const statusCfg = getStatusConfig(bolao.status);
   const isActive = ["active", "open", "published", "live"].includes(bolao.status);
@@ -264,6 +265,9 @@ export function BolaoCard({ bolao, variant = "my" }: BolaoCardProps) {
     </div>
   );
 }
+
+export const BolaoCard = memo(BolaoCardInner);
+BolaoCard.displayName = "BolaoCard";
 
 export function BolaoCardSkeleton() {
   return (

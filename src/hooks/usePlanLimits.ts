@@ -9,14 +9,13 @@
  * Usage:
  *   const { canCreateGrupo, loadingLimits } = usePlanLimits();
  */
-import { useEffect, useState } from "react";
-import {
-  collection, query, where, getCountFromServer,
-} from "firebase/firestore";
+import { useQuery } from "@tanstack/react-query";
+import { collection, query, where, getCountFromServer } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMonetization } from "@/contexts/MonetizationContext";
 import { logger } from "@/lib/logger";
+import { STALE_5M, GC_10M } from "@/lib/query-config";
 
 export const FREE_GRUPO_LIMIT = 1;
 
@@ -35,37 +34,19 @@ export function usePlanLimits(): PlanLimits {
   const { user } = useAuth();
   const { isPremium } = useMonetization();
 
-  const [adminGroupCount, setAdminGroupCount] = useState(0);
-  const [loadingLimits, setLoadingLimits] = useState(true);
-
-  useEffect(() => {
-    if (!user) {
-      setLoadingLimits(false);
-      return;
-    }
-
-    let cancelled = false;
-
-    const check = async () => {
-      setLoadingLimits(true);
-      try {
-        const snap = await getCountFromServer(
-          query(
-            collection(db, "grupos"),
-            where("creator_id", "==", user.id),
-          ),
-        );
-        if (!cancelled) setAdminGroupCount(snap.data().count);
-      } catch (e) {
-        logger.error("[usePlanLimits] Failed to fetch group count", { userId: user.id, error: e });
-      } finally {
-        if (!cancelled) setLoadingLimits(false);
-      }
-    };
-
-    check();
-    return () => { cancelled = true; };
-  }, [user, isPremium]);
+  const { data: adminGroupCount = 0, isLoading: loadingLimits } = useQuery({
+    queryKey: ["plan-limits-group-count", user?.id, isPremium],
+    queryFn: async () => {
+      const snap = await getCountFromServer(
+        query(collection(db, "grupos"), where("creator_id", "==", user!.id))
+      );
+      return snap.data().count;
+    },
+    enabled: !!user,
+    staleTime: STALE_5M,
+    gcTime: GC_10M,
+    meta: { onError: (e: unknown) => logger.error("[usePlanLimits] Failed to fetch group count", { userId: user?.id, error: e }) },
+  });
 
   const canCreateGrupo = isPremium || adminGroupCount < FREE_GRUPO_LIMIT;
   const canCreateBolao = true; // bolões are unlimited in the new free tier
