@@ -107,9 +107,28 @@ export function useBolaoDetail(id: string | undefined) {
     }
   }, [searchParams, navigate, toast]);
 
+  useEffect(() => {
+    const editParam = searchParams.get("edit");
+    if (editParam === "1" || editParam === "true") {
+      setShowEditPanel(true);
+    }
+  }, [searchParams]);
+
   const isCreator = bolao?.creator_id === user?.id;
   const championMarket = bolaoMarkets.find((market) => market.slug === "champion");
-  const matchMarkets = bolaoMarkets.filter((market) => market.scope === "match");
+  const allowedMatchIdSet = useMemo(
+    () => (Array.isArray(bolao?.allowed_match_ids) ? new Set(bolao.allowed_match_ids) : null),
+    [bolao?.allowed_match_ids]
+  );
+  const matchMarkets = useMemo(
+    () =>
+      bolaoMarkets.filter((market) => {
+        if (market.scope !== "match") return false;
+        if (!allowedMatchIdSet) return true;
+        return Boolean(market.match_id && allowedMatchIdSet.has(market.match_id));
+      }),
+    [allowedMatchIdSet, bolaoMarkets]
+  );
   const phaseMarkets = bolaoMarkets.filter((market) => market.scope === "phase");
   const specialMarkets = bolaoMarkets.filter((market) => market.scope === "special");
   const tournamentMarkets = bolaoMarkets.filter((market) => market.scope === "tournament");
@@ -341,18 +360,21 @@ export function useBolaoDetail(id: string | undefined) {
         return !["left", "removed", "withdrawn_by_owner"].includes(status);
       });
 
-      const profileIds = Array.from(new Set(activeMemberDocs.map(doc => doc.data().user_id)));
+      const profileIds = Array.from(new Set(activeMemberDocs.map(doc => String(doc.data().user_id))));
       const publicProfiles = await getPublicProfilesByIds(profileIds);
-      const profilesMap: Record<string, any> = {};
+      const profilesMap: Record<string, { name: string | null; avatar_url: string | null }> = {};
       publicProfiles.forEach((profile, profileId) => {
         profilesMap[profileId] = { name: profile.name ?? null, avatar_url: profile.avatar_url ?? null };
       });
 
-      const membersList = activeMemberDocs.map(doc => ({
-        id: doc.id,
-        ...doc.data(),
-        profile: profilesMap[doc.data().user_id] || null
-      })) as MemberData[];
+      const membersList = activeMemberDocs.map((memberDoc) => {
+        const member = memberDoc.data() as MemberData;
+        return {
+          id: memberDoc.id,
+          ...member,
+          profile: profilesMap[member.user_id] || null
+        } as MemberData;
+      });
 
       setMembers(membersList);
       setMemberCount(membersList.length);
@@ -405,7 +427,7 @@ export function useBolaoDetail(id: string | undefined) {
         setOnboardingState(null);
         setShowBolaoIntro(true);
       } else {
-        const data = snapshot.data() as any;
+        const data = snapshot.data() as Omit<BolaoOnboardingState, "id">;
         setOnboardingState({ id: snapshot.id, ...data });
         setShowBolaoIntro(!data.seen_intro);
       }

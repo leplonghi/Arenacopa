@@ -92,8 +92,6 @@ export function CreateBolaoQuickStep({ flow }: { flow: Flow }) {
     return isMatch;
   });
 
-  const hasSelectedPreset = Boolean(selectedPreset);
-
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 text-white">
       <CreateBolaoStepRail activeStep={1} />
@@ -128,75 +126,68 @@ export function CreateBolaoQuickStep({ flow }: { flow: Flow }) {
           Para quem é o bolão?
         </p>
 
-        {hasSelectedPreset && selectedPreset ? (
-          <div className={cn("mt-3 rounded-[24px] border p-4", tone.border, tone.bg)}>
-            <div className="flex items-center gap-3">
-              <selectedPreset.icon className={cn("h-5 w-5 shrink-0", tone.text)} />
-              <div>
-                <p className="text-sm font-black text-white">{selectedPreset.title}</p>
-                <p className="text-xs text-zinc-400">{selectedPreset.description}</p>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <div className="mt-3 grid gap-3 md:grid-cols-3">
-            {socialPresets.map((preset) => {
-              const selected =
-                flow.state.selectedTypeId === preset.id &&
-                flow.state.socialAudience === preset.audience &&
-                ((preset.accessMode === "public" && flow.state.accessMode === "public") ||
-                  (preset.accessMode !== "public" && flow.state.accessMode !== "public"));
+        <div className="mt-3 grid gap-3 md:grid-cols-3">
+          {socialPresets.map((preset) => {
+            const selected =
+              flow.state.selectedTypeId === preset.id &&
+              flow.state.socialAudience === preset.audience &&
+              ((preset.accessMode === "public" && flow.state.accessMode === "public") ||
+                (preset.accessMode !== "public" && flow.state.accessMode !== "public"));
 
-              const Icon = preset.icon;
+            const Icon = preset.icon;
 
-              return (
-                <button
-                  key={`${preset.title}-${preset.accessMode}`}
-                  type="button"
-                  aria-label={`Para quem: ${preset.title}`}
-                  onClick={() => applySocialPreset(preset)}
-                  className={cn(
-                    "min-w-0 rounded-[24px] border p-4 text-left transition",
-                    selected
-                      ? cn(tone.border, tone.bg, tone.shadow, "ring-1", tone.ring)
-                      : "border-white/10 bg-white/[0.04] hover:border-white/20 hover:bg-white/[0.06]",
-                  )}
-                >
-                  <div className="flex min-w-0 items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <div className="flex min-w-0 items-center gap-2">
-                        <Icon className={cn("h-5 w-5 shrink-0", selected ? tone.text : "text-primary")} />
-                        <p className="break-words text-sm font-black leading-tight text-white [overflow-wrap:anywhere]">
-                          {preset.title}
-                        </p>
-                      </div>
-                      <p className="mt-2 text-sm leading-6 text-zinc-400">{preset.description}</p>
+            return (
+              <button
+                key={`${preset.title}-${preset.accessMode}`}
+                type="button"
+                aria-label={`Para quem: ${preset.title}`}
+                onClick={() => applySocialPreset(preset)}
+                className={cn(
+                  "min-w-0 rounded-[24px] border p-4 text-left transition",
+                  selected
+                    ? cn(tone.border, tone.bg, tone.shadow, "ring-1", tone.ring)
+                    : "border-white/10 bg-white/[0.04] hover:border-white/20 hover:bg-white/[0.06]",
+                )}
+              >
+                <div className="flex min-w-0 items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <div className="flex min-w-0 items-center gap-2">
+                      <Icon className={cn("h-5 w-5 shrink-0", selected ? tone.text : "text-primary")} />
+                      <p className="break-words text-sm font-black leading-tight text-white [overflow-wrap:anywhere]">
+                        {preset.title}
+                      </p>
                     </div>
-                    {preset.accessMode === "public" ? (
-                      <Globe2 className={cn("h-5 w-5 shrink-0", selected ? tone.text : "text-primary")} />
-                    ) : (
-                      <Lock className={cn("h-5 w-5 shrink-0", selected ? tone.text : "text-primary")} />
-                    )}
+                    <p className="mt-2 text-sm leading-6 text-zinc-400">{preset.description}</p>
                   </div>
-                  <div className="mt-4 grid gap-2 text-xs text-zinc-300">
-                    <span className="min-w-0 rounded-[14px] border border-white/10 bg-black/20 px-3 py-2">
-                      <strong className="block break-words text-[10px] uppercase leading-tight tracking-[0.12em] text-zinc-500">
-                        Entrada
-                      </strong>
-                      {preset.entrance}
-                    </span>
-                    <span className="min-w-0 rounded-[14px] border border-white/10 bg-black/20 px-3 py-2">
-                      <strong className="block break-words text-[10px] uppercase leading-tight tracking-[0.12em] text-zinc-500">
-                        Uso ideal
-                      </strong>
-                      {preset.whenToUse}
-                    </span>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        )}
+                  {preset.accessMode === "public" ? (
+                    <Globe2 className={cn("h-5 w-5 shrink-0", selected ? tone.text : "text-primary")} />
+                  ) : (
+                    <Lock className={cn("h-5 w-5 shrink-0", selected ? tone.text : "text-primary")} />
+                  )}
+                </div>
+                <div className="mt-4 grid gap-2 text-xs text-zinc-300">
+                  <span className="min-w-0 rounded-[14px] border border-white/10 bg-black/20 px-3 py-2">
+                    <strong className="block break-words text-[10px] uppercase leading-tight tracking-[0.12em] text-zinc-500">
+                      Entrada
+                    </strong>
+                    {preset.entrance}
+                  </span>
+                  <span className="min-w-0 rounded-[14px] border border-white/10 bg-black/20 px-3 py-2">
+                    <strong className="block break-words text-[10px] uppercase leading-tight tracking-[0.12em] text-zinc-500">
+                      Uso ideal
+                    </strong>
+                    {preset.whenToUse}
+                  </span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+        {selectedPreset ? (
+          <p className="mt-3 text-xs leading-5 text-zinc-500">
+            Selecionado: <span className={cn("font-black", tone.text)}>{selectedPreset.title}</span>. Você ainda pode trocar antes de avançar.
+          </p>
+        ) : null}
       </div>
 
       <div className="mt-7 grid gap-3 rounded-[28px] border border-white/10 bg-white/[0.03] p-5 md:grid-cols-[1fr_1.15fr]">

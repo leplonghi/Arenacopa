@@ -9,8 +9,8 @@ import { type BolaoData } from "@/types/bolao";
 import { QRCodeSVG } from "qrcode.react";
 import { ShareCardGenerator } from "./ShareCardGenerator";
 import { openWhatsAppShare } from "@/lib/security";
-import {
 import { tStatic } from "@/i18n/staticText";
+import {
     buildBolaoInviteUrl,
     buildBolaoWhatsAppMessage,
     buildQrPosterFileName,
@@ -220,4 +220,3 @@ export function ShareSheet({ open, onClose, bolao }: ShareSheetProps) {
         </AnimatePresence>
     );
 }
-

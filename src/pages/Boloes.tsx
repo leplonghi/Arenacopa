@@ -31,7 +31,7 @@ import { tStatic } from "@/i18n/staticText";
 const QUICK_ACTIONS = [
   {
     id: "explore",
-    to: "/descobrir/boloes",
+    to: "/descobrir",
     icon: Compass,
     label: "Explorar",
     description: "Públicos e abertos",
@@ -48,6 +48,7 @@ const QUICK_ACTIONS = [
 ] as const;
 
 type BoloesView = "hub" | "traditional";
+type BolaoTab = "meus" | "passados" | "descobrir" | "entradas";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 14 },
@@ -69,7 +70,7 @@ export default function Boloes() {
   const [discoverBoloes, setDiscoverBoloes] = useState<BolaoListingCard[]>([]);
   const [joinCode, setJoinCode] = useState("");
   const [joining, setJoining] = useState(false);
-  const [activeTab, setActiveTab] = useState<"meus" | "descobrir" | "entradas">("meus");
+  const [activeTab, setActiveTab] = useState<BolaoTab>("meus");
 
   const loadData = useCallback(async () => {
     if (!user?.id) {
@@ -154,7 +155,15 @@ export default function Boloes() {
     }
   };
 
-  const activeCount = myBoloes.filter((b) =>
+  const currentBoloes = useMemo(
+    () => myBoloes.filter((bolao) => !bolao.is_past),
+    [myBoloes],
+  );
+  const pastBoloes = useMemo(
+    () => myBoloes.filter((bolao) => bolao.is_past),
+    [myBoloes],
+  );
+  const activeCount = currentBoloes.filter((b) =>
     ["active", "open", "published", "live"].includes(b.status),
   ).length;
 
@@ -218,31 +227,32 @@ export default function Boloes() {
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex items-start justify-between gap-3"
+        className="text-center"
       >
-        <div className="min-w-0">
-          <button
-            onClick={() => setView("hub")}
-            className="text-[10px] font-black uppercase tracking-[0.22em] text-primary hover:underline"
-          >
-            ← Bolões
-          </button>
-          <h1 className="mt-0.5 font-display text-xl font-black uppercase leading-none text-white">
-            {myBoloes.length > 0 ? "Sua mesa" : "Comece a jogar"}
-          </h1>
-        </div>
+        <button
+          onClick={() => setView("hub")}
+          className="text-[10px] font-black uppercase tracking-[0.22em] text-primary hover:underline"
+        >
+          ← Bolões
+        </button>
+        <h1 className="mt-0.5 font-display text-xl font-black uppercase leading-none text-white">
+          {myBoloes.length > 0 ? "Sua mesa" : "Comece a jogar"}
+        </h1>
+      </motion.div>
+
+      <motion.div custom={0} variants={fadeUp} initial="hidden" animate="visible" className="flex justify-center">
         <Link
           to="/boloes/criar"
-          className="flex shrink-0 items-center gap-1.5 rounded-[14px] border border-primary/35 bg-primary/10 px-3.5 py-2 text-xs font-black text-primary transition hover:bg-primary/15"
+          className="inline-flex min-h-12 w-full max-w-[260px] items-center justify-center gap-2 rounded-[18px] border border-primary/45 bg-primary px-6 text-[12px] font-black uppercase tracking-[0.14em] text-black shadow-[0_0_26px_rgba(145,255,59,0.28)] transition hover:-translate-y-0.5 hover:brightness-110 active:translate-y-0"
         >
-          <Plus className="h-3.5 w-3.5" />
-          Criar
+          <Plus className="h-4 w-4" />
+          Criar bolão
         </Link>
       </motion.div>
 
       {/* Métricas + Quick nav em linha */}
       <motion.div
-        custom={0}
+        custom={1}
         variants={fadeUp}
         initial="hidden"
         animate="visible"
@@ -274,7 +284,7 @@ export default function Boloes() {
 
       {/* Entrar por código - inline compacto */}
       <motion.div
-        custom={1}
+        custom={2}
         variants={fadeUp}
         initial="hidden"
         animate="visible"
@@ -298,10 +308,11 @@ export default function Boloes() {
       </motion.div>
 
       {/* Tabs de conteúdo principal */}
-      <motion.div custom={2} variants={fadeUp} initial="hidden" animate="visible">
+      <motion.div custom={3} variants={fadeUp} initial="hidden" animate="visible">
         <div className="flex gap-1 rounded-[14px] border border-white/8 bg-white/[0.03] p-1">
           {[
-            { key: "meus" as const, label: `Meus (${myBoloes.length})` },
+            { key: "meus" as const, label: `Atuais (${currentBoloes.length})` },
+            { key: "passados" as const, label: `Passados (${pastBoloes.length})` },
             { key: "descobrir" as const, label: `Abertos (${discoverBoloes.length})` },
             { key: "entradas" as const, label: `Entradas (${pendingRequests.length})` },
           ].map((tab) => (
@@ -336,17 +347,49 @@ export default function Boloes() {
                   <BolaoCardSkeleton key={i} />
                 ))}
               </div>
-            ) : myBoloes.length === 0 ? (
+            ) : currentBoloes.length === 0 ? (
               <EmptyState
                 icon="⚽"
-                title="Nenhum bolão ainda"
-                description="Crie o seu ou entre por código."
+                title={myBoloes.length === 0 ? "Nenhum bolão ainda" : "Nenhum bolão atual"}
+                description={myBoloes.length === 0 ? "Crie o seu ou entre por código." : "Bolões com jogos encerrados ficam na aba Passados."}
                 className="rounded-[20px] border border-dashed border-white/10 bg-white/[0.03] py-8"
                 glowColor="green"
               />
             ) : (
               <div className="grid gap-3 md:grid-cols-2">
-                {myBoloes.map((bolao) => (
+                {currentBoloes.map((bolao) => (
+                  <BolaoCard key={bolao.id} bolao={bolao} variant="my" />
+                ))}
+              </div>
+            )}
+          </motion.div>
+        )}
+
+        {activeTab === "passados" && (
+          <motion.div
+            key="passados"
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.2 }}
+          >
+            {loading ? (
+              <div className="grid gap-3 md:grid-cols-2">
+                {Array.from({ length: 2 }).map((_, i) => (
+                  <BolaoCardSkeleton key={i} />
+                ))}
+              </div>
+            ) : pastBoloes.length === 0 ? (
+              <EmptyState
+                icon="🏁"
+                title="Nenhum bolão passado"
+                description="Quando todos os jogos escolhidos encerrarem, eles aparecem aqui."
+                className="rounded-[20px] border border-dashed border-white/10 bg-white/[0.03] py-8"
+                glowColor="gold"
+              />
+            ) : (
+              <div className="grid gap-3 md:grid-cols-2">
+                {pastBoloes.map((bolao) => (
                   <BolaoCard key={bolao.id} bolao={bolao} variant="my" />
                 ))}
               </div>

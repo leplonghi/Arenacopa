@@ -10,6 +10,7 @@ import type { MemberData, Palpite } from "@/types/bolao";
 import { leaveBolao, updatePoolMemberPaymentStatus } from "@/services/boloes/bolao-config.service";
 import { postAuthedFunction } from "@/services/backend/functions-http";
 import { mapFirebaseError } from "@/services/errors/AppError";
+import { assertMatchPredictionOpen } from "@/services/boloes/bolao-prediction-deadline";
 
 export function buildBolaoPalpiteId(input: {
   userId: string;
@@ -37,6 +38,24 @@ export async function saveBolaoPalpite(input: {
   existingId?: string;
 }) {
   try {
+    const [bolaoDoc, matchDoc] = await Promise.all([
+      getDoc(doc(db, "boloes", input.bolaoId)),
+      getDoc(doc(db, "matches", input.matchId)),
+    ]);
+    const bolaoData = typeof bolaoDoc.exists === "function" && bolaoDoc.exists() ? bolaoDoc.data() : null;
+    const matchData = typeof matchDoc.exists === "function" && matchDoc.exists() ? matchDoc.data() : null;
+
+    if (matchData) {
+      assertMatchPredictionOpen({
+        matchDate: matchData.match_date,
+        matchStatus: matchData.status,
+        cutoffMinutes:
+          bolaoData?.competition_rules?.prediction_cutoff_minutes ??
+          bolaoData?.prediction_cutoff_minutes ??
+          0,
+      });
+    }
+
     // We can use a deterministic ID: userId_bolaoId_matchId to avoid duplicates
     const palpiteId = input.existingId || buildBolaoPalpiteId(input);
     const docRef = doc(db, "bolao_palpites", palpiteId);

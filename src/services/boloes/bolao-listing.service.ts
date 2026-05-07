@@ -8,8 +8,11 @@ export type BolaoListingCard = {
   avatar_url: string | null;
   category: "public" | "private";
   is_paid: boolean;
+  is_creator?: boolean;
   status: string;
   member_count: number;
+  is_past?: boolean;
+  latest_match_closes_at?: string | null;
 };
 
 export type BolaoListingRequestCard = {

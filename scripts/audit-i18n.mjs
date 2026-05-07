@@ -38,6 +38,17 @@ function flattenKeys(value, prefix = "") {
   });
 }
 
+function flattenEntries(value, prefix = "") {
+  if (value === null || typeof value !== "object" || Array.isArray(value)) {
+    return prefix ? [[prefix, value]] : [];
+  }
+
+  return Object.entries(value).flatMap(([key, child]) => {
+    const next = prefix ? `${prefix}.${key}` : key;
+    return flattenEntries(child, next);
+  });
+}
+
 function loadJson(filePath) {
   return JSON.parse(fs.readFileSync(filePath, "utf8"));
 }
@@ -254,9 +265,37 @@ function getHardcodedTextSuspects() {
   return suspects;
 }
 
+function getForbiddenPtBrLocaleValues() {
+  const forbiddenValues = new Set([
+    "General",
+    "Participation",
+    "Rules",
+    "Finance",
+    "Editable",
+    "Locked",
+    "Processing",
+  ]);
+  const leaks = [];
+
+  for (const namespace of namespaces) {
+    const localeFile = path.join(localesDir, referenceLocale, `${namespace}.json`);
+    for (const [key, value] of flattenEntries(loadJson(localeFile))) {
+      if (typeof value !== "string") continue;
+      if (!forbiddenValues.has(value.trim())) continue;
+      leaks.push({
+        key: `${namespace}.${key}`,
+        value,
+      });
+    }
+  }
+
+  return leaks;
+}
+
 const missingLocaleKeys = getMissingLocaleKeys();
 const missingCodeKeys = getMissingCodeKeys();
 const hardcodedTextSuspects = getHardcodedTextSuspects();
+const forbiddenPtBrLocaleValues = getForbiddenPtBrLocaleValues();
 
 console.log("=== Missing locale keys ===");
 for (const locale of supportedLocales) {
@@ -291,7 +330,23 @@ if (!hardcodedTextSuspects.length) {
   console.log(`Total suspects: ${hardcodedTextSuspects.length}`);
 }
 
+console.log("");
+console.log("=== pt-BR locale English UI leaks ===");
+if (!forbiddenPtBrLocaleValues.length) {
+  console.log("No blocked English UI values found in pt-BR locales.");
+} else {
+  forbiddenPtBrLocaleValues.forEach((item) => {
+    console.log(`${item.key} -> ${item.value}`);
+  });
+  console.log(`Total pt-BR English UI leaks: ${forbiddenPtBrLocaleValues.length}`);
+}
+
 const hasMissingLocaleKeys = Object.values(missingLocaleKeys).some((items) => items.length > 0);
-if (hasMissingLocaleKeys || missingCodeKeys.length > 0 || hardcodedTextSuspects.length > 0) {
+if (
+  hasMissingLocaleKeys ||
+  missingCodeKeys.length > 0 ||
+  hardcodedTextSuspects.length > 0 ||
+  forbiddenPtBrLocaleValues.length > 0
+) {
   process.exitCode = 1;
 }

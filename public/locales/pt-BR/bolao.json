@@ -1245,15 +1245,15 @@
       }
     },
     "tabs": {
-      "general": "General",
-      "participation": "Participation",
-      "rules": "Rules",
-      "finance": "Finance"
+      "general": "Geral",
+      "participation": "Participação",
+      "rules": "Regras",
+      "finance": "Financeiro"
     },
     "card": {
-      "editable": "Editable",
-      "locked": "Locked",
-      "processing": "Processing"
+      "editable": "Editável",
+      "locked": "Travado",
+      "processing": "Processando…"
     },
     "participation": {
       "action_duplicate": "Duplicar para ajustar participação"

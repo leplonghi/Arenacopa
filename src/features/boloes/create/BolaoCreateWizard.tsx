@@ -6,7 +6,6 @@ import { CreateBolaoRulesStep } from "@/features/boloes/create/CreateBolaoRulesS
 import { CreateBolaoAdmissionStep } from "@/features/boloes/create/CreateBolaoAdmissionStep";
 import { CreateBolaoQuickStep } from "@/features/boloes/create/CreateBolaoQuickStep";
 import { CreateBolaoReviewStep } from "@/features/boloes/create/CreateBolaoReviewStep";
-import { CreateBolaoModeStep } from "@/features/boloes/create/CreateBolaoModeStep";
 import { useBolaoCreateFlow } from "@/features/boloes/create/useBolaoCreateFlow";
 import { trackSocialEvent } from "@/lib/analytics/social.telemetry";
 
@@ -42,23 +41,6 @@ export function BolaoCreateWizard() {
       });
     }
   }, []);
-
-  // ── Step 0: mode selection ────────────────────────────────────────────────
-  if (flow.step === "mode") {
-    return (
-      <CreateBolaoModeStep
-        onSelect={(mode) => {
-          // Business mode → dedicated campaign wizard (separate route)
-          // Traditional mode → continue into quick step
-          if (mode === "personal") {
-            flow.setState((s) => ({ ...s, audienceMode: "personal" }));
-            flow.setStep("quick");
-          }
-          // business path is handled internally by CreateBolaoModeStep (navigate to /negocios/criar)
-        }}
-      />
-    );
-  }
 
   if (flow.step === "quick") {
     return <CreateBolaoQuickStep flow={flow} />;

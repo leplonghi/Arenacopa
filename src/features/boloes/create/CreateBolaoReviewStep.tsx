@@ -72,6 +72,7 @@ export function CreateBolaoReviewStep({ flow }: { flow: Flow }) {
         format: flow.state.formatId,
         scoring_mode: flow.state.scoringMode,
         markets: flow.state.selectedMarketIds,
+        prediction_cutoff_minutes: flow.state.predictionCutoffMinutes,
         scoring_rules: flow.state.scoringRules,
       },
       finance_rules: {
@@ -106,6 +107,8 @@ export function CreateBolaoReviewStep({ flow }: { flow: Flow }) {
       payload: {
         bolao_id: flow.draftId,
         expected_config_version: flow.draftConfigVersion || 1,
+        championship_id: championship.id,
+        allowed_match_ids: flow.state.allowedMatchIds,
         patch: configurationPatch,
       },
     });
@@ -175,13 +178,14 @@ export function CreateBolaoReviewStep({ flow }: { flow: Flow }) {
               format: flow.state.formatId,
               scoring_mode: flow.state.scoringMode,
               markets: flow.state.selectedMarketIds,
+              prediction_cutoff_minutes: flow.state.predictionCutoffMinutes,
               scoring_rules: flow.state.scoringRules,
             },
             finance_rules: {
-              finance_mode: "free",
-              entry_fee_amount: null,
+              finance_mode: flow.state.financeMode,
+              entry_fee_amount: typeof flow.state.entryFee === "number" ? flow.state.entryFee : null,
               distribution_custom_text: flow.state.prizeDistribution.trim(),
-              payment_details: "",
+              payment_details: flow.state.paymentDetails.trim(),
             },
             presentation: {
               name: flow.state.name.trim(),
@@ -252,6 +256,7 @@ export function CreateBolaoReviewStep({ flow }: { flow: Flow }) {
           format: flow.state.formatId,
           scoring_mode: flow.state.scoringMode,
           markets: flow.state.selectedMarketIds,
+          prediction_cutoff_minutes: flow.state.predictionCutoffMinutes,
           scoring_rules: flow.state.scoringRules,
         },
         finance_rules: {
@@ -276,6 +281,8 @@ export function CreateBolaoReviewStep({ flow }: { flow: Flow }) {
               payload: {
                 bolao_id: flow.draftId,
                 expected_config_version: flow.draftConfigVersion,
+                championship_id: championship.id,
+                allowed_match_ids: flow.state.allowedMatchIds,
                 patch: {
                   context: basePayload.context,
                   access_policy: basePayload.access_policy,

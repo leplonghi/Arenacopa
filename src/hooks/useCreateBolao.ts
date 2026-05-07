@@ -7,6 +7,7 @@ import {
   getDoc,
   doc,
   query,
+  where,
   writeBatch,
 } from "firebase/firestore";
 import { Haptics, ImpactStyle } from "@capacitor/haptics";
@@ -76,6 +77,7 @@ export function useCreateBolao() {
       const inviteCodeVal = generateInviteCodeFromBolaoId(bolaoDoc.id);
       
       phase = "data_setup";
+      const allowedMatchIds = params.allowedMatchIds ?? (params.matchId ? [params.matchId] : "all");
       const insertData = {
         name: params.name.trim(),
         description: params.description.trim() || null,
@@ -95,7 +97,7 @@ export function useCreateBolao() {
         avatar_url: params.emoji,
         grupo_id: params.grupoId ?? null,
         championship_id: params.championshipId ?? null,
-        allowed_match_ids: params.allowedMatchIds ?? "all",
+        allowed_match_ids: allowedMatchIds,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       };
@@ -113,8 +115,15 @@ export function useCreateBolao() {
         if (!matchDoc.exists()) throw new Error("Jogo não encontrado.");
         matchRows = [{ id: matchDoc.id, ...(matchDoc.data() as { match_date: string; stage?: string | null; group_id?: string | null; home_team_code?: string | null; away_team_code?: string | null }) }];
       } else {
+        const matchesQuery = params.championshipId
+          ? query(
+              collection(db, "matches"),
+              where("championship_id", "==", params.championshipId),
+              orderBy("match_date", "asc")
+            )
+          : query(collection(db, "matches"), orderBy("match_date", "asc"));
         const matchesSnapshot = await getDocs(
-          query(collection(db, "matches"), orderBy("match_date", "asc"))
+          matchesQuery
         );
         matchRows = matchesSnapshot.docs.map((d) => ({
           id: d.id,
@@ -139,7 +148,7 @@ export function useCreateBolao() {
       phase = "batch_markets";
       const markets = buildBolaoMarkets({
         bolaoId: bolaoDoc.id, formatId: params.formatId,
-        selectedMarketIds: params.selectedMarketIds, matches: matchRows,
+        selectedMarketIds: params.selectedMarketIds, allowedMatchIds, matches: matchRows,
       });
       markets.forEach((m) => batch.set(doc(db, "bolao_markets", m.id), m));
 

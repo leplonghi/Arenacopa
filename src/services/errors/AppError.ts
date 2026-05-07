@@ -19,6 +19,7 @@ export type AppErrorCode =
   | "BOLAO_UPDATE_PAYMENT_FAILED"
   | "BOLAO_PREDICTION_SAVE_FAILED"
   | "BOLAO_PREDICTION_INVALID_INPUT"
+  | "BOLAO_PREDICTION_CLOSED"
   // Profile
   | "PROFILE_FETCH_FAILED"
   | "PROFILE_UPDATE_FAILED"
@@ -85,6 +86,7 @@ const FIREBASE_ERROR_MESSAGES: Record<AppErrorCode, string> = {
   BOLAO_UPDATE_PAYMENT_FAILED: "Não foi possível atualizar o status de pagamento.",
   BOLAO_PREDICTION_SAVE_FAILED: "Não foi possível salvar sua previsão.",
   BOLAO_PREDICTION_INVALID_INPUT: "Dados de previsão inválidos.",
+  BOLAO_PREDICTION_CLOSED: "Os palpites deste jogo já foram encerrados.",
   PROFILE_FETCH_FAILED: "Não foi possível carregar o perfil.",
   PROFILE_UPDATE_FAILED: "Não foi possível atualizar o perfil.",
   PROFILE_UPLOAD_AVATAR_FAILED: "Não foi possível enviar a imagem.",

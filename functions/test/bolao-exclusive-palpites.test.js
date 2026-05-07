@@ -6,6 +6,7 @@ const {
   buildExclusiveScoreLockId,
   normalizeExclusiveScoreInput,
   assertExclusiveScoreAvailable,
+  assertMatchPredictionOpen,
   resolveExistingPalpiteCandidate,
 } = require("../bolao-exclusive/palpites");
 
@@ -92,4 +93,40 @@ test("resolveExistingPalpiteCandidate prefers owned current documents over empty
 
   assert.equal(resolved.id, canonicalId);
   assert.deepEqual(resolved.previousScore, { homeScore: 1, awayScore: 0 });
+});
+
+test("assertMatchPredictionOpen rejects finished matches and expired tolerance", () => {
+  const bolaoData = {
+    competition_rules: {
+      prediction_cutoff_minutes: 15,
+    },
+  };
+
+  assert.throws(
+    () =>
+      assertMatchPredictionOpen({
+        bolaoData,
+        matchData: { status: "finished", match_date: "2026-06-10T20:00:00.000Z" },
+        nowIso: "2026-06-10T20:05:00.000Z",
+      }),
+    /match_finished/
+  );
+
+  assert.throws(
+    () =>
+      assertMatchPredictionOpen({
+        bolaoData,
+        matchData: { status: "live", match_date: "2026-06-10T20:00:00.000Z" },
+        nowIso: "2026-06-10T20:16:00.000Z",
+      }),
+    /prediction_closed/
+  );
+
+  assert.doesNotThrow(() =>
+    assertMatchPredictionOpen({
+      bolaoData,
+      matchData: { status: "live", match_date: "2026-06-10T20:00:00.000Z" },
+      nowIso: "2026-06-10T20:10:00.000Z",
+    })
+  );
 });

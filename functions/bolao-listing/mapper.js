@@ -9,7 +9,11 @@ function isVisibleBolao(data = {}) {
   return !["deleted", "archived"].includes(lifecycleStatus) && status !== "deleted";
 }
 
-function toBolaoCard(id, data = {}, fallbackCategory = "private") {
+function toBolaoCard(id, data = {}, fallbackCategory = "private", actorId = null, marketMeta = {}) {
+  const lifecycleStatus = String(data.lifecycle?.status || "");
+  const status = String(data.status || "open");
+  const isPast = Boolean(marketMeta.is_past) || lifecycleStatus === "finished" || status === "finished";
+
   return {
     id,
     name: String(data.name || data.presentation?.name || "Bolão"),
@@ -18,12 +22,22 @@ function toBolaoCard(id, data = {}, fallbackCategory = "private") {
     avatar_url: data.avatar_url || data.presentation?.emoji || null,
     category: data.category || fallbackCategory,
     is_paid: Boolean(data.is_paid || data.finance_rules?.finance_mode === "paid_external"),
-    status: String(data.status || "open"),
+    is_creator: Boolean(actorId && data.creator_id === actorId),
+    status,
     member_count: Number(data.member_count || 1),
+    is_past: isPast,
+    latest_match_closes_at: marketMeta.latest_match_closes_at || null,
   };
 }
 
-function buildUserBolaoListing({ memberships = [], requests = [], boloesById = {}, publicBoloes = [] }) {
+function buildUserBolaoListing({
+  memberships = [],
+  requests = [],
+  boloesById = {},
+  publicBoloes = [],
+  actorId = null,
+  marketMetaByBolaoId = {},
+}) {
   const memberBolaoIds = Array.from(
     new Set(
       memberships
@@ -39,7 +53,9 @@ function buildUserBolaoListing({ memberships = [], requests = [], boloesById = {
   const myBoloes = memberBolaoIds
     .map((bolaoId) => {
       const data = boloesById[bolaoId];
-      return data && isVisibleBolao(data) ? toBolaoCard(bolaoId, data) : null;
+      return data && isVisibleBolao(data)
+        ? toBolaoCard(bolaoId, data, "private", actorId, marketMetaByBolaoId[bolaoId])
+        : null;
     })
     .filter(Boolean)
     .sort((left, right) => right.id.localeCompare(left.id));
@@ -66,7 +82,8 @@ function buildUserBolaoListing({ memberships = [], requests = [], boloesById = {
   const discoverBoloes = publicBoloes
     .filter((bolao) => bolao?.id && !memberBolaoSet.has(bolao.id))
     .filter((bolao) => isVisibleBolao(bolao))
-    .map((bolao) => toBolaoCard(bolao.id, bolao, "public"))
+    .map((bolao) => toBolaoCard(bolao.id, bolao, "public", actorId, marketMetaByBolaoId[bolao.id]))
+    .filter((bolao) => !bolao.is_past)
     .slice(0, 12);
 
   return {

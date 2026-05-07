@@ -114,6 +114,7 @@ export interface BolaoMarket {
     is_required: boolean;
     opens_at?: string | null;
     closes_at?: string | null;
+    closes_at_ts?: unknown;
     status: BolaoMarketStatus;
     points_exact: number;
     points_partial: number;
@@ -197,6 +198,7 @@ export interface BolaoData {
     status: 'draft' | 'open' | 'active' | 'finished' | 'deleted';
     format_id?: BolaoFormatSlug;
     scoring_mode?: "default" | "custom" | "exclusive";
+    prediction_cutoff_minutes?: number;
     grupo_id?: string | null;
     visibility_mode?: "hidden_until_deadline" | "visible_after_save" | "always_hidden";
     cutoff_mode?: "per_match" | "per_phase" | "manual";

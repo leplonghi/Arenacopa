@@ -41,6 +41,21 @@ service cloud.firestore {
       return get(/databases/$(database)/documents/boloes/$(bolaoId)).data;
     }
 
+    function isOpenBolaoMarket(marketId) {
+      let marketPath = /databases/$(database)/documents/bolao_markets/$(marketId);
+      return exists(marketPath) &&
+        get(marketPath).data.status == "open" &&
+        (
+          get(marketPath).data.scope != "match" ||
+          ("closes_at_ts" in get(marketPath).data && get(marketPath).data.closes_at_ts > request.time)
+        );
+    }
+
+    function isOpenBolaoMatch(bolaoId, matchId) {
+      return isOpenBolaoMarket(bolaoId + "_exact_score_" + matchId) ||
+        isOpenBolaoMarket(bolaoId + "_match_winner_" + matchId);
+    }
+
     function canSelfJoinBolao(bolaoId) {
       let bolao = getBolao(bolaoId);
       return bolao.status in ['open', 'active'] && (
@@ -301,11 +316,13 @@ service cloud.firestore {
       allow create: if isSignedIn() &&
         isOwner(request.resource.data.user_id) &&
         isBolaoMember(request.resource.data.bolao_id) &&
+        isOpenBolaoMatch(request.resource.data.bolao_id, request.resource.data.match_id) &&
         request.resource.data.points == null &&
         request.resource.data.user_id == request.auth.uid;
       allow update: if isSignedIn() &&
         isOwner(resource.data.user_id) &&
         resource.data.points == null &&
+        isOpenBolaoMatch(resource.data.bolao_id, resource.data.match_id) &&
         request.resource.data.user_id == resource.data.user_id &&
         request.resource.data.bolao_id == resource.data.bolao_id &&
         request.resource.data.match_id == resource.data.match_id &&
@@ -331,12 +348,14 @@ service cloud.firestore {
       allow create: if isSignedIn() &&
         isOwner(request.resource.data.user_id) &&
         isBolaoMember(request.resource.data.bolao_id) &&
+        isOpenBolaoMarket(request.resource.data.market_id) &&
         request.resource.data.user_id == request.auth.uid &&
         request.resource.data.points_awarded == null &&
         request.resource.data.resolved == false;
       allow update: if isSignedIn() &&
         isOwner(resource.data.user_id) &&
         resource.data.resolved == false &&
+        isOpenBolaoMarket(resource.data.market_id) &&
         request.resource.data.user_id == resource.data.user_id &&
         request.resource.data.bolao_id == resource.data.bolao_id &&
         request.resource.data.market_id == resource.data.market_id &&

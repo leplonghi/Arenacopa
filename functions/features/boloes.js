@@ -90,6 +90,8 @@ exports.updateBolaoConfiguration = createHttpFunction(async ({ actorId, payload,
         actorId,
         expectedConfigVersion: Number(payload.expected_config_version),
         patch: payload.patch || {},
+        championshipId: Object.prototype.hasOwnProperty.call(payload, "championship_id") ? payload.championship_id : undefined,
+        allowedMatchIds: Object.prototype.hasOwnProperty.call(payload, "allowed_match_ids") ? payload.allowed_match_ids : undefined,
         nowIso: new Date().toISOString(),
         forceEdit: Boolean(payload.force_edit),
     });

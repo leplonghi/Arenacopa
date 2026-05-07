@@ -2,6 +2,7 @@ import { db } from "@/integrations/firebase/client";
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from "firebase/firestore";
 import type { BolaoPrediction, PredictionValue } from "@/types/bolao";
 import { mapFirebaseError, AppError } from "@/services/errors/AppError";
+import { assertMatchPredictionOpen } from "@/services/boloes/bolao-prediction-deadline";
 
 type SaveBolaoPredictionInput = {
   bolaoId: string;
@@ -29,6 +30,28 @@ export async function saveBolaoPrediction(input: SaveBolaoPredictionInput) {
   }
 
   try {
+    const marketDoc = await getDoc(doc(db, "bolao_markets", input.marketId));
+    const marketData = typeof marketDoc.exists === "function" && marketDoc.exists() ? marketDoc.data() : null;
+
+    if (marketData) {
+      const [bolaoDoc, matchDoc] = await Promise.all([
+        getDoc(doc(db, "boloes", input.bolaoId)),
+        marketData.match_id ? getDoc(doc(db, "matches", String(marketData.match_id))) : Promise.resolve(null),
+      ]);
+      const bolaoData = typeof bolaoDoc.exists === "function" && bolaoDoc.exists() ? bolaoDoc.data() : null;
+      const matchData = typeof matchDoc?.exists === "function" && matchDoc.exists() ? matchDoc.data() : null;
+
+      assertMatchPredictionOpen({
+        matchDate: matchData?.match_date,
+        matchStatus: matchData?.status ?? null,
+        cutoffMinutes:
+          bolaoData?.competition_rules?.prediction_cutoff_minutes ??
+          bolaoData?.prediction_cutoff_minutes ??
+          0,
+        closesAt: marketData.closes_at_ts ?? marketData.closes_at ?? null,
+      });
+    }
+
     const predictionId =
       input.existingId ??
       buildBolaoPredictionId({

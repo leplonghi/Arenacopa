@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { ChevronRight, Trophy, Lock, Globe, Zap, Star, Users } from "lucide-react";
+import { ChevronRight, Trophy, Lock, Globe, PenLine, Zap, Star, Users, History } from "lucide-react";
 import { BolaoAvatar } from "@/components/BolaoAvatar";
 import type { BolaoListingCard } from "@/services/boloes/bolao-listing.service";
 
@@ -36,14 +36,56 @@ function getStatusConfig(status: string) {
   }
 }
 
+function getBolaoTone(bolao: BolaoListingCard) {
+  if (bolao.is_paid) {
+    return {
+      label: "Negócios",
+      bgImage: "/fundo%20bolao%20negocios.png",
+      topLine: "#FFC54D",
+      border: "border-amber-400/25 hover:border-amber-300/55",
+      shell: "bg-[linear-gradient(135deg,rgba(36,24,4,0.96),rgba(8,7,3,0.88))]",
+      glow: "hover:shadow-[0_20px_40px_-14px_rgba(0,0,0,0.65),0_0_26px_rgba(245,158,11,0.14)]",
+      mask: "linear-gradient(to right, #160f02 34%, #160f02cc 58%, transparent)",
+      imageOpacity: 0.3,
+      badge: "border-amber-300/20 bg-amber-300/10 text-amber-200",
+      edit: "border-amber-200/25 bg-amber-300/15 text-amber-100 hover:bg-amber-300 hover:text-black",
+    };
+  }
+
+  if (bolao.category === "public") {
+    return {
+      label: "Aberto",
+      bgImage: "/fundo%20bolao%20pessoal.png",
+      topLine: "#38BDF8",
+      border: "border-sky-400/22 hover:border-sky-300/50",
+      shell: "bg-[linear-gradient(135deg,rgba(5,26,33,0.96),rgba(2,10,14,0.9))]",
+      glow: "hover:shadow-[0_20px_40px_-14px_rgba(0,0,0,0.62),0_0_24px_rgba(56,189,248,0.12)]",
+      mask: "linear-gradient(to right, #04181f 34%, #04181fcc 58%, transparent)",
+      imageOpacity: 0.2,
+      badge: "border-sky-300/20 bg-sky-300/10 text-sky-200",
+      edit: "border-sky-200/25 bg-sky-300/15 text-sky-100 hover:bg-sky-300 hover:text-black",
+    };
+  }
+
+  return {
+    label: "Privado",
+    bgImage: "/fundo%20bolao%20pessoal.png",
+    topLine: "#91FF3B",
+    border: "border-primary/22 hover:border-primary/55",
+    shell: "bg-[linear-gradient(135deg,rgba(10,30,16,0.96),rgba(2,13,8,0.9))]",
+    glow: "hover:shadow-[0_20px_40px_-14px_rgba(0,0,0,0.62),0_0_24px_rgba(145,255,59,0.12)]",
+    mask: "linear-gradient(to right, #07160c 34%, #07160ccc 58%, transparent)",
+    imageOpacity: 0.22,
+    badge: "border-primary/20 bg-primary/10 text-primary",
+    edit: "border-primary/25 bg-primary/15 text-primary hover:bg-primary hover:text-black",
+  };
+}
+
 export function BolaoCard({ bolao, variant = "my" }: BolaoCardProps) {
   const { t } = useTranslation("bolao");
   const statusCfg = getStatusConfig(bolao.status);
   const isActive = ["active", "open", "published", "live"].includes(bolao.status);
-
-  const bgImage = bolao.is_paid
-    ? "/fundo%20bolao%20negocios.png"
-    : "/fundo%20bolao%20pessoal.png";
+  const tone = getBolaoTone(bolao);
 
   const cardContent = (
     <div className="relative z-10">
@@ -51,10 +93,8 @@ export function BolaoCard({ bolao, variant = "my" }: BolaoCardProps) {
       <div
         className="absolute inset-x-0 -top-4 h-[3px] rounded-t-[20px] transition-all duration-500 group-hover:opacity-100 opacity-60"
         style={{ 
-          background: isActive 
-            ? `linear-gradient(90deg, transparent, ${statusCfg.color}, transparent)` 
-            : "transparent",
-          boxShadow: isActive ? `0 0 15px ${statusCfg.color}40` : "none"
+          background: `linear-gradient(90deg, transparent, ${isActive ? statusCfg.color : tone.topLine}, transparent)`,
+          boxShadow: `0 0 15px ${isActive ? statusCfg.color : tone.topLine}35`,
         }}
       />
 
@@ -83,6 +123,9 @@ export function BolaoCard({ bolao, variant = "my" }: BolaoCardProps) {
             <p className="break-words text-base font-semibold leading-tight text-white group-hover:text-primary transition-colors duration-200">
               {bolao.name}
             </p>
+            <span className={`shrink-0 rounded-md border px-1.5 py-0.5 text-[8px] font-black uppercase tracking-[0.12em] ${tone.badge}`}>
+              {tone.label}
+            </span>
           </div>
           
           {bolao.description && (
@@ -123,13 +166,32 @@ export function BolaoCard({ bolao, variant = "my" }: BolaoCardProps) {
                 {t("common.paid")}
               </span>
             )}
+
+            {bolao.is_past && (
+              <span className="flex items-center gap-1 rounded-lg border border-zinc-400/10 bg-zinc-400/5 px-2 py-1 text-[9px] font-black uppercase tracking-wider text-zinc-300/80 transition-all group-hover:bg-zinc-400/10 group-hover:text-zinc-200">
+                <History className="h-3 w-3" />
+                Passado
+              </span>
+            )}
           </div>
         </div>
 
         {/* Action indicator - Floating Trophy style */}
-        <div className="shrink-0 flex h-10 w-10 items-center justify-center rounded-2xl bg-white/5 border border-white/5 text-zinc-500 transition-all duration-300 group-hover:bg-primary group-hover:text-black group-hover:shadow-[0_0_20px_rgba(145,255,59,0.3)] group-hover:-translate-y-1">
-          {variant === "my" ? <Trophy className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
-        </div>
+        {variant === "my" && bolao.is_creator ? (
+          <Link
+            to={`/boloes/${bolao.id}?tab=config&edit=1`}
+            onClick={(event) => event.stopPropagation()}
+            aria-label={`Editar ${bolao.name}`}
+            title="Editar bolão"
+            className={`relative z-20 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_0_20px_rgba(255,255,255,0.14)] ${tone.edit}`}
+          >
+            <PenLine className="h-4 w-4" />
+          </Link>
+        ) : (
+          <div className="shrink-0 flex h-10 w-10 items-center justify-center rounded-2xl bg-white/5 border border-white/5 text-zinc-500 transition-all duration-300 group-hover:bg-primary group-hover:text-black group-hover:shadow-[0_0_20px_rgba(145,255,59,0.3)] group-hover:-translate-y-1">
+            {variant === "my" ? <Trophy className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
+          </div>
+        )}
       </div>
 
       {/* Bottom CTA for discover variant */}
@@ -155,11 +217,9 @@ export function BolaoCard({ bolao, variant = "my" }: BolaoCardProps) {
   const containerClasses = [
     "group relative min-w-0 overflow-hidden rounded-[24px] border p-5 backdrop-blur-md",
     "transition-all duration-500 ease-out",
-    isActive
-      ? "border-primary/20 bg-gradient-to-br from-[#122117]/90 to-black/80 hover:border-primary/50 hover:shadow-[0_20px_40px_-12px_rgba(0,0,0,0.5),0_0_20px_rgba(145,255,59,0.05)]"
-      : bolao.is_paid
-        ? "border-amber-400/20 bg-black/90 hover:border-amber-400/40 hover:shadow-[0_20px_40px_-12px_rgba(0,0,0,0.6),0_0_20px_rgba(234,179,8,0.08)]"
-        : "border-white/5 bg-white/[0.02] hover:border-white/20 hover:bg-white/[0.04]",
+    tone.border,
+    tone.shell,
+    tone.glow,
     "hover:-translate-y-1 hover:z-20",
   ].join(" ");
 
@@ -167,19 +227,17 @@ export function BolaoCard({ bolao, variant = "my" }: BolaoCardProps) {
     <>
       {/* Card background image — right-anchored */}
       <img
-        src={bgImage}
+        src={tone.bgImage}
         alt=""
         aria-hidden
         className="pointer-events-none absolute inset-y-0 right-0 h-full w-[65%] object-cover object-right select-none"
-        style={{ opacity: bolao.is_paid ? 0.28 : 0.22 }}
+        style={{ opacity: tone.imageOpacity }}
       />
       {/* Gradient mask so content on the left stays readable */}
       <div
         className="pointer-events-none absolute inset-0"
         style={{
-          background: bolao.is_paid
-            ? "linear-gradient(to right, #0a0800 38%, #0a080099 60%, transparent)"
-            : "linear-gradient(to right, #08140d 38%, #08140d99 60%, transparent)",
+          background: tone.mask,
         }}
       />
     </>
@@ -187,10 +245,15 @@ export function BolaoCard({ bolao, variant = "my" }: BolaoCardProps) {
 
   if (variant === "my") {
     return (
-      <Link to={`/boloes/${bolao.id}`} className={containerClasses}>
+      <div className={containerClasses}>
+        <Link
+          to={`/boloes/${bolao.id}`}
+          aria-label={`Abrir ${bolao.name}`}
+          className="absolute inset-0 z-0"
+        />
         {bgLayer}
         {cardContent}
-      </Link>
+      </div>
     );
   }
 

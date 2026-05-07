@@ -23,6 +23,11 @@ import { EmptyState } from "@/components/EmptyState";
 import { cn } from "@/lib/utils";
 import { saveBolaoPalpite, saveExclusiveBolaoPalpite } from "@/services/boloes/bolao.service";
 import {
+    getPredictionCloseMs,
+    isMatchPredictionClosed,
+    normalizePredictionCutoffMinutes,
+} from "@/services/boloes/bolao-prediction-deadline";
+import {
     subscribeBolaoExclusiveScoreLocks,
     type ExclusiveScoreSeat,
 } from "@/services/boloes/bolao-exclusive-locks.service";
@@ -144,7 +149,7 @@ export function JogosTab({
     rules?: unknown;
     markets?: BolaoMarket[];
     predictions?: BolaoPrediction[];
-    bolao?: Pick<BolaoData, "scoring_mode" | "allowed_match_ids" | "championship_id"> | null;
+    bolao?: Pick<BolaoData, "scoring_mode" | "allowed_match_ids" | "championship_id" | "prediction_cutoff_minutes"> | null;
 }) {
     const { t, i18n } = useTranslation('bolao');
     const { user } = useAuth();
@@ -157,6 +162,7 @@ export function JogosTab({
     const [savingMatchId, setSavingMatchId] = useState<string | null>(null);
     const [savedFlashMatchIds, setSavedFlashMatchIds] = useState<Set<string>>(new Set());
     const [exclusiveSeats, setExclusiveSeats] = useState<Record<string, ExclusiveScoreSeat[]>>({});
+    const [nowMs, setNowMs] = useState(() => Date.now());
     
     // Filters
     const [filterTeam, setFilterTeam] = useState<string>("all");
@@ -224,6 +230,11 @@ export function JogosTab({
 
         return () => window.clearTimeout(scrollTarget);
     }, [highlightedMatchId]);
+
+    useEffect(() => {
+        const interval = window.setInterval(() => setNowMs(Date.now()), 30_000);
+        return () => window.clearInterval(interval);
+    }, []);
 
     useEffect(() => {
         if (!user) return;
@@ -330,8 +341,52 @@ export function JogosTab({
         };
     }, [draftPalpites, exactScoreMarketByMatchId, predictionsByMarketId, savedPalpites]);
 
+    const predictionCutoffMinutes = useMemo(
+        () => normalizePredictionCutoffMinutes(bolao?.prediction_cutoff_minutes),
+        [bolao?.prediction_cutoff_minutes]
+    );
+
+    const getMatchPredictionState = useCallback(
+        (match: JogosTabMatch) => {
+            const marketClose = (matchMarketsByMatchId[match.id] ?? [])
+                .map((market) => getPredictionCloseMs({ closesAt: market.closes_at_ts ?? market.closes_at ?? null }))
+                .filter(Number.isFinite)
+                .sort((left, right) => left - right)[0];
+            const closeMs = Number.isFinite(marketClose)
+                ? marketClose
+                : getPredictionCloseMs({
+                    matchDate: match.match_date,
+                    cutoffMinutes: predictionCutoffMinutes,
+                });
+            const isClosed = isMatchPredictionClosed({
+                matchDate: match.match_date,
+                matchStatus: match.status,
+                cutoffMinutes: predictionCutoffMinutes,
+                closesAt: Number.isFinite(closeMs) ? new Date(closeMs) : null,
+                nowMs,
+            });
+
+            return {
+                closeMs,
+                isClosed,
+                isFinished: match.status === "finished",
+            };
+        },
+        [matchMarketsByMatchId, nowMs, predictionCutoffMinutes]
+    );
+
     const handleSave = async (matchId: string, homeTeam: string, awayTeam: string) => {
         if (!user) return;
+        const match = matches.find((item) => item.id === matchId);
+        if (match && getMatchPredictionState(match).isClosed) {
+            toast({
+                title: "Palpites encerrados",
+                description: "Nao e mais possivel palpitar neste jogo.",
+                variant: "destructive",
+            });
+            return;
+        }
+
         const palpite = getCurrentPalpite(matchId);
         const hasScoreInput = palpite.home !== "" && palpite.away !== "";
         const currentFirstScorer = draftFirstScorers[matchId] ?? getSavedFirstScorer(matchId);
@@ -416,11 +471,20 @@ export function JogosTab({
             });
         } catch (error) {
             console.error(error);
+            const isClosedError =
+                error instanceof Error && (error.message === "prediction_closed" || error.message === "match_finished") ||
+                (error as { code?: string })?.code === "BOLAO_PREDICTION_CLOSED";
             toast({
                 title:
                     error instanceof Error && error.message === "exclusive_score_taken"
                         ? t("palpites.exclusive_score_taken")
+                        : isClosedError
+                            ? "Palpites encerrados"
                         : t('palpites.error_save'),
+                description:
+                    isClosedError
+                        ? "Nao e mais possivel palpitar neste jogo."
+                        : undefined,
                 variant: 'destructive',
             });
         } finally {
@@ -555,15 +619,16 @@ export function JogosTab({
         // Identificamos quais jogos possuem mercados ou palpites salvos (para suporte a boloes legado ou customizados)
         const matchesWithMarkets = new Set(matchMarkets.map(m => m.match_id).filter(Boolean) as string[]);
         const matchesWithSavedPalpites = new Set(Object.keys(savedPalpites));
+        const allowedMatchIds = bolao?.allowed_match_ids;
 
-        if (!bolao?.allowed_match_ids || bolao.allowed_match_ids === "all") {
+        if (!allowedMatchIds || allowedMatchIds === "all") {
             // Se for "all", filtramos apenas para mostrar jogos que tenham mercados OU que o usuário já palpitou
             // Isso evita mostrar o calendário inteiro de um campeonato se o bolão só usa uma parte.
             return matches.filter(m => matchesWithMarkets.has(m.id) || matchesWithSavedPalpites.has(m.id));
         }
 
         // Se houver uma lista restrita, respeitamos ela rigorosamente
-        return matches.filter(m => bolao.allowed_match_ids.includes(m.id));
+        return matches.filter(m => allowedMatchIds.includes(m.id));
     }, [matches, bolao?.allowed_match_ids, matchMarkets, savedPalpites]);
 
     const uniqueTeams = useMemo(() => 
@@ -589,7 +654,8 @@ export function JogosTab({
     const enrichedMatches = useMemo(() => {
         const computed = filteredMatches
             .map((match) => {
-                const isStarted = match.status === 'live' || match.status === 'finished';
+                const predictionState = getMatchPredictionState(match);
+                const isStarted = predictionState.isClosed;
                 const marketsForMatch = matchMarketsByMatchId[match.id] ?? [];
                 const firstScorerMarket = firstScorerMarketByMatchId[match.id];
                 const savedFirstScorer = getSavedFirstScorer(match.id);
@@ -617,7 +683,6 @@ export function JogosTab({
                                   : Boolean(predictionsByMarketId[market.id])
                           );
                 const isPending = !isStarted && (isHighlighted || !hasAllOpenMatchMarketsSaved || isDirty);
-                const sortPriority = isHighlighted ? 0 : isPending ? 1 : isStarted ? 3 : 2;
 
                 return {
                     match,
@@ -670,6 +735,7 @@ export function JogosTab({
         filteredMatches,
         firstScorerMarketByMatchId,
         getCurrentPalpite,
+        getMatchPredictionState,
         getSavedFirstScorer,
         highlightedMatchId,
         matchMarketsByMatchId,

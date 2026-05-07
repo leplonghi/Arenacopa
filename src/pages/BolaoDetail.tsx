@@ -105,6 +105,7 @@ export default function BolaoDetail() {
 
         <BolaoEditPanel
           bolao={bolao} open={showEditPanel} onOpenChange={setShowEditPanel}
+          memberCount={memberCount}
           onBolaoUpdated={(patch) => setBolao(curr => curr ? { ...curr, ...patch } : curr)}
         />
 

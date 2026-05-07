@@ -46,15 +46,15 @@ function computeEditableSections({
   }
 
   const isDraft = lifecycleStatus === "draft";
-  const participationEditable =
-    !isStructureLocked && !hasExternalParticipant && !publicExpectation;
+  const structureEditable =
+    isDraft && !isStructureLocked && !hasExternalParticipant && !publicExpectation;
 
   return {
     presentation: true,
-    context: isDraft || participationEditable,
-    access_policy: isDraft || participationEditable,
-    competition_rules: isDraft || participationEditable,
-    finance_rules: isDraft || participationEditable,
+    context: structureEditable,
+    access_policy: structureEditable,
+    competition_rules: structureEditable,
+    finance_rules: structureEditable,
     operation: true,
   };
 }

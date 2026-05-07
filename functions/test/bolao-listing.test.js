@@ -1,6 +1,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const { buildUserBolaoListing } = require("../bolao-listing/mapper");
+const { computeMarketMeta } = require("../bolao-listing/repository");
 
 test("buildUserBolaoListing filters removed and deleted pools without failing the whole page", () => {
   const result = buildUserBolaoListing({
@@ -23,9 +24,59 @@ test("buildUserBolaoListing filters removed and deleted pools without failing th
       { id: "bolao-5", name: "Descoberta", category: "public" },
       { id: "bolao-6", name: "Arquivado", category: "public", lifecycle: { status: "archived" } },
     ],
+    marketMetaByBolaoId: {
+      "bolao-5": { is_past: false },
+    },
   });
 
   assert.deepEqual(result.myBoloes.map((bolao) => bolao.id), ["bolao-1"]);
   assert.deepEqual(result.pendingRequests.map((request) => request.bolaoId), ["bolao-4"]);
   assert.deepEqual(result.discoverBoloes.map((bolao) => bolao.id), ["bolao-5"]);
+});
+
+test("buildUserBolaoListing keeps past pools out of discovery but available to owner", () => {
+  const result = buildUserBolaoListing({
+    memberships: [{ bolao_id: "bolao-1", membership_status: "active" }],
+    boloesById: {
+      "bolao-1": { name: "Finalizado", status: "open" },
+    },
+    publicBoloes: [
+      { id: "bolao-2", name: "Público antigo", category: "public" },
+      { id: "bolao-3", name: "Público atual", category: "public" },
+    ],
+    marketMetaByBolaoId: {
+      "bolao-1": { is_past: true, latest_match_closes_at: "2026-04-20T21:00:00.000Z" },
+      "bolao-2": { is_past: true },
+      "bolao-3": { is_past: false },
+    },
+  });
+
+  assert.equal(result.myBoloes[0].is_past, true);
+  assert.deepEqual(result.discoverBoloes.map((bolao) => bolao.id), ["bolao-3"]);
+});
+
+test("computeMarketMeta marks a pool as past after every selected match closes", () => {
+  const meta = computeMarketMeta(
+    [
+      { scope: "match", status: "open", closes_at: "2026-04-20T19:00:00.000Z" },
+      { scope: "match", status: "closed", closes_at: "2026-04-21T19:00:00.000Z" },
+      { scope: "tournament", status: "open", closes_at: "2026-06-01T19:00:00.000Z" },
+    ],
+    Date.parse("2026-04-22T00:00:00.000Z"),
+  );
+
+  assert.equal(meta.is_past, true);
+  assert.equal(meta.latest_match_closes_at, "2026-04-21T19:00:00.000Z");
+});
+
+test("computeMarketMeta keeps a pool current while any selected match is still open", () => {
+  const meta = computeMarketMeta(
+    [
+      { scope: "match", status: "closed", closes_at: "2026-04-20T19:00:00.000Z" },
+      { scope: "match", status: "open", closes_at: "2026-04-23T19:00:00.000Z" },
+    ],
+    Date.parse("2026-04-22T00:00:00.000Z"),
+  );
+
+  assert.equal(meta.is_past, false);
 });

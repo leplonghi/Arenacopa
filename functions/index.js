@@ -2537,6 +2537,12 @@ exports.updateBolaoConfiguration = createAuthedEndpoint(async ({ auth, nowIso, r
         actorId: auth.uid,
         expectedConfigVersion: Number(req.body?.expected_config_version),
         patch: req.body?.patch || {},
+        championshipId: Object.prototype.hasOwnProperty.call(req.body || {}, "championship_id")
+            ? req.body.championship_id
+            : undefined,
+        allowedMatchIds: Object.prototype.hasOwnProperty.call(req.body || {}, "allowed_match_ids")
+            ? req.body.allowed_match_ids
+            : undefined,
         nowIso,
     });
 

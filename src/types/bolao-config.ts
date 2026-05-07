@@ -52,6 +52,9 @@ export type CreateAndPublishBolaoPayload = {
 export type UpdateBolaoConfigurationPayload = {
   bolao_id: string;
   expected_config_version: number;
+  championship_id?: string | null;
+  allowed_match_ids?: string[] | "all";
+  force_edit?: boolean;
   patch: Partial<Record<"context" | "access_policy" | "competition_rules" | "finance_rules", Record<string, unknown>>>;
 };
 

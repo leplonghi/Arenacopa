@@ -16,6 +16,7 @@ type BuildBolaoMarketsInput = {
     bolaoId: string;
     formatId: BolaoFormatSlug;
     selectedMarketIds?: MarketTemplateSlug[];
+    allowedMatchIds?: string[] | "all";
     closesAt?: string | null;
     status?: BolaoMarketStatus;
     matches?: Array<{
@@ -73,10 +74,16 @@ export function buildBolaoMarkets(input: BuildBolaoMarketsInput) {
 
     const builtMarkets: BolaoMarket[] = [];
     let orderIndex = 0;
+    const allowedMatchIdSet = Array.isArray(input.allowedMatchIds)
+        ? new Set(input.allowedMatchIds)
+        : null;
+    const effectiveMatches = allowedMatchIdSet && input.matches
+        ? input.matches.filter((match) => allowedMatchIdSet.has(match.id))
+        : input.matches;
 
     resolvedTemplates.forEach((template) => {
-        if (template.scope === "match" && input.matches?.length) {
-            input.matches.forEach((match) => {
+        if (template.scope === "match" && effectiveMatches?.length) {
+            effectiveMatches.forEach((match) => {
                 builtMarkets.push({
                     id: toMatchMarketDocId(input.bolaoId, template.id, match.id),
                     bolao_id: input.bolaoId,

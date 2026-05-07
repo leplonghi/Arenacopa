@@ -36,6 +36,7 @@ type WizardState = {
   selectedTypeId: PoolTypeId;
   formatId: BolaoFormatSlug;
   selectedMarketIds: MarketTemplateSlug[];
+  predictionCutoffMinutes: number;
   scoringRules: ScoringRules;
   scoringMode: "default" | "exclusive";
   name: string;
@@ -84,7 +85,7 @@ export function mapWizardStateToBolaoStructure(state: WizardState) {
 
 export function useBolaoCreateFlow(initialGrupoId: string | null) {
   const initialType = poolTypeConfig.rapid;
-  const [step, setStep] = useState<CreateStep>("mode");
+  const [step, setStep] = useState<CreateStep>("quick");
   const [draftId, setDraftId] = useState<string | null>(null);
   const [draftConfigVersion, setDraftConfigVersion] = useState<number | null>(null);
   const [state, setState] = useState<WizardState>({
@@ -100,6 +101,7 @@ export function useBolaoCreateFlow(initialGrupoId: string | null) {
     selectedTypeId: "rapid",
     formatId: initialType.formatId,
     selectedMarketIds: getInitialMarkets(initialType.formatId),
+    predictionCutoffMinutes: 0,
     scoringRules: PRESETS[initialType.preset],
     scoringMode: "default",
     name: "",

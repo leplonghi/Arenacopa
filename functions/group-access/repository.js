@@ -631,6 +631,13 @@ async function requestBolaoJoin({ db, bolaoId, actorId, nowIso, inviteCode, orig
       }),
       { merge: true },
     );
+    await bolaoSnapshot.ref.set(
+      {
+        member_count: admin.firestore.FieldValue.increment(1),
+        updated_at: nowIso,
+      },
+      { merge: true },
+    );
     await requestRef.set(
       buildBolaoJoinRequest({
         bolaoId,
@@ -711,6 +718,13 @@ async function approveBolaoJoin({ db, bolaoId, requestId, actorId, nowIso, reaso
       paymentStatus: data.is_paid ? "pending" : "exempt",
       inviteCode: requestData.invite_code || null,
     }),
+    { merge: true },
+  );
+  await db.collection("boloes").doc(bolaoId).set(
+    {
+      member_count: admin.firestore.FieldValue.increment(1),
+      updated_at: nowIso,
+    },
     { merge: true },
   );
   await requestRef.set(

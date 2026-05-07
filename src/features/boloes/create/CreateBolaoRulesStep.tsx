@@ -43,6 +43,7 @@ export function CreateBolaoRulesStep({ flow }: { flow: Flow }) {
 
   const selectedType = poolTypes.find((t) => t.id === flow.state.selectedTypeId);
   const hasSelectedType = Boolean(selectedType);
+  const cutoffOptions = [0, 5, 10, 15];
 
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 text-white">
@@ -58,70 +59,82 @@ export function CreateBolaoRulesStep({ flow }: { flow: Flow }) {
       </p>
 
       <div className="mt-8 grid gap-3">
-        {hasSelectedType && selectedType ? (
-          <div className={cn("rounded-3xl border p-4", tone.border, tone.bg)}>
-            <p className="text-sm font-black text-white">{selectedType.title}</p>
-            <p className="mt-1 text-sm text-zinc-400">{selectedType.description}</p>
-          </div>
-        ) : (
-          poolTypes.map((type) => {
-            const selected = flow.state.selectedTypeId === type.id;
-            return (
-              <button
-                key={type.id}
-                onClick={() => flow.setSelectedType(type.id)}
-                className={cn(
-                  "rounded-3xl border p-4 text-left transition-all hover:scale-[1.02] active:scale-[0.98]",
-                  selected ? cn(tone.border, tone.bg) : "border-white/10 bg-white/5 hover:bg-white/10"
-                )}
-              >
-                <p className="text-sm font-black text-white">{type.title}</p>
-                <p className="mt-1 text-sm text-zinc-400">{type.description}</p>
-              </button>
-            );
-          })
-        )}
+        {poolTypes.map((type) => {
+          const selected = flow.state.selectedTypeId === type.id;
+          return (
+            <button
+              key={type.id}
+              onClick={() => flow.setSelectedType(type.id)}
+              className={cn(
+                "rounded-3xl border p-4 text-left transition-all hover:scale-[1.02] active:scale-[0.98]",
+                selected ? cn(tone.border, tone.bg) : "border-white/10 bg-white/5 hover:bg-white/10"
+              )}
+            >
+              <p className="text-sm font-black text-white">{type.title}</p>
+              <p className="mt-1 text-sm text-zinc-400">{type.description}</p>
+            </button>
+          );
+        })}
       </div>
 
       {hasSelectedType && (
         <div className="mt-8 rounded-3xl border border-white/10 bg-white/5 p-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-          <p className="text-xs font-black uppercase tracking-[0.18em] text-zinc-400">
-            {t("creation.rules.finance_label")}
-          </p>
-          
-          {flow.state.financeMode ? (
-            <div className="mt-3">
-              {financeModes.map((mode) => {
-                const selected = flow.state.financeMode === mode.id;
-                if (!selected) return null;
-                return (
-                  <div key={mode.id} className={cn("rounded-3xl border p-4", tone.border, tone.bg)}>
-                    <p className="text-sm font-black text-white">{mode.title}</p>
-                    <p className="mt-1 text-sm text-zinc-400">{mode.description}</p>
-                  </div>
-                );
-              })}
+          <div className="mb-6 rounded-3xl border border-white/10 bg-[#0c1811] p-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <p className="text-xs font-black uppercase tracking-[0.18em] text-zinc-400">
+                  Tolerancia para palpites
+                </p>
+                <p className="mt-2 text-sm text-zinc-300">
+                  Escolha ate quantos minutos apos o inicio do jogo os participantes podem palpitar. Jogo finalizado nunca aceita palpite.
+                </p>
+              </div>
+              <div className="rounded-2xl border border-primary/20 bg-primary/10 px-3 py-2 text-center text-sm font-black text-primary">
+                {flow.state.predictionCutoffMinutes} min
+              </div>
             </div>
-          ) : (
-            <div className="mt-3 grid gap-3">
-              {financeModes.map((mode) => {
-                const selected = flow.state.financeMode === mode.id;
+            <div className="mt-4 grid grid-cols-4 gap-2">
+              {cutoffOptions.map((minutes) => {
+                const selected = flow.state.predictionCutoffMinutes === minutes;
                 return (
                   <button
-                    key={mode.id}
-                    onClick={() => flow.setState((current) => ({ ...current, financeMode: mode.id }))}
+                    key={minutes}
+                    type="button"
+                    onClick={() => flow.setState((current) => ({ ...current, predictionCutoffMinutes: minutes }))}
                     className={cn(
-                      "rounded-3xl border p-4 text-left transition-all hover:scale-[1.02] active:scale-[0.98]",
-                      selected ? cn(tone.border, tone.bg) : "border-white/10 bg-[#0c1811] hover:bg-white/5"
+                      "rounded-2xl border px-3 py-3 text-[11px] font-black uppercase tracking-[0.16em] transition-all",
+                      selected ? cn(tone.border, tone.bg, "text-white") : "border-white/10 bg-white/5 text-zinc-300 hover:bg-white/10"
                     )}
                   >
-                    <p className="text-sm font-black text-white">{mode.title}</p>
-                    <p className="mt-1 text-sm text-zinc-400">{mode.description}</p>
+                    {minutes === 0 ? "Inicio" : `+${minutes} min`}
                   </button>
                 );
               })}
             </div>
-          )}
+          </div>
+
+          <p className="text-xs font-black uppercase tracking-[0.18em] text-zinc-400">
+            {t("creation.rules.finance_label")}
+          </p>
+
+          <div className="mt-3 grid gap-3">
+            {financeModes.map((mode) => {
+              const selected = flow.state.financeMode === mode.id;
+              return (
+                <button
+                  key={mode.id}
+                  onClick={() => flow.setState((current) => ({ ...current, financeMode: mode.id }))}
+                  className={cn(
+                    "rounded-3xl border p-4 text-left transition-all hover:scale-[1.02] active:scale-[0.98]",
+                    selected ? cn(tone.border, tone.bg) : "border-white/10 bg-[#0c1811] hover:bg-white/5"
+                  )}
+                >
+                  <p className="text-sm font-black text-white">{mode.title}</p>
+                  <p className="mt-1 text-sm text-zinc-400">{mode.description}</p>
+                </button>
+              );
+            })}
+          </div>
 
           {flow.state.financeMode === "paid_external" ? (
             <div className="mt-4 grid gap-3 animate-in fade-in slide-in-from-bottom-4 duration-500">

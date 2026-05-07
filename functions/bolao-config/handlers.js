@@ -27,6 +27,7 @@ const DEFAULT_COMPETITION_RULES = {
   format: "classic",
   scoring_mode: "default",
   markets: [],
+  prediction_cutoff_minutes: 0,
   scoring_rules: {
     exact: 10,
     winner: 3,
@@ -53,6 +54,12 @@ function mergeSection(base, patch) {
     ...clone(base),
     ...(patch || {}),
   };
+}
+
+function normalizePredictionCutoffMinutes(value) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return 0;
+  return Math.max(0, Math.min(15, Math.floor(numeric)));
 }
 
 function legacyStatusFromLifecycle(lifecycleStatus) {
@@ -185,11 +192,15 @@ function normalizeBolaoDocument(source) {
       reserved_seat_count: Number(source.metrics?.reserved_seat_count || 0),
     },
     members: Array.isArray(source.members) ? clone(source.members) : [],
+    member_count: Number.isFinite(Number(source.member_count)) ? Number(source.member_count) : 1,
     created_at: source.created_at || source.audit_meta?.last_updated_at || null,
     updated_at: source.updated_at || source.audit_meta?.last_updated_at || null,
     championship_id: source.championship_id || null,
     allowed_match_ids: source.allowed_match_ids ?? "all",
   };
+  normalized.competition_rules.prediction_cutoff_minutes = normalizePredictionCutoffMinutes(
+    normalized.competition_rules.prediction_cutoff_minutes
+  );
 
   const derived = recomputeDerivedState(normalized, normalized.audit_meta.last_updated_at);
   normalized.integrity = derived.integrity;
@@ -210,6 +221,7 @@ function normalizeBolaoDocument(source) {
   normalized.format_id = normalized.competition_rules.format;
   normalized.scoring_mode = normalized.competition_rules.scoring_mode || "default";
   normalized.scoring_rules = clone(normalized.competition_rules.scoring_rules);
+  normalized.prediction_cutoff_minutes = normalized.competition_rules.prediction_cutoff_minutes;
   normalized.visibility_mode = source.visibility_mode || "hidden_until_deadline";
   normalized.cutoff_mode = source.cutoff_mode || "per_match";
   normalized.status = legacyStatusFromLifecycle(normalized.lifecycle.status);

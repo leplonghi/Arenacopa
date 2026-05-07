@@ -321,7 +321,25 @@ function toMatchMarketDocId(bolaoId, templateId, matchId) {
   return `${bolaoId}_${templateId}_${matchId}`;
 }
 
-function buildBolaoMarkets({ bolaoId, selectedMarketIds = [], matches = [], allowedMatchIds = "all" }) {
+function normalizePredictionCutoffMinutes(value) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return 0;
+  return Math.max(0, Math.min(15, Math.floor(numeric)));
+}
+
+function buildMatchCloseDate(matchDate, predictionCutoffMinutes = 0) {
+  const kickoff = new Date(matchDate || "");
+  if (!Number.isFinite(kickoff.getTime())) return null;
+  return new Date(kickoff.getTime() + normalizePredictionCutoffMinutes(predictionCutoffMinutes) * 60 * 1000);
+}
+
+function buildBolaoMarkets({
+  bolaoId,
+  selectedMarketIds = [],
+  matches = [],
+  allowedMatchIds = "all",
+  predictionCutoffMinutes = 0,
+}) {
   const builtMarkets = [];
   let orderIndex = 0;
 
@@ -336,6 +354,7 @@ function buildBolaoMarkets({ bolaoId, selectedMarketIds = [], matches = [], allo
 
     if (template.scope === "match" && effectiveMatches.length) {
       for (const match of effectiveMatches) {
+        const closesAt = buildMatchCloseDate(match.match_date, predictionCutoffMinutes);
         builtMarkets.push({
           id: toMatchMarketDocId(bolaoId, templateId, match.id),
           bolao_id: bolaoId,
@@ -350,7 +369,8 @@ function buildBolaoMarkets({ bolaoId, selectedMarketIds = [], matches = [], allo
           group_id: match.group_id || null,
           is_required: template.is_required,
           opens_at: null,
-          closes_at: match.match_date || null,
+          closes_at: closesAt ? closesAt.toISOString() : null,
+          closes_at_ts: closesAt,
           status: "open",
           points_exact: template.points_exact,
           points_partial: template.points_partial,
@@ -395,4 +415,6 @@ function buildBolaoMarkets({ bolaoId, selectedMarketIds = [], matches = [], allo
 
 module.exports = {
   buildBolaoMarkets,
+  buildMatchCloseDate,
+  normalizePredictionCutoffMinutes,
 };

@@ -36,9 +36,6 @@ export function CreateBolaoAdmissionStep({ flow }: { flow: Flow }) {
   };
 
   const options = getOptions();
-  const selectedOption = options.find((o) => o.id === flow.state.accessMode);
-  const hasSelected = Boolean(selectedOption);
-
   return (
     <div className="mx-auto max-w-3xl px-4 py-8 text-white">
       <div className="mb-8">
@@ -53,26 +50,19 @@ export function CreateBolaoAdmissionStep({ flow }: { flow: Flow }) {
       </p>
 
       <div className="mt-8 grid gap-3">
-        {hasSelected && selectedOption ? (
-          <div className={cn("rounded-3xl border p-4", tone.border, tone.bg)}>
-            <p className="font-black">{selectedOption.title}</p>
-            <p className="mt-1 text-sm text-zinc-400">{selectedOption.description}</p>
-          </div>
-        ) : (
-          options.map((option) => (
-            <button
-              key={option.id}
-              onClick={() => flow.setState((current) => ({ ...current, accessMode: option.id }))}
-              className={cn(
-                "rounded-3xl border p-4 text-left transition-all hover:scale-[1.02] active:scale-[0.98]",
-                flow.state.accessMode === option.id ? cn(tone.border, tone.bg) : "border-white/10 bg-white/5 hover:bg-white/10"
-              )}
-            >
-              <p className="font-black">{option.title}</p>
-              <p className="mt-1 text-sm text-zinc-400">{option.description}</p>
-            </button>
-          ))
-        )}
+        {options.map((option) => (
+          <button
+            key={option.id}
+            onClick={() => flow.setState((current) => ({ ...current, accessMode: option.id }))}
+            className={cn(
+              "rounded-3xl border p-4 text-left transition-all hover:scale-[1.02] active:scale-[0.98]",
+              flow.state.accessMode === option.id ? cn(tone.border, tone.bg) : "border-white/10 bg-white/5 hover:bg-white/10"
+            )}
+          >
+            <p className="font-black">{option.title}</p>
+            <p className="mt-1 text-sm text-zinc-400">{option.description}</p>
+          </button>
+        ))}
       </div>
 
       <div className="mt-6 rounded-3xl border border-white/10 bg-white/5 p-4 text-sm text-zinc-300">

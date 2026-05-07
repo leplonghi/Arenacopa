@@ -1246,14 +1246,14 @@
     },
     "tabs": {
       "general": "General",
-      "participation": "Participation",
-      "rules": "Rules",
-      "finance": "Finance"
+      "participation": "Participación",
+      "rules": "Reglas",
+      "finance": "Financiero"
     },
     "card": {
       "editable": "Editable",
-      "locked": "Locked",
-      "processing": "Processing"
+      "locked": "Bloqueado",
+      "processing": "Procesando…"
     },
     "participation": {
       "action_duplicate": "Duplicar para ajustar participação"

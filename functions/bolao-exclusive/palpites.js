@@ -70,6 +70,44 @@ function assertExclusiveScoreAvailable({ lockData, actorId }) {
   }
 }
 
+function normalizePredictionCutoffMinutes(value) {
+  const numeric = Number(value);
+  if (!Number.isFinite(numeric)) return 0;
+  return Math.max(0, Math.min(15, Math.floor(numeric)));
+}
+
+function toDate(value) {
+  if (!value) return null;
+  if (value instanceof Date) return Number.isFinite(value.getTime()) ? value : null;
+  if (typeof value.toDate === "function") {
+    const date = value.toDate();
+    return Number.isFinite(date.getTime()) ? date : null;
+  }
+  const parsed = new Date(value);
+  return Number.isFinite(parsed.getTime()) ? parsed : null;
+}
+
+function assertMatchPredictionOpen({ bolaoData, matchData, nowIso }) {
+  if (!matchData) {
+    throw new Error("not_found");
+  }
+  if (matchData.status === "finished") {
+    throw new Error("match_finished");
+  }
+
+  const kickoff = toDate(matchData.match_date);
+  if (!kickoff) return;
+
+  const cutoffMinutes = normalizePredictionCutoffMinutes(
+    bolaoData?.competition_rules?.prediction_cutoff_minutes ?? bolaoData?.prediction_cutoff_minutes
+  );
+  const closesAt = new Date(kickoff.getTime() + cutoffMinutes * 60 * 1000);
+  const now = toDate(nowIso) || new Date();
+  if (now.getTime() > closesAt.getTime()) {
+    throw new Error("prediction_closed");
+  }
+}
+
 async function saveExclusiveBolaoPalpite({ db, admin, actorId, input, nowIso }) {
   if (!actorId) {
     throw new Error("auth_required");
@@ -97,6 +135,12 @@ async function saveExclusiveBolaoPalpite({ db, admin, actorId, input, nowIso }) 
     if (bolaoSnapshot.data()?.scoring_mode !== "exclusive") {
       throw new Error("validation_failed");
     }
+    const matchSnapshot = await transaction.get(db.collection("matches").doc(normalized.matchId));
+    assertMatchPredictionOpen({
+      bolaoData: bolaoSnapshot.data(),
+      matchData: matchSnapshot.exists ? matchSnapshot.data() : null,
+      nowIso,
+    });
 
     const palpiteRefs = candidateIds.map((id) => db.collection("bolao_palpites").doc(id));
     const palpiteSnapshots = await Promise.all(palpiteRefs.map((ref) => transaction.get(ref)));
@@ -206,5 +250,7 @@ module.exports = {
   normalizeExclusiveScoreInput,
   resolveExistingPalpiteCandidate,
   assertExclusiveScoreAvailable,
+  assertMatchPredictionOpen,
+  normalizePredictionCutoffMinutes,
   saveExclusiveBolaoPalpite,
 };

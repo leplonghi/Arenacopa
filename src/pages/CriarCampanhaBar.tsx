@@ -30,6 +30,7 @@ import { tStatic } from "@/i18n/staticText";
 
 type Step = 1 | 2 | 3 | 4 | 5;
 type ActivationType = "physical" | "virtual" | "hybrid";
+type CommercialPlanId = keyof typeof commercialPlanCatalog;
 
 const activationTypeLabels: Record<ActivationType, string> = {
   physical: "Física",
@@ -50,11 +51,11 @@ export default function CriarCampanhaBar() {
   const [gpsStatus, setGpsStatus] = useState<string | null>(null);
   const requestedPlan = searchParams.get("plan");
   const initialPricingPlan =
-    requestedPlan && requestedPlan in commercialPlanCatalog ? requestedPlan : "single_match";
+    requestedPlan && requestedPlan in commercialPlanCatalog ? (requestedPlan as CommercialPlanId) : null;
   const [state, setState] = useState({
     kind: "match" as CommercialCampaignKind,
     activationType: "physical" as ActivationType,
-    pricingPlan: initialPricingPlan as keyof typeof commercialPlanCatalog,
+    pricingPlan: initialPricingPlan as CommercialPlanId | null,
     merchantName: "",
     cep: "",
     city: "",
@@ -76,7 +77,7 @@ export default function CriarCampanhaBar() {
     [matches],
   );
   const selectedMatch = futureMatches.find((match) => match.id === state.matchId) ?? null;
-  const selectedPlan = getCommercialPlanDefinition(state.pricingPlan);
+  const selectedPlan = state.pricingPlan ? getCommercialPlanDefinition(state.pricingPlan) : null;
   const normalizedBenefitCode = useMemo(
     () => normalizeBenefitCode(state.benefitCode || state.title || state.merchantName),
     [state.benefitCode, state.merchantName, state.title],
@@ -112,7 +113,7 @@ export default function CriarCampanhaBar() {
 
   const canContinue =
     step === 1
-      ? true
+      ? Boolean(state.pricingPlan)
       : step === 2
         ? state.merchantName.trim().length >= 3 &&
           cepValidation.ok &&
@@ -186,6 +187,14 @@ export default function CriarCampanhaBar() {
       });
       return;
     }
+    if (!state.pricingPlan || !selectedPlan) {
+      setStep(1);
+      toast({
+        title: "Escolha um plano",
+        description: "Selecione o alcance da campanha antes de continuar.",
+      });
+      return;
+    }
 
     try {
       setSaving(true);
@@ -216,7 +225,7 @@ export default function CriarCampanhaBar() {
           },
         },
       });
-      navigate(`/campanhas/${campaign.id}`);
+      navigate(`/negocios/campanhas/${campaign.id}`);
     } catch (error) {
       const message = error instanceof Error ? error.message : "";
       toast({
@@ -251,49 +260,61 @@ export default function CriarCampanhaBar() {
       <ArenaPanel className="mt-5 p-5">
         {step === 1 ? (
           <div className="space-y-5">
-            <div className="rounded-[24px] border border-primary/25 bg-primary/10 p-4">
+            <div className="rounded-[24px] border border-white/10 bg-white/[0.04] p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">{tStatic("Plano da campanha")}</p>
-                  <p className="mt-1 font-display text-4xl font-black uppercase text-white">
-                    {selectedPlan.priceLabel}
+                  <p className="mt-1 font-display text-2xl font-black uppercase text-white">
+                    {selectedPlan ? selectedPlan.title : "Escolha o alcance"}
                   </p>
                   <p className="mt-2 text-sm leading-6 text-zinc-300">
-                    {selectedPlan.shortTitle} com QR code, link publico, bolao automatico da rodada e {selectedPlan.includedGames} jogo{selectedPlan.includedGames === 1 ? "" : "s"} incluido{selectedPlan.includedGames === 1 ? "" : "s"}.
+                    {selectedPlan
+                      ? `${selectedPlan.shortTitle} com QR code, link público, bolão automático da rodada e ${selectedPlan.includedGames} jogo${selectedPlan.includedGames === 1 ? "" : "s"} incluído${selectedPlan.includedGames === 1 ? "" : "s"}.`
+                      : "Primeiro defina o tamanho da ação. Depois você informa os dados do negócio, escolhe jogo ou período e descreve o benefício."}
                   </p>
                 </div>
                 <ArenaHint label="Sobre o preço">{tStatic("O pagamento acontece depois da revisão, antes da publicação final.")}</ArenaHint>
               </div>
             </div>
 
-            <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-              {commercialPlanOrder.map((planId) => {
-                const plan = commercialPlanCatalog[planId];
-                return (
-                  <ChoiceCard
-                    key={planId}
-                    selected={state.pricingPlan === planId}
-                    title={plan.title}
-                    description={`${plan.shortTitle}, ${plan.includedGames} jogo${plan.includedGames === 1 ? "" : "s"} incluido${plan.includedGames === 1 ? "" : "s"}. ${plan.priceLabel}`}
-                    onClick={() => setState((current) => ({ ...current, pricingPlan: planId }))}
-                  />
-                );
-              })}
+            <div>
+              <p className="mb-3 text-[11px] font-black uppercase tracking-[0.18em] text-zinc-400">
+                Alcance da campanha
+              </p>
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                {commercialPlanOrder.map((planId) => {
+                  const plan = commercialPlanCatalog[planId];
+                  return (
+                    <ChoiceCard
+                      key={planId}
+                      selected={state.pricingPlan === planId}
+                      title={`${plan.title} · ${plan.priceLabel}`}
+                      description={`${plan.shortTitle}. ${plan.includedGames} jogo${plan.includedGames === 1 ? "" : "s"} e até ${plan.participantLimit} participantes.`}
+                      onClick={() => setState((current) => ({ ...current, pricingPlan: planId }))}
+                    />
+                  );
+                })}
+              </div>
             </div>
 
-            <div className="grid gap-3 md:grid-cols-2">
-              <ChoiceCard
-                selected={state.kind === "match"}
-                title="Campanha por jogo"
-                description="Escolha uma partida futura e o app gera o nome da rodada."
-                onClick={() => update("kind", "match")}
-              />
-              <ChoiceCard
-                selected={state.kind === "period"}
-                title="Campanha geral por período"
-                description="Use quando a ação não depende de uma partida específica."
-                onClick={() => update("kind", "period")}
-              />
+            <div>
+              <p className="mb-3 text-[11px] font-black uppercase tracking-[0.18em] text-zinc-400">
+                Formato da campanha
+              </p>
+              <div className="grid gap-3 md:grid-cols-2">
+                <ChoiceCard
+                  selected={state.kind === "match"}
+                  title="Campanha por jogo"
+                  description="Escolha uma partida futura e o app gera o nome da rodada."
+                  onClick={() => update("kind", "match")}
+                />
+                <ChoiceCard
+                  selected={state.kind === "period"}
+                  title="Campanha geral por período"
+                  description="Use quando a ação não depende de uma partida específica."
+                  onClick={() => update("kind", "period")}
+                />
+              </div>
             </div>
 
             <div>
@@ -321,7 +342,7 @@ export default function CriarCampanhaBar() {
                 />
               </div>
               <p className="mt-3 text-xs leading-5 text-zinc-500">
-                Nesta etapa, o tipo organiza a campanha na interface. A publicação continua usando o contrato atual.
+                Nesta etapa, as escolhas organizam a campanha. O app não opera aposta, carteira, sorteio ou prêmio financeiro.
               </p>
             </div>
           </div>
@@ -463,8 +484,8 @@ export default function CriarCampanhaBar() {
             <h2 className="font-display text-3xl font-black uppercase text-white">{tStatic("Revisão")}</h2>
             <Summary label="Tipo" value={state.kind === "match" ? "Campanha por jogo" : "Campanha geral por período"} />
             <Summary label="Ativação" value={activationTypeLabels[state.activationType]} />
-            <Summary label="Plano" value={`${selectedPlan.title} · ${selectedPlan.priceLabel}`} />
-            <Summary label="Alcance" value={`${selectedPlan.shortTitle} · ${selectedPlan.includedGames} jogo${selectedPlan.includedGames === 1 ? "" : "s"} incluido${selectedPlan.includedGames === 1 ? "" : "s"}`} />
+            <Summary label="Plano" value={selectedPlan ? `${selectedPlan.title} · ${selectedPlan.priceLabel}` : ""} />
+            <Summary label="Alcance" value={selectedPlan ? `${selectedPlan.shortTitle} · ${selectedPlan.includedGames} jogo${selectedPlan.includedGames === 1 ? "" : "s"} incluido${selectedPlan.includedGames === 1 ? "" : "s"}` : ""} />
             <Summary label="Negócio" value={`${state.merchantName} · ${state.neighborhood}, ${state.city}`} />
             <Summary label="Rodada" value={state.title} />
             <Summary label="Benefício" value={state.benefitSummary} />

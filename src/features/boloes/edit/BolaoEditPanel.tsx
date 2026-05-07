@@ -29,13 +29,14 @@ type BolaoEditPanelProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onBolaoUpdated?: (patch: Partial<BolaoData>) => void;
+  memberCount?: number;
 };
 
 type GroupBindingMode = "none" | "linked_discovery" | "group_gated";
 type JoinMode = "private_invite" | "public_open";
 type FinanceMode = "free" | "paid_external";
 
-export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated }: BolaoEditPanelProps) {
+export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated, memberCount = 0 }: BolaoEditPanelProps) {
   const { t } = useTranslation("bolao");
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -286,10 +287,16 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated }: Bo
       });
       onOpenChange(false);
       navigate("/boloes", { replace: true });
-    } catch {
+    } catch (error) {
       toast({
-        title: t("errors.generic_title"),
-        description: t("errors.try_again_later"),
+        title:
+          error instanceof Error && error.message === "external_member_exists"
+            ? "Não é possível excluir"
+            : t("errors.generic_title"),
+        description:
+          error instanceof Error && error.message === "external_member_exists"
+            ? "Este bolão já tem outros participantes. Use finalizar ou arquivar."
+            : t("errors.try_again_later"),
         variant: "destructive",
       });
     } finally {
@@ -370,6 +377,7 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated }: Bo
   const participationEditable = Boolean(editableSections.context || editableSections.access_policy);
   const canSaveParticipation = groupBindingMode === "none" || Boolean(selectedGrupoId);
   const canSaveRules = selectedMarketIds.length > 0;
+  const canDeleteBolao = memberCount <= 1;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -485,7 +493,41 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated }: Bo
                       editable={true}
                     />
                     <div className="grid gap-3">
-                      {bolao.integrity?.is_structure_locked ? (
+                      {canDeleteBolao ? (
+                        <div className="grid gap-3">
+                          <button
+                            onClick={() => {
+                              if (!deleteConfirmOpen) {
+                                setDeleteConfirmOpen(true);
+                                return;
+                              }
+                              void handleDeleteBolao();
+                            }}
+                            disabled={savingKey === "delete"}
+                            className="rounded-2xl border border-red-500/20 bg-red-500/10 py-3.5 text-[11px] font-black uppercase tracking-[0.15em] text-red-400 hover:bg-red-500/20 transition-all disabled:opacity-50"
+                          >
+                            {savingKey === "delete"
+                              ? t("edit.sections.danger.deleting")
+                              : deleteConfirmOpen
+                                ? t("edit.sections.danger.confirm_delete")
+                                : t("edit.sections.danger.delete")}
+                          </button>
+                          {deleteConfirmOpen && (
+                            <div className="grid gap-2">
+                              <p className="rounded-2xl border border-red-300/20 bg-black/20 px-4 py-3 text-xs text-red-100/85">
+                                {t("edit.sections.danger.delete_warning")}
+                              </p>
+                              <button
+                                type="button"
+                                onClick={() => setDeleteConfirmOpen(false)}
+                                className="text-xs text-zinc-400 underline hover:text-white"
+                              >
+                                {t("edit.sections.danger.give_up")}
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      ) : bolao.integrity?.is_structure_locked ? (
                         <div className="grid gap-3">
                            <button
                             onClick={() => {
@@ -520,39 +562,9 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated }: Bo
                           )}
                         </div>
                       ) : (
-                        <div className="grid gap-3">
-                          <button
-                            onClick={() => {
-                              if (!deleteConfirmOpen) {
-                                setDeleteConfirmOpen(true);
-                                return;
-                              }
-                              void handleDeleteBolao();
-                            }}
-                            disabled={savingKey === "delete"}
-                            className="rounded-2xl border border-red-500/20 bg-red-500/10 py-3.5 text-[11px] font-black uppercase tracking-[0.15em] text-red-400 hover:bg-red-500/20 transition-all disabled:opacity-50"
-                          >
-                            {savingKey === "delete"
-                              ? t("edit.sections.danger.deleting")
-                              : deleteConfirmOpen
-                                ? t("edit.sections.danger.confirm_delete")
-                                : t("edit.sections.danger.delete")}
-                          </button>
-                          {deleteConfirmOpen && (
-                            <div className="grid gap-2">
-                              <p className="rounded-2xl border border-red-300/20 bg-black/20 px-4 py-3 text-xs text-red-100/85">
-                                {t("edit.sections.danger.delete_warning")}
-                              </p>
-                              <button
-                                type="button"
-                                onClick={() => setDeleteConfirmOpen(false)}
-                                className="text-xs text-zinc-400 underline hover:text-white"
-                              >
-                                {t("edit.sections.danger.give_up")}
-                              </button>
-                            </div>
-                          )}
-                        </div>
+                        <p className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-xs leading-5 text-zinc-300">
+                          A exclusão fica disponível apenas enquanto só você está registrado no bolão. Como já existem participantes, use finalizar ou arquivar.
+                        </p>
                       )}
                     </div>
                   </div>

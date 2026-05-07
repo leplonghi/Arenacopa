@@ -1,10 +1,36 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const {
+  assertDeleteAllowedForOwnerOnly,
+} = require("../bolao-config/repository");
+const {
   buildDeleteBolaoUpdate,
   buildDraftBolaoDocument,
   buildPublishUpdate,
 } = require("../bolao-config/handlers");
+
+function buildMembersDb(members) {
+  return {
+    collection(name) {
+      assert.equal(name, "bolao_members");
+      return {
+        where(field, operator, value) {
+          assert.equal(field, "bolao_id");
+          assert.equal(operator, "==");
+          assert.equal(value, "bolao-1");
+          return this;
+        },
+        async get() {
+          return {
+            docs: members.map((member) => ({
+              data: () => member,
+            })),
+          };
+        },
+      };
+    },
+  };
+}
 
 test("buildDeleteBolaoUpdate marks a draft as deleted and disables sharing", () => {
   const draft = buildDraftBolaoDocument({
@@ -80,5 +106,31 @@ test("buildDeleteBolaoUpdate rejects an already deleted pool", () => {
         nowIso: "2026-04-20T12:10:00.000Z",
       }),
     /invalid_state/,
+  );
+});
+
+test("assertDeleteAllowedForOwnerOnly allows deleting while creator is the only active member", async () => {
+  await assertDeleteAllowedForOwnerOnly({
+    db: buildMembersDb([
+      { bolao_id: "bolao-1", user_id: "owner-1", membership_status: "active" },
+      { bolao_id: "bolao-1", user_id: "guest-1", membership_status: "left" },
+    ]),
+    bolaoId: "bolao-1",
+    actorId: "owner-1",
+  });
+});
+
+test("assertDeleteAllowedForOwnerOnly blocks deleting after another active member joins", async () => {
+  await assert.rejects(
+    () =>
+      assertDeleteAllowedForOwnerOnly({
+        db: buildMembersDb([
+          { bolao_id: "bolao-1", user_id: "owner-1", membership_status: "active" },
+          { bolao_id: "bolao-1", user_id: "guest-1", membership_status: "active" },
+        ]),
+        bolaoId: "bolao-1",
+        actorId: "owner-1",
+      }),
+    /external_member_exists/,
   );
 });
