@@ -21,6 +21,7 @@ import { BolaoAvatar } from "@/components/BolaoAvatar";
 import { JoinCTA } from "@/features/social/JoinCTA";
 import { joinViaInvite } from "@/services/groups/group-access.service";
 import { Button } from "@/components/ui/button";
+import { tStatic } from "@/i18n/staticText";
 
 type PublicInviteBolao = Awaited<ReturnType<typeof resolvePublicBolaoInvite>>;
 
@@ -146,7 +147,7 @@ export default function PublicInvite() {
       <div className="flex min-h-screen items-center justify-center bg-[#050505]">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="h-10 w-10 animate-spin text-primary" />
-          <p className="text-sm font-medium text-gray-500">Carregando convite...</p>
+          <p className="text-sm font-medium text-gray-500">{tStatic("Carregando convite...")}</p>
         </div>
       </div>
     );
@@ -159,8 +160,8 @@ export default function PublicInvite() {
           <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-white/5">
             <Sparkles className="h-8 w-8 text-gray-500" />
           </div>
-          <h2 className="mb-2 text-xl font-bold text-white">Convite não encontrado</h2>
-          <p className="mb-6 text-sm text-gray-400">Esse código pode ter expirado ou o bolão foi removido.</p>
+          <h2 className="mb-2 text-xl font-bold text-white">{tStatic("Convite não encontrado")}</h2>
+          <p className="mb-6 text-sm text-gray-400">{tStatic("Esse código pode ter expirado ou o bolão foi removido.")}</p>
           <Button onClick={() => navigate("/")} variant="outline" className="border-white/10 bg-white/5 text-white hover:bg-white/10">
             Voltar para o início
           </Button>
@@ -234,7 +235,7 @@ export default function PublicInvite() {
                   <span className={`text-lg font-black ${requiresApproval ? "text-amber-400" : "text-primary"}`}>
                     {requiresGroup ? "Grupo" : requiresApproval ? "Aprovação" : "Livre"}
                   </span>
-                  <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">entrada</span>
+                  <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">{tStatic("entrada")}</span>
                 </div>
               </div>
 
@@ -287,7 +288,7 @@ export default function PublicInvite() {
 
           {/* Invite code */}
           <div className="mt-4 flex items-center justify-center gap-2 text-xs text-gray-500">
-            <span>Código do convite:</span>
+            <span>{tStatic("Código do convite:")}</span>
             <code className="rounded-lg bg-white/5 px-2 py-1 font-mono text-xs font-bold tracking-widest text-gray-300">
               {inviteCode?.toUpperCase()}
             </code>

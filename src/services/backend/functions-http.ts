@@ -6,6 +6,10 @@ export function getFunctionsBaseUrl() {
     throw new Error("Ambiente Firebase incompleto.");
   }
 
+  if (import.meta.env.DEV) {
+    return "/__functions";
+  }
+
   return `https://us-central1-${projectId}.cloudfunctions.net`;
 }
 
@@ -53,7 +57,7 @@ export async function postPublicFunction<T>(
   payload: Record<string, unknown>,
 ): Promise<T> {
   const url = `${getFunctionsBaseUrl()}/${functionName}`;
-  console.log(`[functions-http] POST ${url}`, payload);
+  console.warn(`[functions-http] POST ${url}`, payload);
 
   let response: Response;
   try {
@@ -72,7 +76,7 @@ export async function postPublicFunction<T>(
   let data: { error?: string } & Record<string, unknown> = {};
   try {
     const text = await response.text();
-    console.log(`[functions-http] ${functionName} response ${response.status}:`, text.substring(0, 500));
+    console.warn(`[functions-http] ${functionName} response ${response.status}:`, text.substring(0, 500));
     data = text ? (JSON.parse(text) as { error?: string } & Record<string, unknown>) : {};
   } catch (parseError) {
     console.error(`[functions-http] Failed to parse response from ${functionName}:`, parseError);

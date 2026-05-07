@@ -9,7 +9,7 @@ import {
     SUPPORTED_LANGUAGES,
 } from './language';
 
-const I18N_VERSION = '20260419-2';
+const I18N_VERSION = '20260506-2';
 
 i18n
     .use(Backend)

@@ -1,33 +1,33 @@
 {
   "overview": {
-  "your_palpites": "Suas escolhas",
+    "your_palpites": "Suas escolhas",
     "games": "jogos",
     "journey_title": "Sua jornada",
     "matches_predicted": "jogos salvos",
     "activity_now": "agora",
     "kickoff": "Início",
     "final": "Final",
-  "remaining_palpites": "Faltam {{count}} jogos para completar a fase de grupos",
+    "remaining_palpites": "Faltam {{count}} jogos para completar a fase de grupos",
     "next_matches": "Próximos Jogos",
     "market_pulse_kicker": "Pulso do bolão",
     "market_pulse_title": "Desafios mais quentes",
-  "saved_predictions": "{{count}} escolhas salvas",
+    "saved_predictions": "{{count}} escolhas salvas",
     "members_in_bolao": "{{count}} membros no bolão",
     "live_kicker": "Tempo real",
     "activity_title": "Atividade do bolão",
-  "activity_empty": "Assim que a turma começar a marcar jogos, entrar no bolão e acompanhar resultados oficiais, a atividade aparece aqui em tempo real.",
+    "activity_empty": "Assim que a turma começar a marcar jogos, entrar no bolão e acompanhar resultados oficiais, a atividade aparece aqui em tempo real.",
     "invite_friends": "Convide mais amigos",
-  "invite_desc": "Convide sua turma para entrar, marcar os jogos e acompanhar a tabela.",
+    "invite_desc": "Convide sua turma para entrar, marcar os jogos e acompanhar a tabela.",
     "share_code": "Compartilhe o código:",
     "btn_share_whatsapp": "Compartilhar convite",
     "btn_share": "Compartilhar",
     "disclaimer": "⚠️ O ArenaCup **não realiza** processamento de pagamentos ou transações financeiras. Eventuais valores devem ser combinados entre os participantes, fora do aplicativo.",
     "members_stat": "Membros",
-  "palpites_stat": "Escolhas",
+    "palpites_stat": "Escolhas",
     "progress_stat": "Progresso",
     "stats_members_sub": "MEMBROS",
     "stats_markets_sub": "DESAFIOS",
-  "stats_predictions_sub": "ESCOLHAS",
+    "stats_predictions_sub": "ESCOLHAS",
     "stats_complete_sub": "CONCLUÍDO",
     "ready_badge": "{{progress}}% pronto",
     "protocol_label": "Protocolo ArenaCUP"
@@ -106,12 +106,16 @@
       "total_goals": "Total de gols",
       "both_score": "Ambos marcam",
       "first_team_to_score": "Primeiro gol"
-    }
+    },
+    "filter_kicker": "Filtros",
+    "filter_title": "Refine os jogos"
   },
   "news": {
     "general_category": "Geral",
     "recent": "Recente",
-    "readers": "leitores"
+    "readers": "leitores",
+    "highlights": "Destaques",
+    "view_all": "Ver tudo"
   },
   "members": {
     "participants": "Participantes",
@@ -128,7 +132,7 @@
     },
     "role": {
       "admin": "Administrador",
-    "member": "Participante"
+      "member": "Participante"
     },
     "you": "(Você)",
     "remove_member": "Remover membro",
@@ -161,7 +165,7 @@
     "guesses": "escolhas",
     "points_abbr": "Pts",
     "legend_rules": "Regras de Pontuação",
-    "leader_badge": "Líder",
+    "leader_badge": "líder",
     "guesses_label": "escolhas",
     "exact_scores_label": "exatos",
     "legend_categories": "Origem dos Pontos",
@@ -179,7 +183,6 @@
     "category_tournament_short": "Camp.",
     "category_special_short": "Esp.",
     "you_badge": "você",
-    "leader_badge": "líder",
     "exact_badge": "exatos",
     "correct_badge": "acertos",
     "full_table": "Tabela completa",
@@ -188,7 +191,11 @@
     "share_my_position": "Atualmente tô em {{position}}º lugar 👀",
     "share_podium": "Estou no pódio: {{position}}º lugar.",
     "share_cta": "Vem conferir como tá a tabela completa:",
-    "share_copied": "Copiado para a área de transferência!"
+    "share_copied": "Copiado para a área de transferência!",
+    "filter_all": "Todos",
+    "filter_friends": "Amigos",
+    "no_friends_title": "Sem amigos no ranking ainda",
+    "no_friends_desc": "Convide sua turma para comparar posições aqui."
   },
   "share_card": {
     "join_title": "Vem pro Bolão",
@@ -215,7 +222,10 @@
     "tip": "Dica",
     "public": "Público",
     "private": "Privado",
-    "paid": "Pago"
+    "paid": "Pago",
+    "error_desc": "Não foi possível carregar os dados. Tente novamente.",
+    "filter_group": "Filtrar por grupo",
+    "edit": "Editar"
   },
   "create_bolao": {
     "title": "Novo Bolão",
@@ -274,7 +284,7 @@
       "draw": "Apenas Vencedor/Empate",
       "draw_desc": "Acertar o resultado simples (1x2) sem acertar placar ou saldo.",
       "participation": "Participação",
-    "participation_desc": "Pontos garantidos por cada jogo marcado."
+      "participation_desc": "Pontos garantidos por cada jogo marcado."
     },
     "review": {
       "title": "Tudo pronto!",
@@ -369,7 +379,7 @@
     "disclaimer_payment": "O pagamento é combinado externamente entre os participantes.",
     "tabs": {
       "overview": "Visão Geral",
-    "palpites": "Escolhas",
+      "palpites": "Escolhas",
       "extras": "Extras",
       "ranking": "Ranking",
       "members": "Membros"
@@ -605,6 +615,73 @@
           "error_generic": "Revise os dados e tente novamente."
         }
       }
+    },
+    "admission": {
+      "step_label": "Etapa 5 de 6",
+      "title": "Como as pessoas entram?",
+      "desc": "Aqui você define a expectativa do convite. Isso precisa ficar claro desde o primeiro link.",
+      "summary_title": "Resumo da decisão",
+      "summary": {
+        "group_gated": "O link do bolão vai orientar a pessoa a entrar no grupo antes.",
+        "public": "O link do bolão deixa claro que a entrada é direta.",
+        "approval": "O link do bolão deixa claro que a entrada depende de aprovação."
+      },
+      "modes": {
+        "approval": {
+          "title": "Privado com aprovação",
+          "desc": "A pessoa pede entrada e o dono do bolão decide com calma."
+        },
+        "public": {
+          "title": "Público",
+          "desc": "A entrada é direta enquanto o bolão estiver aberto."
+        },
+        "group_gated": {
+          "title": "Controlado pelo grupo",
+          "desc": "Só entra no bolão quem já faz parte do grupo vinculado."
+        }
+      }
+    },
+    "review": {
+      "step_label": "Etapa 6 de 6",
+      "title": "Revise e publique",
+      "desc": "Confira o resumo final. Se quiser ajustar acesso, grupo ou pontuação, volte um passo.",
+      "placeholder_name": "Nome do bolão",
+      "placeholder_desc": "Uma descrição curta para explicar o clima do bolão",
+      "summary_title": "Resumo final",
+      "context_label": "Contexto",
+      "admission_label": "Entrada",
+      "type_label": "Tipo",
+      "prize_label": "Premiação simbólica",
+      "no_prize": "Não definida",
+      "save_draft": "Salvar rascunho",
+      "publish": "Publicar bolão",
+      "publishing": "Criando bolão",
+      "messages": {
+        "draft_success_title": "Rascunho salvo",
+        "draft_success_desc": "Você pode voltar depois usando o bolão {{id}}.",
+        "draft_error_title": "Não foi possível salvar o rascunho",
+        "draft_error_desc": "Tente novamente em alguns instantes.",
+        "publish_error_title": "Não foi possível publicar o bolão",
+        "error_auth": "Sua sessão expirou. Entre novamente e publique o bolão.",
+        "error_conflict": "Esse rascunho mudou em outro lugar. Atualize a página e tente de novo.",
+        "error_validation": "Confira nome, entrada e regras antes de publicar.",
+        "error_generic": "Revise os dados e tente novamente."
+      }
+    },
+    "steps": {
+      "aria_label": "Etapas de criação do bolão",
+      "identity": "Identidade",
+      "games": "Jogos",
+      "context": "Contexto",
+      "rules": "Regras",
+      "access": "Acesso",
+      "publish": "Publicar",
+      "done": "Feito",
+      "current_short": "Atual",
+      "step": "Etapa {{number}}",
+      "completed": "concluída",
+      "current": "atual",
+      "item_aria": "Etapa {{number}}: {{label}} {{status}}"
     }
   },
   "onboarding": {
@@ -708,7 +785,8 @@
     "active_market_title": "Desafio ativo neste formato",
     "active_market_desc": "A interface específica desse desafio entra na próxima etapa da migração do bolão.",
     "legacy_title": "Compatibilidade com dados antigos",
-    "legacy_desc": "Este bolão ainda tem previsões legadas salvas. A tela nova já lê esses valores para evitar perda de contexto."
+    "legacy_desc": "Este bolão ainda tem previsões legadas salvas. A tela nova já lê esses valores para evitar perda de contexto.",
+    "official_result_desc": "Defina o resultado oficial para distribuir os pontos deste desafio."
   },
   "caixinha": {
     "section_title": "Caixinha combinada",
@@ -846,7 +924,12 @@
     "not_found_desc": "Confira o link ou volte para a lista.",
     "points": "pts",
     "members_label": "membros",
-    "admin_badge": "Admin"
+    "admin_badge": "Admin",
+    "next_play_kicker": "Próxima jogada",
+    "progress_label": "Progresso",
+    "not_found": "Bolão não encontrado",
+    "tab_palpite": "Marcar",
+    "tab_turma": "Turma"
   },
   "special_markets": {
     "status_resolved": "Pontuado",
@@ -953,9 +1036,9 @@
       "private_desc": "Só quem tiver o link ou código",
       "public_title": "Público",
       "public_desc": "Qualquer pessoa pode entrar",
-    "scoring_mode_title": "Modo de escolhas",
+      "scoring_mode_title": "Modo de escolhas",
       "mode_default_title": "Padrão",
-    "mode_default_desc": "Escolhas livres para todos os participantes.",
+      "mode_default_desc": "Escolhas livres para todos os participantes.",
       "mode_exclusive_title": "Placar Exclusivo 🎯",
       "mode_exclusive_desc": "Cada placar só pode ser escolhido por uma pessoa. Se alguém já cravou 1-0, esse placar fica fechado.",
       "paid_title": "Tem combinado financeiro?",
@@ -1095,7 +1178,10 @@
         "participation_points": "Pontos por participação",
         "success_title": "Regras atualizadas",
         "error_markets": "Escolha ao menos um desafio",
-        "error_markets_desc": "O bolão precisa de pelo menos um desafio ativo para funcionar."
+        "error_markets_desc": "O bolão precisa de pelo menos um desafio ativo para funcionar.",
+        "winner": "Vencedor",
+        "draw": "Empate",
+        "participation": "Participação"
       },
       "finance": {
         "title": "Financeiro",
@@ -1111,7 +1197,13 @@
         "payment_placeholder": "Pix, prazo, conferência manual...",
         "prize_dist": "Rateio combinado entre participantes",
         "prize_placeholder": "Ex.: combinação interna do grupo, se existir",
-        "success_title": "Financeiro atualizado"
+        "success_title": "Financeiro atualizado",
+        "free": "Grátis",
+        "paid_external": "Pago por fora",
+        "payment_details": "Detalhes de pagamento",
+        "payment_details_placeholder": "Pix, prazo, conferência manual...",
+        "prize_distribution": "Rateio combinado",
+        "prize_distribution_placeholder": "Ex.: combinação interna do grupo, se existir"
       },
       "operation": {
         "title": "Operação",
@@ -1151,6 +1243,20 @@
         "locked": "Travado",
         "processing": "Processando…"
       }
+    },
+    "tabs": {
+      "general": "General",
+      "participation": "Participation",
+      "rules": "Rules",
+      "finance": "Finance"
+    },
+    "card": {
+      "editable": "Editable",
+      "locked": "Locked",
+      "processing": "Processing"
+    },
+    "participation": {
+      "action_duplicate": "Duplicar para ajustar participação"
     }
   },
   "status": {
@@ -1159,5 +1265,16 @@
     "finished": "Encerrado",
     "archived": "Arquivado",
     "deleted": "Apagado"
+  },
+  "nav": {
+    "bolao": "Bolão"
+  },
+  "errors": {
+    "generic_title": "Algo deu errado",
+    "try_again_later": "Tente novamente em instantes."
+  },
+  "create": {
+    "error_title": "Erro ao criar bolão",
+    "error_desc": "Tente novamente."
   }
 }

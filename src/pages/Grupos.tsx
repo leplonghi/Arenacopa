@@ -11,6 +11,7 @@ import { joinViaInvite } from "@/services/groups/group-access.service";
 import { getSiteUrl } from "@/utils/site-url";
 import { trackSocialEvent } from "@/lib/analytics/social.telemetry";
 import { ArenaMetric, ArenaPanel, ArenaSectionHeader } from "@/components/arena/ArenaPrimitives";
+import { tStatic } from "@/i18n/staticText";
 
 type GroupCard = {
   id: string;
@@ -313,8 +314,8 @@ export default function Grupos() {
 
           {invitationGroups.length === 0 ? (
             <div className="mt-5 rounded-[26px] border border-dashed border-white/10 bg-white/[0.03] px-5 py-7">
-              <p className="font-display text-[1.35rem] font-semibold uppercase leading-none text-white">Você ainda não administra nenhuma comunidade</p>
-              <p className="mt-2 text-sm leading-6 text-zinc-500">Quando criar uma comunidade, os atalhos de convite aparecem aqui.</p>
+              <p className="font-display text-[1.35rem] font-semibold uppercase leading-none text-white">{tStatic("Você ainda não administra nenhuma comunidade")}</p>
+              <p className="mt-2 text-sm leading-6 text-zinc-500">{tStatic("Quando criar uma comunidade, os atalhos de convite aparecem aqui.")}</p>
             </div>
           ) : (
             <div className="mt-4 grid gap-3 md:grid-cols-2">

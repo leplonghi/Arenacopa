@@ -46,8 +46,8 @@ export default function Menu() {
                 >
                     <Users2 className="w-5 h-5 text-primary" />
                     <div className="flex-1">
-                        <span className="font-bold text-sm">Comunidades</span>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">Acesse seus grupos e espaços de disputa.</p>
+                        <span className="font-bold text-sm">{t("menu.communities_title")}</span>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">{t("menu.communities_desc")}</p>
                     </div>
                 </button>
 
@@ -57,8 +57,8 @@ export default function Menu() {
                 >
                     <PlusCircle className="w-5 h-5 text-primary" />
                     <div className="flex-1">
-                        <span className="font-bold text-sm">Criar comunidade</span>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">Monte um espaço para reunir participantes.</p>
+                        <span className="font-bold text-sm">{t("menu.create_community_title")}</span>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">{t("menu.create_community_desc")}</p>
                     </div>
                 </button>
 
@@ -68,8 +68,8 @@ export default function Menu() {
                 >
                     <Store className="w-5 h-5 text-primary" />
                     <div className="flex-1">
-                        <span className="font-bold text-sm">ArenaCup para Negócios</span>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">Crie campanha com QR, link e benefício simples.</p>
+                        <span className="font-bold text-sm">{t("menu.business_title")}</span>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">{t("menu.business_desc")}</p>
                     </div>
                 </button>
 
@@ -79,8 +79,8 @@ export default function Menu() {
                 >
                     <Megaphone className="w-5 h-5 text-primary" />
                     <div className="flex-1">
-                        <span className="font-bold text-sm">Criar campanha</span>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">Publique uma campanha para dias de jogo.</p>
+                        <span className="font-bold text-sm">{t("menu.create_campaign_title")}</span>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">{t("menu.create_campaign_desc")}</p>
                     </div>
                 </button>
 

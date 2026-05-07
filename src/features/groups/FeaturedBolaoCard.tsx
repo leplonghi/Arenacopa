@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Trophy } from "lucide-react";
 import { BolaoAvatar } from "@/components/BolaoAvatar";
+import { tStatic } from "@/i18n/staticText";
 
 type FeaturedBolaoCardProps = {
   bolao: {
@@ -17,8 +18,8 @@ export function FeaturedBolaoCard({ bolao }: FeaturedBolaoCardProps) {
   if (!bolao) {
     return (
       <div className="rounded-[32px] border border-white/10 bg-white/5 p-5 text-white">
-        <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">Bolão em destaque</p>
-        <p className="mt-3 text-lg font-black">Este grupo ainda não tem um bolão principal.</p>
+        <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">{tStatic("Bolão em destaque")}</p>
+        <p className="mt-3 text-lg font-black">{tStatic("Este grupo ainda não tem um bolão principal.")}</p>
         <p className="mt-1 line-clamp-2 text-sm text-zinc-400">
           Crie ou destaque um bolão ativo para deixar a entrada mais clara para todo mundo.
         </p>
@@ -50,7 +51,7 @@ export function FeaturedBolaoCard({ bolao }: FeaturedBolaoCardProps) {
       />
 
       <div className="relative z-10">
-        <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">Bolão em destaque</p>
+        <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">{tStatic("Bolão em destaque")}</p>
         <div className="mt-4 flex flex-wrap items-center gap-4">
           <BolaoAvatar
             avatarUrl={bolao.avatar_url ?? null}
@@ -63,7 +64,7 @@ export function FeaturedBolaoCard({ bolao }: FeaturedBolaoCardProps) {
             {bolao.description ? <p className="mt-1 line-clamp-2 text-sm text-zinc-200">{bolao.description}</p> : null}
             <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-black uppercase tracking-[0.16em]">
               <span className="rounded-full bg-black/20 px-3 py-1">{bolao.category === "public" ? "Público" : "Privado"}</span>
-              {bolao.is_paid ? <span className="rounded-full bg-black/20 px-3 py-1">Pago</span> : null}
+              {bolao.is_paid ? <span className="rounded-full bg-black/20 px-3 py-1">{tStatic("Pago")}</span> : null}
             </div>
           </div>
           <Link

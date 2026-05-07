@@ -4,8 +4,13 @@ import path from "node:path";
 const root = process.cwd();
 const srcDir = path.join(root, "src");
 const localesDir = path.join(root, "public", "locales");
+const referenceLocale = "pt-BR";
 const supportedLocales = ["pt-BR", "en", "es"];
-const namespaces = ["common", "auth", "copa", "bolao", "guia", "ranking", "profile", "errors", "sedes", "home", "premium", "championships"];
+const namespaces = fs
+  .readdirSync(path.join(localesDir, referenceLocale))
+  .filter((fileName) => fileName.endsWith(".json"))
+  .map((fileName) => path.basename(fileName, ".json"))
+  .sort();
 
 function walk(dir, predicate) {
   const results = [];
@@ -37,26 +42,48 @@ function loadJson(filePath) {
   return JSON.parse(fs.readFileSync(filePath, "utf8"));
 }
 
-function getMissingLocaleKeys() {
-  const reference = new Map();
+function getLocaleKeySets(locale) {
+  const result = new Map();
 
   for (const namespace of namespaces) {
-    const ptFile = path.join(localesDir, "pt-BR", `${namespace}.json`);
-    if (!fs.existsSync(ptFile)) continue;
-    reference.set(namespace, new Set(flattenKeys(loadJson(ptFile))));
+    const localeFile = path.join(localesDir, locale, `${namespace}.json`);
+    if (!fs.existsSync(localeFile)) {
+      result.set(namespace, null);
+      continue;
+    }
+    result.set(namespace, new Set(flattenKeys(loadJson(localeFile))));
   }
 
+  return result;
+}
+
+function hasTranslationKey(localeKeySets, namespace, key) {
+  const keys = localeKeySets.get(namespace);
+  if (!keys) return false;
+
+  return (
+    keys.has(key) ||
+    keys.has(`${key}_one`) ||
+    keys.has(`${key}_other`) ||
+    keys.has(`${key}_zero`)
+  );
+}
+
+function getMissingLocaleKeys() {
+  const reference = getLocaleKeySets(referenceLocale);
   const missing = {};
+
   for (const locale of supportedLocales) {
     missing[locale] = [];
+    const localeKeySets = getLocaleKeySets(locale);
+
     for (const [namespace, referenceKeys] of reference.entries()) {
-      const localeFile = path.join(localesDir, locale, `${namespace}.json`);
-      if (!fs.existsSync(localeFile)) {
+      const localeKeys = localeKeySets.get(namespace);
+      if (!localeKeys) {
         missing[locale].push(`${namespace}: missing file`);
         continue;
       }
 
-      const localeKeys = new Set(flattenKeys(loadJson(localeFile)));
       for (const key of referenceKeys) {
         if (!localeKeys.has(key)) {
           missing[locale].push(`${namespace}.${key}`);
@@ -68,8 +95,101 @@ function getMissingLocaleKeys() {
   return missing;
 }
 
+function getSourceFiles() {
+  return walk(srcDir, (filePath) => {
+    const normalized = filePath.split(path.sep).join("/");
+    if (![".ts", ".tsx"].includes(path.extname(filePath))) return false;
+    if (normalized.includes("/src/test/")) return false;
+    if (normalized.includes("/test/") || normalized.includes("_disabled/")) return false;
+    return true;
+  });
+}
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function getTranslationFunctions(content) {
+  const functions = new Map();
+  const destructuredRegex =
+    /(?:const|let|var)\s*\{([^}]*\bt\s*(?::\s*[$A-Z_a-z][$\w]*)?[^}]*)\}\s*=\s*useTranslation\(\s*(?:(["'`])([\w-]+)\2)?\s*\)/g;
+  let match;
+
+  while ((match = destructuredRegex.exec(content)) !== null) {
+    const destructured = match[1];
+    const namespace = match[3] || "common";
+    const aliasMatch = /\bt\s*(?::\s*([$A-Z_a-z][$\w]*))?/.exec(destructured);
+    functions.set(aliasMatch?.[1] || "t", namespace);
+  }
+
+  if (content.includes("i18n.t(")) {
+    functions.set("i18n.t", "common");
+  }
+
+  return functions;
+}
+
+function parseTranslationKey(rawKey, defaultNamespace) {
+  if (rawKey.includes(":")) {
+    const [namespace, key] = rawKey.split(/:(.*)/s);
+    return { namespace, key };
+  }
+
+  return { namespace: defaultNamespace, key: rawKey };
+}
+
+function getMissingCodeKeys() {
+  const localeKeySets = getLocaleKeySets(referenceLocale);
+  const missing = [];
+
+  for (const file of getSourceFiles()) {
+    const content = fs.readFileSync(file, "utf8");
+    if (!content.includes("useTranslation") && !content.includes("i18n.t(")) continue;
+
+    const translationFunctions = getTranslationFunctions(content);
+    if (!translationFunctions.size) continue;
+
+    const lines = content.split(/\r?\n/);
+
+    for (const [functionName, defaultNamespace] of translationFunctions.entries()) {
+      const callRegex = new RegExp(`\\b${escapeRegExp(functionName)}\\(\\s*(["'\`])([^"'\`$]+)\\1`, "g");
+
+      lines.forEach((line, index) => {
+        let match;
+        callRegex.lastIndex = 0;
+        while ((match = callRegex.exec(line)) !== null) {
+          const { namespace, key } = parseTranslationKey(match[2], defaultNamespace);
+          if (!namespaces.includes(namespace)) {
+            missing.push({
+              file: path.relative(root, file),
+              line: index + 1,
+              key: `${namespace}:${key}`,
+              reason: "unknown namespace",
+            });
+            continue;
+          }
+
+          if (!hasTranslationKey(localeKeySets, namespace, key)) {
+            missing.push({
+              file: path.relative(root, file),
+              line: index + 1,
+              key: `${namespace}:${key}`,
+              reason: "missing in pt-BR",
+            });
+          }
+        }
+      });
+    }
+  }
+
+  return missing;
+}
+
 function getHardcodedTextSuspects() {
-  const files = walk(srcDir, (filePath) => [".ts", ".tsx"].includes(path.extname(filePath)));
+  const files = getSourceFiles().filter((filePath) => {
+    const normalized = filePath.split(path.sep).join("/");
+    return !normalized.endsWith("/src/i18n/staticText.ts");
+  });
   const suspects = [];
 
   const jsxTextRegex = />\s*([A-Za-zÀ-ÿ][^<{}`]{2,})\s*</g;
@@ -83,6 +203,18 @@ function getHardcodedTextSuspects() {
     "rgba(",
     "hsla(",
     "displayName",
+    "Promise",
+    "Array",
+    "TFunction",
+    "Date.now",
+    "country.cities",
+    "now - timestamp",
+    "ArenaCopa",
+    "ArenaCup",
+    "arenacopa.app",
+    "FIFA",
+    "CartoDB",
+    "QR Code",
   ];
 
   for (const file of files) {
@@ -92,7 +224,12 @@ function getHardcodedTextSuspects() {
     lines.forEach((line, index) => {
       const trimmed = line.trim();
       if (!trimmed || trimmed.startsWith("//") || trimmed.startsWith("*")) return;
-      if (trimmed.includes("t(") || trimmed.includes("useTranslation")) return;
+      if (
+        trimmed.includes("t(") ||
+        trimmed.includes("tStatic(") ||
+        trimmed.includes("useTranslation") ||
+        trimmed.includes("i18n-ignore")
+      ) return;
 
       for (const regex of [jsxTextRegex, literalRegex]) {
         regex.lastIndex = 0;
@@ -101,6 +238,7 @@ function getHardcodedTextSuspects() {
           const text = (match[1] ?? match[2] ?? "").trim();
           if (!text) continue;
           if (ignored.some((fragment) => text.includes(fragment))) continue;
+          if (/^R\$\s?\d/.test(text)) continue;
           if (!/[A-Za-zÀ-ÿ]/.test(text)) continue;
 
           suspects.push({
@@ -117,6 +255,7 @@ function getHardcodedTextSuspects() {
 }
 
 const missingLocaleKeys = getMissingLocaleKeys();
+const missingCodeKeys = getMissingCodeKeys();
 const hardcodedTextSuspects = getHardcodedTextSuspects();
 
 console.log("=== Missing locale keys ===");
@@ -131,6 +270,17 @@ for (const locale of supportedLocales) {
 }
 
 console.log("");
+console.log("=== Missing code translation keys ===");
+if (!missingCodeKeys.length) {
+  console.log("No missing keys referenced by source files.");
+} else {
+  missingCodeKeys.slice(0, 200).forEach((item) => {
+    console.log(`${item.file}:${item.line} -> ${item.key} (${item.reason})`);
+  });
+  console.log(`Total missing code keys: ${missingCodeKeys.length}`);
+}
+
+console.log("");
 console.log("=== Hardcoded text suspects ===");
 if (!hardcodedTextSuspects.length) {
   console.log("No relevant hardcoded text found.");
@@ -139,4 +289,9 @@ if (!hardcodedTextSuspects.length) {
     console.log(`${item.file}:${item.line} -> ${item.text}`);
   });
   console.log(`Total suspects: ${hardcodedTextSuspects.length}`);
+}
+
+const hasMissingLocaleKeys = Object.values(missingLocaleKeys).some((items) => items.length > 0);
+if (hasMissingLocaleKeys || missingCodeKeys.length > 0 || hardcodedTextSuspects.length > 0) {
+  process.exitCode = 1;
 }

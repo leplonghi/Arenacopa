@@ -1,14 +1,12 @@
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { NavLink } from "react-router-dom";
-import { User, Bell, ShieldQuestion, ShieldAlert, Trophy, Star, Users2, Store, PlusCircle, Megaphone } from "lucide-react";
+import { User, ShieldQuestion, ShieldAlert, Trophy, Star, Users2, Store, PlusCircle, Megaphone } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 import React from "react";
 
 export function MobileMenuSheet({ children }: { children: React.ReactNode }) {
   const { t } = useTranslation('common');
-  const { user } = useAuth();
   const [open, setOpen] = React.useState(false);
 
   return (
@@ -25,26 +23,26 @@ export function MobileMenuSheet({ children }: { children: React.ReactNode }) {
           <div className="grid gap-2">
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-1">{t('menu.account', 'Minha Conta')}</h3>
             <MenuLink to="/perfil" icon={<User className="w-5 h-5" />} label={t('nav.profile', 'Perfil')} onClick={() => setOpen(false)} />
-            <MenuLink to="/ranking" icon={<Trophy className="w-5 h-5" />} label="Ranking Geral" onClick={() => setOpen(false)} />
-            <MenuLink to="/guia" icon={<Star className="w-5 h-5" />} label="Guia da Copa" onClick={() => setOpen(false)} />
-            <MenuLink to="/premium" icon={<Star className="w-5 h-5 text-yellow-500" />} label="Arena Premium" onClick={() => setOpen(false)} />
+            <MenuLink to="/ranking" icon={<Trophy className="w-5 h-5" />} label={t('menu.general_ranking')} onClick={() => setOpen(false)} />
+            <MenuLink to="/guia" icon={<Star className="w-5 h-5" />} label={t('menu.copa_guide')} onClick={() => setOpen(false)} />
+            <MenuLink to="/premium" icon={<Star className="w-5 h-5 text-yellow-500" />} label={t('menu.premium')} onClick={() => setOpen(false)} />
           </div>
 
           <div className="grid gap-2">
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-1">Grupos</h3>
-            <MenuLink to="/grupos" icon={<Users2 className="w-5 h-5" />} label="Comunidades" onClick={() => setOpen(false)} />
-            <MenuLink to="/grupos/criar" icon={<PlusCircle className="w-5 h-5" />} label="Criar grupo" onClick={() => setOpen(false)} />
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-1">{t('menu.groups')}</h3>
+            <MenuLink to="/grupos" icon={<Users2 className="w-5 h-5" />} label={t('menu.communities')} onClick={() => setOpen(false)} />
+            <MenuLink to="/grupos/criar" icon={<PlusCircle className="w-5 h-5" />} label={t('menu.create_group')} onClick={() => setOpen(false)} />
           </div>
 
           <div className="grid gap-2">
-            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-1">Negócios</h3>
-            <MenuLink to="/negocios" icon={<Store className="w-5 h-5" />} label="ArenaCup para Negócios" onClick={() => setOpen(false)} />
-            <MenuLink to="/negocios/criar" icon={<Megaphone className="w-5 h-5" />} label="Criar campanha" onClick={() => setOpen(false)} />
+            <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-1">{t('menu.business')}</h3>
+            <MenuLink to="/negocios" icon={<Store className="w-5 h-5" />} label={t('menu.business_home')} onClick={() => setOpen(false)} />
+            <MenuLink to="/negocios/criar" icon={<Megaphone className="w-5 h-5" />} label={t('menu.create_campaign')} onClick={() => setOpen(false)} />
           </div>
 
           <div className="grid gap-2">
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-1">{t('menu.support', 'Suporte')}</h3>
-            <MenuLink to="/regras" icon={<ShieldQuestion className="w-5 h-5" />} label={t('regras.title', 'Regras do Jogo')} onClick={() => setOpen(false)} />
+            <MenuLink to="/regras" icon={<ShieldQuestion className="w-5 h-5" />} label={t('menu.game_rules')} onClick={() => setOpen(false)} />
             <MenuLink to="/termos" icon={<ShieldAlert className="w-5 h-5" />} label={t('footer.terms', 'Termos de Uso')} onClick={() => setOpen(false)} />
             <MenuLink to="/privacidade" icon={<ShieldAlert className="w-5 h-5" />} label={t('footer.privacy', 'Privacidade')} onClick={() => setOpen(false)} />
           </div>

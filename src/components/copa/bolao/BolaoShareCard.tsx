@@ -2,6 +2,7 @@ import React from "react";
 import { Trophy, Users, Globe, ShieldCheck } from "lucide-react";
 import { BolaoAvatar } from "@/components/BolaoAvatar";
 import { cn } from "@/lib/utils";
+import { tStatic } from "@/i18n/staticText";
 
 interface BolaoShareCardProps {
   bolaoName: string;
@@ -63,12 +64,12 @@ export const BolaoShareCard = React.forwardRef<HTMLDivElement, BolaoShareCardPro
             <div className="bg-white/5 backdrop-blur-md rounded-2xl p-4 border border-white/10 flex flex-col items-center">
               <Users className="w-5 h-5 text-zinc-400 mb-1" />
               <span className="text-2xl font-black">{memberCount}</span>
-              <span className="text-[9px] font-bold uppercase tracking-widest text-zinc-500">Participantes</span>
+              <span className="text-[9px] font-bold uppercase tracking-widest text-zinc-500">{tStatic("Participantes")}</span>
             </div>
             <div className="bg-white/5 backdrop-blur-md rounded-2xl p-4 border border-white/10 flex flex-col items-center">
               <ShieldCheck className="w-5 h-5 text-copa-gold mb-1" />
               <span className="text-2xl font-black">{isPaid ? "Pro" : "Livre"}</span>
-              <span className="text-[9px] font-bold uppercase tracking-widest text-zinc-500">Categoria</span>
+              <span className="text-[9px] font-bold uppercase tracking-widest text-zinc-500">{tStatic("Categoria")}</span>
             </div>
           </div>
         </div>
@@ -77,7 +78,7 @@ export const BolaoShareCard = React.forwardRef<HTMLDivElement, BolaoShareCardPro
         <div className="relative z-10 w-full flex flex-col items-center">
           <div className="bg-white/5 border border-white/10 rounded-2xl px-6 py-4 w-full flex flex-col items-center relative overflow-hidden group">
             <div className="absolute inset-0 bg-gradient-to-r from-copa-gold/0 via-copa-gold/5 to-copa-gold/0 -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-            <p className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-2">Use o código para entrar</p>
+            <p className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-500 mb-2">{tStatic("Use o código para entrar")}</p>
             <div className="text-4xl font-black tracking-[0.3em] text-white">
               {inviteCode.toUpperCase()}
             </div>

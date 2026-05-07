@@ -3,6 +3,7 @@ import { ArrowRight, BarChart3, Newspaper, Sparkles, Target, Trophy } from "luci
 import { ArenaPanel, ArenaSectionHeader } from "@/components/arena/ArenaPrimitives";
 import { getHomeNextAction } from "@/lib/home-next-action";
 import type { MatchFeedItem } from "@/types/match-feed";
+import { tStatic } from "@/i18n/staticText";
 
 export function TodayArenaCard({
   pendingCount,
@@ -161,7 +162,7 @@ export function CuriosityCard({ match }: { match: MatchFeedItem | null }) {
             <Newspaper className="h-5 w-5" />
           </span>
           <div className="min-w-0">
-            <p className="arena-kicker text-primary">Conteúdo para você</p>
+            <p className="arena-kicker text-primary">{tStatic("Conteúdo para você")}</p>
             <h2 className="mt-1 truncate font-display text-[1.9rem] font-bold uppercase tracking-[0.035em] text-white">
               {title}
             </h2>
@@ -192,7 +193,7 @@ export function RankingHighlightCard({
     <ArenaPanel className="p-4 sm:p-5">
       <div className="flex items-start justify-between gap-4">
         <div className="min-w-0">
-          <p className="arena-kicker text-primary">Ranking em destaque</p>
+          <p className="arena-kicker text-primary">{tStatic("Ranking em destaque")}</p>
           <h2 className="mt-1 font-display text-[2rem] font-bold uppercase leading-none tracking-[0.035em] text-white">
             {hasRank ? `Sua melhor posição é #${bestRank}` : "Entre em um ranking"}
           </h2>

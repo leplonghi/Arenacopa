@@ -1,5 +1,6 @@
 import { Flag, Star } from "lucide-react";
 import { ArenaPanel } from "@/components/arena/ArenaPrimitives";
+import { tStatic } from "@/i18n/staticText";
 
 export function RewardProgressCard({
   current,
@@ -16,7 +17,7 @@ export function RewardProgressCard({
 
   return (
     <ArenaPanel className="p-5">
-      <p className="arena-kicker text-primary">Próximo marco</p>
+      <p className="arena-kicker text-primary">{tStatic("Próximo marco")}</p>
       <div className="mt-3 flex items-center gap-4">
         <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-[22px] border border-primary/30 bg-primary/12 text-primary shadow-[0_0_24px_rgba(145,255,59,0.14)]">
           <Flag className="h-8 w-8" />

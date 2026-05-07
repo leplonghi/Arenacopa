@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import {
   collection,
   orderBy,
@@ -44,6 +45,7 @@ export interface CreateBolaoResult {
 export function useCreateBolao() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { t } = useTranslation("bolao");
   const [creating, setCreating] = useState(false);
   const mountedRef = useRef(true);
   useEffect(() => {

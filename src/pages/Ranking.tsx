@@ -12,6 +12,7 @@ import { getArenaLevel } from "@/lib/profile-level";
 import { RankingPodium } from "@/components/ranking/RankingPodium";
 import { RankingListRow } from "@/components/ranking/RankingListRow";
 import { RewardProgressCard } from "@/components/ranking/RewardProgressCard";
+import { tStatic } from "@/i18n/staticText";
 
 type UserStanding = {
   userId: string;
@@ -240,7 +241,7 @@ export default function Ranking() {
 
           <div className="space-y-4">
             <ArenaPanel className="p-5">
-              <p className="arena-kicker text-primary">Recorte da temporada</p>
+              <p className="arena-kicker text-primary">{tStatic("Recorte da temporada")}</p>
               <h3 className="mt-2 text-[1.75rem] font-bold leading-tight text-white">
                 Competição global com foco no seu progresso
               </h3>
@@ -265,7 +266,7 @@ export default function Ranking() {
 
             {myPosition ? (
               <ArenaPanel className="p-5">
-                <p className="arena-kicker text-primary">Sua corrida</p>
+                <p className="arena-kicker text-primary">{tStatic("Sua corrida")}</p>
                 <div className="mt-3 grid gap-3 sm:grid-cols-2">
                   <ArenaMetric
                     label={t('my_position')}

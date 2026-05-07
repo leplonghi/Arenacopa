@@ -8,6 +8,7 @@ import { OpportunityRail } from "@/components/opportunities/OpportunityRail";
 import { useAuth } from "@/contexts/AuthContext";
 import { useOpportunities } from "@/hooks/useOpportunities";
 import { listCreatorBoloes, type CreatorBolaoSummary } from "@/services/boloes/creator-pro.service";
+import { tStatic } from "@/i18n/staticText";
 
 const creatorTools = [
   {
@@ -224,7 +225,7 @@ export default function CreatorPro() {
               <ImageDown className="h-5 w-5" />
             </span>
             <div>
-              <p className="arena-kicker text-primary">Materiais</p>
+              <p className="arena-kicker text-primary">{tStatic("Materiais")}</p>
               <h2 className="mt-1 font-display text-[2rem] font-bold uppercase leading-none tracking-[0.035em] text-white">
                 Cards e QR prontos
               </h2>
@@ -235,10 +236,10 @@ export default function CreatorPro() {
           </div>
 
           <div className="grid gap-2 text-sm text-zinc-300">
-            <div className="rounded-[16px] border border-white/10 bg-white/[0.04] px-4 py-3">Card quadrado</div>
-            <div className="rounded-[16px] border border-white/10 bg-white/[0.04] px-4 py-3">Story</div>
-            <div className="rounded-[16px] border border-white/10 bg-white/[0.04] px-4 py-3">Cartaz com QR</div>
-            <div className="rounded-[16px] border border-white/10 bg-white/[0.04] px-4 py-3">Card de ranking</div>
+            <div className="rounded-[16px] border border-white/10 bg-white/[0.04] px-4 py-3">{tStatic("Card quadrado")}</div>
+            <div className="rounded-[16px] border border-white/10 bg-white/[0.04] px-4 py-3">{tStatic("Story")}</div>
+            <div className="rounded-[16px] border border-white/10 bg-white/[0.04] px-4 py-3">{tStatic("Cartaz com QR")}</div>
+            <div className="rounded-[16px] border border-white/10 bg-white/[0.04] px-4 py-3">{tStatic("Card de ranking")}</div>
           </div>
 
           <Link
@@ -258,7 +259,7 @@ export default function CreatorPro() {
               <Sparkles className="h-5 w-5" />
             </span>
             <div>
-              <p className="font-bold text-white">Upgrade preparado, checkout fora desta etapa</p>
+              <p className="font-bold text-white">{tStatic("Upgrade preparado, checkout fora desta etapa")}</p>
               <p className="mt-1 text-sm leading-6 text-zinc-400">
                 Esta primeira versão cria a casa do Creator Pro sem assinatura nova, cobrança ou automação comercial.
               </p>

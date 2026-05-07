@@ -1,4 +1,5 @@
 import { Check } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 
 type StepTone = "green" | "gold" | "cyan" | "rose";
@@ -34,24 +35,27 @@ const toneConfig: Record<StepTone, { active: string; done: string; idle: string 
 
 export function CreateBolaoStepRail({
   activeStep,
-  steps = [
-    { number: 1, label: "Identidade", tone: "green" },
-    { number: 2, label: "Jogos", tone: "gold" },
-    { number: 3, label: "Contexto", tone: "cyan" },
-    { number: 4, label: "Regras", tone: "rose" },
-    { number: 5, label: "Acesso", tone: "gold" },
-    { number: 6, label: "Publicar", tone: "green" },
-  ],
+  steps,
 }: {
   activeStep: number;
   steps?: StepRailItem[];
 }) {
+  const { t } = useTranslation("bolao");
+  const resolvedSteps = steps ?? [
+    { number: 1, label: t("creation.steps.identity"), tone: "green" },
+    { number: 2, label: t("creation.steps.games"), tone: "gold" },
+    { number: 3, label: t("creation.steps.context"), tone: "cyan" },
+    { number: 4, label: t("creation.steps.rules"), tone: "rose" },
+    { number: 5, label: t("creation.steps.access"), tone: "gold" },
+    { number: 6, label: t("creation.steps.publish"), tone: "green" },
+  ];
+
   return (
     <nav
-      aria-label="Etapas de criação do bolão"
+      aria-label={t("creation.steps.aria_label")}
       className="mb-6 grid grid-cols-3 gap-2 sm:grid-cols-6"
     >
-      {steps.map((step) => {
+      {resolvedSteps.map((step) => {
         const isDone = step.number < activeStep;
         const isActive = step.number === activeStep;
         const cfg = toneConfig[step.tone];
@@ -59,7 +63,11 @@ export function CreateBolaoStepRail({
         return (
           <div
             key={step.number}
-            aria-label={`Etapa ${step.number}: ${step.label}${isDone ? " (concluída)" : isActive ? " (atual)" : ""}`}
+            aria-label={t("creation.steps.item_aria", {
+              number: step.number,
+              label: step.label,
+              status: isDone ? t("creation.steps.completed") : isActive ? t("creation.steps.current") : "",
+            })}
             aria-current={isActive ? "step" : undefined}
             className={cn(
               "relative overflow-hidden rounded-[18px] border px-3 py-3 transition-all duration-300",
@@ -82,7 +90,7 @@ export function CreateBolaoStepRail({
                 {isDone ? <Check className="h-3 w-3" /> : step.number}
               </span>
               <span className="text-[9px] font-black uppercase tracking-[0.16em] opacity-70">
-                {isDone ? "Feito" : isActive ? "Atual" : `Etapa ${step.number}`}
+                {isDone ? t("creation.steps.done") : isActive ? t("creation.steps.current_short") : t("creation.steps.step", { number: step.number })}
               </span>
             </div>
 

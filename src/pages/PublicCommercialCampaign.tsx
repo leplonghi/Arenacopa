@@ -5,6 +5,7 @@ import { motion } from "framer-motion";
 import { ArenaPanel, ArenaSectionHeader } from "@/components/arena/ArenaPrimitives";
 import { resolveCommercialCampaign } from "@/services/commercial/commercial-campaign.service";
 import type { CommercialCampaign } from "@/types/commercial-campaign";
+import { tStatic } from "@/i18n/staticText";
 
 export default function PublicCommercialCampaign() {
   const { shareCode } = useParams();
@@ -32,8 +33,8 @@ export default function PublicCommercialCampaign() {
     return (
       <div className="arena-screen">
         <ArenaPanel className="p-6 text-center">
-          <h1 className="font-display text-3xl font-black uppercase text-white">Campanha não encontrada</h1>
-          <p className="mt-2 text-sm text-zinc-400">Confira o QR ou peça um novo link ao estabelecimento.</p>
+          <h1 className="font-display text-3xl font-black uppercase text-white">{tStatic("Campanha não encontrada")}</h1>
+          <p className="mt-2 text-sm text-zinc-400">{tStatic("Confira o QR ou peça um novo link ao estabelecimento.")}</p>
         </ArenaPanel>
       </div>
     );
@@ -79,7 +80,7 @@ export default function PublicCommercialCampaign() {
                 className="rounded-full bg-primary/20 px-3 py-1 flex items-center gap-1.5 border border-primary/30"
               >
                 <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-primary">Ativo Agora</span>
+                <span className="text-[10px] font-black uppercase tracking-widest text-primary">{tStatic("Ativo Agora")}</span>
               </motion.div>
             </div>
             

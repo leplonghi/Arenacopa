@@ -7,6 +7,7 @@ import { Send, MessageCircle, Loader2 } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { formatRelative } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { tStatic } from "@/i18n/staticText";
 
 interface Message {
   id: string;
@@ -99,8 +100,8 @@ export function CommunityFeed({ groupId }: { groupId: string }) {
       <div className="flex items-center gap-3 border-b border-white/10 bg-white/5 px-6 py-4">
         <MessageCircle className="h-6 w-6 text-primary" />
         <div>
-          <h3 className="font-display text-lg font-semibold text-white">Resenha da Comunidade</h3>
-          <p className="text-xs text-zinc-400">Converse com os membros e mande seus palpites</p>
+          <h3 className="font-display text-lg font-semibold text-white">{tStatic("Resenha da Comunidade")}</h3>
+          <p className="text-xs text-zinc-400">{tStatic("Converse com os membros e mande seus palpites")}</p>
         </div>
       </div>
 
@@ -108,8 +109,8 @@ export function CommunityFeed({ groupId }: { groupId: string }) {
         {messages.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center text-center">
             <MessageCircle className="mb-4 h-12 w-12 text-zinc-500" />
-            <p className="text-sm font-bold text-zinc-300">Nenhuma mensagem ainda</p>
-            <p className="mt-1 text-xs text-zinc-500">Mande a primeira mensagem na resenha!</p>
+            <p className="text-sm font-bold text-zinc-300">{tStatic("Nenhuma mensagem ainda")}</p>
+            <p className="mt-1 text-xs text-zinc-500">{tStatic("Mande a primeira mensagem na resenha!")}</p>
           </div>
         ) : (
           <div className="flex flex-col gap-4">

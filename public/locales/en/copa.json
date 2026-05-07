@@ -72,7 +72,10 @@
       "create_first": "Create First Simulation",
       "groups_count": "{{count}} Groups",
       "games_count": "{{filled}}/{{total}} Games",
-      "groups_count_plural": "{{count}} groups"
+      "groups_count_plural": "{{count}} groups",
+      "hero_title": "Suas simulações",
+      "hero_desc": "Crie cenários e compare caminhos até a final.",
+      "yours": "Minhas simulações"
     },
     "editor": {
       "selected_groups": "{{count}} groups selected",
@@ -191,7 +194,15 @@
       "hdi": "HDI",
       "population": "Population",
       "gdp": "GDP (Billion)"
-    }
+    },
+    "status_finished": "Finalizado",
+    "status_upcoming": "Em breve",
+    "hero": {
+      "date": "Data",
+      "time": "Horário",
+      "stage": "Fase"
+    },
+    "location_city": "Cidade"
   },
   "match_card": {
     "live": "In Progress",
@@ -208,7 +219,14 @@
     "share_error": "Error sharing",
     "not_supported": "Sharing not supported in this browser",
     "downloaded": "Image downloaded! Attach in WhatsApp",
-    "btn_label": "Share"
+    "btn_label": "Share",
+    "native_title": "Minha chave da Copa",
+    "native_text": "Olha minha simulação no ArenaCUP!",
+    "title": "Compartilhar chave",
+    "generating": "Gerando...",
+    "share": "Compartilhar",
+    "whatsapp": "WhatsApp",
+    "download": "Baixar"
   },
   "bracket_modal": {
     "edit_score": "Edit score",
@@ -372,5 +390,22 @@
         "ENG": "The 2006 quarterfinal remains the most memorable chapter of this matchup."
       }
     }
+  },
+  "knockout": {
+    "tbd": "A definir",
+    "penalties": "Pênaltis",
+    "advance_label": "{{team}} avança",
+    "incomplete_title": "Mata-mata incompleto",
+    "incomplete_desc": "Complete a fase anterior para liberar os confrontos.",
+    "defined_count": "{{count}} definidos"
+  },
+  "tournament_progress": {
+    "stages": {
+      "groups": "Grupos",
+      "knockout": "Mata-mata",
+      "final": "Final"
+    },
+    "title": "Progresso do torneio",
+    "live": "Ao vivo"
   }
 }

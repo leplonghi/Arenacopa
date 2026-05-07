@@ -1,9 +1,9 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { teams, getTeam } from "@/data/mockData";
 import { Flag } from "@/components/Flag";
 import { cn } from "@/lib/utils";
-import { LogOut, Settings, Bell, Goal, Newspaper, Clock, Loader2, Languages, Target, Star, Crown, Zap, Trophy, Medal, Award, Heart, BookOpen } from "lucide-react";
+import { LogOut, Settings, Goal, Newspaper, Clock, Loader2, Target, Star, Crown, Zap, Trophy } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { db } from "@/integrations/firebase/client";
 import { useNavigate } from "react-router-dom";
@@ -27,6 +27,7 @@ import { ArenaMetric, ArenaPanel, ArenaSectionHeader } from "@/components/arena/
 import { getArenaLevel } from "@/lib/profile-level";
 import { AchievementRail } from "@/components/profile/AchievementRail";
 import { HistoryStatList } from "@/components/profile/HistoryStatList";
+import { tStatic } from "@/i18n/staticText";
 
 function urlBase64ToUint8Array(base64String: string) {
   const padding = '='.repeat((4 - base64String.length % 4) % 4);
@@ -47,7 +48,7 @@ const Perfil = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { t } = useTranslation('profile');
+  const { t } = useTranslation(['profile', 'common', 'bolao']);
   const { language, systemLanguage } = useLanguage();
   const [profile, setProfile] = useState<ProfileRecord | null>(null);
 
@@ -65,7 +66,7 @@ const Perfil = () => {
 
   const { data: stats } = useProfileStats(user?.id);
 
-  const { data: currentProfile, isLoading: profileLoading } = useCurrentProfile();
+  const { data: currentProfile } = useCurrentProfile();
 
   useEffect(() => {
     if (currentProfile) {
@@ -103,11 +104,11 @@ const Perfil = () => {
   const levelInfo = getArenaLevel(stats?.points);
 
   const getTier = (level: number) => {
-    if (level < 5) return { name: 'Amador', color: 'text-[#cd7f32]', bg: 'bg-[#cd7f32]/10', border: 'border-[#cd7f32]/30' };
-    if (level < 15) return { name: 'Bronze', color: 'text-[#d4af37]', bg: 'bg-[#d4af37]/10', border: 'border-[#d4af37]/30' };
-    if (level < 30) return { name: 'Prata', color: 'text-[#e3e4e5]', bg: 'bg-[#e3e4e5]/10', border: 'border-[#e3e4e5]/30' };
-    if (level < 50) return { name: 'Ouro', color: 'text-[#ffd700]', bg: 'bg-[#ffd700]/10', border: 'border-[#ffd700]/30' };
-    return { name: 'Lenda', color: 'text-[#00ffff]', bg: 'bg-[#00ffff]/10', border: 'border-[#00ffff]/30' };
+    if (level < 5) return { name: t('tiers.amateur'), color: 'text-[#cd7f32]', bg: 'bg-[#cd7f32]/10', border: 'border-[#cd7f32]/30' };
+    if (level < 15) return { name: t('tiers.bronze'), color: 'text-[#d4af37]', bg: 'bg-[#d4af37]/10', border: 'border-[#d4af37]/30' };
+    if (level < 30) return { name: t('tiers.silver'), color: 'text-[#e3e4e5]', bg: 'bg-[#e3e4e5]/10', border: 'border-[#e3e4e5]/30' };
+    if (level < 50) return { name: t('tiers.gold'), color: 'text-[#ffd700]', bg: 'bg-[#ffd700]/10', border: 'border-[#ffd700]/30' };
+    return { name: t('tiers.legend'), color: 'text-[#00ffff]', bg: 'bg-[#00ffff]/10', border: 'border-[#00ffff]/30' };
   };
   const tier = getTier(levelInfo.level);
   const achievements = [
@@ -118,11 +119,11 @@ const Perfil = () => {
     { id: "campeao", title: t('achievements.champion.title'), description: (stats?.titles || 0) > 0 ? t('achievements.champion.desc') : t('achievements.locked'), icon: <Trophy className="w-6 h-6 text-emerald-400" />, unlocked: (stats?.titles || 0) > 0 },
   ];
   const historyItems = [
-    { label: "Jogos marcados", value: (stats?.totalPredictions || 0).toLocaleString("pt-BR") },
-    { label: "Placares exatos", value: (stats?.exactScores || 0).toLocaleString("pt-BR") },
-    { label: "Bolões criados", value: (stats?.createdBoloes || 0).toLocaleString("pt-BR") },
-    { label: "Títulos", value: (stats?.titles || 0).toLocaleString("pt-BR") },
-    { label: "Aproveitamento", value: `${stats?.efficiency || 0}%` },
+    { label: t('history.predictions'), value: (stats?.totalPredictions || 0).toLocaleString(language) },
+    { label: t('history.exact_scores'), value: (stats?.exactScores || 0).toLocaleString(language) },
+    { label: t('history.created_pools'), value: (stats?.createdBoloes || 0).toLocaleString(language) },
+    { label: t('history.titles'), value: (stats?.titles || 0).toLocaleString(language) },
+    { label: t('history.efficiency'), value: `${stats?.efficiency || 0}%` },
   ];
   const languageLabels = {
     "pt-BR": t('language_names.ptBR'),
@@ -180,7 +181,7 @@ const Perfil = () => {
           </div>
 
           <div className="space-y-3 text-center md:text-left">
-            <p className="arena-kicker text-primary">Perfil</p>
+            <p className="arena-kicker text-primary">{tStatic("Perfil")}</p>
             <h1 className="font-display text-[3.2rem] font-black uppercase leading-[0.9] text-white">
               {displayName}
             </h1>
@@ -475,7 +476,7 @@ const Perfil = () => {
       </ArenaPanel>
 
       <ArenaPanel className="p-5">
-        <ArenaSectionHeader eyebrow={t('language')} title="Idioma do app" />
+        <ArenaSectionHeader eyebrow={t('language')} title={t('language_app_title')} />
         <div className="mt-4 space-y-3 rounded-[26px] border border-white/10 bg-white/[0.03] p-4">
           <div className="flex items-start justify-between gap-3">
             <div>

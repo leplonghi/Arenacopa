@@ -22,7 +22,9 @@
       "title": "Ranking no data yet",
       "description": "When predictions are computed, the ranking will appear here."
     },
-    "summary": "<0>{{count}}</0> players in the overall ranking this season."
+    "summary": "<0>{{count}}</0> players in the overall ranking this season.",
+    "filter_all": "Todos",
+    "filter_friends": "Amigos"
   },
   "open_boloes": {
     "title": "Open Bolões",

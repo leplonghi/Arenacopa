@@ -92,5 +92,66 @@
     "today_match_cta": "See games",
     "ready_title": "All set!",
     "ready_desc": "Your picks are done. Good luck!"
+  },
+  "zones": {
+    "now": "Now",
+    "my_pools": "My pools",
+    "discover": "Discover"
+  },
+  "pending_banner": {
+    "kicker": "Upcoming matches",
+    "title_one": "{{count}} match to predict",
+    "title_other": "{{count}} matches to predict",
+    "desc": "Submit your picks before kickoff"
+  },
+  "join_requests": {
+    "title_one": "{{count}} join request for your pool",
+    "title_other": "{{count}} join requests for your pool",
+    "desc": "Tap to review and approve"
+  },
+  "quick_stats": {
+    "pending": "Pending picks",
+    "today": "Matches today",
+    "pools": "My pools"
+  },
+  "pool_row": {
+    "members": "{{count}} members",
+    "pending_one": "{{count}} pending pick",
+    "pending_other": "{{count}} pending picks",
+    "up_to_date": "Up to date"
+  },
+  "empty_pools": {
+    "title": "What is a pool?",
+    "desc": "Compete with your group to predict more matches",
+    "body": "Each participant predicts scores. Whoever earns the most points leads the group ranking.",
+    "create": "Create pool",
+    "create_desc": "For your group",
+    "explore": "Explore",
+    "explore_desc": "Open pools"
+  },
+  "pool_actions": {
+    "remaining_one": "+{{count}} pool remaining",
+    "remaining_other": "+{{count}} pools remaining",
+    "create_another": "Create another pool"
+  },
+  "discover": {
+    "championships": "Championships",
+    "championships_desc": "Matches and standings",
+    "news": "News",
+    "news_desc": "Latest football updates",
+    "ranking": "Ranking",
+    "ranking_desc": "Your position",
+    "communities": "Communities",
+    "communities_desc": "Recurring groups"
+  },
+  "today_more": {
+    "title": "More matches today",
+    "view_all": "View all"
+  },
+  "profile_card": {
+    "level": "Your level",
+    "view_profile": "View profile",
+    "ranking": "Ranking",
+    "no_points": "No points yet"
   }
 }

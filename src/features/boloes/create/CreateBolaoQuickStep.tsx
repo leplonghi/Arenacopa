@@ -15,6 +15,7 @@ import {
   type useBolaoCreateFlow,
 } from "@/features/boloes/create/useBolaoCreateFlow";
 import { getToneClasses } from "@/features/boloes/create/stepColors";
+import { tStatic } from "@/i18n/staticText";
 
 type Flow = ReturnType<typeof useBolaoCreateFlow>;
 
@@ -215,7 +216,7 @@ export function CreateBolaoQuickStep({ flow }: { flow: Flow }) {
           </div>
         </div>
         <div className="rounded-[22px] border border-white/10 bg-black/20 p-4">
-          <p className="break-words text-sm font-black text-white">Pontuação padrão</p>
+          <p className="break-words text-sm font-black text-white">{tStatic("Pontuação padrão")}</p>
           <p className="mt-2 text-sm leading-6 text-zinc-300">
             10 pontos para placar exato, 5 pontos para acertar vencedor ou empate, e ranking
             atualizado conforme os resultados forem apurados.

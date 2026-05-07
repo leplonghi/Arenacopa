@@ -20,6 +20,7 @@ import {
   setFeaturedGroupBolao,
 } from "@/services/groups/group-access.service";
 import { trackSocialEvent } from "@/lib/analytics/social.telemetry";
+import { tStatic } from "@/i18n/staticText";
 
 type GroupData = {
   id: string;
@@ -352,7 +353,7 @@ export default function GrupoDetail() {
           </button>
           <div className="flex h-14 w-14 items-center justify-center rounded-[22px] bg-primary/10 text-2xl">{grupo.emoji}</div>
           <div>
-            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">Comunidade</p>
+            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">{tStatic("Comunidade")}</p>
             <h1 className="text-3xl font-black">{grupo.name}</h1>
             {grupo.description ? <p className="text-sm text-zinc-400">{grupo.description}</p> : null}
           </div>
@@ -386,7 +387,7 @@ export default function GrupoDetail() {
       </div>
 
       <div className="mt-6 flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-        <button onClick={() => setActiveTab('feed')} className={`rounded-full px-5 py-2.5 text-[11px] font-black uppercase tracking-widest transition-all ${activeTab === 'feed' ? 'bg-primary text-black' : 'bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white'}`}>Resenha</button>
+        <button onClick={() => setActiveTab('feed')} className={`rounded-full px-5 py-2.5 text-[11px] font-black uppercase tracking-widest transition-all ${activeTab === 'feed' ? 'bg-primary text-black' : 'bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white'}`}>{tStatic("Resenha")}</button>
         <button onClick={() => setActiveTab('boloes')} className={`rounded-full px-5 py-2.5 text-[11px] font-black uppercase tracking-widest transition-all ${activeTab === 'boloes' ? 'bg-primary text-black' : 'bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white'}`}>Bolões ({boloes.length})</button>
         <button onClick={() => setActiveTab('members')} className={`rounded-full px-5 py-2.5 text-[11px] font-black uppercase tracking-widest transition-all ${activeTab === 'members' ? 'bg-primary text-black' : 'bg-white/5 text-zinc-400 hover:bg-white/10 hover:text-white'}`}>Membros ({members.length})</button>
       </div>
@@ -401,7 +402,7 @@ export default function GrupoDetail() {
             <FeaturedBolaoCard bolao={featuredBolao} />
 
             <section className="rounded-[32px] border border-white/10 bg-white/5 p-5">
-              <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">Bolões da comunidade</p>
+              <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">{tStatic("Bolões da comunidade")}</p>
               <p className="mt-2 text-sm text-zinc-400">
                 A comunidade pode ter vários bolões, mas só um fica em destaque para não poluir a experiência.
               </p>
@@ -422,7 +423,7 @@ export default function GrupoDetail() {
                             {bolao.description ? <p className="mt-1 text-sm text-zinc-400">{bolao.description}</p> : null}
                             <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-black uppercase tracking-[0.14em]">
                               <span className="rounded-full bg-white/10 px-3 py-1">{bolao.category === "public" ? "Público" : "Privado"}</span>
-                              {bolao.is_paid ? <span className="rounded-full bg-white/10 px-3 py-1">Pago</span> : null}
+                              {bolao.is_paid ? <span className="rounded-full bg-white/10 px-3 py-1">{tStatic("Pago")}</span> : null}
                             </div>
                           </Link>
                           {isManager ? (

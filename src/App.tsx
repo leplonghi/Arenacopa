@@ -5,7 +5,7 @@ import "./i18n/config";
 import { Suspense, lazy, useEffect } from "react";
 import type { ComponentType } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation, useParams } from "react-router-dom";
 import { App as CapacitorApp } from '@capacitor/app';
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 import { Layout } from "@/components/Layout";
@@ -160,7 +160,7 @@ function DeepLinkListener() {
   const navigate = useNavigate();
   useEffect(() => {
     const listener = CapacitorApp.addListener('appUrlOpen', data => {
-      console.log('App opened with URL:', data);
+      console.warn('App opened with URL:', data);
       const url = new URL(data.url);
       const path = url.pathname;
       // Sanitize against open redirect vulnerabilities and javascript injections

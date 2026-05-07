@@ -5,6 +5,7 @@ import { Loader2, Ticket } from "lucide-react";
 import { resolveCommercialCampaign } from "@/services/commercial/commercial-campaign.service";
 import type { CommercialCampaign } from "@/types/commercial-campaign";
 import { RealtimeRankingTab } from "@/components/copa/bolao/RealtimeRankingTab";
+import { tStatic } from "@/i18n/staticText";
 
 export default function ArenaTV() {
   const { shareCode } = useParams();
@@ -32,8 +33,8 @@ export default function ArenaTV() {
     return (
       <div className="flex min-h-screen w-full items-center justify-center bg-black">
         <div className="text-center">
-          <h1 className="font-display text-4xl font-black uppercase text-white">Campanha não encontrada</h1>
-          <p className="mt-4 text-xl text-zinc-500">O código da TV pode estar incorreto ou expirado.</p>
+          <h1 className="font-display text-4xl font-black uppercase text-white">{tStatic("Campanha não encontrada")}</h1>
+          <p className="mt-4 text-xl text-zinc-500">{tStatic("O código da TV pode estar incorreto ou expirado.")}</p>
         </div>
       </div>
     );
@@ -69,7 +70,7 @@ export default function ArenaTV() {
         </div>
 
         <div className="mt-8 text-center shrink-0">
-          <p className="text-sm font-bold uppercase tracking-[0.2em] text-zinc-500">Acesse também pelo link</p>
+          <p className="text-sm font-bold uppercase tracking-[0.2em] text-zinc-500">{tStatic("Acesse também pelo link")}</p>
           <p className="mt-2 text-xl font-medium text-white">{joinUrl.replace('https://', '').replace('http://', '')}</p>
         </div>
 
@@ -78,7 +79,7 @@ export default function ArenaTV() {
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary/20 mb-4">
               <Ticket className="h-6 w-6 text-primary" />
             </div>
-            <h3 className="font-display text-xl font-black uppercase tracking-wider text-primary mb-2">Prêmio da Rodada</h3>
+            <h3 className="font-display text-xl font-black uppercase tracking-wider text-primary mb-2">{tStatic("Prêmio da Rodada")}</h3>
             <p className="text-lg text-white font-medium">{campaign.benefitSummary}</p>
             {campaign.benefitTerms && (
               <p className="mt-3 text-xs text-zinc-500">{campaign.benefitTerms}</p>
@@ -106,7 +107,7 @@ export default function ArenaTV() {
           ) : (
             <div className="flex h-full items-center justify-center rounded-3xl border border-white/5 bg-zinc-900/50 p-12 text-center">
               <div>
-                <h3 className="font-display text-3xl font-bold uppercase text-zinc-600">Ranking em breve</h3>
+                <h3 className="font-display text-3xl font-bold uppercase text-zinc-600">{tStatic("Ranking em breve")}</h3>
                 <p className="mt-4 max-w-md text-lg text-zinc-500">
                   O bolão vinculado ainda não foi configurado. Quando os palpites começarem, o ranking aparecerá aqui.
                 </p>

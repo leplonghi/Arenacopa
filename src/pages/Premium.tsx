@@ -9,6 +9,7 @@ import { useTranslation } from "react-i18next";
 import {
   getPremiumSupportMailto,
 } from "@/services/monetization/stripe.service";
+import { tStatic } from "@/i18n/staticText";
 
 export default function Premium() {
   const navigate = useNavigate();
@@ -117,14 +118,14 @@ export default function Premium() {
                 animate={{ opacity: 1, y: 0 }}
                 className="rounded-2xl border border-primary/20 bg-primary/5 p-5 relative overflow-hidden"
               >
-                <div className="absolute top-0 right-0 bg-primary/20 px-3 py-1 rounded-bl-xl text-[10px] font-bold text-primary uppercase">Mais Popular</div>
+                <div className="absolute top-0 right-0 bg-primary/20 px-3 py-1 rounded-bl-xl text-[10px] font-bold text-primary uppercase">{tStatic("Mais Popular")}</div>
                 <div className="flex items-center gap-3 mb-3">
                   <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center">
                     <Map className="w-5 h-5 text-primary" />
                   </div>
                   <div>
-                    <h3 className="font-black text-lg">Bar / Restaurante</h3>
-                    <p className="text-xs text-muted-foreground">Atraia clientes em dias de jogo</p>
+                    <h3 className="font-black text-lg">{tStatic("Bar / Restaurante")}</h3>
+                    <p className="text-xs text-muted-foreground">{tStatic("Atraia clientes em dias de jogo")}</p>
                   </div>
                 </div>
                 
@@ -136,15 +137,15 @@ export default function Premium() {
                 <ul className="space-y-2 mb-5">
                   <li className="flex items-start gap-2">
                     <CheckCircle2 className="w-4 h-4 shrink-0 text-primary mt-0.5" />
-                    <span className="text-xs text-muted-foreground"><strong>QR Code & Convite Premium:</strong> Cartaz digital lindo para impressão e WhatsApp.</span>
+                    <span className="text-xs text-muted-foreground"><strong>QR Code & Convite Premium:</strong>{tStatic("Cartaz digital lindo para impressão e WhatsApp.")}</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle2 className="w-4 h-4 shrink-0 text-primary mt-0.5" />
-                    <span className="text-xs text-muted-foreground"><strong>Bolão Patrocinado:</strong> Sua marca em destaque no app.</span>
+                    <span className="text-xs text-muted-foreground"><strong>{tStatic("Bolão Patrocinado:")}</strong>{tStatic("Sua marca em destaque no app.")}</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle2 className="w-4 h-4 shrink-0 text-primary mt-0.5" />
-                    <span className="text-xs text-muted-foreground">Aba extra para link do cardápio ou promoções.</span>
+                    <span className="text-xs text-muted-foreground">{tStatic("Aba extra para link do cardápio ou promoções.")}</span>
                   </li>
                 </ul>
 
@@ -177,8 +178,8 @@ export default function Premium() {
                     <Users2 className="w-5 h-5 text-white" />
                   </div>
                   <div>
-                    <h3 className="font-black text-lg">Empresa / RH</h3>
-                    <p className="text-xs text-muted-foreground">Engajamento real para suas equipes</p>
+                    <h3 className="font-black text-lg">{tStatic("Empresa / RH")}</h3>
+                    <p className="text-xs text-muted-foreground">{tStatic("Engajamento real para suas equipes")}</p>
                   </div>
                 </div>
                 
@@ -190,15 +191,15 @@ export default function Premium() {
                 <ul className="space-y-2 mb-5">
                   <li className="flex items-start gap-2">
                     <CheckCircle2 className="w-4 h-4 shrink-0 text-white/70 mt-0.5" />
-                    <span className="text-xs text-muted-foreground"><strong>Múltiplos Bolões:</strong> Até 5 bolões simultâneos por setor.</span>
+                    <span className="text-xs text-muted-foreground"><strong>{tStatic("Múltiplos Bolões:")}</strong>{tStatic("Até 5 bolões simultâneos por setor.")}</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle2 className="w-4 h-4 shrink-0 text-white/70 mt-0.5" />
-                    <span className="text-xs text-muted-foreground"><strong>White-label:</strong> Logo da empresa no topo do bolão.</span>
+                    <span className="text-xs text-muted-foreground"><strong>{tStatic("White-label:")}</strong>{tStatic("Logo da empresa no topo do bolão.")}</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle2 className="w-4 h-4 shrink-0 text-white/70 mt-0.5" />
-                    <span className="text-xs text-muted-foreground">Dashboard de engajamento em PDF para premiações.</span>
+                    <span className="text-xs text-muted-foreground">{tStatic("Dashboard de engajamento em PDF para premiações.")}</span>
                   </li>
                 </ul>
 
@@ -227,18 +228,18 @@ export default function Premium() {
                 transition={{ delay: 0.2 }}
                 className="rounded-2xl border border-white/5 bg-transparent p-5 text-center"
               >
-                <h3 className="font-bold text-sm mb-1">Enterprise / Redes</h3>
-                <p className="text-xs text-muted-foreground mb-3">Participantes e bolões ilimitados. Multimarcas e franquias.</p>
-                <a href={supportMailto} className="text-xs font-bold text-primary hover:underline">Falar com vendas →</a>
+                <h3 className="font-bold text-sm mb-1">{tStatic("Enterprise / Redes")}</h3>
+                <p className="text-xs text-muted-foreground mb-3">{tStatic("Participantes e bolões ilimitados. Multimarcas e franquias.")}</p>
+                <a href={supportMailto} className="text-xs font-bold text-primary hover:underline">{tStatic("Falar com vendas →")}</a>
               </motion.div>
 
             </div>
 
             {/* Social proof strip */}
             <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground pb-4">
-              <span className="flex items-center gap-1"><ShieldCheck className="w-3.5 h-3.5 text-amber-400" /> Pagamento Seguro</span>
+              <span className="flex items-center gap-1"><ShieldCheck className="w-3.5 h-3.5 text-amber-400" />{tStatic("Pagamento Seguro")}</span>
               <span className="w-1 h-1 rounded-full bg-white/20" />
-              <span className="flex items-center gap-1"><Star className="w-3.5 h-3.5 text-violet-400" /> Acesso vitalício à Copa</span>
+              <span className="flex items-center gap-1"><Star className="w-3.5 h-3.5 text-violet-400" />{tStatic("Acesso vitalício à Copa")}</span>
             </div>
           </>
         )}

@@ -2,11 +2,10 @@ import { useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Mail, Lock, User, Eye, EyeOff, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { signInWithGoogle, signInWithPassword, signUpWithPassword } from "@/services/auth/auth.service";
-import { getDefaultProfileName } from "@/i18n/language";
+import { getDefaultProfileName, normalizeLanguage } from "@/i18n/language";
 import { BRAND_MARK_SRC } from "@/lib/brand-assets";
 import { acceptTerms, ensureProfile, updateProfile } from "@/services/profile/profile.service";
 import { sanitizeInternalRedirect } from "@/lib/security";
@@ -24,13 +23,16 @@ const Auth = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { user } = useAuth();
-  const { t } = useTranslation(['auth', 'common']);
+  const { i18n, t } = useTranslation(['auth', 'common']);
   const brandName = t('common:brand.name');
   const redirectPath = sanitizeInternalRedirect(searchParams.get("redirect"));
 
   const getSafeAuthError = (fallback: string, error: unknown) => {
     if (error instanceof Error) {
+      if (error.name === "AppError") {
+        return error.message;
+      }
+
       const message = error.message.toLowerCase();
       if (message.includes("muitas tentativas")) {
         return error.message;
@@ -97,19 +99,23 @@ const Auth = () => {
     try {
 
       const googleUser = await signInWithGoogle();
-      await ensureProfile({
-        id: googleUser.uid,
-        email: googleUser.email ?? null,
-        user_metadata: {
-          full_name: googleUser.displayName || undefined,
-          name: googleUser.displayName || undefined,
-          avatar_url: googleUser.photoURL || undefined,
-        },
-      });
+      try {
+        await ensureProfile({
+          id: googleUser.uid,
+          email: googleUser.email ?? null,
+          user_metadata: {
+            full_name: googleUser.displayName || undefined,
+            name: googleUser.displayName || undefined,
+            avatar_url: googleUser.photoURL || undefined,
+          },
+        });
 
-      await updateProfile(googleUser.uid, {
-        name: googleUser.displayName || googleUser.email?.split("@")[0] || getDefaultProfileName(),
-      });
+        await updateProfile(googleUser.uid, {
+          name: googleUser.displayName || googleUser.email?.split("@")[0] || getDefaultProfileName(normalizeLanguage(i18n.resolvedLanguage || i18n.language)),
+        });
+      } catch (profileError) {
+        console.error("Erro ao sincronizar perfil Google:", profileError);
+      }
 
       navigate(redirectPath);
     } catch (error) {

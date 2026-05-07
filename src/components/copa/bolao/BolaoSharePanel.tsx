@@ -1,6 +1,7 @@
 import { Copy, Image as ImageIcon, Link2, MessageCircle, Share2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { ArenaPanel } from "@/components/arena/ArenaPrimitives";
+import { tStatic } from "@/i18n/staticText";
 
 type BolaoSharePanelProps = {
   bolaoName: string;
@@ -17,8 +18,10 @@ export function BolaoSharePanel({
   inviteUrl,
   shareText,
   onNativeShare,
+  onGenerateVipCard,
 }: BolaoSharePanelProps) {
   const { toast } = useToast();
+  const canGenerateVipCard = typeof onGenerateVipCard === "function";
 
   const copyInviteUrl = async () => {
     await navigator.clipboard.writeText(inviteUrl);
@@ -33,7 +36,7 @@ export function BolaoSharePanel({
   return (
     <div className="space-y-4">
       <ArenaPanel className="p-4 sm:p-5">
-        <p className="arena-kicker text-primary">Compartilhar</p>
+        <p className="arena-kicker text-primary">{tStatic("Compartilhar")}</p>
         <h2 className="mt-2 break-words font-display text-[2.4rem] font-black uppercase leading-[0.92] tracking-[0.02em] text-white">
           Convide sua turma para {bolaoName}
         </h2>
@@ -44,7 +47,7 @@ export function BolaoSharePanel({
 
       <div className="grid gap-3 md:grid-cols-[0.85fr_1.15fr]">
         <ArenaPanel className="p-4 sm:p-5">
-          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-zinc-500">Código do bolão</p>
+          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-zinc-500">{tStatic("Código do bolão")}</p>
           <div className="mt-4 rounded-[24px] border border-primary/25 bg-primary/10 p-5 text-center">
             <p className="font-display text-[3.2rem] font-black uppercase tracking-[0.18em] text-primary">
               {inviteCode}
@@ -65,8 +68,8 @@ export function BolaoSharePanel({
               <Share2 className="h-5 w-5" />
             </span>
             <span className="min-w-0">
-              <span className="block font-bold text-white">Compartilhar agora</span>
-              <span className="mt-1 block text-xs leading-5 text-zinc-400">Usa o compartilhamento nativo quando disponível.</span>
+              <span className="block font-bold text-white">{tStatic("Compartilhar agora")}</span>
+              <span className="mt-1 block text-xs leading-5 text-zinc-400">{tStatic("Usa o compartilhamento nativo quando disponível.")}</span>
             </span>
           </button>
 
@@ -79,8 +82,8 @@ export function BolaoSharePanel({
               <MessageCircle className="h-5 w-5" />
             </span>
             <span className="min-w-0">
-              <span className="block font-bold text-white">Copiar texto para WhatsApp</span>
-              <span className="mt-1 block text-xs leading-5 text-zinc-400">Mensagem pronta com link e instruções.</span>
+              <span className="block font-bold text-white">{tStatic("Copiar texto para WhatsApp")}</span>
+              <span className="mt-1 block text-xs leading-5 text-zinc-400">{tStatic("Mensagem pronta com link e instruções.")}</span>
             </span>
           </button>
 
@@ -93,7 +96,7 @@ export function BolaoSharePanel({
               <Link2 className="h-5 w-5" />
             </span>
             <span className="min-w-0">
-              <span className="block font-bold text-white">Copiar link direto</span>
+              <span className="block font-bold text-white">{tStatic("Copiar link direto")}</span>
               <span className="mt-1 block break-all text-xs leading-5 text-zinc-400">{inviteUrl}</span>
             </span>
           </button>
@@ -106,11 +109,11 @@ export function BolaoSharePanel({
             <Copy className="h-4 w-4" />
           </span>
           <div>
-            <p className="font-bold text-white">Materiais de divulgação</p>
+            <p className="font-bold text-white">{tStatic("Materiais de divulgação")}</p>
             <p className="mt-1 text-sm leading-6 text-zinc-400">
               Crie cartões personalizados e imagens exclusivas para aumentar as adesões.
             </p>
-            {onGenerateVipCard && (
+            {canGenerateVipCard && (
               <button
                 onClick={onGenerateVipCard}
                 className="mt-4 flex items-center gap-2 rounded-xl bg-copa-gold px-4 py-2 text-xs font-black uppercase tracking-widest text-black shadow-lg shadow-copa-gold/20 transition hover:scale-105 active:scale-95"

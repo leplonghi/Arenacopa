@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { MessageCircle, Send, Share2, UsersRound } from "lucide-react";
 import { ArenaPanel } from "@/components/arena/ArenaPrimitives";
+import { tStatic } from "@/i18n/staticText";
 
 const shareChannels = ["WhatsApp", "Telegram", "TikTok", "Instagram", "Facebook"];
 
@@ -14,7 +15,7 @@ export function SocialBolaoCard() {
             <Share2 className="h-7 w-7" />
           </div>
           <div className="min-w-0">
-            <p className="arena-kicker text-primary">Compartilhavel</p>
+            <p className="arena-kicker text-primary">{tStatic("Compartilhavel")}</p>
             <h3 className="font-display text-[1.55rem] font-semibold uppercase leading-[0.95] text-white">
               Bolao da turma
             </h3>

@@ -2,11 +2,16 @@ export type AppErrorCode =
   // Auth
   | "AUTH_EMAIL_IN_USE"
   | "AUTH_INVALID_CREDENTIALS"
+  | "AUTH_INVALID_API_KEY"
   | "AUTH_WEAK_PASSWORD"
   | "AUTH_USER_NOT_FOUND"
   | "AUTH_TOO_MANY_REQUESTS"
   | "AUTH_POPUP_CLOSED"
+  | "AUTH_POPUP_BLOCKED"
   | "AUTH_NETWORK_ERROR"
+  | "AUTH_PROVIDER_DISABLED"
+  | "AUTH_UNAUTHORIZED_DOMAIN"
+  | "AUTH_ACCOUNT_EXISTS_WITH_DIFFERENT_CREDENTIAL"
   | "AUTH_UNKNOWN"
   // Bolão
   | "BOLAO_SAVE_PALPITE_FAILED"
@@ -41,14 +46,21 @@ export class AppError extends Error {
 
 const FIREBASE_ERROR_MAP: Record<string, AppErrorCode> = {
   "auth/email-already-in-use": "AUTH_EMAIL_IN_USE",
+  "auth/account-exists-with-different-credential": "AUTH_ACCOUNT_EXISTS_WITH_DIFFERENT_CREDENTIAL",
+  "auth/credential-already-in-use": "AUTH_ACCOUNT_EXISTS_WITH_DIFFERENT_CREDENTIAL",
+  "auth/invalid-api-key": "AUTH_INVALID_API_KEY",
+  "auth/api-key-not-valid.-please-pass-a-valid-api-key.": "AUTH_INVALID_API_KEY",
   "auth/invalid-credential": "AUTH_INVALID_CREDENTIALS",
   "auth/invalid-email": "AUTH_INVALID_CREDENTIALS",
   "auth/wrong-password": "AUTH_INVALID_CREDENTIALS",
+  "auth/operation-not-allowed": "AUTH_PROVIDER_DISABLED",
   "auth/weak-password": "AUTH_WEAK_PASSWORD",
   "auth/user-not-found": "AUTH_USER_NOT_FOUND",
   "auth/too-many-requests": "AUTH_TOO_MANY_REQUESTS",
+  "auth/popup-blocked": "AUTH_POPUP_BLOCKED",
   "auth/popup-closed-by-user": "AUTH_POPUP_CLOSED",
   "auth/cancelled-popup-request": "AUTH_POPUP_CLOSED",
+  "auth/unauthorized-domain": "AUTH_UNAUTHORIZED_DOMAIN",
   "auth/network-request-failed": "AUTH_NETWORK_ERROR",
   "permission-denied": "PERMISSION_DENIED",
   "not-found": "NOT_FOUND",
@@ -56,12 +68,17 @@ const FIREBASE_ERROR_MAP: Record<string, AppErrorCode> = {
 
 const FIREBASE_ERROR_MESSAGES: Record<AppErrorCode, string> = {
   AUTH_EMAIL_IN_USE: "Este e-mail já está em uso.",
+  AUTH_ACCOUNT_EXISTS_WITH_DIFFERENT_CREDENTIAL: "Este e-mail já está vinculado a outro método de login.",
+  AUTH_INVALID_API_KEY: "Configuração do Firebase inválida. Recarregue a página e tente novamente.",
   AUTH_INVALID_CREDENTIALS: "E-mail ou senha inválidos.",
   AUTH_WEAK_PASSWORD: "Senha muito fraca. Use pelo menos 6 caracteres.",
   AUTH_USER_NOT_FOUND: "Usuário não encontrado.",
   AUTH_TOO_MANY_REQUESTS: "Muitas tentativas. Tente novamente mais tarde.",
   AUTH_POPUP_CLOSED: "Login cancelado.",
+  AUTH_POPUP_BLOCKED: "O navegador bloqueou a janela do Google. Libere pop-ups para este site e tente novamente.",
   AUTH_NETWORK_ERROR: "Erro de conexão. Verifique sua internet.",
+  AUTH_PROVIDER_DISABLED: "Login com Google não está habilitado no Firebase.",
+  AUTH_UNAUTHORIZED_DOMAIN: "Este domínio não está autorizado no Firebase Authentication.",
   AUTH_UNKNOWN: "Erro de autenticação. Tente novamente.",
   BOLAO_SAVE_PALPITE_FAILED: "Não foi possível salvar seu palpite.",
   BOLAO_REMOVE_MEMBER_FAILED: "Não foi possível remover o membro.",

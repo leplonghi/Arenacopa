@@ -2,6 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { Users, Store, ArrowRight, Trophy, Megaphone } from "lucide-react";
 import type { CreateAudienceMode } from "./useBolaoCreateFlow";
 import { ModeChoiceCard } from "@/features/boloes/components/ModeChoiceCard";
+import { tStatic } from "@/i18n/staticText";
 
 interface Props {
   onSelect: (mode: CreateAudienceMode) => void;
@@ -70,7 +71,7 @@ export function CreateBolaoModeStep({ onSelect }: Props) {
         {/* Bottom hint */}
         <div className="flex items-center justify-center gap-2 text-white/25 text-xs">
           <Megaphone className="w-3.5 h-3.5" />
-          <span>Você pode mudar o tipo a qualquer momento</span>
+          <span>{tStatic("Você pode mudar o tipo a qualquer momento")}</span>
         </div>
       </div>
     </div>

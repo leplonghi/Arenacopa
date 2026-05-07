@@ -382,12 +382,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
               {children}
             </div>
             <footer className="mt-12 w-full shrink-0 border-t border-white/10 px-4 py-8">
-              <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between md:gap-4 text-xs text-muted-foreground gap-4">
-                <div className="flex items-center gap-2">
+              <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 text-xs text-muted-foreground md:flex-row md:gap-4">
+                <div className="flex max-w-full items-center justify-center gap-2 text-center leading-relaxed">
                   <img src={logoUrl} alt={t('brand.name')} className="h-4 w-4 opacity-50" />
-                  <span>{t('footer.rights')}</span>
+                  <span className="min-w-0 break-words">{t('footer.rights')}</span>
                 </div>
-                <div className="flex gap-6">
+                <div className="flex flex-wrap justify-center gap-x-6 gap-y-2">
                   <NavLink to="/termos" className="hover:text-primary transition-colors">{t('footer.terms')}</NavLink>
                   <NavLink to="/privacidade" className="hover:text-primary transition-colors">{t('footer.privacy')}</NavLink>
                   <a href="mailto:contato@arenacup.com" className="hover:text-primary transition-colors">{t('footer.contact')}</a>

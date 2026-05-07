@@ -13,7 +13,7 @@ import {
 export function ElitePassModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
     const { purchasePremium, isLoading, isPremium } = useMonetization();
     const { toast } = useToast();
-    const [isHovering, setIsHovering] = useState(false);
+    const { i18n, t } = useTranslation('premium');
     const canStartPremiumCheckout = monetizationEnv.enablePremiumSimulation || monetizationEnv.premiumCheckoutEnabled;
     const supportMailto = getPremiumSupportMailto();
     const benefits = t('elite.benefits', { returnObjects: true }) as Array<{ title: string; desc: string }>;

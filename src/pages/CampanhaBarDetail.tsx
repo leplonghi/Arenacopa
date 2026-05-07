@@ -13,6 +13,7 @@ import {
   syncCommercialCampaignCheckout,
 } from "@/services/commercial/commercial-campaign.service";
 import type { CommercialCampaign } from "@/types/commercial-campaign";
+import { tStatic } from "@/i18n/staticText";
 
 export default function CampanhaBarDetail() {
   const { campaignId } = useParams();
@@ -260,7 +261,7 @@ export default function CampanhaBarDetail() {
         <div className="mt-4 grid gap-3 sm:grid-cols-[0.8fr,1.2fr]">
           <div className="rounded-[24px] border border-primary/20 bg-primary/10 p-5 text-center">
             <Ticket className="mx-auto h-7 w-7 text-primary" />
-            <p className="mt-3 text-[11px] font-black uppercase tracking-[0.18em] text-primary">Código</p>
+            <p className="mt-3 text-[11px] font-black uppercase tracking-[0.18em] text-primary">{tStatic("Código")}</p>
             <p className="mt-1 font-display text-3xl font-black uppercase text-white">{campaign.benefitCode}</p>
           </div>
           <div className="rounded-[24px] border border-white/10 bg-white/[0.03] p-5">

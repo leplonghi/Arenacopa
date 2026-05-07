@@ -10,6 +10,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { ShareCardGenerator } from "./ShareCardGenerator";
 import { openWhatsAppShare } from "@/lib/security";
 import {
+import { tStatic } from "@/i18n/staticText";
     buildBolaoInviteUrl,
     buildBolaoWhatsAppMessage,
     buildQrPosterFileName,
@@ -202,13 +203,13 @@ export function ShareSheet({ open, onClose, bolao }: ShareSheetProps) {
                             <div>
                                 <p className="text-sm font-black uppercase tracking-[0.28em] text-[#137d42]">ArenaCopa</p>
                                 <h2 className="mt-8 text-5xl font-black leading-tight">{bolao.name}</h2>
-                                <p className="mt-5 text-xl leading-8">Aponte a camera, entre no bolao e confirme seus palpites.</p>
+                                <p className="mt-5 text-xl leading-8">{tStatic("Aponte a camera, entre no bolao e confirme seus palpites.")}</p>
                             </div>
                             <div className="rounded-[40px] bg-white p-8 shadow-2xl">
                                 <QRCodeSVG value={shareUrl} size={360} bgColor="#ffffff" fgColor="#101010" level="H" />
                             </div>
                             <div>
-                                <p className="text-sm font-black uppercase tracking-[0.22em] text-[#137d42]">Codigo do bolao</p>
+                                <p className="text-sm font-black uppercase tracking-[0.22em] text-[#137d42]">{tStatic("Codigo do bolao")}</p>
                                 <p className="mt-3 text-5xl font-black tracking-[0.2em]">{bolao.invite_code}</p>
                                 <p className="mt-5 text-base leading-7">1. Escaneie o QR  2. Entre ou crie sua conta  3. Confirme a entrada</p>
                             </div>

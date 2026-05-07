@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { resolvePublicGroupInvite } from "@/services/public-invite/public-invite.service";
 import { JoinCTA } from "@/features/social/JoinCTA";
 import { joinViaInvite } from "@/services/groups/group-access.service";
+import { tStatic } from "@/i18n/staticText";
 
 type PublicInviteGroup = Awaited<ReturnType<typeof resolvePublicGroupInvite>>;
 
@@ -122,21 +123,21 @@ export default function PublicGroupInvite() {
           <div className="mb-6 inline-flex h-[108px] w-[108px] items-center justify-center rounded-3xl border border-white/10 bg-white/5 text-[60px]">
             {grupo.emoji}
           </div>
-          <h3 className="mb-2 text-[12px] font-black uppercase tracking-[0.3em] text-primary">Convite para grupo</h3>
+          <h3 className="mb-2 text-[12px] font-black uppercase tracking-[0.3em] text-primary">{tStatic("Convite para grupo")}</h3>
           <h1 className="mb-4 text-4xl font-black tracking-tighter text-white">{grupo.name}</h1>
           {grupo.description ? <p className="mb-8 px-4 text-sm font-medium text-gray-400">{grupo.description}</p> : null}
 
           <div className="mb-8 flex justify-center gap-6">
             <div className="text-center">
               <span className="block text-2xl font-black text-white">{grupo.memberCount}</span>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">membros</span>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">{tStatic("membros")}</span>
             </div>
             <div className="w-[1px] bg-white/10" />
             <div className="text-center">
               <span className="block text-2xl font-black uppercase text-white">
                 {ctaMode === "direct" ? "Direta" : "Aprovação"}
               </span>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">entrada</span>
+              <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500">{tStatic("entrada")}</span>
             </div>
           </div>
 

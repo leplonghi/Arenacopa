@@ -52,7 +52,13 @@
     "games": {
       "recent_label": "Mostrando últimos 6 jogos + próximos",
       "unavailable_title": "Calendário ainda não sincronizado",
-      "unavailable_desc": "Os jogos oficiais deste campeonato vão aparecer aqui assim que forem publicados."
+      "unavailable_desc": "Os jogos oficiais deste campeonato vão aparecer aqui assim que forem publicados.",
+      "live_title": "Ao vivo agora",
+      "live_count": "{{count}} ao vivo",
+      "upcoming_title": "Próximos jogos",
+      "upcoming_count": "{{count}} próximos",
+      "results_title": "Resultados",
+      "results_count": "{{count}} resultados"
     },
     "table": {
       "updated_at": "Atualizado: {{date}}",
@@ -62,7 +68,8 @@
       "legend_champion": "Campeão",
       "legend_ucl": "UCL",
       "legend_uel": "UEL",
-      "legend_relegation": "Rebaixamento"
+      "legend_relegation": "Rebaixamento",
+      "form": "Forma"
     },
     "pools": {
       "create_title": "Criar bolão",

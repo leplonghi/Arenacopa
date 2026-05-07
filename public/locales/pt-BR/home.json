@@ -92,5 +92,66 @@
     "today_match_cta": "Ver jogos",
     "ready_title": "Tudo em dia!",
     "ready_desc": "Suas escolhas estão prontas. Boa rodada!"
+  },
+  "zones": {
+    "now": "Agora",
+    "my_pools": "Meus bolões",
+    "discover": "Descobrir"
+  },
+  "pending_banner": {
+    "kicker": "Próximos jogos",
+    "title_one": "{{count}} jogo para você chutar",
+    "title_other": "{{count}} jogos para você chutar",
+    "desc": "Marque seus chutes antes do jogo começar"
+  },
+  "join_requests": {
+    "title_one": "{{count}} pedido de entrada no seu bolão",
+    "title_other": "{{count}} pedidos de entrada no seu bolão",
+    "desc": "Toque para revisar e aprovar"
+  },
+  "quick_stats": {
+    "pending": "Chutes pendentes",
+    "today": "Jogos hoje",
+    "pools": "Meus bolões"
+  },
+  "pool_row": {
+    "members": "{{count}} membros",
+    "pending_one": "{{count}} palpite pendente",
+    "pending_other": "{{count}} palpites pendentes",
+    "up_to_date": "Em dia"
+  },
+  "empty_pools": {
+    "title": "O que é um bolão?",
+    "desc": "Dispute com sua turma quem acerta mais jogos",
+    "body": "Cada participante dá palpites nos placares. Quem acertar mais pontos, ganha o ranking do grupo.",
+    "create": "Criar bolão",
+    "create_desc": "Para sua turma",
+    "explore": "Explorar",
+    "explore_desc": "Bolões abertos"
+  },
+  "pool_actions": {
+    "remaining_one": "+{{count}} bolão restante",
+    "remaining_other": "+{{count}} bolões restantes",
+    "create_another": "Criar outro bolão"
+  },
+  "discover": {
+    "championships": "Campeonatos",
+    "championships_desc": "Jogos e tabelas",
+    "news": "Notícias",
+    "news_desc": "Últimas do futebol",
+    "ranking": "Ranking",
+    "ranking_desc": "Sua posição",
+    "communities": "Comunidades",
+    "communities_desc": "Turmas recorrentes"
+  },
+  "today_more": {
+    "title": "Mais jogos hoje",
+    "view_all": "Ver todos"
+  },
+  "profile_card": {
+    "level": "Seu nível",
+    "view_profile": "Ver perfil",
+    "ranking": "Ranking",
+    "no_points": "Sem pontos ainda"
   }
 }

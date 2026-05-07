@@ -26,6 +26,7 @@ import {
 } from "@/services/commercial/commercial-campaign.service";
 import type { CommercialCampaignKind } from "@/types/commercial-campaign";
 import type { MatchFeedItem } from "@/types/match-feed";
+import { tStatic } from "@/i18n/staticText";
 
 type Step = 1 | 2 | 3 | 4 | 5;
 type ActivationType = "physical" | "virtual" | "hybrid";
@@ -253,7 +254,7 @@ export default function CriarCampanhaBar() {
             <div className="rounded-[24px] border border-primary/25 bg-primary/10 p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">Plano da campanha</p>
+                  <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">{tStatic("Plano da campanha")}</p>
                   <p className="mt-1 font-display text-4xl font-black uppercase text-white">
                     {selectedPlan.priceLabel}
                   </p>
@@ -261,7 +262,7 @@ export default function CriarCampanhaBar() {
                     {selectedPlan.shortTitle} com QR code, link publico, bolao automatico da rodada e {selectedPlan.includedGames} jogo{selectedPlan.includedGames === 1 ? "" : "s"} incluido{selectedPlan.includedGames === 1 ? "" : "s"}.
                   </p>
                 </div>
-                <ArenaHint label="Sobre o preço">O pagamento acontece depois da revisão, antes da publicação final.</ArenaHint>
+                <ArenaHint label="Sobre o preço">{tStatic("O pagamento acontece depois da revisão, antes da publicação final.")}</ArenaHint>
               </div>
             </div>
 
@@ -329,7 +330,7 @@ export default function CriarCampanhaBar() {
         {step === 2 ? (
           <div className="space-y-4">
             <Store className="h-8 w-8 text-primary" />
-            <h2 className="font-display text-3xl font-black uppercase text-white">Dados do negócio</h2>
+            <h2 className="font-display text-3xl font-black uppercase text-white">{tStatic("Dados do negócio")}</h2>
             <Field
               label="Nome do negócio"
               value={state.merchantName}
@@ -418,7 +419,7 @@ export default function CriarCampanhaBar() {
               placeholder={state.kind === "match" ? "Escolha um jogo para gerar o nome" : "Semana especial da empresa"}
             />
             {state.kind === "period" && !periodValidation.ok && (state.startsAt || state.endsAt) ? (
-              <p className="text-sm text-red-200">Escolha um período futuro, com fim depois do início.</p>
+              <p className="text-sm text-red-200">{tStatic("Escolha um período futuro, com fim depois do início.")}</p>
             ) : null}
           </div>
         ) : null}
@@ -426,7 +427,7 @@ export default function CriarCampanhaBar() {
         {step === 4 ? (
           <div className="space-y-4">
             <Ticket className="h-8 w-8 text-primary" />
-            <h2 className="font-display text-3xl font-black uppercase text-white">Benefício simples</h2>
+            <h2 className="font-display text-3xl font-black uppercase text-white">{tStatic("Benefício simples")}</h2>
             <Field
               label="Benefício para participantes"
               value={state.benefitSummary}
@@ -459,7 +460,7 @@ export default function CriarCampanhaBar() {
 
         {step === 5 ? (
           <div className="space-y-4">
-            <h2 className="font-display text-3xl font-black uppercase text-white">Revisão</h2>
+            <h2 className="font-display text-3xl font-black uppercase text-white">{tStatic("Revisão")}</h2>
             <Summary label="Tipo" value={state.kind === "match" ? "Campanha por jogo" : "Campanha geral por período"} />
             <Summary label="Ativação" value={activationTypeLabels[state.activationType]} />
             <Summary label="Plano" value={`${selectedPlan.title} · ${selectedPlan.priceLabel}`} />

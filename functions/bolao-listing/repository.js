@@ -45,6 +45,7 @@ async function listUserBoloes({ db, actorId }) {
   ];
   const boloesById = await loadBoloesById({ db, bolaoIds });
 
+  let publicBoloes = [];
   try {
     const publicSnapshot = await db
       .collection("boloes")

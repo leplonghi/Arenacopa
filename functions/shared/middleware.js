@@ -10,10 +10,16 @@ function getAllowedOrigins(configuredSiteUrl = DEFAULT_SITE_URL) {
         "http://localhost",
         "http://localhost:5173",
         "http://localhost:8080",
+        "http://localhost:8081",
         "http://127.0.0.1:5173",
         "http://127.0.0.1:8080",
+        "http://127.0.0.1:8081",
         "capacitor://localhost",
     ]);
+}
+
+function isLocalDevOrigin(origin) {
+    return /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin);
 }
 
 function applyCors(req, res) {
@@ -22,7 +28,7 @@ function applyCors(req, res) {
     const siteUrl = runtimeConfig?.app?.site_url || process.env.SITE_URL || DEFAULT_SITE_URL;
     const allowedOrigins = getAllowedOrigins(siteUrl);
 
-    if (origin && allowedOrigins.has(origin)) {
+    if (origin && (allowedOrigins.has(origin) || isLocalDevOrigin(origin))) {
         res.set("Access-Control-Allow-Origin", origin);
         res.set("Vary", "Origin");
     }

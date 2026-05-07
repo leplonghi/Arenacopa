@@ -34,6 +34,21 @@ describe("mapFirebaseError", () => {
     expect(error.code).toBe("AUTH_INVALID_CREDENTIALS");
   });
 
+  it("mapeia auth/invalid-api-key → AUTH_INVALID_API_KEY", () => {
+    const error = mapFirebaseError({ code: "auth/invalid-api-key" });
+    expect(error.code).toBe("AUTH_INVALID_API_KEY");
+  });
+
+  it("mapeia auth/unauthorized-domain → AUTH_UNAUTHORIZED_DOMAIN", () => {
+    const error = mapFirebaseError({ code: "auth/unauthorized-domain" });
+    expect(error.code).toBe("AUTH_UNAUTHORIZED_DOMAIN");
+  });
+
+  it("mapeia auth/operation-not-allowed → AUTH_PROVIDER_DISABLED", () => {
+    const error = mapFirebaseError({ code: "auth/operation-not-allowed" });
+    expect(error.code).toBe("AUTH_PROVIDER_DISABLED");
+  });
+
   it("mapeia auth/weak-password → AUTH_WEAK_PASSWORD", () => {
     const error = mapFirebaseError({ code: "auth/weak-password" });
     expect(error.code).toBe("AUTH_WEAK_PASSWORD");

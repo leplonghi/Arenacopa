@@ -135,8 +135,8 @@
       }
     },
     "operation": {
-  "deadlines_title": "Prazos dos Jogos",
-  "deadlines_desc": "As escolhas podem ser feitas ou alteradas até 30 minutos antes do início de cada partida em horário local.",
+      "deadlines_title": "Prazos dos Jogos",
+      "deadlines_desc": "As escolhas podem ser feitas ou alteradas até 30 minutos antes do início de cada partida em horário local.",
       "live_update_title": "Atualização Instantânea",
       "live_update_desc": "O ranking oficial e os pontos dos participantes são processados automaticamente no apito final de cada jogo.",
       "responsibility_title": "Responsabilidade",
@@ -189,6 +189,81 @@
     "breadcrumb": {
       "label": "Navegação estrutural",
       "more": "Mais"
+    }
+  },
+  "menu": {
+    "account": "Minha Conta",
+    "general_ranking": "Ranking Geral",
+    "copa_guide": "Guia da Copa",
+    "premium": "Arena Premium",
+    "groups": "Grupos",
+    "communities": "Comunidades",
+    "create_group": "Criar grupo",
+    "business": "Negócios",
+    "business_home": "ArenaCup para Negócios",
+    "create_campaign": "Criar campanha",
+    "support": "Suporte",
+    "game_rules": "Regras do Jogo"
+  },
+  "news_page": {
+    "time": {
+      "now": "agora",
+      "minutes_ago": "há {{count}} min",
+      "hours_ago": "há {{count}} h"
+    },
+    "categories": {
+      "all": "Todas",
+      "copa": "Copa",
+      "teams": "Seleções",
+      "general": "Geral",
+      "matches": "Jogos",
+      "travel": "Viagem",
+      "tickets": "Ingressos"
+    },
+    "onboarding": {
+      "title": "Monte seu feed",
+      "description": "Escolha os temas que quer acompanhar de perto.",
+      "pick_categories": "Escolha categorias",
+      "skip": "Pular",
+      "confirm": "Confirmar preferências"
+    },
+    "live_kicker": "Notícias ao vivo",
+    "title": "Central de notícias",
+    "subtitle": "Acompanhe as principais atualizações da Copa.",
+    "loading_sources": "Carregando fontes...",
+    "home_customization_title": "Personalize sua página inicial",
+    "home_customization_desc": "Escolha o que aparece primeiro para você.",
+    "home_none": "Nada selecionado",
+    "home_active_count": "{{count}} ativos",
+    "for_you": "Para você",
+    "read_full": "Ler matéria completa",
+    "news_count": "{{count}} notícias",
+    "empty_title": "Nenhuma notícia encontrada",
+    "empty_desc": "Tente mudar os filtros ou voltar mais tarde.",
+    "read_more": "Ler mais"
+  },
+  "legal": {
+    "privacy": {
+      "title": "Política de Privacidade",
+      "intro_1": "Esta política explica como o ArenaCup trata seus dados.",
+      "intro_2": "Usamos informações essenciais para autenticação, segurança e funcionamento do app.",
+      "cookies_title": "Cookies",
+      "cookies_desc": "Usamos apenas cookies essenciais para manter sua sessão e proteger sua conta.",
+      "data_sharing_title": "Compartilhamento de dados",
+      "data_sharing_desc": "Não vendemos seus dados pessoais. Compartilhamos informações apenas quando necessário para operar o serviço ou cumprir obrigações legais.",
+      "effective_date": "Vigente desde maio de 2026"
+    },
+    "terms": {
+      "title": "Termos de Uso",
+      "intro": "Ao usar o ArenaCup, você concorda com estes termos.",
+      "app_use_title": "Uso do app",
+      "app_use_desc": "Use o app de forma responsável e respeite outros participantes.",
+      "gambling_title": "Apostas e pagamentos",
+      "gambling_strong": "O ArenaCup não processa apostas, pagamentos ou premiações.",
+      "gambling_desc": "Qualquer combinado financeiro acontece fora do app e é responsabilidade exclusiva dos participantes.",
+      "account_title": "Conta",
+      "account_desc": "Você é responsável por manter sua conta segura e suas informações atualizadas.",
+      "effective_date": "Vigente desde maio de 2026"
     }
   }
 }

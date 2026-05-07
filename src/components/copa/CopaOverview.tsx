@@ -18,6 +18,7 @@ import { useMatches } from "@/hooks/useMatches";
 import { getTeam, groupStandings, groups, type Match } from "@/data/mockData";
 import { cn } from "@/lib/utils";
 import { getArenaAssetSrc } from "@/lib/arena-assets";
+import { tStatic } from "@/i18n/staticText";
 
 const PHASES = [
   {
@@ -80,7 +81,7 @@ function FeaturedFixture({
     >
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="arena-kicker text-primary">Jogo em destaque</p>
+          <p className="arena-kicker text-primary">{tStatic("Jogo em destaque")}</p>
           <p className="mt-2 text-sm text-zinc-300">
             {new Date(match.date).toLocaleDateString("pt-BR", {
               day: "2-digit",
@@ -135,7 +136,7 @@ function FeaturedFixture({
       </div>
 
       <div className="mt-5 flex items-center justify-between border-t border-white/10 pt-4">
-        <p className="text-sm text-zinc-400">Toque para abrir detalhes, chute e contexto da partida.</p>
+        <p className="text-sm text-zinc-400">{tStatic("Toque para abrir detalhes, chute e contexto da partida.")}</p>
         <ArrowRight className="h-5 w-5 text-white/40 transition group-hover:translate-x-1 group-hover:text-white/80" />
       </div>
     </button>
@@ -234,7 +235,7 @@ export function CopaOverview() {
               fallbackClassName="scale-75"
             />
             <div className="absolute bottom-2 left-2 rounded-xl border border-white/10 bg-black/35 px-3 py-2 backdrop-blur-xl">
-              <p className="text-[9px] font-black uppercase tracking-wider text-zinc-400">Abertura</p>
+              <p className="text-[9px] font-black uppercase tracking-wider text-zinc-400">{tStatic("Abertura")}</p>
               <p className="text-sm font-bold uppercase text-white">11 jun</p>
             </div>
           </div>
@@ -304,7 +305,7 @@ export function CopaOverview() {
         <ArenaSectionHeader
           eyebrow="Comunidades"
           title="Panorama inicial"
-          action={<button onClick={() => navigate("/copa/grupos")} className="arena-button-green px-4 py-2 text-sm">Ver grupos</button>}
+          action={<button onClick={() => navigate("/copa/grupos")} className="arena-button-green px-4 py-2 text-sm">{tStatic("Ver grupos")}</button>}
         />
         <div className="mt-4 grid gap-3 xl:grid-cols-4">
           {visibleGroups.map((group) => (

@@ -79,7 +79,7 @@ export function useBolaoDetail(id: string | undefined) {
   const [championOpen, setChampionOpen] = useState(false);
   const [championSelection, setChampionSelection] = useState("");
   const [myChampion, setMyChampion] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<BolaoDetailTab>(requestedTab ?? (highlightedMatch ? "palpites" : "resumo" as any));
+  const [activeTab, setActiveTab] = useState<BolaoDetailTab>(requestedTab ?? (highlightedMatch ? "palpites" : "turma"));
   const [showEditPanel, setShowEditPanel] = useState(false);
   const initialTabHydratedRef = useRef(false);
   const mountedRef = useRef(true);

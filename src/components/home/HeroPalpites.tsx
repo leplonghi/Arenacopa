@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Crown, Sparkles, Target } from "lucide-react";
 import { getArenaAssetSrc } from "@/lib/arena-assets";
+import { tStatic } from "@/i18n/staticText";
 
 export function HeroPalpites({
   pendingCount,
@@ -32,7 +33,7 @@ export function HeroPalpites({
       <div className="relative z-10 flex min-h-[430px] max-w-[560px] flex-col justify-start pb-7 pt-[calc(7rem+var(--safe-area-top,0px))] sm:min-h-[500px] sm:pt-[calc(8rem+var(--safe-area-top,0px))]">
         <div className="space-y-4">
           <div className="flex items-center gap-2">
-            <span className="arena-kicker text-zinc-300">Rodada</span>
+            <span className="arena-kicker text-zinc-300">{tStatic("Rodada")}</span>
             {!isPremium ? (
               <button
                 onClick={onOpenElite}
@@ -55,8 +56,8 @@ export function HeroPalpites({
                 {pendingCount}
               </span>
               <div className="pb-4">
-                <p className="text-xl font-semibold text-zinc-300 sm:text-2xl">jogos pendentes</p>
-                <p className="text-xl font-semibold text-primary sm:text-2xl">na rodada</p>
+                <p className="text-xl font-semibold text-zinc-300 sm:text-2xl">{tStatic("jogos pendentes")}</p>
+                <p className="text-xl font-semibold text-primary sm:text-2xl">{tStatic("na rodada")}</p>
               </div>
             </div>
             <p className="max-w-[300px] text-sm font-medium leading-5 text-zinc-300 sm:max-w-[360px]">

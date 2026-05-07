@@ -4,6 +4,7 @@ import { ArenaPanel } from "@/components/arena/ArenaPrimitives";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import type { BolaoData, BolaoMarket } from "@/types/bolao";
+import { tStatic } from "@/i18n/staticText";
 
 interface BolaoHeaderProps {
   bolao: BolaoData;
@@ -99,7 +100,7 @@ export function BolaoHeader({
               className="inline-flex h-8 items-center gap-1 rounded-lg bg-primary/15 px-2.5 text-[10px] font-black uppercase tracking-[0.12em] text-primary transition hover:bg-primary/25"
             >
               <Share2 className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">Convidar</span>
+              <span className="hidden sm:inline">{tStatic("Convidar")}</span>
             </button>
             <button
               aria-label={t('bolao_detail.info_button_aria')}

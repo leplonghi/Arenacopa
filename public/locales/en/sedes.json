@@ -32,7 +32,23 @@
       "attractions": "Top Attractions",
       "hiddenGems": "Hidden Gems",
       "mustEat": "Must-Try Dishes",
-      "localTips": "Local Tips"
+      "localTips": "Local Tips",
+      "close": "Fechar",
+      "host_city_badge": "Cidade-sede",
+      "stadium": "Estádio",
+      "weather": "Clima",
+      "matches": "Jogos",
+      "host_stadium": "Estádio-sede",
+      "airport": "Aeroporto",
+      "accommodation_title": "Hospedagem",
+      "hotel": "Hotel",
+      "airbnb": "Airbnb",
+      "best_areas": "Melhores regiões",
+      "population_short": "Pop.",
+      "timezone_short": "Fuso",
+      "altitude_short": "Altitude",
+      "highlights": "Destaques",
+      "view_itinerary": "Ver roteiro"
     },
     "map": {
       "all": "All",
@@ -875,6 +891,43 @@
       ],
       "economics": "Biotech, elite education, and finance. Est. $500B GDP.",
       "weather": "June/July: Average 28°C / 18°C. Humid summer."
+    }
+  },
+  "actions": {
+    "share": "Compartilhar"
+  },
+  "stadiums": {
+    "hero_title": "Estádios da Copa 2026",
+    "stats": {
+      "stadiums": "Estádios",
+      "official_hosts": "Sedes oficiais",
+      "capacity": "Capacidade",
+      "total_overall": "Total geral",
+      "average": "Média",
+      "per_arena": "por arena",
+      "matches": "Jogos",
+      "total_confirmed": "Total confirmado"
+    },
+    "filters": {
+      "all": "Todos",
+      "usa": "EUA"
+    },
+    "elite_title": "Arenas de elite",
+    "elite_desc": "Conheça os estádios mais marcantes do torneio.",
+    "modal": {
+      "capacity": "Capacidade",
+      "opened": "Inaugurado"
+    },
+    "detail": {
+      "football_cathedral": "Catedral do futebol",
+      "engineering": "Engenharia",
+      "investment": "Investimento",
+      "altitude": "Altitude",
+      "world_cup_2026": "Copa do Mundo 2026",
+      "confirmed_matches": "Jogos confirmados",
+      "pitch": "Gramado",
+      "hybrid_technology": "Tecnologia híbrida",
+      "routes": "Rotas"
     }
   }
 }

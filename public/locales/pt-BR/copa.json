@@ -72,7 +72,10 @@
       "groups_count_plural": "{{count}} grupos",
       "games_count": "{{filled}}/{{total}} jogos",
       "deleted": "Simulação excluída",
-      "created": "Simulação criada!"
+      "created": "Simulação criada!",
+      "hero_title": "Suas simulações",
+      "hero_desc": "Crie cenários e compare caminhos até a final.",
+      "yours": "Minhas simulações"
     },
     "editor": {
       "selected_groups": "{{count}} grupo selecionado",
@@ -225,7 +228,15 @@
       "advances": "{{team}} avança",
       "defined_games": "{{filled}}/{{total}} jogos definidos",
       "defined_games_singular": "{{filled}}/{{total}} jogo definido"
-    }
+    },
+    "status_finished": "Finalizado",
+    "status_upcoming": "Em breve",
+    "hero": {
+      "date": "Data",
+      "time": "Horário",
+      "stage": "Fase"
+    },
+    "location_city": "Cidade"
   },
   "match_card": {
     "live": "Em andamento",
@@ -233,7 +244,7 @@
     "live_badge": "Ao Vivo",
     "details_cta": "Ver Detalhes do Jogo",
     "group": "Grupo {{group}}",
-  "my_prediction": "Sua escolha:",
+    "my_prediction": "Sua escolha:",
     "edit": "Editar"
   },
   "share_bracket": {
@@ -242,7 +253,14 @@
     "share_error": "Erro ao compartilhar",
     "not_supported": "Compartilhamento não suportado neste navegador",
     "downloaded": "Imagem baixada! Anexe no WhatsApp",
-    "btn_label": "Compartilhar"
+    "btn_label": "Compartilhar",
+    "native_title": "Minha chave da Copa",
+    "native_text": "Olha minha simulação no ArenaCUP!",
+    "title": "Compartilhar chave",
+    "generating": "Gerando...",
+    "share": "Compartilhar",
+    "whatsapp": "WhatsApp",
+    "download": "Baixar"
   },
   "bracket_modal": {
     "edit_score": "Editar placar",
@@ -372,5 +390,22 @@
         "ENG": "As quartas de 2006 carregam o capítulo mais marcante deste confronto."
       }
     }
+  },
+  "knockout": {
+    "tbd": "A definir",
+    "penalties": "Pênaltis",
+    "advance_label": "{{team}} avança",
+    "incomplete_title": "Mata-mata incompleto",
+    "incomplete_desc": "Complete a fase anterior para liberar os confrontos.",
+    "defined_count": "{{count}} definidos"
+  },
+  "tournament_progress": {
+    "stages": {
+      "groups": "Grupos",
+      "knockout": "Mata-mata",
+      "final": "Final"
+    },
+    "title": "Progresso do torneio",
+    "live": "Ao vivo"
   }
 }

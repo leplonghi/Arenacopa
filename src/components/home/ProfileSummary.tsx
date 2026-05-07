@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Shield } from "lucide-react";
 import { ArenaHint, ArenaPanel } from "@/components/arena/ArenaPrimitives";
+import { tStatic } from "@/i18n/staticText";
 
 type LevelInfo = {
   level: number;
@@ -29,7 +30,7 @@ export function ProfileSummary({
       <div className="relative flex flex-col gap-3">
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <p className="font-display text-[1.15rem] font-bold uppercase tracking-[0.18em] text-zinc-200">Sua rodada</p>
+            <p className="font-display text-[1.15rem] font-bold uppercase tracking-[0.18em] text-zinc-200">{tStatic("Sua rodada")}</p>
             <ArenaHint label="Como lemos sua rodada">
               Pontos, posição e bolões reunidos em um só lugar. O ranking completo fica no botão ao lado.
             </ArenaHint>
@@ -48,7 +49,7 @@ export function ProfileSummary({
               </span>
             </div>
             <div className="min-w-0">
-              <p className="font-display text-[1.05rem] font-bold uppercase tracking-[0.16em] text-primary">Nível</p>
+              <p className="font-display text-[1.05rem] font-bold uppercase tracking-[0.16em] text-primary">{tStatic("Nível")}</p>
               <h3 className="font-display text-[1.55rem] font-bold uppercase leading-none tracking-[0.03em] text-white">
                 Da turma
               </h3>
@@ -58,7 +59,7 @@ export function ProfileSummary({
 
           <div>
             <div className="flex items-end justify-between gap-3">
-              <p className="font-display text-[1rem] font-bold uppercase tracking-[0.14em] text-zinc-400">Próximo nível</p>
+              <p className="font-display text-[1rem] font-bold uppercase tracking-[0.14em] text-zinc-400">{tStatic("Próximo nível")}</p>
               <p className="font-display text-[1.2rem] font-bold text-zinc-100">
                 {levelInfo.currentXp} / {levelInfo.maxXp}
               </p>

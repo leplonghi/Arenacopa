@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
+  ArrowRight,
   Compass,
   Loader2,
   Plus,
@@ -19,13 +20,13 @@ import { BolaoEntryGuidance } from "@/features/boloes/shared/BolaoEntryGuidance"
 import { BolaoCard, BolaoCardSkeleton } from "@/features/boloes/listing/BolaoCard";
 import { joinViaInvite } from "@/services/groups/group-access.service";
 import { trackSocialEvent } from "@/lib/analytics/social.telemetry";
-import { useOpportunities } from "@/hooks/useOpportunities";
 import {
   listUserBoloes,
   type BolaoListingCard,
   type BolaoListingRequestCard,
 } from "@/services/boloes/bolao-listing.service";
 import { ModeChoiceCard } from "@/features/boloes/components/ModeChoiceCard";
+import { tStatic } from "@/i18n/staticText";
 
 const QUICK_ACTIONS = [
   {
@@ -114,12 +115,6 @@ export default function Boloes() {
     [pendingRequests],
   );
 
-  const opportunities = useOpportunities({
-    user,
-    activeBoloes: myBoloes,
-    surface: "boloes",
-  });
-
   const handleJoinByCode = async () => {
     if (!joinCode.trim()) return;
     try {
@@ -173,7 +168,7 @@ export default function Boloes() {
           transition={{ duration: 0.35 }}
           className="text-center space-y-1.5 pt-2"
         >
-          <p className="text-[10px] font-black uppercase tracking-[0.22em] text-primary">Bolões</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.22em] text-primary">{tStatic("Bolões")}</p>
           <h1 className="font-display text-2xl font-black uppercase leading-none text-white sm:text-3xl">
             Escolha o tipo
           </h1>

@@ -17,6 +17,7 @@ import {
 import { cn } from "@/lib/utils";
 import { commercialCampaignAudienceCopy, commercialCampaignPillars } from "@/lib/commercial-campaign-copy";
 import { commercialPlanCatalog, commercialPlanOrder } from "@/lib/commercial-campaign-pricing";
+import { tStatic } from "@/i18n/staticText";
 
 const pillarIcons = [QrCode, Users2, Ticket];
 
@@ -133,7 +134,7 @@ export default function BaresLanding() {
               {/* Title */}
               <h1 className="mt-5 font-display text-[2.8rem] font-black uppercase leading-[0.92] tracking-tight text-white sm:text-[3.6rem]">
                 ArenaCup para{" "}
-                <span className="text-[#FFC700]">Negócios</span>
+                <span className="text-[#FFC700]">{tStatic("Negócios")}</span>
               </h1>
 
               {/* Description */}

@@ -10,6 +10,7 @@ const commercialCampaignRepository = require("./commercial-campaigns/repository"
 const { resolveLegacyMatchPredictionPoints } = require("./bolao-ranking/scoring");
 const { saveExclusiveBolaoPalpite } = require("./bolao-exclusive/palpites");
 const { updateBolaoPrizeSettings } = require("./bolao-prize/settings");
+const { DEFAULT_SITE_URL } = require("./shared/constants");
 
 // Feature Modules
 const boloes = require("./features/boloes");
@@ -19,6 +20,124 @@ const social = require("./features/social");
 admin.initializeApp();
 
 const db = admin.firestore();
+
+function getRuntimeConfig() {
+    const runtimeConfig = functions.config();
+    const appConfig = runtimeConfig.app || {};
+    const seedConfig = runtimeConfig.seed || {};
+    const stripeConfig = runtimeConfig.stripe || {};
+    const footballDataConfig = runtimeConfig.football_data || runtimeConfig.footballdata || {};
+
+    return {
+        siteUrl: appConfig.site_url || process.env.SITE_URL || DEFAULT_SITE_URL,
+        seedToken: seedConfig.token || process.env.SEED_TOKEN || "",
+        footballDataApiKey: footballDataConfig.api_key || process.env.FOOTBALL_DATA_API_KEY || "",
+        stripePremiumPriceId: stripeConfig.premium_price_id || process.env.STRIPE_PREMIUM_PRICE_ID || "",
+        stripeCommercialCampaignPriceIds: {
+            single_match:
+                stripeConfig.commercial_campaign_single_match_price_id ||
+                process.env.STRIPE_COMMERCIAL_CAMPAIGN_SINGLE_MATCH_PRICE_ID ||
+                "",
+            five_matches:
+                stripeConfig.commercial_campaign_five_matches_price_id ||
+                process.env.STRIPE_COMMERCIAL_CAMPAIGN_FIVE_MATCHES_PRICE_ID ||
+                "",
+            short_championship:
+                stripeConfig.commercial_campaign_short_championship_price_id ||
+                process.env.STRIPE_COMMERCIAL_CAMPAIGN_SHORT_CHAMPIONSHIP_PRICE_ID ||
+                "",
+            full_cup:
+                stripeConfig.commercial_campaign_full_cup_price_id ||
+                process.env.STRIPE_COMMERCIAL_CAMPAIGN_FULL_CUP_PRICE_ID ||
+                "",
+        },
+    };
+}
+
+function getAllowedOrigins(configuredSiteUrl = DEFAULT_SITE_URL) {
+    const configuredOrigin = configuredSiteUrl.replace(/\/$/, "");
+    return new Set([
+        configuredOrigin,
+        "https://arenacopa-web-2026.web.app",
+        "https://arenacup.net",
+        "http://localhost",
+        "http://localhost:5173",
+        "http://localhost:8080",
+        "http://localhost:8081",
+        "http://127.0.0.1:5173",
+        "http://127.0.0.1:8080",
+        "http://127.0.0.1:8081",
+        "capacitor://localhost",
+    ]);
+}
+
+function isLocalDevOrigin(origin) {
+    return /^http:\/\/(localhost|127\.0\.0\.1):\d+$/.test(origin);
+}
+
+function applyCors(req, res) {
+    const origin = typeof req?.headers?.origin === "string" ? req.headers.origin.replace(/\/$/, "") : null;
+    const { siteUrl } = getRuntimeConfig();
+    const allowedOrigins = getAllowedOrigins(siteUrl);
+
+    if (origin && (allowedOrigins.has(origin) || isLocalDevOrigin(origin))) {
+        res.set("Access-Control-Allow-Origin", origin);
+        res.set("Vary", "Origin");
+    }
+    res.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    res.set("Access-Control-Allow-Methods", "POST, OPTIONS");
+}
+
+async function verifyHttpUser(req) {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        throw new Error("auth_required");
+    }
+    return admin.auth().verifyIdToken(authHeader.split("Bearer ")[1]);
+}
+
+function mapAuthedOperationError(error) {
+    const errorMap = {
+        auth_required: { status: 401, error: "auth_required" },
+        permission_denied: { status: 403, error: "permission_denied" },
+        not_found: { status: 404, error: "not_found" },
+        validation_failed: { status: 400, error: "validation_failed" },
+        config_conflict: { status: 409, error: "config_conflict" },
+        invalid_state: { status: 409, error: "invalid_state" },
+        payment_required: { status: 402, error: "payment_required" },
+    };
+    return errorMap[error?.message] || { status: 500, error: error?.message || "internal" };
+}
+
+function createAuthedEndpoint(handler) {
+    return functions.region("us-central1").https.onRequest(async (req, res) => {
+        applyCors(req, res);
+
+        if (req.method === "OPTIONS") {
+            return res.status(204).send("");
+        }
+
+        if (req.method !== "POST") {
+            return res.status(405).json({ error: "method_not_allowed" });
+        }
+
+        try {
+            const auth = await verifyHttpUser(req);
+            const nowIso = new Date().toISOString();
+            const result = await handler({ auth, nowIso, req, res });
+            if (!res.headersSent) {
+                return res.status(200).json(result || { success: true });
+            }
+            return undefined;
+        } catch (error) {
+            const mapped = mapAuthedOperationError(error);
+            functions.logger.error("Authed endpoint failed", {
+                error: error?.message || error,
+            });
+            return res.status(mapped.status).json({ error: mapped.error });
+        }
+    });
+}
 
 const SCORING = {
     EXACT: 5,

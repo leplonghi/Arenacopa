@@ -23,6 +23,7 @@ import { ArenaAssetSlot } from "@/components/arena/ArenaAssetSlot";
 import { getArenaAssetSrc } from "@/lib/arena-assets";
 import { useDashboardMatches } from "@/hooks/useDashboardMatches";
 import type { MatchFeedItem } from "@/types/match-feed";
+import { tStatic } from "@/i18n/staticText";
 
 const COUNTRY_LABELS: Record<string, string> = {
   BR: "Brasil",
@@ -206,7 +207,7 @@ function FeaturedCompetitionCard({
             ) : (
               <div className="flex items-center gap-2 text-sm text-zinc-400">
                 <MapPin className="h-3.5 w-3.5 text-[#8de65b]" />
-                <span className="font-sans font-medium">EUA, Canadá e México</span>
+                <span className="font-sans font-medium">{tStatic("EUA, Canadá e México")}</span>
               </div>
             )}
           </div>

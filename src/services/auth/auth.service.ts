@@ -10,20 +10,16 @@ import {
 } from "firebase/auth";
 import { Capacitor } from "@capacitor/core";
 import { mapFirebaseError } from "@/services/errors/AppError";
+import type {
+  SignInResult,
+  SignInWithGoogleOptions,
+} from "@capacitor-firebase/authentication";
 
 const AUTH_FAILURE_WINDOW_MS = 60_000;
 const AUTH_MAX_FAILURES_PER_WINDOW = 10;
 const AUTH_RATE_LIMIT_KEY = "arenacopa:auth-failures";
 
-type NativeGoogleSignInResult = {
-  credential?: {
-    idToken?: string | null;
-  } | null;
-};
-
-type NativeGoogleSignInFn = (options: {
-  useCredentialManager: boolean;
-}) => Promise<NativeGoogleSignInResult>;
+type NativeGoogleSignInFn = (options: SignInWithGoogleOptions) => Promise<SignInResult>;
 
 function readAuthFailures() {
   try {
@@ -91,15 +87,22 @@ export async function signInWithGoogle() {
     // On Android/iOS use the native Capacitor plugin — avoids WebView OAuth issues
     if (Capacitor.isNativePlatform()) {
       const { FirebaseAuthentication } = await import("@capacitor-firebase/authentication");
-      // useCredentialManager: false forces the traditional full-screen Google Sign-In intent.
-      // The default (true) uses Android Credential Manager which fails with
-      // "No credentials available" in some devices/configurations.
+      // Keep native auth disabled here because the app session is owned by
+      // the Firebase JS SDK via onAuthStateChanged in AuthContext.
       const signInWithGoogleNative = FirebaseAuthentication.signInWithGoogle as NativeGoogleSignInFn;
       const result = await signInWithGoogleNative({
+        skipNativeAuth: true,
+        // useCredentialManager: false forces the traditional full-screen Google Sign-In intent.
+        // The default (true) uses Android Credential Manager which fails with
+        // "No credentials available" in some devices/configurations.
         useCredentialManager: false,
       });
-      if (!result.credential?.idToken) throw new Error("Google Sign-In: idToken ausente");
-      const credential = GoogleAuthProvider.credential(result.credential.idToken);
+      const idToken = result.credential?.idToken ?? null;
+      const accessToken = result.credential?.accessToken ?? null;
+      if (!idToken && !accessToken) {
+        throw new Error("Google Sign-In: credencial ausente");
+      }
+      const credential = GoogleAuthProvider.credential(idToken, accessToken);
       const userCredential = await signInWithCredential(auth, credential);
       return userCredential.user;
     }

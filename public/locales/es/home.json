@@ -92,5 +92,66 @@
     "today_match_cta": "Ver partidos",
     "ready_title": "¡Todo listo!",
     "ready_desc": "Tus pronósticos están hechos. ¡Buena suerte!"
+  },
+  "zones": {
+    "now": "Ahora",
+    "my_pools": "Mis quinielas",
+    "discover": "Descubrir"
+  },
+  "pending_banner": {
+    "kicker": "Próximos partidos",
+    "title_one": "{{count}} partido para pronosticar",
+    "title_other": "{{count}} partidos para pronosticar",
+    "desc": "Marca tus pronósticos antes de que empiece el partido"
+  },
+  "join_requests": {
+    "title_one": "{{count}} solicitud de entrada en tu quiniela",
+    "title_other": "{{count}} solicitudes de entrada en tu quiniela",
+    "desc": "Toca para revisar y aprobar"
+  },
+  "quick_stats": {
+    "pending": "Pronósticos pendientes",
+    "today": "Partidos hoy",
+    "pools": "Mis quinielas"
+  },
+  "pool_row": {
+    "members": "{{count}} miembros",
+    "pending_one": "{{count}} pronóstico pendiente",
+    "pending_other": "{{count}} pronósticos pendientes",
+    "up_to_date": "Al día"
+  },
+  "empty_pools": {
+    "title": "¿Qué es una quiniela?",
+    "desc": "Compite con tu grupo por acertar más partidos",
+    "body": "Cada participante pronostica marcadores. Quien sume más puntos lidera el ranking del grupo.",
+    "create": "Crear quiniela",
+    "create_desc": "Para tu grupo",
+    "explore": "Explorar",
+    "explore_desc": "Quinielas abiertas"
+  },
+  "pool_actions": {
+    "remaining_one": "+{{count}} quiniela restante",
+    "remaining_other": "+{{count}} quinielas restantes",
+    "create_another": "Crear otra quiniela"
+  },
+  "discover": {
+    "championships": "Campeonatos",
+    "championships_desc": "Partidos y tablas",
+    "news": "Noticias",
+    "news_desc": "Lo último del fútbol",
+    "ranking": "Ranking",
+    "ranking_desc": "Tu posición",
+    "communities": "Comunidades",
+    "communities_desc": "Grupos recurrentes"
+  },
+  "today_more": {
+    "title": "Más partidos hoy",
+    "view_all": "Ver todos"
+  },
+  "profile_card": {
+    "level": "Tu nivel",
+    "view_profile": "Ver perfil",
+    "ranking": "Ranking",
+    "no_points": "Sin puntos aún"
   }
 }
