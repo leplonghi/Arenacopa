@@ -81,11 +81,11 @@ export const TOURNAMENT = {
   /** Fases */
   phases: {
     groups:       'Fase de Grupos',
-    roundOf32:    'Oitavas de Final',      /* novidade em 2026 */
-    roundOf16:    'Quartas de Final',
-    quarterFinals:'Semifinais',
-    semiFinals:   'Final',
-    final:        'Grande Final',
+    roundOf32:    'Rodada de 32',          /* nova fase em 2026 — 48 times */
+    roundOf16:    'Oitavas de Final',
+    quarterFinals:'Quartas de Final',
+    semiFinals:   'Semifinais',
+    final:        'Final',
   },
 } as const;
 

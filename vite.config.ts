@@ -1,16 +1,22 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+import { resolve } from 'path'
 
 export default defineConfig({
+  resolve: {
+    alias: {
+      '@': resolve(__dirname, 'src'),
+    },
+  },
   plugins: [
     react(),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
       manifest: {
-        name: 'Arenacopa 2026',
-        short_name: 'Arenacopa',
+        name: 'ArenaCopa 2026',
+        short_name: 'ArenaCopa',
         description: 'Acompanhe a Copa 2026 e participe de bolões na Arenacopa',
         theme_color: '#121212',
         background_color: '#121212',

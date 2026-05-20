@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /perfil/
+Disallow: /configuracoes/
+Disallow: /notificacoes/
+Disallow: /parceiro/
+
+Sitemap: https://arenacopa.com.br/sitemap.xml
