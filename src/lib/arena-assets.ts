@@ -14,6 +14,15 @@ const AVAILABLE_ARENA_ASSETS = new Set([
   "saudi-league-logo.png",
   "wc2026-trophy.png",
   "world-cup-badge.png",
+  "generated/creator-cockpit.webp",
+  "generated/empty-groups.webp",
+  "generated/empty-pools.webp",
+  "generated/empty-ranking.webp",
+  "generated/groups-crew.webp",
+  "generated/home-command.webp",
+  "generated/invalid-invite.webp",
+  "generated/pool-create-preview.webp",
+  "generated/pool-detail-hero.webp",
 ]);
 
 const OPTIMIZED_ARENA_ASSETS = new Set([
@@ -30,6 +39,15 @@ const OPTIMIZED_ARENA_ASSETS = new Set([
   "saudi-league-logo.webp",
   "wc2026-trophy.webp",
   "world-cup-badge.webp",
+  "generated/creator-cockpit.webp",
+  "generated/empty-groups.webp",
+  "generated/empty-pools.webp",
+  "generated/empty-ranking.webp",
+  "generated/groups-crew.webp",
+  "generated/home-command.webp",
+  "generated/invalid-invite.webp",
+  "generated/pool-create-preview.webp",
+  "generated/pool-detail-hero.webp",
 ]);
 
 export function getArenaAssetSrc(assetName: string | null | undefined): string | null {

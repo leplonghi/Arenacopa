@@ -1,9 +1,8 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import "../mocks/firebase";
 import {
-  mockSetDoc,
-  mockUpdateDoc,
-  mockDeleteDoc,
+  mockBatchSet,
+  mockBatchUpdate,
   mockDoc,
   mockDocData,
   resetFirebaseMocks,
@@ -42,8 +41,8 @@ describe("bolao.service", () => {
 
       const result = await saveBolaoPalpite(baseInput);
 
-      expect(mockSetDoc).toHaveBeenCalledOnce();
-      expect(mockUpdateDoc).not.toHaveBeenCalled();
+      expect(mockBatchSet).toHaveBeenCalledOnce();
+      expect(mockBatchUpdate).not.toHaveBeenCalled();
       expect(result.id).toBe(palpiteId);
     });
 
@@ -54,8 +53,8 @@ describe("bolao.service", () => {
 
       await saveBolaoPalpite({ ...baseInput, existingId });
 
-      expect(mockUpdateDoc).toHaveBeenCalledOnce();
-      expect(mockSetDoc).not.toHaveBeenCalled();
+      expect(mockBatchUpdate).toHaveBeenCalledOnce();
+      expect(mockBatchSet).not.toHaveBeenCalled();
     });
 
     it("usa ID determinístico baseado em userId_bolaoId_matchId", async () => {
@@ -73,12 +72,14 @@ describe("bolao.service", () => {
 
       await saveBolaoPalpite({ ...baseInput, isPowerPlay: true });
 
-      const setDocCall = mockSetDoc.mock.calls[0];
+      const setDocCall = mockBatchSet.mock.calls[0];
       expect(setDocCall[1]).toMatchObject({ is_power_play: true });
     });
 
     it("lança AppError com código BOLAO_SAVE_PALPITE_FAILED em caso de erro", async () => {
-      mockSetDoc.mockRejectedValueOnce(new Error("Firestore error"));
+      mockBatchSet.mockImplementationOnce(() => {
+        throw new Error("Firestore error");
+      });
 
       try {
         await saveBolaoPalpite(baseInput);

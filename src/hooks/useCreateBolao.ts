@@ -1,20 +1,14 @@
 import { useState, useRef, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import {
-  collection,
-  orderBy,
-  getDocs,
-  getDoc,
   doc,
-  query,
-  where,
-  writeBatch,
+  setDoc,
 } from "firebase/firestore";
 import { Haptics, ImpactStyle } from "@capacitor/haptics";
 import { db } from "@/integrations/firebase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useToast } from "@/hooks/use-toast";
-import { buildBolaoMarkets } from "@/services/boloes/bolao-market.service";
+import { createAndPublishBolao } from "@/services/boloes/bolao-config.service";
 import type { BolaoFormatSlug, MarketTemplateSlug, ScoringRules } from "@/types/bolao";
 
 export interface CreateBolaoParams {
@@ -71,102 +65,54 @@ export function useCreateBolao() {
     setCreating(true);
     let phase = "prepare";
     try {
-      phase = "generate_invite";
-      const boloesRef = collection(db, "boloes");
-      const bolaoDoc = doc(boloesRef);
-      const inviteCodeVal = generateInviteCodeFromBolaoId(bolaoDoc.id);
-      
       phase = "data_setup";
       const allowedMatchIds = params.allowedMatchIds ?? (params.matchId ? [params.matchId] : "all");
-      const insertData = {
-        name: params.name.trim(),
-        description: params.description.trim() || null,
-        creator_id: user.id,
-        category: params.category,
-        format_id: params.formatId,
-        is_paid: params.isPaid ?? false,
-        entry_fee: params.entryFee ?? null,
-        prize_distribution: params.prizeDistribution ?? null,
-        payment_details: params.paymentDetails ?? null,
-        scoring_rules: params.scoringRules,
-        scoring_mode: params.scoringMode ?? "default",
-        visibility_mode: "hidden_until_deadline",
-        cutoff_mode: "per_match",
-        status: "open",
-        invite_code: inviteCodeVal,
-        avatar_url: params.emoji,
-        grupo_id: params.grupoId ?? null,
-        championship_id: params.championshipId ?? null,
-        allowed_match_ids: allowedMatchIds,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      };
 
-      phase = "batch_init";
-      const batch = writeBatch(db);
-      batch.set(bolaoDoc, insertData);
-
-      phase = "fetch_matches";
-      let matchRows: Array<{ id: string; match_date: string; stage?: string | null; group_id?: string | null; home_team_code?: string | null; away_team_code?: string | null }>;
-
-      if (params.matchId) {
-        // Bolão Rápido: busca apenas o jogo selecionado
-        const matchDoc = await getDoc(doc(db, "matches", params.matchId));
-        if (!matchDoc.exists()) throw new Error("Jogo não encontrado.");
-        matchRows = [{ id: matchDoc.id, ...(matchDoc.data() as { match_date: string; stage?: string | null; group_id?: string | null; home_team_code?: string | null; away_team_code?: string | null }) }];
-      } else {
-        const matchesQuery = params.championshipId
-          ? query(
-              collection(db, "matches"),
-              where("championship_id", "==", params.championshipId),
-              orderBy("match_date", "asc")
-            )
-          : query(collection(db, "matches"), orderBy("match_date", "asc"));
-        const matchesSnapshot = await getDocs(
-          matchesQuery
-        );
-        matchRows = matchesSnapshot.docs.map((d) => ({
-          id: d.id,
-          ...(d.data() as { match_date: string; stage?: string | null; group_id?: string | null; home_team_code?: string | null; away_team_code?: string | null }),
-        }));
-      }
-
-      phase = "batch_members";
-      batch.set(doc(db, "bolao_members", `${user.id}_${bolaoDoc.id}`), {
-        bolao_id: bolaoDoc.id, user_id: user.id, role: "admin",
-        payment_status: "exempt", created_at: new Date().toISOString(),
-        joined_at: new Date().toISOString(),
+      phase = "create_function";
+      const created = await createAndPublishBolao({
+        payload: {
+          presentation: {
+            name: params.name.trim(),
+            description: params.description.trim() || "",
+            emoji: params.emoji,
+          },
+          context: {
+            grupo_id: params.grupoId ?? null,
+            group_binding_mode: params.grupoId ? "linked" : "none",
+          },
+          access_policy: {
+            visibility: params.category,
+            join_mode: params.category === "public" ? "public_open" : "private_invite",
+          },
+          competition_rules: {
+            format: params.formatId,
+            scoring_mode: params.scoringMode ?? "default",
+            markets: params.selectedMarketIds,
+            scoring_rules: params.scoringRules,
+          },
+          finance_rules: {
+            finance_mode: params.isPaid ? "paid_external" : "free",
+            entry_fee_amount: params.entryFee ?? null,
+            distribution_custom_text: params.prizeDistribution ?? "",
+            payment_details: params.paymentDetails ?? "",
+          },
+          championship_id: params.championshipId ?? null,
+          allowed_match_ids: allowedMatchIds,
+        },
       });
-
-      phase = "batch_onboarding";
-      batch.set(doc(db, "bolao_onboarding_state", `${user.id}_${bolaoDoc.id}`), {
-        id: `${user.id}_${bolaoDoc.id}`, bolao_id: bolaoDoc.id, user_id: user.id,
-        seen_intro: false, seen_scoring: false, seen_markets: false,
-        seen_ranking: false, completed_at: null, updated_at: new Date().toISOString(),
-      });
-
-      phase = "batch_markets";
-      const markets = buildBolaoMarkets({
-        bolaoId: bolaoDoc.id, formatId: params.formatId,
-        selectedMarketIds: params.selectedMarketIds, allowedMatchIds, matches: matchRows,
-      });
-      markets.forEach((m) => batch.set(doc(db, "bolao_markets", m.id), m));
 
       if (championEnabled && params.champion) {
-        phase = "batch_champion";
-        batch.set(doc(db, "bolao_champion_predictions", `${user.id}_${bolaoDoc.id}`), {
-          bolao_id: bolaoDoc.id, user_id: user.id,
+        phase = "champion_prediction";
+        await setDoc(doc(db, "bolao_champion_predictions", `${user.id}_${created.bolaoId}`), {
+          bolao_id: created.bolaoId, user_id: user.id,
           team_code: params.champion, updated_at: new Date().toISOString(),
         });
       }
 
-      phase = "batch_commit";
-      await batch.commit();
-
       if (typeof window !== "undefined" && window.plausible) {
         window.plausible("Bolao Created", { props: { category: params.category, format: params.formatId } });
       }
-      return { bolaoId: bolaoDoc.id, inviteCode: inviteCodeVal };
+      return { bolaoId: created.bolaoId, inviteCode: generateInviteCodeFromBolaoId(created.bolaoId) };
     } catch (error) {
       console.error(`Erro ao criar bolão [${phase}]:`, error);
       toast({

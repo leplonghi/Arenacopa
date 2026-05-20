@@ -1,6 +1,8 @@
 import { auth, db } from "@/integrations/firebase/client";
 import { 
   collection, 
+  doc,
+  getDoc,
   query, 
   where, 
   getDocs, 
@@ -11,7 +13,7 @@ import { monetizationEnv } from "@/lib/env";
 import { getSystemLanguage, normalizeLanguage, type AppLanguage } from "@/i18n/language";
 import { logger } from "@/lib/logger";
 
-export type PremiumSubscriptionStatus = "inactive" | "pending" | "active" | "expired" | "canceled" | "failed";
+export type PremiumSubscriptionStatus = "inactive" | "pending" | "active" | "expired" | "canceled" | "failed" | "refunded";
 
 type PremiumSubscriptionRow = {
   status: Exclude<PremiumSubscriptionStatus, "inactive">;
@@ -155,6 +157,11 @@ async function callPremiumFunction<T>(functionName: string, payload: Record<stri
 
 export async function getPremiumStatus(userId: string): Promise<PremiumStatusResult> {
   try {
+    const currentSnapshot = await getDoc(doc(db, "premium_subscriptions", userId));
+    if (currentSnapshot.exists()) {
+      return mapSubscriptionRow(currentSnapshot.data() as PremiumSubscriptionRow);
+    }
+
     const q = query(
       collection(db, "premium_subscriptions"),
       where("user_id", "==", userId),

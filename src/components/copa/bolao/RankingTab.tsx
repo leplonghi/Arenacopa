@@ -66,9 +66,9 @@ export function RankingTab({ members, palpites, extraBets = [], scoringRules }: 
         return (
             <div className="space-y-4 pt-8">
                 <div className="flex justify-center gap-4 mb-12">
-                    <Skeleton className="h-40 w-32 rounded-3xl" />
-                    <Skeleton className="h-48 w-40 rounded-3xl" />
-                    <Skeleton className="h-32 w-32 rounded-3xl" />
+                    <Skeleton className="h-40 w-32 rounded-2xl" />
+                    <Skeleton className="h-48 w-40 rounded-2xl" />
+                    <Skeleton className="h-32 w-32 rounded-2xl" />
                 </div>
                 <div className="space-y-3">
                     {Array(5).fill(0).map((_, i) => (
@@ -152,7 +152,7 @@ export function RankingTab({ members, palpites, extraBets = [], scoringRules }: 
 
                             <div className="relative group">
                                 <div className="absolute inset-0 bg-copa-gold/20 blur-[30px] rounded-full scale-125 opacity-50 group-hover:opacity-100 transition-opacity" />
-                                <div className="w-24 h-24 rounded-3xl p-1 bg-gradient-to-br from-copa-gold via-yellow-400 to-amber-600 shadow-[0_20px_40px_rgba(234,179,8,0.25)] relative overflow-hidden">
+                                <div className="w-24 h-24 rounded-2xl p-1 bg-gradient-to-br from-copa-gold via-yellow-400 to-amber-600 shadow-[0_20px_40px_rgba(234,179,8,0.25)] relative overflow-hidden">
                                     <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/10 to-transparent h-1/2 w-full animate-pulse-slow pointer-events-none" />
                                     <div className="w-full h-full rounded-[22px] bg-zinc-950 flex items-center justify-center text-sm font-black overflow-hidden border border-white/10 relative">
                                         <div className="absolute inset-0 opacity-[0.05] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
@@ -236,7 +236,7 @@ export function RankingTab({ members, palpites, extraBets = [], scoringRules }: 
                             variants={staggerItem}
                             whileHover={{ scale: 1.02, translateX: isMe ? 0 : 8, translateZ: "10px", rotateY: isMe ? 0 : -2 }}
                             className={cn(
-                                "flex items-center gap-4 px-6 py-5 rounded-[28px] border transition-all cursor-default relative overflow-hidden group transform-3d shadow-sm",
+                                "flex items-center gap-4 px-5 py-4 rounded-2xl border transition-all cursor-default relative overflow-hidden group transform-3d shadow-sm",
                                 i === 0 ? "bg-gradient-to-r from-copa-gold/20 via-copa-gold/[0.05] to-transparent border-copa-gold/40 shadow-[0_10px_30px_rgba(234,179,8,0.15)] ring-1 ring-copa-gold/20" :
                                     i === 1 ? "bg-gradient-to-r from-zinc-400/15 via-zinc-400/[0.05] to-transparent border-zinc-400/40" :
                                         i === 2 ? "bg-gradient-to-r from-amber-700/15 via-amber-700/[0.05] to-transparent border-amber-800/40" :
@@ -326,7 +326,7 @@ export function RankingTab({ members, palpites, extraBets = [], scoringRules }: 
 
             <motion.div
                 variants={staggerItem}
-                className="rounded-[40px] border border-white/5 p-8 bg-gradient-to-b from-white/[0.03] to-transparent backdrop-blur-2xl relative overflow-hidden"
+                className="rounded-2xl border border-white/5 p-5 bg-gradient-to-b from-white/[0.03] to-transparent backdrop-blur-2xl relative overflow-hidden"
             >
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-copa-gold/20 to-transparent" />
                 <div className="flex items-center gap-3 mb-8 justify-center">
@@ -349,7 +349,7 @@ function LegendItem({ icon, label, points, color, bg, border }: { icon: React.Re
     const { t } = useTranslation("bolao");
 
     return (
-        <div className={cn("group rounded-3xl p-6 border transition-all hover:scale-105 hover:shadow-2xl flex flex-col items-center text-center", bg, border)}>
+        <div className={cn("group rounded-2xl p-4 border transition-all hover:scale-105 hover:shadow-2xl flex flex-col items-center text-center", bg, border)}>
             <div className={cn("mb-4 transform group-hover:rotate-12 transition-transform", color)}>{icon}</div>
             <span className="text-[9px] font-black text-zinc-500 uppercase tracking-widest mb-2 leading-tight px-2">{label}</span>
             <div className="flex items-baseline gap-1">

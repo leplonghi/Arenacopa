@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import type { BolaoData, BolaoMarket } from "@/types/bolao";
 import { tStatic } from "@/i18n/staticText";
+import { getArenaAssetSrc } from "@/lib/arena-assets";
 
 interface BolaoHeaderProps {
   bolao: BolaoData;
@@ -33,65 +34,89 @@ export function BolaoHeader({
 }: BolaoHeaderProps) {
   const { t } = useTranslation('bolao');
   const navigate = useNavigate();
+  const heroSrc =
+    getArenaAssetSrc("generated/pool-detail-hero.webp") ||
+    (bolao.is_paid ? "/fundo%20bolao%20negocios.png" : "/fundo%20bolao%20pessoal.png");
 
   return (
-    <ArenaPanel tone="strong" className="mb-4 overflow-hidden p-4 sm:p-5 relative">
+    <ArenaPanel tone="strong" className="mb-4 overflow-hidden p-3 relative">
       {/* Background image — right-anchored */}
       <img
-        src={bolao.is_paid ? "/fundo%20bolao%20negocios.png" : "/fundo%20bolao%20pessoal.png"}
+        src={heroSrc}
         alt=""
         aria-hidden
-        className="pointer-events-none absolute inset-y-0 right-0 h-full w-[55%] select-none object-cover object-right"
-        style={{ opacity: bolao.is_paid ? 0.25 : 0.2 }}
+        className="pointer-events-none absolute inset-y-0 right-0 h-full w-[65%] select-none object-cover object-right"
+        style={{ opacity: bolao.is_paid ? 0.28 : 0.24 }}
       />
       <div
         className="pointer-events-none absolute inset-0"
         style={{
           background: bolao.is_paid
-            ? "linear-gradient(to right, #1a1508 40%, #1a150899 65%, transparent)"
-            : "linear-gradient(to right, #0c1912 40%, #0c191299 65%, transparent)",
+            ? "linear-gradient(to right, #1a1508 50%, #1a1508aa 75%, transparent)"
+            : "linear-gradient(to right, #0c1912 50%, #0c1912aa 75%, transparent)",
         }}
       />
       <div className="relative z-10">
-        <div className="flex items-start gap-2.5">
+        <div className="flex items-center gap-3">
           <button
             aria-label={t('bolao_detail.back_button_aria')}
             onClick={() => navigate("/boloes")}
-            className="surface-card-soft flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
+            className="surface-card-soft flex h-8 w-8 shrink-0 items-center justify-center rounded-lg"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-3.5 w-3.5" />
           </button>
 
           <BolaoAvatar
             avatarUrl={bolao.avatar_url}
             alt={bolao.name}
-            className="surface-card-soft flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-2xl"
+            className="surface-card-soft flex h-12 w-12 shrink-0 items-center justify-center rounded-xl text-xl"
           />
 
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <p className="arena-kicker text-primary">
+              <p className="text-[10px] font-black uppercase tracking-widest text-primary">
                 {bolao.category === "public" ? t('bolao_detail.category_public') : t('bolao_detail.category_private')}
               </p>
               {isCreator && (
                 <button
                   onClick={onEdit}
-                  className="rounded-md p-1 text-zinc-400 transition hover:bg-white/10 hover:text-white focus-visible:ring-2 focus-visible:ring-primary/70"
+                  className="rounded-lg p-1.5 text-zinc-400 transition hover:bg-white/10 hover:text-white"
                   aria-label="Editar configurações do bolão"
-                  title="Editar bolão"
                 >
-                  <PenLine className="h-3 w-3" />
+                  <PenLine className="h-3.5 w-3.5" />
                 </button>
               )}
             </div>
-            <h1 className="arena-title-lg">
+            <h1 className="arena-title-md truncate">
               {bolao.name}
             </h1>
-            {bolao.description ? (
-              <p className="mt-0.5 max-w-xl text-xs leading-relaxed text-zinc-300 line-clamp-2">
-                {bolao.description}
-              </p>
-            ) : null}
+            <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] font-black uppercase tracking-widest text-zinc-500">
+              <span className="flex items-center gap-1">
+                <Users className="h-3 w-3 text-emerald-400" />
+                {memberCount}
+              </span>
+              <span className="flex items-center gap-1">
+                <Share2 className="h-3 w-3 text-blue-400" />
+                {bolao.invite_code}
+              </span>
+              {formatLabel && (
+                <span className="flex items-center gap-1">
+                  <Trophy className="h-3 w-3 text-amber-400" />
+                  {formatLabel}
+                </span>
+              )}
+              {championMarket && myChampion && (
+                <span className="flex items-center gap-1 text-amber-200">
+                  <Crown className="h-3 w-3" />
+                  {myChampion}
+                </span>
+              )}
+              {isCreator && (
+                <span className="rounded-md border border-orange-500/30 bg-orange-500/10 px-1.5 py-0.5 text-[9px] text-orange-400">
+                  Admin
+                </span>
+              )}
+            </div>
           </div>
 
           <div className="flex shrink-0 items-center gap-1.5">
@@ -110,41 +135,6 @@ export function BolaoHeader({
               <Info className="h-4 w-4" />
             </button>
           </div>
-        </div>
-
-        <div className="mt-2.5 flex flex-wrap gap-1.5">
-          <span className="arena-badge text-[10px] py-0.5 px-2">
-            <Users className="h-3 w-3" />
-            {memberCount}
-          </span>
-          <span className="arena-badge text-[10px] py-0.5 px-2">
-            <Share2 className="h-3 w-3" />
-            {bolao.invite_code}
-          </span>
-          {formatLabel ? (
-            <span className="arena-badge text-[10px] py-0.5 px-2">
-              <Trophy className="h-3 w-3" />
-              {formatLabel}
-            </span>
-          ) : null}
-          {bolaoMarkets.length > 0 ? (
-            <span className="arena-badge text-[10px] py-0.5 px-2">
-              <Info className="h-3 w-3" />
-              {bolaoMarkets.length} desafios
-            </span>
-          ) : null}
-          {isCreator ? (
-            <span className="arena-badge border-orange-400/30 text-orange-300 text-[10px] py-0.5 px-2">
-              <Crown className="h-3 w-3" />
-              Admin
-            </span>
-          ) : null}
-          {championMarket && myChampion && (
-            <span className="arena-badge text-[10px] py-0.5 px-2">
-              <Trophy className="h-3 w-3 text-amber-400" />
-              {myChampion}
-            </span>
-          )}
         </div>
       </div>
     </ArenaPanel>

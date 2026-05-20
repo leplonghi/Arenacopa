@@ -1,4 +1,5 @@
 const LEAGUE_CHAMPIONSHIPS = [
+    { id: "wc2026", fdoId: 2000, name: "Copa do Mundo", season: "2026" },
     { id: "brasileirao2026", fdoId: 2013, name: "Brasileirão", season: "2026" },
     { id: "libertadores2026", fdoId: 2152, name: "Libertadores", season: "2026" },
     { id: "bundesliga2526", fdoId: 2002, name: "Bundesliga", season: "2025" },

@@ -69,6 +69,15 @@
       "collectionGroup": "matches",
       "queryScope": "COLLECTION",
       "fields": [
+        { "fieldPath": "home_team_code", "order": "ASCENDING" },
+        { "fieldPath": "away_team_code", "order": "ASCENDING" },
+        { "fieldPath": "match_date", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "matches",
+      "queryScope": "COLLECTION",
+      "fields": [
         { "fieldPath": "championship_id", "order": "ASCENDING" },
         { "fieldPath": "match_date", "order": "ASCENDING" }
       ]
@@ -161,6 +170,14 @@
       "fields": [
         { "fieldPath": "championship_id", "order": "ASCENDING" },
         { "fieldPath": "status", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "bolao_markets",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "bolao_id", "order": "ASCENDING" },
+        { "fieldPath": "scope", "order": "ASCENDING" }
       ]
     }
   ],

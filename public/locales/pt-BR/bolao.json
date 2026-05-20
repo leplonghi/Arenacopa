@@ -10,7 +10,6 @@
     "remaining_palpites": "Faltam {{count}} jogos para completar a fase de grupos",
     "next_matches": "Próximos Jogos",
     "market_pulse_kicker": "Pulso do bolão",
-    "market_pulse_title": "Desafios mais quentes",
     "saved_predictions": "{{count}} escolhas salvas",
     "members_in_bolao": "{{count}} membros no bolão",
     "live_kicker": "Tempo real",
@@ -527,8 +526,8 @@
       },
       "modes_desc": {
         "standalone": "O bolão vive sozinho e você controla os convites por ele mesmo.",
-        "existing_group": "O bolão nasce já conectado a uma comunidade que você participa.",
-        "new_group": "Você monta a comunidade e o bolão no mesmo fluxo, sem ida e volta."
+        "existing_group": "O bolão nasce já conectado a um grupo que você participa.",
+        "new_group": "Você monta o grupo e o bolão no mesmo fluxo, sem ida e volta."
       }
     },
     "rules": {
@@ -838,7 +837,7 @@
     "limit_cta": "Copa Pass — R$ 19,90",
     "limit_unavailable": "Em preparação",
     "back": "Voltar",
-    "kicker": "Comunidade",
+    "kicker": "Grupo",
     "title": "Grupos",
     "subtitle": "Reúna bolões em um grupo e dispute o ranking geral",
     "create_button": "Criar",

@@ -8,7 +8,7 @@
     "championships": "Campeonatos",
     "news": "Noticias",
     "discover": "Descubrir",
-    "groups": "Comunidades",
+    "groups": "Grupos",
     "ranking": "Ranking",
     "profile": "Cuenta",
     "menu": "Menú"
@@ -18,7 +18,7 @@
       "boloes": "Quinielas",
       "create_bolao": "Crear Quiniela",
       "bolao_detail": "Quiniela",
-      "groups": "Comunidades",
+      "groups": "Grupos",
       "group_detail": "Comunidad",
       "profile": "Cuenta",
       "menu": "Cuenta"
@@ -197,7 +197,7 @@
     "copa_guide": "Guía de la Copa",
     "premium": "Arena Premium",
     "groups": "Grupos",
-    "communities": "Comunidades",
+    "communities": "Grupos",
     "create_group": "Crear grupo",
     "business": "Negocios",
     "business_home": "ArenaCup para Negocios",

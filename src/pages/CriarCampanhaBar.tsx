@@ -73,7 +73,7 @@ export default function CriarCampanhaBar() {
   });
 
   const futureMatches = useMemo(
-    () => filterFutureMatchesForCampaign(matches, new Date()).slice(0, 12),
+    () => filterFutureMatchesForCampaign(Array.isArray(matches) ? matches : [], new Date()).slice(0, 12),
     [matches],
   );
   const selectedMatch = futureMatches.find((match) => match.id === state.matchId) ?? null;
@@ -91,7 +91,7 @@ export default function CriarCampanhaBar() {
     let mounted = true;
     void listManagedMerchants()
       .then((merchants) => {
-        if (!mounted || merchants.length === 0) return;
+        if (!mounted || !Array.isArray(merchants) || merchants.length === 0) return;
         const last = merchants[0];
         setState((current) => current.merchantName
           ? current

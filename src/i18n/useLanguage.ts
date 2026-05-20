@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { AppLanguage } from './language';
 import { applyDocumentLanguage, getSystemLanguage, normalizeLanguage } from './language';

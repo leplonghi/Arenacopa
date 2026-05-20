@@ -155,6 +155,7 @@ test("buildPresentationUpdate keeps presentation editable after publish", () => 
   });
 
   assert.equal(updated.presentation.description, "Nova descrição");
+  assert.equal(updated.description, "Nova descrição");
   assert.equal(updated.lifecycle.status, "published");
 });
 

@@ -1,9 +1,15 @@
 import { initializeApp } from "firebase/app";
 import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "firebase/app-check";
-import { initializeAuth, indexedDBLocalPersistence, browserLocalPersistence, getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
-import { getStorage } from "firebase/storage";
+import { connectAuthEmulator, initializeAuth, indexedDBLocalPersistence, browserLocalPersistence, getAuth } from "firebase/auth";
+import { connectFirestoreEmulator, getFirestore } from "firebase/firestore";
+import { connectStorageEmulator, getStorage } from "firebase/storage";
 import { Capacitor } from "@capacitor/core";
+
+declare global {
+  interface Window {
+    __ARENA_FIREBASE_EMULATORS_CONNECTED__?: boolean;
+  }
+}
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -18,6 +24,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 
 // Initialize App Check (web only, native uses different mechanisms)
+/* 
 if (typeof window !== "undefined" && !Capacitor.isNativePlatform()) {
   try {
     if (import.meta.env.DEV) {
@@ -36,6 +43,7 @@ if (typeof window !== "undefined" && !Capacitor.isNativePlatform()) {
     console.warn("Could not initialize App Check:", err);
   }
 }
+*/
 
 // On native Capacitor (Android/iOS), use indexedDB to avoid sessionStorage
 // issues with Custom Chrome Tabs. On web, use standard getAuth.
@@ -47,5 +55,29 @@ export const auth = Capacitor.isNativePlatform()
 
 export const db = getFirestore(app);
 export const storage = getStorage(app);
+
+const useFirebaseEmulators =
+  import.meta.env.VITE_USE_FIREBASE_EMULATORS === "true" &&
+  typeof window !== "undefined" &&
+  !Capacitor.isNativePlatform();
+
+if (useFirebaseEmulators && !window.__ARENA_FIREBASE_EMULATORS_CONNECTED__) {
+  connectAuthEmulator(
+    auth,
+    import.meta.env.VITE_FIREBASE_AUTH_EMULATOR_URL || "http://127.0.0.1:9099",
+    { disableWarnings: true },
+  );
+  connectFirestoreEmulator(
+    db,
+    import.meta.env.VITE_FIRESTORE_EMULATOR_HOST || "127.0.0.1",
+    Number(import.meta.env.VITE_FIRESTORE_EMULATOR_PORT || 8280),
+  );
+  connectStorageEmulator(
+    storage,
+    import.meta.env.VITE_FIREBASE_STORAGE_EMULATOR_HOST || "127.0.0.1",
+    Number(import.meta.env.VITE_FIREBASE_STORAGE_EMULATOR_PORT || 9199),
+  );
+  window.__ARENA_FIREBASE_EMULATORS_CONNECTED__ = true;
+}
 
 export default app;

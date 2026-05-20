@@ -11,13 +11,14 @@ describe("discover navigation rollout", () => {
       expect(isFeatureEnabled("discoverEnabled")).toBe(true);
     });
 
-  it("uses Noticias as the fourth mobile tab while keeping Groups out of the bottom nav", () => {
+  it("keeps Groups and Ranking directly reachable from the mobile bottom nav", () => {
     const mobilePaths = appNavigationItems
       .filter((item) => item.mobile)
       .map((item) => item.path);
 
-    expect(mobilePaths).toEqual(["/", "/campeonatos", "/boloes", "/noticias", "#menu"]);
-    expect(appNavigationItems.find((item) => item.path === "/grupos")?.mobile).not.toBe(true);
+    expect(mobilePaths).toEqual(["/", "/campeonatos", "/boloes", "/noticias", "/ranking", "#menu", "/grupos"]);
+    expect(appNavigationItems.find((item) => item.path === "/grupos")?.mobile).toBe(true);
+    expect(appNavigationItems.find((item) => item.path === "/ranking")?.mobile).toBe(true);
   });
 
   it("marks discover subroutes as active for the Discover nav item", () => {

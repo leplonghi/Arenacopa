@@ -30,13 +30,14 @@ type BolaoEditPanelProps = {
   onOpenChange: (open: boolean) => void;
   onBolaoUpdated?: (patch: Partial<BolaoData>) => void;
   memberCount?: number;
+  initialTab?: "general" | "participation" | "rules" | "finance";
 };
 
 type GroupBindingMode = "none" | "linked_discovery" | "group_gated";
 type JoinMode = "private_invite" | "public_open";
 type FinanceMode = "free" | "paid_external";
 
-export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated, memberCount = 0 }: BolaoEditPanelProps) {
+export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated, memberCount = 0, initialTab = "general" }: BolaoEditPanelProps) {
   const { t } = useTranslation("bolao");
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -64,6 +65,13 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated, memb
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [cancelConfirmOpen, setCancelConfirmOpen] = useState(false);
   const [allowedMatchIds, setAllowedMatchIds] = useState<string[] | "all">("all");
+  const [activeTab, setActiveTab] = useState<string>(initialTab);
+
+  useEffect(() => {
+    if (open) {
+      setActiveTab(initialTab);
+    }
+  }, [open, initialTab]);
 
   const { groups: availableGroups } = useUserGroups(open);
 
@@ -75,7 +83,7 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated, memb
     setName(bolao.name || "");
     setDescription(bolao.description || "");
     setEmoji(bolao.avatar_url || "⚽");
-    setGroupBindingMode((bolao.grupo_id ? "linked_discovery" : "none") as GroupBindingMode);
+    setGroupBindingMode((bolao.group_binding_mode || (bolao.grupo_id ? "linked_discovery" : "none")) as GroupBindingMode);
     setSelectedGrupoId(bolao.grupo_id || null);
     setJoinMode(bolao.category === "public" ? "public_open" : "private_invite");
     setFormatId((bolao.format_id || "classic") as BolaoFormatSlug);
@@ -115,36 +123,32 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated, memb
 
   const configVersion = bolao.integrity?.config_version ?? 1;
 
-  const mapConfigStateToLegacyPatch = (updated: {
-    lifecycle: { status: BolaoData["lifecycle"] extends { status: infer T } ? T : string };
-    integrity: { configVersion: number; isStructureLocked: boolean };
-    editableSections: BolaoData["editable_sections"];
-  }) => ({
+  const mapConfigStateToLegacyPatch = (updated: any) => ({
     editable_sections: {
-      presentation: Boolean(updated.editableSections?.presentation),
-      context: Boolean(updated.editableSections?.context),
-      access_policy: Boolean(updated.editableSections?.access_policy),
-      competition_rules: Boolean(updated.editableSections?.competition_rules),
-      finance_rules: Boolean(updated.editableSections?.finance_rules),
-      operation: Boolean(updated.editableSections?.operation),
+      presentation: Boolean(updated.editable_sections?.presentation),
+      context: Boolean(updated.editable_sections?.context),
+      access_policy: Boolean(updated.editable_sections?.access_policy),
+      competition_rules: Boolean(updated.editable_sections?.competition_rules),
+      finance_rules: Boolean(updated.editable_sections?.finance_rules),
+      operation: Boolean(updated.editable_sections?.operation),
     },
     integrity: {
       ...(bolao.integrity || {}),
-      config_version: updated.integrity.configVersion,
-      is_structure_locked: updated.integrity.isStructureLocked,
+      config_version: updated.integrity?.config_version,
+      is_structure_locked: updated.integrity?.is_structure_locked,
     },
     lifecycle: {
       ...(bolao.lifecycle || {}),
-      status: updated.lifecycle.status,
+      status: updated.lifecycle?.status,
     },
     status:
-      updated.lifecycle.status === "live"
+      updated.lifecycle?.status === "live"
         ? "active"
-        : updated.lifecycle.status === "published"
+        : updated.lifecycle?.status === "published"
           ? "open"
-          : updated.lifecycle.status === "archived"
+          : updated.lifecycle?.status === "archived"
             ? "finished"
-            : updated.lifecycle.status,
+            : updated.lifecycle?.status,
   });
 
   const updateLocal = (patch: Partial<BolaoData>) => {
@@ -183,10 +187,16 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated, memb
         title: t("edit.sections.identity.success_title"),
         description: t("edit.sections.identity.success_desc"),
       });
-    } catch {
+    } catch (error) {
       toast({
-        title: t("errors.generic_title"),
-        description: t("errors.try_again_later"),
+        title:
+          error instanceof Error && error.message === "permission_denied"
+            ? "Edição bloqueada"
+            : t("errors.generic_title"),
+        description:
+          error instanceof Error && error.message === "permission_denied"
+            ? "Você não tem permissão para editar a apresentação deste bolão."
+            : t("errors.try_again_later"),
         variant: "destructive",
       });
     } finally {
@@ -202,6 +212,18 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated, memb
   ) => {
     try {
       setSavingKey(key);
+
+      // Guard: don't send empty patch (all sections locked)
+      if (Object.keys(patch).length === 0) {
+        toast({
+          title: "Nenhuma alteração possível",
+          description: "Todas as seções deste bolão estão bloqueadas. Crie uma cópia para editar.",
+          variant: "destructive",
+        });
+        setSavingKey(null);
+        return;
+      }
+
       const updated = await updateBolaoConfiguration({
         payload: {
           bolao_id: bolao.id,
@@ -220,17 +242,26 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated, memb
         description: t("edit.sections.participation.success_title"),
       });
     } catch (error) {
-      toast({
-        title: t("errors.generic_title"),
-        description: t("errors.try_again_later"),
-        variant: "destructive",
-      });
-      if (error instanceof Error && error.message === "structure_locked") {
-        trackSocialEvent("edit_blocked_after_lock", {
-          section: key,
-          bolao_id: bolao.id,
-        });
+      const msg = error instanceof Error ? error.message : "";
+      let title = t("errors.generic_title");
+      let description = t("errors.try_again_later");
+
+      if (msg === "structure_locked") {
+        title = "Edição bloqueada";
+        description = "Este bolão já tem estrutura competitiva travada. Crie uma cópia para alterar regras, participação ou financeiro.";
+        trackSocialEvent("edit_blocked_after_lock", { section: key, bolao_id: bolao.id });
+      } else if (msg === "config_conflict") {
+        title = "Versão desatualizada";
+        description = "As configurações foram alteradas em outro dispositivo. Feche e reabra o painel para sincronizar.";
+      } else if (msg === "validation_failed") {
+        title = "Nada para salvar";
+        description = "Nenhuma seção editável foi encontrada no patch enviado. Verifique as permissões do bolão.";
+      } else if (msg === "permission_denied") {
+        title = "Sem permissão";
+        description = "Você não tem permissão para editar esta seção do bolão.";
       }
+
+      toast({ title, description, variant: "destructive" });
     } finally {
       setSavingKey(null);
     }
@@ -290,12 +321,14 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated, memb
     } catch (error) {
       toast({
         title:
-          error instanceof Error && error.message === "external_member_exists"
+          error instanceof Error && ["external_member_exists", "structure_locked"].includes(error.message)
             ? "Não é possível excluir"
             : t("errors.generic_title"),
         description:
           error instanceof Error && error.message === "external_member_exists"
             ? "Este bolão já tem outros participantes. Use finalizar ou arquivar."
+            : error instanceof Error && error.message === "structure_locked"
+              ? "Este bolão já foi travado por atividade competitiva. Use cancelar, finalizar ou arquivar."
             : t("errors.try_again_later"),
         variant: "destructive",
       });
@@ -377,7 +410,7 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated, memb
   const participationEditable = Boolean(editableSections.context || editableSections.access_policy);
   const canSaveParticipation = groupBindingMode === "none" || Boolean(selectedGrupoId);
   const canSaveRules = selectedMarketIds.length > 0;
-  const canDeleteBolao = memberCount <= 1;
+  const canDeleteBolao = memberCount <= 1 && !bolao.integrity?.is_structure_locked;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -389,7 +422,7 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated, memb
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs defaultValue="general" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-4 rounded-2xl bg-white/5 p-1">
             <TabsTrigger value="general" className="rounded-xl py-2 text-xs font-black uppercase tracking-wider transition-all data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
               {t("edit.tabs.general")}
@@ -594,18 +627,22 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated, memb
                           ? void saveConfigurationSection(
                               "participation",
                               {
-                                context: {
-                                  group_binding_mode: groupBindingMode,
-                                  grupo_id: groupBindingMode === "none" ? null : selectedGrupoId,
-                                },
-                                access_policy: {
-                                  join_mode: joinMode,
-                                  visibility: joinMode === "public_open" ? "public" : "private",
-                                },
+                                ...(editableSections.context && {
+                                  context: {
+                                    group_binding_mode: groupBindingMode,
+                                    grupo_id: groupBindingMode === "none" ? null : selectedGrupoId,
+                                  },
+                                }),
+                                ...(editableSections.access_policy && {
+                                  access_policy: {
+                                    join_mode: joinMode,
+                                    visibility: joinMode === "public_open" ? "public" : "private",
+                                  },
+                                }),
                               },
                               {
-                                category: joinMode === "public_open" ? "public" : "private",
-                                grupo_id: groupBindingMode === "none" ? null : selectedGrupoId,
+                                ...(editableSections.access_policy && { category: joinMode === "public_open" ? "public" : "private" }),
+                                ...(editableSections.context && { grupo_id: groupBindingMode === "none" ? null : selectedGrupoId }),
                               },
                               t("edit.sections.participation.success_title"),
                             )
@@ -634,12 +671,32 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated, memb
                         value={groupBindingMode}
                         onChange={(event) => {
                           const nextValue = event.target.value as GroupBindingMode;
+
+                          // Cannot set group_gated if bolão is public and access_policy is locked
+                          if (
+                            nextValue === "group_gated" &&
+                            joinMode === "public_open" &&
+                            !editableSections.access_policy
+                          ) {
+                            toast({
+                              title: "Combinação inválida",
+                              description: "Bolões públicos abertos não podem ser restritos a grupo. Para usar essa opção, o bolão precisa ser privado (apenas convite).",
+                              variant: "destructive",
+                            });
+                            return;
+                          }
+
                           setGroupBindingMode(nextValue);
                           if (nextValue === "none") {
                             setSelectedGrupoId(null);
                           }
+                          // Se for bloqueado por grupo, não pode ser público aberto
+                          if (nextValue === "group_gated" && joinMode === "public_open") {
+                            setJoinMode("private_invite");
+                          }
                         }}
-                        className="rounded-2xl border border-white/10 bg-[#0a1a11] px-4 py-3.5 text-white focus:border-primary/30 focus:outline-none transition-colors"
+                        disabled={!editableSections.context}
+                        className="rounded-2xl border border-white/10 bg-[#0a1a11] px-4 py-3.5 text-white focus:border-primary/30 focus:outline-none transition-colors disabled:opacity-30"
                       >
                         <option value="none">{t("edit.sections.participation.no_group")}</option>
                         <option value="linked_discovery">{t("edit.sections.participation.discovery_link")}</option>
@@ -653,7 +710,7 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated, memb
                       <select
                         value={selectedGrupoId || ""}
                         onChange={(event) => setSelectedGrupoId(event.target.value || null)}
-                        disabled={groupBindingMode === "none"}
+                        disabled={groupBindingMode === "none" || !editableSections.context}
                         className="rounded-2xl border border-white/10 bg-[#0a1a11] px-4 py-3.5 text-white focus:border-primary/30 focus:outline-none transition-colors disabled:opacity-30"
                       >
                         <option value="">{t("edit.sections.participation.select_group")}</option>
@@ -670,8 +727,21 @@ export function BolaoEditPanel({ bolao, open, onOpenChange, onBolaoUpdated, memb
                       </span>
                       <select
                         value={joinMode}
-                        onChange={(event) => setJoinMode(event.target.value as JoinMode)}
-                        className="rounded-2xl border border-white/10 bg-[#0a1a11] px-4 py-3.5 text-white focus:border-primary/30 focus:outline-none transition-colors"
+                        onChange={(event) => {
+                          const nextValue = event.target.value as JoinMode;
+                          // Não permitir público se for group_gated
+                          if (nextValue === "public_open" && groupBindingMode === "group_gated") {
+                            toast({
+                              title: "Combinação inválida",
+                              description: "Bolões restritos a grupo devem ser privados (apenas convite).",
+                              variant: "destructive",
+                            });
+                            return;
+                          }
+                          setJoinMode(nextValue);
+                        }}
+                        disabled={!editableSections.access_policy}
+                        className="rounded-2xl border border-white/10 bg-[#0a1a11] px-4 py-3.5 text-white focus:border-primary/30 focus:outline-none transition-colors disabled:opacity-30"
                       >
                         <option value="private_invite">{t("edit.sections.participation.private_invite")}</option>
                         <option value="public_open">{t("edit.sections.participation.public_open")}</option>

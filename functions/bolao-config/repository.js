@@ -1,4 +1,5 @@
 const admin = require("firebase-admin");
+const { FieldValue } = require("firebase-admin/firestore");
 const { buildBolaoMarkets } = require("./market-sync");
 const {
   buildConfigurationUpdate,
@@ -148,7 +149,7 @@ async function writeAuditLog({ db, bolaoId, actorId, action, before, after, reas
     before,
     after,
     reason: reason || null,
-    created_at: admin.firestore.FieldValue.serverTimestamp(),
+    created_at: FieldValue.serverTimestamp(),
   }).catch((err) => {
     console.error("Audit log failed (non-blocking):", err.message);
   });
@@ -445,9 +446,11 @@ async function deleteBolao({ db, bolaoId, actorId, nowIso, reason }) {
   return after;
 }
 
-function isActiveBolaoMembership(data = {}) {
-  const status = String(data.membership_status || "active");
-  return !["left", "removed", "withdrawn_by_owner"].includes(status);
+// Only statuses that represent a real committed membership block deletion.
+// Pending/invited requests are NOT considered blocking — the person never truly joined.
+function isBlockingMembership(data = {}) {
+  const status = String(data.membership_status || "");
+  return ["active", "confirmed"].includes(status);
 }
 
 async function assertDeleteAllowedForOwnerOnly({ db, bolaoId, actorId }) {
@@ -456,9 +459,10 @@ async function assertDeleteAllowedForOwnerOnly({ db, bolaoId, actorId }) {
     .where("bolao_id", "==", bolaoId)
     .get();
 
+  // Allow deletion only when the creator is the sole active member
   const hasExternalActiveMember = snapshot.docs.some((memberDoc) => {
     const member = memberDoc.data();
-    return isActiveBolaoMembership(member) && String(member.user_id || "") !== actorId;
+    return isBlockingMembership(member) && String(member.user_id || "") !== actorId;
   });
 
   if (hasExternalActiveMember) {
@@ -504,14 +508,14 @@ async function removePoolMember({
     membership_status: decision.membership_status,
     removal_reason_code: decision.reason_code,
     removal_reason_text: reasonText || null,
-    removed_at: admin.firestore.FieldValue.serverTimestamp(),
-    updated_at: admin.firestore.FieldValue.serverTimestamp(),
+    removed_at: FieldValue.serverTimestamp(),
+    updated_at: FieldValue.serverTimestamp(),
   };
 
   await memberRef.set(after, { merge: true });
   await db.collection("boloes").doc(bolaoId).set(
     {
-      member_count: admin.firestore.FieldValue.increment(-1),
+      member_count: FieldValue.increment(-1),
       updated_at: nowIso,
     },
     { merge: true },
@@ -583,14 +587,14 @@ async function leaveBolao({
   const after = {
     ...before,
     membership_status: "left",
-    left_at: admin.firestore.FieldValue.serverTimestamp(),
-    updated_at: admin.firestore.FieldValue.serverTimestamp(),
+    left_at: FieldValue.serverTimestamp(),
+    updated_at: FieldValue.serverTimestamp(),
   };
 
   await memberRef.set(after, { merge: true });
   await bolaoRef.set(
     {
-      member_count: admin.firestore.FieldValue.increment(-1),
+      member_count: FieldValue.increment(-1),
       updated_at: nowIso,
     },
     { merge: true },
@@ -647,8 +651,8 @@ async function updatePoolMemberPaymentStatus({
     payment_proof_status: validated ? "validated" : memberData.payment_proof_status || "pending",
     prize_agreement_status: validated ? "validated" : memberData.prize_agreement_status || "pending",
     payment_reviewed_by: actorId,
-    payment_reviewed_at: admin.firestore.FieldValue.serverTimestamp(),
-    updated_at: admin.firestore.FieldValue.serverTimestamp(),
+    payment_reviewed_at: FieldValue.serverTimestamp(),
+    updated_at: FieldValue.serverTimestamp(),
   };
 
   await memberRef.set(after, { merge: true });
@@ -716,8 +720,8 @@ async function submitPoolMemberPaymentProof({
   await memberRef.set(
     {
       ...after,
-      payment_proof_submitted_at: admin.firestore.FieldValue.serverTimestamp(),
-      updated_at: admin.firestore.FieldValue.serverTimestamp(),
+      payment_proof_submitted_at: FieldValue.serverTimestamp(),
+      updated_at: FieldValue.serverTimestamp(),
     },
     { merge: true },
   );

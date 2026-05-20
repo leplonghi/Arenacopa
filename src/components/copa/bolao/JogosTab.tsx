@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo, useCallback } from "react";
+import React, { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { db } from "@/integrations/firebase/client";
 import { 
     collection, 
@@ -7,6 +7,7 @@ import {
     orderBy, 
     getDocs, 
     onSnapshot, 
+    documentId,
 } from "firebase/firestore";
 import { useAuth } from "@/contexts/AuthContext";
 import { Flag } from "@/components/Flag";
@@ -22,16 +23,19 @@ import { toPng } from "html-to-image";
 import { EmptyState } from "@/components/EmptyState";
 import { cn } from "@/lib/utils";
 import { saveBolaoPalpite, saveExclusiveBolaoPalpite } from "@/services/boloes/bolao.service";
+import { MatchPublicPalpitesDialog } from "./MatchPublicPalpitesDialog";
+import { Users } from "lucide-react";
 import {
+    normalizePredictionCutoffMinutes,
     getPredictionCloseMs,
     isMatchPredictionClosed,
-    normalizePredictionCutoffMinutes,
 } from "@/services/boloes/bolao-prediction-deadline";
 import {
     subscribeBolaoExclusiveScoreLocks,
     type ExclusiveScoreSeat,
 } from "@/services/boloes/bolao-exclusive-locks.service";
 import { saveBolaoPrediction } from "@/services/boloes/bolao-prediction.service";
+import { normalizeMatchFeedStatus } from "@/lib/match-feed";
 import { ArenaPanel, ArenaSectionHeader } from "@/components/arena/ArenaPrimitives";
 import type { BolaoData, BolaoMarket, BolaoPrediction } from "@/types/bolao";
 
@@ -142,6 +146,7 @@ export function JogosTab({
     highlightedMatchId,
     markets = [],
     predictions = [],
+    matchPredictionCounts = {},
     bolao,
 }: {
     bolaoId: string;
@@ -149,6 +154,7 @@ export function JogosTab({
     rules?: unknown;
     markets?: BolaoMarket[];
     predictions?: BolaoPrediction[];
+    matchPredictionCounts?: Record<string, number>;
     bolao?: Pick<BolaoData, "scoring_mode" | "allowed_match_ids" | "championship_id" | "prediction_cutoff_minutes"> | null;
 }) {
     const { t, i18n } = useTranslation('bolao');
@@ -161,6 +167,7 @@ export function JogosTab({
     const [draftFirstScorers, setDraftFirstScorers] = useState<Record<string, string>>({});
     const [savingMatchId, setSavingMatchId] = useState<string | null>(null);
     const [savedFlashMatchIds, setSavedFlashMatchIds] = useState<Set<string>>(new Set());
+    const [isLoading, setIsLoading] = useState(true);
     const [exclusiveSeats, setExclusiveSeats] = useState<Record<string, ExclusiveScoreSeat[]>>({});
     const [nowMs, setNowMs] = useState(() => Date.now());
     
@@ -173,6 +180,8 @@ export function JogosTab({
     const [shareData, setShareData] = useState<ShareData | null>(null);
     const shareRef = useRef<HTMLDivElement>(null);
     const [isGenerating, setIsGenerating] = useState(false);
+    const [publicPicksMatchId, setPublicPicksMatchId] = useState<string | null>(null);
+    const [publicPicksDialogOpen, setPublicPicksDialogOpen] = useState(false);
     const matchMarkets = useMemo(
         () => markets.filter((market) => market.scope === "match" && market.match_id),
         [markets]
@@ -189,16 +198,56 @@ export function JogosTab({
             }, {}),
         [matchMarkets]
     );
-    const exactScoreMarketByMatchId = useMemo(
-        () =>
-            matchMarkets.reduce<Record<string, BolaoMarket>>((accumulator, market) => {
-                if (market.slug === "exact_score" && market.match_id) {
-                    accumulator[market.match_id] = market;
-                }
-                return accumulator;
-            }, {}),
-        [matchMarkets]
-    );
+
+    // allowedMatches must be defined BEFORE effectiveExactScoreMarketByMatchId which depends on it
+    const allowedMatches = useMemo(() => {
+        const matchesWithMarkets = new Set(matchMarkets.map(m => m.match_id).filter(Boolean) as string[]);
+        const matchesWithSavedPalpites = new Set(Object.keys(savedPalpites));
+        const allowedMatchIds = bolao?.allowed_match_ids;
+
+        // 1. Se houver uma lista explícita de IDs (Array), respeitamos estritamente.
+        if (Array.isArray(allowedMatchIds)) {
+            return matches.filter(m => allowedMatchIds.includes(m.id));
+        }
+
+        // 2. Se for "all", mostramos jogos que têm mercados ativos para este bolão.
+        if (allowedMatchIds === 'all') {
+            const hasAnyMarkets = matchesWithMarkets.size > 0;
+            if (!hasAnyMarkets && matchesWithSavedPalpites.size === 0) {
+                return matches.filter(m => new Date(m.match_date).getTime() > Date.now());
+            }
+            return matches.filter(m => matchesWithMarkets.has(m.id) || matchesWithSavedPalpites.has(m.id));
+        }
+
+        // 3. Caso não esteja definido (fallback de segurança)
+        return [];
+    }, [matches, bolao?.allowed_match_ids, matchMarkets, savedPalpites]);
+
+    // If no exact_score market exists for an allowed match, we synthesize a virtual one
+    // to ensure the user can still place predictions for the primary outcome.
+    const effectiveExactScoreMarketByMatchId = useMemo(() => {
+        const result: Record<string, BolaoMarket | { slug: "exact_score"; match_id: string; id: string }> = {};
+        
+        // First fill with real markets
+        matchMarkets.forEach(market => {
+            if (market.slug === "exact_score" && market.match_id) {
+                result[market.match_id] = market;
+            }
+        });
+
+        // Then fill gaps for allowed matches
+        allowedMatches.forEach(match => {
+            if (!result[match.id]) {
+                result[match.id] = {
+                    id: `virtual_${bolaoId}_${match.id}`,
+                    slug: "exact_score",
+                    match_id: match.id,
+                };
+            }
+        });
+
+        return result;
+    }, [matchMarkets, allowedMatches, bolaoId]);
     const firstScorerMarketByMatchId = useMemo(
         () =>
             matchMarkets.reduce<Record<string, BolaoMarket>>((accumulator, market) => {
@@ -239,21 +288,102 @@ export function JogosTab({
     useEffect(() => {
         if (!user) return;
 
-        // Load Matches
-        const loadMatches = async () => {
-            const matchesRef = collection(db, "matches");
-            let q = query(matchesRef, orderBy("match_date", "asc"));
-            
-            // Se o bolão for de um campeonato específico e não tiver lista restrita de IDs, filtrar no Firestore
-            if (bolao?.championship_id) {
-                q = query(matchesRef, where("championship_id", "==", bolao.championship_id), orderBy("match_date", "asc"));
+        // Listen for Matches
+        const matchesRef = collection(db, "matches");
+        const allowedIds = bolao?.allowed_match_ids;
+
+        setIsLoading(true);
+
+        let unsubscribeMatches = () => {};
+
+        if (Array.isArray(allowedIds) && allowedIds.length > 0) {
+            if (allowedIds.length <= 30) {
+                // Fast path: single 'in' query (Firestore limit is 30)
+                const qMatches = query(matchesRef, where(documentId(), "in", allowedIds));
+                unsubscribeMatches = onSnapshot(qMatches, (snapshot) => {
+                    const mData = snapshot.docs.map(d => {
+                        const data = d.data();
+                        return {
+                            id: d.id,
+                            ...data,
+                            status: normalizeMatchFeedStatus({
+                                status: data.status,
+                                matchDate: data.match_date,
+                                homeScore: data.home_score,
+                                awayScore: data.away_score,
+                            }),
+                        } as JogosTabMatch;
+                    });
+                    setMatches(mData.sort((a, b) => new Date(a.match_date).getTime() - new Date(b.match_date).getTime()));
+                    setIsLoading(false);
+                }, (error) => {
+                    console.error("Error fetching matches:", error);
+                    setIsLoading(false);
+                });
+            } else {
+                // [BUG-009 FIX] Batch into chunks of 30 to stay within Firestore limits.
+                // We use one-time getDocs per chunk instead of onSnapshot to keep it simple.
+                const CHUNK_SIZE = 30;
+                const chunks: string[][] = [];
+                for (let i = 0; i < allowedIds.length; i += CHUNK_SIZE) {
+                    chunks.push(allowedIds.slice(i, i + CHUNK_SIZE));
+                }
+                Promise.all(
+                    chunks.map((chunk) =>
+                        getDocs(query(matchesRef, where(documentId(), "in", chunk)))
+                    )
+                ).then((snapshots) => {
+                    const allDocs = snapshots.flatMap((snap) =>
+                        snap.docs.map((d) => {
+                            const data = d.data();
+                            return {
+                                id: d.id,
+                                ...data,
+                                status: normalizeMatchFeedStatus({
+                                    status: data.status,
+                                    matchDate: data.match_date,
+                                    homeScore: data.home_score,
+                                    awayScore: data.away_score,
+                                }),
+                            } as JogosTabMatch;
+                        })
+                    );
+                    setMatches(allDocs.sort((a, b) => new Date(a.match_date).getTime() - new Date(b.match_date).getTime()));
+                    setIsLoading(false);
+                }).catch((error) => {
+                    console.error("Error fetching batched matches:", error);
+                    setIsLoading(false);
+                });
             }
-            
-            const snapshot = await getDocs(q);
-            const mData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as JogosTabMatch));
-            setMatches(mData);
-        };
-        loadMatches();
+        } else if (bolao?.championship_id) {
+            // Fallback: entire championship
+            const qMatches = query(matchesRef, where("championship_id", "==", bolao.championship_id), orderBy("match_date", "asc"));
+            unsubscribeMatches = onSnapshot(qMatches, (snapshot) => {
+                const mData = snapshot.docs.map(d => {
+                    const data = d.data();
+                    return {
+                        id: d.id,
+                        ...data,
+                        status: normalizeMatchFeedStatus({
+                            status: data.status,
+                            matchDate: data.match_date,
+                            homeScore: data.home_score,
+                            awayScore: data.away_score,
+                        }),
+                    } as JogosTabMatch;
+                });
+                setMatches(mData);
+                setIsLoading(false);
+            }, (error) => {
+                console.error("Error fetching matches:", error);
+                setIsLoading(false);
+            });
+        } else {
+            // Safety fallback: no criteria → empty result, stop loading
+            setMatches([]);
+            setIsLoading(false);
+        }
+
 
         // Listen for user's predictions in this bolao
         const palpitesRef = collection(db, "bolao_palpites");
@@ -263,7 +393,7 @@ export function JogosTab({
             where("user_id", "==", user.id)
         );
 
-        const unsubscribe = onSnapshot(qPalpites, (snapshot) => {
+        const unsubscribePredictions = onSnapshot(qPalpites, (snapshot) => {
             const m = snapshot.docs.reduce<Record<string, EditablePalpite>>((acc, doc) => {
                 const p = doc.data() as PalpiteRealtimeRow;
                 return {
@@ -301,17 +431,18 @@ export function JogosTab({
         }
 
         return () => {
-             unsubscribe();
+             unsubscribePredictions();
+             unsubscribeMatches();
              unsubscribeAll();
         };
-    }, [bolaoId, bolao?.scoring_mode, bolao?.championship_id, t, toast, user]);
+    }, [bolaoId, bolao?.scoring_mode, bolao?.allowed_match_ids, bolao?.championship_id, t, toast, user]);
 
     const getCurrentPalpite = useMemo(() => {
         return (matchId: string): EditablePalpite => {
             const saved = savedPalpites[matchId];
             const draft = draftPalpites[matchId];
-            const exactScorePrediction = exactScoreMarketByMatchId[matchId]
-                ? predictionsByMarketId[exactScoreMarketByMatchId[matchId].id]
+            const exactScorePrediction = effectiveExactScoreMarketByMatchId[matchId]
+                ? predictionsByMarketId[effectiveExactScoreMarketByMatchId[matchId].id]
                 : null;
             const predictionValue = exactScorePrediction?.prediction_value;
             const newModelHome =
@@ -339,7 +470,7 @@ export function JogosTab({
                 is_exact: saved?.is_exact ?? false,
             };
         };
-    }, [draftPalpites, exactScoreMarketByMatchId, predictionsByMarketId, savedPalpites]);
+    }, [draftPalpites, effectiveExactScoreMarketByMatchId, predictionsByMarketId, savedPalpites]);
 
     const predictionCutoffMinutes = useMemo(
         () => normalizePredictionCutoffMinutes(bolao?.prediction_cutoff_minutes),
@@ -468,6 +599,18 @@ export function JogosTab({
                 description: hasScoreInput
                     ? `${homeTeam} ${hs} x ${as} ${awayTeam}`
                     : t("palpites.market_updated_desc", { home: homeTeam, away: awayTeam }),
+                action: (
+                    <button 
+                        onClick={() => {
+                            setPublicPicksMatchId(matchId);
+                            setPublicPicksDialogOpen(true);
+                        }}
+                        className="arena-badge-gold px-2 py-1 text-[8px] flex items-center gap-1"
+                    >
+                        <Users className="w-3 h-3" />
+                        {t('palpites.view_public_picks', 'Ver Galera')}
+                    </button>
+                )
             });
         } catch (error) {
             console.error(error);
@@ -615,21 +758,7 @@ export function JogosTab({
         }
     };
 
-    const allowedMatches = useMemo(() => {
-        // Identificamos quais jogos possuem mercados ou palpites salvos (para suporte a boloes legado ou customizados)
-        const matchesWithMarkets = new Set(matchMarkets.map(m => m.match_id).filter(Boolean) as string[]);
-        const matchesWithSavedPalpites = new Set(Object.keys(savedPalpites));
-        const allowedMatchIds = bolao?.allowed_match_ids;
-
-        if (!allowedMatchIds || allowedMatchIds === "all") {
-            // Se for "all", filtramos apenas para mostrar jogos que tenham mercados OU que o usuário já palpitou
-            // Isso evita mostrar o calendário inteiro de um campeonato se o bolão só usa uma parte.
-            return matches.filter(m => matchesWithMarkets.has(m.id) || matchesWithSavedPalpites.has(m.id));
-        }
-
-        // Se houver uma lista restrita, respeitamos ela rigorosamente
-        return matches.filter(m => allowedMatchIds.includes(m.id));
-    }, [matches, bolao?.allowed_match_ids, matchMarkets, savedPalpites]);
+    // allowedMatches is now declared earlier (before effectiveExactScoreMarketByMatchId)
 
     const uniqueTeams = useMemo(() => 
         Array.from(new Set(allowedMatches.flatMap(m => [m.home_team_code, m.away_team_code])))
@@ -746,7 +875,19 @@ export function JogosTab({
     const lockedMatchesCount = enrichedMatches.filter((item) => item.isStarted).length;
     const completedMatchesCount = enrichedMatches.filter((item) => !item.isStarted && !item.isPending).length;
 
-    if (!matches.length) {
+    // Show skeleton while loading
+    if (isLoading) {
+        return (
+            <div className="space-y-3 animate-pulse">
+                {[1, 2, 3].map(i => (
+                    <div key={i} className="h-28 rounded-[16px] bg-white/5 border border-white/10" />
+                ))}
+            </div>
+        );
+    }
+
+    // All championship matches loaded but none match the bolão selection
+    if (!allowedMatches.length) {
         return (
             <EmptyState
                 icon="⚽"
@@ -758,13 +899,13 @@ export function JogosTab({
 
     return (
         <div className="space-y-4">
-            <ArenaPanel tone="strong" className="p-5">
+            <ArenaPanel tone="strong" className="p-4">
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                     <div>
                         <p className="arena-kicker text-primary">
                             {t('palpites.header_kicker')}
                         </p>
-                        <h3 className="mt-2 font-display text-[2.5rem] font-semibold uppercase leading-[0.88] tracking-[0.02em] text-white sm:text-[3.2rem]">
+                        <h3 className="mt-1 font-display text-[2rem] font-semibold uppercase leading-[0.88] tracking-[0.02em] text-white sm:text-[2.5rem]">
                             {pendingMatchesCount > 0
                                 ? t('palpites.pending_title', { count: pendingMatchesCount })
                                 : t('palpites.pending_title_done')}
@@ -777,39 +918,39 @@ export function JogosTab({
                     </div>
 
                     <div className="grid grid-cols-3 gap-2 sm:min-w-[300px]">
-                        <div className="rounded-[22px] border border-white/10 bg-black/20 px-3 py-3 text-center">
-                            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-zinc-500">
+                        <div className="rounded-[16px] border border-white/10 bg-black/20 px-3 py-2 text-center">
+                            <p className="text-[9px] font-black uppercase tracking-[0.16em] text-zinc-500">
                                 {t('palpites.stats_pending')}
                             </p>
-                            <p className="mt-1 text-2xl font-black text-white">{pendingMatchesCount}</p>
+                            <p className="mt-0.5 text-xl font-black text-white">{pendingMatchesCount}</p>
                         </div>
-                        <div className="rounded-[22px] border border-white/10 bg-black/20 px-3 py-3 text-center">
-                            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-zinc-500">
+                        <div className="rounded-[16px] border border-white/10 bg-black/20 px-3 py-2 text-center">
+                            <p className="text-[9px] font-black uppercase tracking-[0.16em] text-zinc-500">
                                 {t('palpites.stats_saved')}
                             </p>
-                            <p className="mt-1 text-2xl font-black text-white">{completedMatchesCount}</p>
+                            <p className="mt-0.5 text-xl font-black text-white">{completedMatchesCount}</p>
                         </div>
-                        <div className="rounded-[22px] border border-white/10 bg-black/20 px-3 py-3 text-center">
-                            <p className="text-[10px] font-black uppercase tracking-[0.16em] text-zinc-500">
+                        <div className="rounded-[16px] border border-white/10 bg-black/20 px-3 py-2 text-center">
+                            <p className="text-[9px] font-black uppercase tracking-[0.16em] text-zinc-500">
                                 {t('palpites.stats_closed')}
                             </p>
-                            <p className="mt-1 text-2xl font-black text-white">{lockedMatchesCount}</p>
+                            <p className="mt-0.5 text-xl font-black text-white">{lockedMatchesCount}</p>
                         </div>
                     </div>
                 </div>
             </ArenaPanel>
 
-            <ArenaPanel className="p-4">
+            <ArenaPanel className="p-3">
                 <ArenaSectionHeader
                     eyebrow={t('palpites.filter_kicker', 'Filtro rápido')}
                     title={t('palpites.filter_title', 'Refinar jogos')}
                     action={<div className="arena-badge">{enrichedMatches.length} jogos</div>}
                 />
-                <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+                <div className="mt-3 flex flex-col gap-2 sm:flex-row">
                     <select 
                         value={filterTeam} 
                         onChange={e => setFilterTeam(e.target.value)}
-                        className="flex-1 rounded-[18px] border border-white/10 bg-white/[0.05] px-4 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-white outline-none focus:border-primary/50"
+                        className="flex-1 rounded-[14px] border border-white/10 bg-white/[0.05] px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.16em] text-white outline-none focus:border-primary/50"
                     >
                         <option value="all" className="bg-zinc-900">{t('palpites.filter_all_teams')}</option>
                         {uniqueTeams.map(t => <option key={t} value={t} className="bg-zinc-900">{t}</option>)}
@@ -817,7 +958,7 @@ export function JogosTab({
                     <select 
                         value={filterStage} 
                         onChange={e => setFilterStage(e.target.value)}
-                        className="flex-1 rounded-[18px] border border-white/10 bg-white/[0.05] px-4 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-white outline-none focus:border-primary/50"
+                        className="flex-1 rounded-[14px] border border-white/10 bg-white/[0.05] px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.16em] text-white outline-none focus:border-primary/50"
                     >
                         <option value="all" className="bg-zinc-900">{t('palpites.filter_all_stages')}</option>
                         {uniqueStages.map(s => <option key={s} value={s} className="bg-zinc-900">{s}</option>)}
@@ -828,7 +969,7 @@ export function JogosTab({
             {enrichedMatches.map(({ match: m, isStarted, marketsForMatch, firstScorerMarket, savedFirstScorer, currentFirstScorer, p, hasSavedPrediction, isDirty, canSave, isHighlighted, isPending, isUpcoming }) => {
                 return (
                     <div id={`match-card-${m.id}`} key={m.id} className={cn(
-                        "relative overflow-hidden rounded-[34px] border p-6 transition-all shadow-[0_24px_60px_-34px_rgba(0,0,0,0.82)]",
+                        "relative overflow-hidden rounded-[16px] border p-3 transition-all shadow-[0_24px_60px_-34px_rgba(0,0,0,0.82)]",
                         isHighlighted
                             ? "border-primary/45 bg-[radial-gradient(circle_at_top_left,rgba(145,255,59,0.14),transparent_30%),linear-gradient(180deg,rgba(255,255,255,0.06),rgba(255,255,255,0.03))] ring-1 ring-primary/18"
                             : isUpcoming
@@ -836,11 +977,11 @@ export function JogosTab({
                                 : "border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.03))]"
                     )}>
                         {isUpcoming && !isHighlighted && (
-                            <div className="absolute top-0 right-0 rounded-bl-3xl rounded-tr-[34px] bg-primary/20 border border-primary/20 px-4 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-primary">
+                            <div className="absolute top-0 right-0 rounded-bl-2xl rounded-tr-[16px] bg-primary/20 border border-primary/20 px-3 py-1 text-[8px] font-black uppercase tracking-[0.18em] text-primary">
                                 Próximo Jogo
                             </div>
                         )}
-                        {isStarted && <div className="absolute inset-0 bg-black/50 z-10 backdrop-blur-sm pointer-events-none flex flex-col items-center justify-center">
+                        {isStarted && <div className="absolute inset-0 bg-black/50 z-10 backdrop-blur-sm flex flex-col items-center justify-center">
                             <Lock className="w-8 h-8 text-gray-500 mb-2" />
                             <span className="text-[10px] font-black uppercase tracking-widest text-gray-400">
                                 {t('palpites.closed_label')}
@@ -861,7 +1002,7 @@ export function JogosTab({
                                     animate={{ opacity: 1, scale: 1 }}
                                     exit={{ opacity: 0, scale: 1.1 }}
                                     transition={{ type: "spring", stiffness: 300, damping: 20 }}
-                                    className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/70 backdrop-blur-sm pointer-events-none rounded-[32px]"
+                                    className="absolute inset-0 z-20 flex flex-col items-center justify-center bg-black/70 backdrop-blur-sm pointer-events-none rounded-[20px]"
                                 >
                                     <CheckCircle2 className="w-14 h-14 text-primary mb-3" />
                                     <span className="text-[11px] font-black uppercase tracking-widest text-primary">{t('palpites.saved')}</span>
@@ -869,22 +1010,29 @@ export function JogosTab({
                             )}
                         </AnimatePresence>
 
-                        <div className="mb-6 flex items-center justify-between gap-3">
-                            <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.18em] text-zinc-400">
+                        <div className="mb-2 flex items-center justify-between gap-3">
+                            <div className="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-zinc-400">
                                 {new Date(m.match_date).toLocaleDateString(currentLanguage)} • {new Date(m.match_date).toLocaleTimeString(currentLanguage, { hour: "2-digit", minute: "2-digit" })}
                             </div>
                             <div className={cn(
-                                "rounded-full border px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.18em]",
+                                "rounded-full border px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em]",
                                 m.status === "live"
                                     ? "border-emerald-400/30 bg-emerald-500/10 text-emerald-300"
                                     : "border-white/10 bg-white/5 text-zinc-400"
                             )}>
                                 {m.status === "live" ? "Ao vivo" : m.stage}
                             </div>
+
+                            {matchPredictionCounts && matchPredictionCounts[m.id] > 0 && (
+                                <div className="flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-2.5 py-1 text-[9px] font-black uppercase tracking-widest text-primary shadow-[0_0_10px_rgba(var(--primary-rgb),0.1)] animate-in fade-in zoom-in duration-300">
+                                    <Users className="h-3 w-3" />
+                                    <span>{matchPredictionCounts[m.id]} {t('palpites.predictions_count', 'palpites')}</span>
+                                </div>
+                            )}
                         </div>
 
                         {marketsForMatch.length > 0 && (
-                            <div className="mb-4 flex flex-wrap gap-2">
+                            <div className="mb-2 flex flex-wrap gap-2">
                                 {marketsForMatch.slice(0, 4).map((market) => (
                                     <div key={market.id} className="inline-flex items-center gap-1.5 rounded-full border border-primary/15 bg-primary/10 px-3 py-1 text-[9px] font-black uppercase tracking-[0.16em] text-primary">
                                         <span>{getMarketShortLabel(market.slug, market.title, t)}</span>
@@ -914,7 +1062,7 @@ export function JogosTab({
                         )}
 
                         {isPending && (
-                            <div className="mb-4 rounded-2xl border border-primary/20 bg-primary/10 px-4 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-primary">
+                            <div className="mb-2 rounded-[12px] border border-primary/20 bg-primary/10 px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.18em] text-primary">
                                 {isHighlighted
                                     ? t('palpites.highlighted_pending')
                                     : t('palpites.queue_pending')}
@@ -922,12 +1070,12 @@ export function JogosTab({
                         )}
 
                             {bolao?.scoring_mode === 'exclusive' ? (
-                                <div className="mt-4 mb-2">
+                                <div className="mt-3 mb-2">
                                     <div className="flex items-center justify-between mb-2">
                                         <p className="text-[10px] font-black uppercase tracking-widest text-primary flex items-center gap-1">🎟️ {t("palpites.exclusive_seats_title")}</p>
                                         <p className="text-[9px] text-zinc-500 uppercase tracking-wider">{t('palpites.exclusive_pick_label')}</p>
                                     </div>
-                                    <div className="grid grid-cols-5 gap-1.5 rounded-[24px] border border-white/10 bg-black/20 p-3">
+                                    <div className="grid grid-cols-5 gap-1.5 rounded-[12px] border border-white/10 bg-black/20 p-2">
                                         {[0,1,2,3,4].flatMap(homeG => [0,1,2,3,4].map(awayG => {
                                             const oc = (exclusiveSeats[m.id] || []).find(ap => ap.home === homeG && ap.away === awayG);
                                             const isMine = oc?.userId === user?.id;
@@ -939,7 +1087,7 @@ export function JogosTab({
                                                     onClick={() => !isTaken && !isStarted && setDraftScoreBoth(m.id, homeG.toString(), awayG.toString())}
                                                     disabled={isTaken || isStarted}
                                                     className={cn(
-                                                        "h-8 flex justify-center items-center text-[10px] font-black rounded-lg transition-all",
+                                                        "h-7 flex justify-center items-center text-[10px] font-black rounded-lg transition-all",
                                                         isSelected ? "bg-primary text-black scale-105 shadow-[0_0_10px_rgba(255,255,255,0.4)]" :
                                                         isTaken ? "bg-white/5 text-zinc-600 cursor-not-allowed grayscale" :
                                                         "bg-white/10 text-white hover:bg-white/20 active:scale-95"
@@ -952,14 +1100,14 @@ export function JogosTab({
                                     </div>
                                 </div>
                             ) : (
-                                <div className="rounded-[30px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] px-4 py-5">
-                                    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-4">
-                                        <div className="flex flex-col items-center gap-3">
-                                            <div className="flex h-16 w-16 items-center justify-center rounded-[22px] border border-white/10 bg-white/5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
-                                                <Flag code={m.home_team_code} size="md" />
+                                <div className="rounded-[12px] border border-white/10 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] px-2 py-3">
+                                    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+                                        <div className="flex flex-col items-center gap-1.5">
+                                            <div className="flex h-10 w-10 items-center justify-center rounded-[12px] border border-white/10 bg-white/5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+                                                <Flag code={m.home_team_code} size="sm" />
                                             </div>
                                             <div className="flex flex-col items-center">
-                                                <span className="font-display text-[1.55rem] font-semibold uppercase text-white">{m.home_team_code}</span>
+                                                <span className="font-display text-[1.2rem] font-semibold uppercase text-white">{m.home_team_code}</span>
                                                 <div className="mt-1 flex gap-1">
                                                     {getForm(m.home_team_code).map((f, i) => (
                                                         <div key={i} className={cn("w-2 h-2 rounded-full", f === 'W' ? 'bg-emerald-500' : f === 'D' ? 'bg-zinc-500' : 'bg-red-500')} title={f} />
@@ -968,7 +1116,7 @@ export function JogosTab({
                                             </div>
                                         </div>
 
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-1.5">
                                             <input
                                                 type="text"
                                                 maxLength={2}
@@ -976,10 +1124,10 @@ export function JogosTab({
                                                 aria-label={t("palpites.score_input_aria", { team: m.home_team_code })}
                                                 value={p.home}
                                                 onChange={e => updateScore(m.id, 'home', e.target.value)}
-                                                className="h-20 w-16 rounded-[22px] border border-white/10 bg-white/[0.06] text-center font-display text-[2.3rem] font-semibold text-white outline-none focus:border-primary/50"
+                                                className="h-12 w-12 rounded-[12px] border border-white/10 bg-white/[0.06] text-center font-display text-xl font-semibold text-white outline-none focus:border-primary/50"
                                                 disabled={isStarted}
                                             />
-                                            <span className="font-display text-4xl font-semibold text-white/35">x</span>
+                                            <span className="font-display text-2xl font-semibold text-white/35">x</span>
                                             <input
                                                 type="text"
                                                 maxLength={2}
@@ -987,17 +1135,17 @@ export function JogosTab({
                                                 aria-label={t("palpites.score_input_aria", { team: m.away_team_code })}
                                                 value={p.away}
                                                 onChange={e => updateScore(m.id, 'away', e.target.value)}
-                                                className="h-20 w-16 rounded-[22px] border border-white/10 bg-white/[0.06] text-center font-display text-[2.3rem] font-semibold text-white outline-none focus:border-primary/50"
+                                                className="h-12 w-12 rounded-[12px] border border-white/10 bg-white/[0.06] text-center font-display text-xl font-semibold text-white outline-none focus:border-primary/50"
                                                 disabled={isStarted}
                                             />
                                         </div>
 
-                                        <div className="flex flex-col items-center gap-3">
-                                            <div className="flex h-16 w-16 items-center justify-center rounded-[22px] border border-white/10 bg-white/5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
-                                                <Flag code={m.away_team_code} size="md" />
+                                        <div className="flex flex-col items-center gap-1.5">
+                                            <div className="flex h-10 w-10 items-center justify-center rounded-[12px] border border-white/10 bg-white/5 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+                                                <Flag code={m.away_team_code} size="sm" />
                                             </div>
                                             <div className="flex flex-col items-center">
-                                                <span className="font-display text-[1.55rem] font-semibold uppercase text-white">{m.away_team_code}</span>
+                                                <span className="font-display text-[1.2rem] font-semibold uppercase text-white">{m.away_team_code}</span>
                                                 <div className="mt-1 flex gap-1">
                                                     {getForm(m.away_team_code).map((f, i) => (
                                                         <div key={i} className={cn("w-2 h-2 rounded-full", f === 'W' ? 'bg-emerald-500' : f === 'D' ? 'bg-zinc-500' : 'bg-red-500')} title={f} />
@@ -1010,17 +1158,17 @@ export function JogosTab({
                             )}
 
                         {firstScorerMarket && !isStarted && (
-                            <div className="mt-5 rounded-[24px] border border-white/10 bg-black/10 p-4">
-                                <div className="mb-3 flex items-center justify-between gap-3">
+                            <div className="mt-2 rounded-[12px] border border-white/10 bg-black/10 p-2.5">
+                                <div className="mb-2 flex items-center justify-between gap-3">
                                     <div>
-                                        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">{t('palpites.extra_market_label')}</p>
-                                        <p className="mt-1 font-display text-[1.4rem] font-semibold uppercase leading-none text-white">{t('palpites.first_scorer_title')}</p>
+                                        <p className="text-[9px] font-black uppercase tracking-[0.18em] text-primary">{t('palpites.extra_market_label')}</p>
+                                        <p className="mt-0.5 font-display text-[1.2rem] font-semibold uppercase leading-none text-white">{t('palpites.first_scorer_title')}</p>
                                     </div>
                                     <Tooltip delayDuration={200}>
                                         <TooltipTrigger asChild>
                                             <button
                                                 type="button"
-                                                className="inline-flex h-9 items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 text-[10px] font-black uppercase tracking-[0.16em] text-zinc-300"
+                                                className="inline-flex h-9 items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 text-[9px] font-black uppercase tracking-[0.16em] text-zinc-300"
                                                 aria-label={t('palpites.market_help_aria', { title: firstScorerMarket.title })}
                                             >
                                                 <CircleHelp className="h-3.5 w-3.5 text-primary" />
@@ -1047,7 +1195,7 @@ export function JogosTab({
                                                 type="button"
                                                 onClick={() => updateFirstScorer(m.id, option.value)}
                                                 className={cn(
-                                                    "rounded-2xl border px-4 py-3 text-[11px] font-black uppercase tracking-[0.18em] transition-all",
+                                                    "rounded-xl border px-3 py-2 text-[10px] font-black uppercase tracking-[0.18em] transition-all",
                                                     isSelected
                                                         ? "border-primary bg-primary/10 text-primary"
                                                         : "border-white/10 bg-white/5 text-zinc-300 hover:text-white"
@@ -1067,34 +1215,51 @@ export function JogosTab({
                             </div>
                         )}
 
-                        {!isStarted && (
-                            <div className="flex gap-2">
+                        <div className="relative z-20 mt-3 flex flex-col gap-2">
+                            {!isStarted && (
                                 <button
                                     onClick={() => handleSave(m.id, m.home_team_code, m.away_team_code)}
                                     disabled={!canSave || savingMatchId === m.id}
                                     className={cn(
-                                        "arena-button-gold mt-6 flex-1 py-4 text-[1.05rem] disabled:opacity-50 disabled:hover:scale-100",
+                                        "arena-button-gold w-full py-3 rounded-[12px] text-[1rem] font-black uppercase tracking-wider disabled:opacity-50 disabled:hover:scale-100 transition-all",
                                         canSave
                                             ? ""
-                                            : "border-white/10 bg-white/5 text-gray-400 shadow-none hover:bg-white/10 hover:text-white",
+                                            : "border-white/10 bg-white/5 text-gray-400 shadow-none hover:bg-white/10 hover:text-white"
                                     )}
                                 >
                                     {savingMatchId === m.id
-                                        ? t('palpites.saving_cta')
+                                        ? t('palpites.saving_cta', 'Salvando...')
                                         : hasSavedPrediction && !isDirty
-                                            ? t('palpites.saved_cta')
-                                            : t('palpites.save_cta')}
+                                            ? t('palpites.saved_cta', 'Palpite Salvo')
+                                            : t('palpites.save_cta', 'Salvar Palpite')}
                                 </button>
+                            )}
+                            
+                            <div className="flex gap-2">
+                                {hasSavedPrediction && (
+                                    <button
+                                        onClick={() => openShareModal(m.id, m.home_team_code, m.away_team_code)}
+                                        className="flex-1 arena-button-green rounded-[12px] py-2.5 flex items-center justify-center gap-2 text-[0.8rem] font-bold uppercase tracking-wider transition-all hover:brightness-110"
+                                        aria-label={t('palpites.share_prediction_aria', { home: m.home_team_code, away: m.away_team_code })}
+                                    >
+                                        <Share2 className="h-4 w-4" />
+                                        {t('palpites.share_button', 'Compartilhar')}
+                                    </button>
+                                )}
+                                
                                 <button
-                                    onClick={() => openShareModal(m.id, m.home_team_code, m.away_team_code)}
-                                    disabled={!hasSavedPrediction}
-                                    className="arena-button-green mt-6 inline-flex px-5 text-[1rem] disabled:cursor-not-allowed disabled:opacity-40"
-                                    aria-label={t('palpites.share_prediction_aria', { home: m.home_team_code, away: m.away_team_code })}
+                                    onClick={() => {
+                                        setPublicPicksMatchId(m.id);
+                                        setPublicPicksDialogOpen(true);
+                                    }}
+                                    className="flex-1 arena-button-zinc rounded-[12px] py-2.5 flex items-center justify-center gap-2 text-[0.8rem] font-bold uppercase tracking-wider transition-all hover:bg-white/20"
+                                    title={t('palpites.view_public_picks', 'Ver Palpites da Galera')}
                                 >
-                                    <Share2 className="h-4 w-4" />
+                                    <Users className="h-4 w-4" />
+                                    {t('palpites.view_public_picks_short', 'Palpites da Galera')}
                                 </button>
                             </div>
-                        )}
+                        </div>
                     </div>
                 );
             })}
@@ -1122,6 +1287,17 @@ export function JogosTab({
                     </div>
                 </DialogContent>
             </Dialog>
+
+            {publicPicksMatchId && (
+                <MatchPublicPalpitesDialog
+                    open={publicPicksDialogOpen}
+                    onOpenChange={setPublicPicksDialogOpen}
+                    bolaoId={bolaoId}
+                    matchId={publicPicksMatchId}
+                    matchHomeCode={matches.find(m => m.id === publicPicksMatchId)?.home_team_code || ""}
+                    matchAwayCode={matches.find(m => m.id === publicPicksMatchId)?.away_team_code || ""}
+                />
+            )}
         </div>
     );
 }

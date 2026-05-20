@@ -37,25 +37,25 @@ export function EmptyState({ icon, title, description, action, className, glowCo
       variants={containerVariants}
       initial="hidden"
       animate="visible"
-      className={cn("flex flex-col items-center justify-center py-12 px-6 text-center relative", className)}
+      className={cn("flex flex-col items-center justify-center py-6 px-4 text-center relative", className)}
       style={{ background: glowMap[glowColor] }}
     >
       {/* Floating icon with subtle bounce */}
       <motion.span
         variants={itemVariants}
-        animate={{ y: [0, -5, 0] }}
+        animate={{ y: [0, -3, 0] }}
         transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-        className="text-5xl mb-4 select-none"
+        className="text-3xl mb-2 select-none"
         aria-hidden
       >
         {icon}
       </motion.span>
 
-      <motion.h3 variants={itemVariants} className="text-lg font-black mb-1">
+      <motion.h3 variants={itemVariants} className="text-base font-black mb-1">
         {title}
       </motion.h3>
 
-      <motion.p variants={itemVariants} className="text-sm text-muted-foreground mb-5 max-w-xs leading-relaxed">
+      <motion.p variants={itemVariants} className="text-[13px] text-muted-foreground mb-3 max-w-[280px] leading-relaxed">
         {description}
       </motion.p>
 

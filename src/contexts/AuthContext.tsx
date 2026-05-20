@@ -54,11 +54,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let unsubscribe: () => void = () => {};
 
     try {
-      // Force loading to false if Firebase auth hangs for more than 3 seconds
+      // Force loading to false if Firebase auth hangs for more than 8 seconds
       timeoutId = setTimeout(() => {
         logger.warn("Firebase auth initialization timeout - forcing load state to false");
         setLoading(false);
-      }, 3000);
+      }, 8000);
 
       unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
         clearTimeout(timeoutId);

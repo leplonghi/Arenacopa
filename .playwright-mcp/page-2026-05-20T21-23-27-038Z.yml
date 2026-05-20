@@ -1,0 +1,12 @@
+- generic [active] [ref=e1]:
+  - generic:
+    - region "Notifications (F8)":
+      - list
+    - region "Notifications alt+T"
+    - status "ArenaCopa" [ref=e2]:
+      - generic [ref=e7]:
+        - generic [ref=e11]: Bolão em campo
+        - generic "ARENACUP" [ref=e14]:
+          - generic [ref=e15]: ARENA
+          - generic [ref=e16]: CUP
+        - paragraph [ref=e17]: Chutes, ranking e rodada no mesmo gramado.

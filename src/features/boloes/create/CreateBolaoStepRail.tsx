@@ -2,7 +2,7 @@ import { Check } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 
-type StepTone = "green" | "gold" | "cyan" | "rose";
+type StepTone = "green" | "gold" | "cyan" | "rose" | "blue" | "orange";
 
 type StepRailItem = {
   number: number;
@@ -12,48 +12,60 @@ type StepRailItem = {
 
 const toneConfig: Record<StepTone, { active: string; done: string; idle: string }> = {
   green: {
-    active: "border-primary/50 bg-primary/15 text-primary shadow-[0_0_20px_rgba(145,255,59,0.14)]",
-    done: "border-primary/30 bg-primary/8 text-primary/70",
-    idle: "border-white/8 bg-white/[0.03] text-zinc-600",
+    active: "border-emerald-500/60 bg-emerald-500/20 text-emerald-300 shadow-[0_0_15px_rgba(16,185,129,0.2)]",
+    done: "border-emerald-500/40 bg-emerald-500/15 text-emerald-400",
+    idle: "border-emerald-500/25 bg-emerald-500/10 text-emerald-500/80",
   },
   gold: {
-    active: "border-amber-400/50 bg-amber-400/15 text-amber-300 shadow-[0_0_20px_rgba(255,197,77,0.14)]",
-    done: "border-amber-400/25 bg-amber-400/8 text-amber-500",
-    idle: "border-white/8 bg-white/[0.03] text-zinc-600",
+    active: "border-amber-400/60 bg-amber-400/20 text-amber-300 shadow-[0_0_15px_rgba(251,191,36,0.2)]",
+    done: "border-amber-400/40 bg-amber-400/15 text-amber-400",
+    idle: "border-amber-400/25 bg-amber-400/10 text-amber-400/80",
   },
   cyan: {
-    active: "border-cyan-300/45 bg-cyan-300/12 text-cyan-200 shadow-[0_0_20px_rgba(103,232,249,0.12)]",
-    done: "border-cyan-300/20 bg-cyan-300/6 text-cyan-600",
-    idle: "border-white/8 bg-white/[0.03] text-zinc-600",
+    active: "border-cyan-400/60 bg-cyan-400/20 text-cyan-300 shadow-[0_0_15px_rgba(34,211,238,0.2)]",
+    done: "border-cyan-400/40 bg-cyan-400/15 text-cyan-400",
+    idle: "border-cyan-400/25 bg-cyan-400/10 text-cyan-400/80",
   },
   rose: {
-    active: "border-rose-300/45 bg-rose-300/12 text-rose-200 shadow-[0_0_20px_rgba(253,164,175,0.12)]",
-    done: "border-rose-300/20 bg-rose-300/6 text-rose-600",
-    idle: "border-white/8 bg-white/[0.03] text-zinc-600",
+    active: "border-rose-400/60 bg-rose-400/20 text-rose-300 shadow-[0_0_15px_rgba(251,113,133,0.2)]",
+    done: "border-rose-400/40 bg-rose-400/15 text-rose-400",
+    idle: "border-rose-400/25 bg-rose-400/10 text-rose-400/80",
+  },
+  blue: {
+    active: "border-blue-400/60 bg-blue-400/20 text-blue-300 shadow-[0_0_15px_rgba(96,165,250,0.2)]",
+    done: "border-blue-400/40 bg-blue-400/15 text-blue-400",
+    idle: "border-blue-400/25 bg-blue-400/10 text-blue-400/80",
+  },
+  orange: {
+    active: "border-orange-400/60 bg-orange-400/20 text-orange-300 shadow-[0_0_15px_rgba(251,146,60,0.2)]",
+    done: "border-orange-400/40 bg-orange-400/15 text-orange-400",
+    idle: "border-orange-400/25 bg-orange-400/10 text-orange-400/80",
   },
 };
 
 export function CreateBolaoStepRail({
   activeStep,
   steps,
+  onStepClick,
 }: {
   activeStep: number;
   steps?: StepRailItem[];
+  onStepClick?: (step: number) => void;
 }) {
   const { t } = useTranslation("bolao");
   const resolvedSteps = steps ?? [
     { number: 1, label: t("creation.steps.identity"), tone: "green" },
-    { number: 2, label: t("creation.steps.games"), tone: "gold" },
+    { number: 2, label: t("creation.steps.games"), tone: "blue" },
     { number: 3, label: t("creation.steps.context"), tone: "cyan" },
     { number: 4, label: t("creation.steps.rules"), tone: "rose" },
-    { number: 5, label: t("creation.steps.access"), tone: "gold" },
-    { number: 6, label: t("creation.steps.publish"), tone: "green" },
+    { number: 5, label: t("creation.steps.access"), tone: "orange" },
+    { number: 6, label: t("creation.steps.publish"), tone: "gold" },
   ];
 
   return (
     <nav
       aria-label={t("creation.steps.aria_label")}
-      className="mb-6 grid grid-cols-3 gap-2 sm:grid-cols-6"
+      className="sticky top-0 md:top-[72px] z-[100] flex w-full flex-row items-stretch gap-1.5 border-b border-white/10 bg-[#09090b] p-2 backdrop-blur-2xl shadow-xl shadow-black/40"
     >
       {resolvedSteps.map((step) => {
         const isDone = step.number < activeStep;
@@ -61,53 +73,44 @@ export function CreateBolaoStepRail({
         const cfg = toneConfig[step.tone];
 
         return (
-          <div
+          <button
             key={step.number}
-            aria-label={t("creation.steps.item_aria", {
-              number: step.number,
-              label: step.label,
-              status: isDone ? t("creation.steps.completed") : isActive ? t("creation.steps.current") : "",
-            })}
-            aria-current={isActive ? "step" : undefined}
+            type="button"
+            onClick={() => {
+              if (isDone && onStepClick) {
+                onStepClick(step.number);
+              }
+            }}
+            disabled={!isDone && !isActive}
             className={cn(
-              "relative overflow-hidden rounded-[18px] border px-3 py-3 transition-all duration-300",
+              "relative flex flex-1 min-w-[60px] flex-col items-center justify-center gap-1 overflow-hidden rounded-lg border py-2 transition-all duration-300 md:min-w-[100px]",
               isActive ? cfg.active : isDone ? cfg.done : cfg.idle,
+              isDone && onStepClick ? "cursor-pointer hover:brightness-110" : "cursor-default"
             )}
           >
-            {/* Connector line (except last) */}
-            {step.number < steps.length && (
-              <div className="absolute right-0 top-1/2 hidden h-px w-2 -translate-y-1/2 bg-white/10 sm:block" />
-            )}
+            <span
+              className={cn(
+                "flex h-4 w-4 shrink-0 items-center justify-center rounded-full text-[10px] font-black md:h-5 md:w-5 md:text-[11px]",
+                isActive ? "bg-white text-black" : isDone ? "bg-current/30" : "bg-current/20",
+              )}
+            >
+              {isDone ? <Check className="h-3 w-3 md:h-3.5 md:w-3.5" /> : step.number}
+            </span>
 
-            {/* Step indicator */}
-            <div className="mb-1.5 flex items-center gap-1.5">
-              <span
-                className={cn(
-                  "flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-black",
-                  isActive ? "bg-current/20 text-inherit" : isDone ? "bg-current/15 text-inherit" : "bg-white/5 text-zinc-600",
-                )}
-              >
-                {isDone ? <Check className="h-3 w-3" /> : step.number}
-              </span>
-              <span className="text-[9px] font-black uppercase tracking-[0.16em] opacity-70">
-                {isDone ? t("creation.steps.done") : isActive ? t("creation.steps.current_short") : t("creation.steps.step", { number: step.number })}
-              </span>
-            </div>
-
-            <p className={cn(
-              "text-xs font-black leading-tight",
-              isActive ? "text-white" : isDone ? "text-zinc-300" : "text-zinc-600",
+            <span className={cn(
+              "truncate text-[9px] font-black uppercase tracking-tighter md:text-[10px]",
+              isActive ? "text-white" : "opacity-70"
             )}>
-              {step.label}
-            </p>
+              {step.label.split(" ")[0]}
+            </span>
 
-            {/* Active glow bar */}
             {isActive && (
-              <div className="absolute inset-x-0 bottom-0 h-[2px] rounded-b-[18px] bg-current opacity-60" />
+              <div className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-current shadow-[0_0_8px_currentColor]" />
             )}
-          </div>
+          </button>
         );
       })}
     </nav>
   );
 }
+

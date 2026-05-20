@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import type { AccessMode, useBolaoCreateFlow } from "@/features/boloes/create/useBolaoCreateFlow";
-import { CreateBolaoStepRail } from "@/features/boloes/create/CreateBolaoStepRail";
+import { ArrowRight, Globe, Lock, ShieldAlert } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { getToneClasses } from "@/features/boloes/create/stepColors";
 
@@ -36,12 +36,10 @@ export function CreateBolaoAdmissionStep({ flow }: { flow: Flow }) {
   };
 
   const options = getOptions();
+
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8 text-white">
-      <div className="mb-8">
-        <CreateBolaoStepRail activeStep={5} />
-      </div>
-      <p className={cn("text-[11px] font-black uppercase tracking-[0.22em]", tone.labelText)}>
+    <div className="mx-auto max-w-5xl pb-8 text-white">
+      <p className="break-words text-[11px] font-black uppercase leading-tight tracking-[0.2em] text-primary mt-4">
         {t("creation.admission.step_label")}
       </p>
       <h1 className="mt-2 text-3xl font-black">{t("creation.admission.title")}</h1>
@@ -53,42 +51,43 @@ export function CreateBolaoAdmissionStep({ flow }: { flow: Flow }) {
         {options.map((option) => (
           <button
             key={option.id}
-            onClick={() => flow.setState((current) => ({ ...current, accessMode: option.id }))}
+            onClick={() => flow.setState((s) => ({ ...s, accessMode: option.id }))}
             className={cn(
-              "rounded-3xl border p-4 text-left transition-all hover:scale-[1.02] active:scale-[0.98]",
-              flow.state.accessMode === option.id ? cn(tone.border, tone.bg) : "border-white/10 bg-white/5 hover:bg-white/10"
+              "flex flex-col items-start gap-2 rounded-[20px] border p-4 text-left transition-all hover:scale-[1.01] active:scale-[0.99]",
+              flow.state.accessMode === option.id
+                ? cn(tone.border, tone.bg, tone.shadow, "ring-1", tone.ring)
+                : "border-white/10 bg-black/20 hover:bg-white/5"
             )}
           >
-            <p className="font-black">{option.title}</p>
-            <p className="mt-1 text-sm text-zinc-400">{option.description}</p>
+            <div className="flex items-center gap-3">
+               <div className={cn("p-2 rounded-lg", flow.state.accessMode === option.id ? "bg-white/10" : "bg-black/20")}>
+                  {option.id === 'public' && <Globe className="h-5 w-5" />}
+                  {option.id === 'approval' && <Lock className="h-5 w-5" />}
+                  {option.id === 'group_gated' && <ShieldAlert className="h-5 w-5" />}
+               </div>
+               <p className="text-base font-black text-white">{option.title}</p>
+            </div>
+            <p className="text-sm text-zinc-400 leading-relaxed">{option.description}</p>
           </button>
         ))}
       </div>
 
-      <div className="mt-6 rounded-3xl border border-white/10 bg-white/5 p-4 text-sm text-zinc-300">
-        <p className="font-black text-white">{t("creation.admission.summary_title")}</p>
-        <p className="mt-2">
-          {flow.state.accessMode === "group_gated"
-            ? t("creation.admission.summary.group_gated")
-            : flow.state.accessMode === "public"
-              ? t("creation.admission.summary.public")
-              : t("creation.admission.summary.approval")}
-        </p>
-      </div>
-
-      <div className="mt-8 flex items-center justify-between">
+      <div className="mt-10 flex justify-between">
         <button
+          type="button"
           onClick={() => flow.setStep("type")}
-          className="rounded-2xl border border-white/10 px-5 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-white hover:bg-white/5 transition-colors"
+          className="inline-flex items-center gap-2 rounded-[20px] border border-white/10 bg-black/20 px-6 py-3.5 text-xs font-black uppercase tracking-widest text-zinc-400 transition-all hover:bg-white/5"
         >
           {t("wizard.back")}
         </button>
         <button
+          type="button"
           onClick={() => flow.setStep("review")}
           disabled={!flow.canAdvance}
-          className="rounded-2xl bg-primary px-5 py-3 text-[11px] font-black uppercase tracking-[0.18em] text-black disabled:opacity-50 hover:scale-105 active:scale-95 transition-transform"
+          className="inline-flex items-center gap-2 rounded-[20px] bg-primary px-8 py-3.5 text-xs font-black uppercase tracking-widest text-black transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
         >
           {t("wizard.next")}
+          <ArrowRight className="h-4 w-4" />
         </button>
       </div>
     </div>

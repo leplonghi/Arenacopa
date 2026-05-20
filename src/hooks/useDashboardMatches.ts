@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
+import { collection, onSnapshot, orderBy, query, where, limit, Timestamp } from "firebase/firestore";
 import { getChampionshipById, resolveChampionshipId } from "@/data/championships/definitions";
 import { db } from "@/integrations/firebase/client";
 import { normalizeMatchDateValue, normalizeMatchFeedStatus } from "@/lib/match-feed";
@@ -94,12 +94,29 @@ function emitDashboardMatchesSnapshot(nextSnapshot: DashboardMatchesSnapshot) {
 function startDashboardMatchesSubscription() {
   if (unsubscribeDashboardMatches) return;
 
-  const matchesQuery = query(collection(db, "matches"), orderBy("match_date", "asc"));
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+  // Tenta com filtro de data (Timestamp) primeiro. Se falhar por índice, faz fallback sem filtro.
+  const filteredQuery = query(
+    collection(db, "matches"),
+    where("match_date", ">=", sevenDaysAgo.toISOString()),
+    orderBy("match_date", "asc"),
+    limit(100)
+  );
+
+  const fallbackQuery = query(
+    collection(db, "matches"),
+    orderBy("match_date", "asc"),
+    limit(100)
+  );
+
+  let usedFallback = false;
 
   unsubscribeDashboardMatches = onSnapshot(
-    matchesQuery,
+    filteredQuery,
     (snapshot) => {
-      const matches = snapshot.docs
+      const matches = (snapshot.docs || [])
         .map(mapDashboardMatch)
         .sort((first, second) => new Date(first.matchDate).getTime() - new Date(second.matchDate).getTime());
 
@@ -110,6 +127,41 @@ function startDashboardMatchesSubscription() {
       });
     },
     (snapshotError) => {
+      // Índice ou tipo de campo incompatível – tenta sem filtro de data
+      if (!usedFallback) {
+        usedFallback = true;
+        console.warn("Dashboard matches filtered query failed, retrying without date filter:", snapshotError);
+
+        if (unsubscribeDashboardMatches) {
+          unsubscribeDashboardMatches();
+        }
+        unsubscribeDashboardMatches = onSnapshot(
+          fallbackQuery,
+          (snapshot) => {
+            const cutoffMs = sevenDaysAgo.getTime();
+            const matches = (snapshot.docs || [])
+              .map(mapDashboardMatch)
+              .filter((m) => new Date(m.matchDate).getTime() >= cutoffMs)
+              .sort((first, second) => new Date(first.matchDate).getTime() - new Date(second.matchDate).getTime());
+
+            emitDashboardMatchesSnapshot({
+              data: matches,
+              error: null,
+              isLoading: false,
+            });
+          },
+          (fallbackError) => {
+            console.error("Error loading dashboard matches (fallback):", fallbackError);
+            emitDashboardMatchesSnapshot({
+              data: [],
+              error: fallbackError instanceof Error ? fallbackError : new Error("Failed to load matches"),
+              isLoading: false,
+            });
+          }
+        );
+        return;
+      }
+
       console.error("Error loading dashboard matches:", snapshotError);
       emitDashboardMatchesSnapshot({
         data: [],

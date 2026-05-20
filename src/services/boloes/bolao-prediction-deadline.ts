@@ -11,7 +11,8 @@ export type MatchDeadlineInfo = {
 export function normalizePredictionCutoffMinutes(value: unknown) {
   const numeric = Number(value);
   if (!Number.isFinite(numeric)) return 0;
-  return Math.max(0, Math.min(15, Math.floor(numeric)));
+  // Permite até 120 minutos de cutoff (ou grace period se positivo)
+  return Math.max(-120, Math.min(120, Math.floor(numeric)));
 }
 
 export function toTimestampMs(value: MatchDeadlineInfo["matchDate"]) {
@@ -33,8 +34,20 @@ export function getPredictionCloseMs(input: MatchDeadlineInfo) {
   return kickoffMs + normalizePredictionCutoffMinutes(input.cutoffMinutes) * 60 * 1000;
 }
 
+const CLOSED_STATUSES = new Set([
+  "finished",
+  "full_time",
+  "after_extra_time",
+  "penalty_shootout",
+  "awarded",
+  "canceled",
+  "postponed"
+]);
+
 export function isMatchPredictionClosed(input: MatchDeadlineInfo) {
-  if (input.matchStatus === "finished") return true;
+  const status = input.matchStatus?.toLowerCase()?.trim() || "";
+  if (CLOSED_STATUSES.has(status)) return true;
+  
   const closeMs = getPredictionCloseMs(input);
   return Number.isFinite(closeMs) && (input.nowMs ?? Date.now()) > closeMs;
 }

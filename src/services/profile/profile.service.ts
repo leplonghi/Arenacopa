@@ -95,20 +95,27 @@ export async function ensureProfile(user: EnsureProfileUser) {
       user.email?.split("@")[0] ||
       DEFAULT_PROFILE_NAME;
     const createdAt = new Date().toISOString();
+    const incomingAvatarUrl = user.user_metadata?.avatar_url || null;
 
     if (!docSnap.exists()) {
       const payload = {
         user_id: user.id,
         name: resolvedName,
-        avatar_url: user.user_metadata?.avatar_url || null,
+        avatar_url: incomingAvatarUrl,
         created_at: createdAt,
       };
       await setDoc(docRef, payload);
+    } else {
+      // Update avatar_url if the profile exists but is missing it (e.g. Google photo)
+      const existing = docSnap.data() as ProfileRecord;
+      if (!existing.avatar_url && incomingAvatarUrl) {
+        await updateDoc(docRef, { avatar_url: incomingAvatarUrl } as UpdateData<ProfileRecord>);
+      }
     }
 
     await syncPublicProfile(user.id, {
       name: resolvedName,
-      avatar_url: user.user_metadata?.avatar_url || null,
+      avatar_url: incomingAvatarUrl,
       created_at: createdAt,
     });
   } catch (error) {

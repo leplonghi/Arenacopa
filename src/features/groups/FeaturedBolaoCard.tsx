@@ -17,10 +17,10 @@ type FeaturedBolaoCardProps = {
 export function FeaturedBolaoCard({ bolao }: FeaturedBolaoCardProps) {
   if (!bolao) {
     return (
-      <div className="rounded-[32px] border border-white/10 bg-white/5 p-5 text-white">
-        <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">{tStatic("Bolão em destaque")}</p>
-        <p className="mt-3 text-lg font-black">{tStatic("Este grupo ainda não tem um bolão principal.")}</p>
-        <p className="mt-1 line-clamp-2 text-sm text-zinc-400">
+      <div className="rounded-[20px] border border-white/10 bg-white/5 p-4 text-white">
+        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">{tStatic("Bolão em destaque")}</p>
+        <p className="mt-2 text-base font-black">{tStatic("Este grupo ainda não tem um bolão principal.")}</p>
+        <p className="mt-1 line-clamp-2 text-xs text-zinc-400">
           Crie ou destaque um bolão ativo para deixar a entrada mais clara para todo mundo.
         </p>
       </div>
@@ -32,7 +32,7 @@ export function FeaturedBolaoCard({ bolao }: FeaturedBolaoCardProps) {
     : "/fundo%20bolao%20pessoal.png";
 
   return (
-    <div className="relative overflow-hidden rounded-[32px] border border-primary/20 bg-primary/10 p-5 text-white">
+    <div className="relative overflow-hidden rounded-[20px] border border-primary/20 bg-primary/10 p-4 text-white">
       {/* Background image — right-anchored */}
       <img
         src={bgImage}
@@ -51,27 +51,27 @@ export function FeaturedBolaoCard({ bolao }: FeaturedBolaoCardProps) {
       />
 
       <div className="relative z-10">
-        <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">{tStatic("Bolão em destaque")}</p>
-        <div className="mt-4 flex flex-wrap items-center gap-4">
+        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">{tStatic("Bolão em destaque")}</p>
+        <div className="mt-3 flex flex-wrap items-center gap-3">
           <BolaoAvatar
             avatarUrl={bolao.avatar_url ?? null}
             fallback="⚽"
             alt={bolao.name}
-            className="flex h-16 w-16 items-center justify-center rounded-[24px] bg-black/20 text-3xl"
+            className="flex h-12 w-12 items-center justify-center rounded-[16px] bg-black/20 text-2xl"
           />
           <div className="flex-1">
-            <p className="truncate text-2xl font-black">{bolao.name}</p>
-            {bolao.description ? <p className="mt-1 line-clamp-2 text-sm text-zinc-200">{bolao.description}</p> : null}
-            <div className="mt-3 flex flex-wrap gap-2 text-[11px] font-black uppercase tracking-[0.16em]">
-              <span className="rounded-full bg-black/20 px-3 py-1">{bolao.category === "public" ? "Público" : "Privado"}</span>
-              {bolao.is_paid ? <span className="rounded-full bg-black/20 px-3 py-1">{tStatic("Pago")}</span> : null}
+            <p className="truncate text-xl font-black">{bolao.name}</p>
+            {bolao.description ? <p className="mt-0.5 line-clamp-2 text-xs text-zinc-200">{bolao.description}</p> : null}
+            <div className="mt-2 flex flex-wrap gap-1.5 text-[10px] font-black uppercase tracking-[0.16em]">
+              <span className="rounded-full bg-black/20 px-2.5 py-0.5">{bolao.category === "public" ? "Público" : "Privado"}</span>
+              {bolao.is_paid ? <span className="rounded-full bg-black/20 px-2.5 py-0.5">{tStatic("Pago")}</span> : null}
             </div>
           </div>
           <Link
             to={`/boloes/${bolao.id}`}
-            className="inline-flex items-center gap-2 rounded-2xl bg-black/80 px-4 py-3 text-[11px] font-black uppercase tracking-[0.16em] text-white"
+            className="inline-flex items-center gap-1.5 rounded-xl bg-black/80 px-3 py-2.5 text-[10px] font-black uppercase tracking-[0.16em] text-white"
           >
-            <Trophy className="h-4 w-4 text-primary" />
+            <Trophy className="h-3.5 w-3.5 text-primary" />
             Abrir bolão
           </Link>
         </div>

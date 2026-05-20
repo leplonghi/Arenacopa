@@ -1,4 +1,4 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { LogOut, Crown, DollarSign, CheckCircle2, Shield, Clock, AlertCircle, UserMinus, Send, BadgeCheck } from "lucide-react";
@@ -21,9 +21,20 @@ interface MembrosTabProps {
     bolaoId: string;
     isPaid?: boolean;
     onRefresh: () => void;
+    predictionCounts?: Record<string, number>;
+    totalMarkets?: number;
 }
 
-export function MembrosTab({ members, userId, isCreator, bolaoId, isPaid, onRefresh }: MembrosTabProps) {
+export function MembrosTab({ 
+    members, 
+    userId, 
+    isCreator, 
+    bolaoId, 
+    isPaid, 
+    onRefresh,
+    predictionCounts = {},
+    totalMarkets = 0
+}: MembrosTabProps) {
     const { t } = useTranslation('bolao');
     const { toast } = useToast();
     const navigate = useNavigate();
@@ -192,7 +203,7 @@ export function MembrosTab({ members, userId, isCreator, bolaoId, isPaid, onRefr
         >
             {/* Payment Summary for Admin - Enhanced Glassmorphism */}
             {isPaid && (
-                <motion.div variants={staggerItem} className="glass-card p-6 relative overflow-hidden group">
+                <motion.div variants={staggerItem} className="glass-card p-4 relative overflow-hidden group">
                     <div className="absolute top-0 right-0 p-8 transform translate-x-1/4 -translate-y-1/4 opacity-5 group-hover:scale-110 transition-transform">
                         <DollarSign className="w-32 h-32 text-emerald-500" />
                     </div>
@@ -200,8 +211,8 @@ export function MembrosTab({ members, userId, isCreator, bolaoId, isPaid, onRefr
                     <div className="relative z-10 space-y-4">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
-                                    <DollarSign className="w-5 h-5 text-emerald-500" />
+                                <div className="w-8 h-8 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center">
+                                    <DollarSign className="w-4 h-4 text-emerald-500" />
                                 </div>
                                 <div className="flex flex-col">
                                     <span className="text-[10px] font-black uppercase tracking-widest text-gray-500">{t('members.financial_status')}</span>
@@ -261,7 +272,7 @@ export function MembrosTab({ members, userId, isCreator, bolaoId, isPaid, onRefr
                                     variants={staggerItem}
                                     layout
                                     className={cn(
-                                        "glass-card p-4 transition-all border group",
+                                        "glass-card p-3 transition-all border group",
                                         isMe ? "border-primary/20 bg-primary/[0.03]" : "border-white/5 hover:border-white/10"
                                     )}
                                 >
@@ -269,10 +280,10 @@ export function MembrosTab({ members, userId, isCreator, bolaoId, isPaid, onRefr
                                         {/* Avatar with Premium Border */}
                                         <div className="relative shrink-0">
                                             <div className={cn(
-                                                "w-12 h-12 rounded-2xl flex items-center justify-center p-0.5 transition-transform group-hover:scale-105",
+                                                "w-10 h-10 rounded-xl flex items-center justify-center p-0.5 transition-transform group-hover:scale-105",
                                                 m.role === 'admin' ? "bg-gradient-to-br from-primary to-primary/50" : "bg-white/10"
                                             )}>
-                                                <div className="w-full h-full rounded-[14px] bg-black flex items-center justify-center text-xs font-black overflow-hidden border border-white/10">
+                                                <div className="w-full h-full rounded-[10px] bg-black flex items-center justify-center text-xs font-black overflow-hidden border border-white/10">
                                                     {m.profile?.avatar_url ? (
                                                         <img src={m.profile.avatar_url} alt="" className="w-full h-full object-cover" />
                                                     ) : (
@@ -306,6 +317,25 @@ export function MembrosTab({ members, userId, isCreator, bolaoId, isPaid, onRefr
                                                     #{m.user_id.slice(0, 4)}
                                                 </span>
                                             </div>
+                                            {totalMarkets > 0 && (
+                                                <div className="mt-1 flex items-center gap-2">
+                                                    <div className="flex-1 h-1 bg-white/5 rounded-full overflow-hidden max-w-[60px]">
+                                                        <div 
+                                                            className={cn(
+                                                                "h-full transition-all duration-500",
+                                                                (predictionCounts[m.user_id] || 0) === totalMarkets ? "bg-emerald-500" : "bg-primary"
+                                                            )}
+                                                            style={{ width: `${Math.min(100, ((predictionCounts[m.user_id] || 0) / totalMarkets) * 100)}%` }}
+                                                        />
+                                                    </div>
+                                                    <span className={cn(
+                                                        "text-[9px] font-black uppercase tracking-widest",
+                                                        (predictionCounts[m.user_id] || 0) === totalMarkets ? "text-emerald-400" : "text-gray-500"
+                                                    )}>
+                                                        {predictionCounts[m.user_id] || 0}/{totalMarkets}
+                                                    </span>
+                                                </div>
+                                            )}
                                         </div>
 
                                         {/* Actions & Status */}
@@ -329,7 +359,7 @@ export function MembrosTab({ members, userId, isCreator, bolaoId, isPaid, onRefr
                                             {isCreator && !isMe && (
                                                 <button
                                                     onClick={() => handleRemove(m.user_id)}
-                                                    className="w-10 h-10 rounded-xl bg-red-500/5 text-red-500/50 hover:text-red-500 hover:bg-red-500/10 transition-all flex items-center justify-center border border-transparent hover:border-red-500/20"
+                                                    className="w-8 h-8 rounded-lg bg-red-500/5 text-red-500/50 hover:text-red-500 hover:bg-red-500/10 transition-all flex items-center justify-center border border-transparent hover:border-red-500/20"
                                                 >
                                                     <UserMinus className="w-4 h-4" />
                                                 </button>
@@ -337,7 +367,7 @@ export function MembrosTab({ members, userId, isCreator, bolaoId, isPaid, onRefr
                                         </div>
                                     </div>
                                     {isPaid && (isMe || isCreator) ? (
-                                        <div className="mt-4 rounded-2xl border border-white/10 bg-black/20 p-3">
+                                        <div className="mt-3 rounded-xl border border-white/10 bg-black/20 p-2.5">
                                             {hasSubmittedProof ? (
                                                 <div className="space-y-3">
                                                     <div className="flex items-start gap-2">
@@ -433,7 +463,7 @@ export function MembrosTab({ members, userId, isCreator, bolaoId, isPaid, onRefr
                         whileHover={{ scale: 1.02, backgroundColor: "rgba(239, 68, 68, 0.05)" }}
                         whileTap={{ scale: 0.98 }}
                         onClick={handleLeave}
-                        className="w-full py-4 rounded-2xl border-2 border-red-500/10 text-red-500 font-black text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all"
+                        className="w-full py-3 rounded-xl border-2 border-red-500/10 text-red-500 font-black text-[11px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all"
                     >
                         <LogOut className="w-4 h-4" /> {t('members.leave_bolao')}
                     </motion.button>

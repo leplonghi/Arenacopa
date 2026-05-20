@@ -4,11 +4,12 @@ import { useAuth } from "@/contexts/AuthContext";
 import { db } from "@/integrations/firebase/client";
 import { collection, query, orderBy, getDocs, where, documentId } from "firebase/firestore";
 import { Skeleton } from "@/components/ui/skeleton";
-import { EmptyState } from "@/components/EmptyState";
 import { useTranslation } from "react-i18next";
 import { getPublicProfilesByIds } from "@/services/profile/profile.service";
 import { ArenaMetric, ArenaPanel, ArenaSectionHeader, ArenaTabPill } from "@/components/arena/ArenaPrimitives";
+import { ArenaStateBlock } from "@/components/arena/ArenaExperience";
 import { getArenaLevel } from "@/lib/profile-level";
+import { getArenaAssetSrc } from "@/lib/arena-assets";
 import { RankingPodium } from "@/components/ranking/RankingPodium";
 import { RankingListRow } from "@/components/ranking/RankingListRow";
 import { RewardProgressCard } from "@/components/ranking/RewardProgressCard";
@@ -193,15 +194,16 @@ export default function Ranking() {
   }
 
   if (!displayRows.length && !isLoadingDisplay) {
+    const emptyRankingSrc = getArenaAssetSrc("generated/empty-ranking.webp");
     return (
       <div className="arena-screen">
-        <ArenaPanel className="p-8">
-          <EmptyState
-            icon="🏆"
-            {...{ title: t('empty_title') }}
-            description={t('empty_desc')}
-          />
-        </ArenaPanel>
+        <ArenaStateBlock
+          image={{ src: emptyRankingSrc, alt: "" }}
+          icon={<Trophy className="h-7 w-7" />}
+          title={t('empty_title')}
+          description={t('empty_desc')}
+          className="min-h-[420px]"
+        />
       </div>
     );
   }

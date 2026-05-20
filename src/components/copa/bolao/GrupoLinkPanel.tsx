@@ -8,9 +8,10 @@ interface GrupoLinkPanelProps {
   bolaoId: string;
   currentGrupoId: string | null;
   onLinkedGroupChange?: (grupoId: string | null) => void;
+  onOpenEditParticipation?: () => void;
 }
 
-export function GrupoLinkPanel({ currentGrupoId }: GrupoLinkPanelProps) {
+export function GrupoLinkPanel({ currentGrupoId, onOpenEditParticipation }: GrupoLinkPanelProps) {
   const { t } = useTranslation("bolao");
   const { user } = useAuth();
   const [grupos, setGrupos] = useState<{ id: string; name: string }[]>([]);
@@ -44,10 +45,22 @@ export function GrupoLinkPanel({ currentGrupoId }: GrupoLinkPanelProps) {
         O vínculo com grupo agora faz parte da edição estruturada do bolão. Esse campo não aceita mais alteração direta por write do cliente.
       </p>
       <div className="rounded-2xl border border-white/10 bg-white/5 p-3 text-sm text-zinc-300">
-        <p className="font-black text-white">{currentGrupo ? currentGrupo.name : "Sem grupo vinculado"}</p>
-        <p className="mt-1 text-xs text-zinc-400">
-          Use o novo painel de edição para revisar contexto, política de entrada e relação com grupos antes de publicar.
-        </p>
+        <div className="flex items-center justify-between gap-4">
+          <div className="min-w-0">
+            <p className="font-black text-white">{currentGrupo ? currentGrupo.name : "Sem grupo vinculado"}</p>
+            <p className="mt-1 text-[11px] text-zinc-400 leading-tight">
+              {currentGrupo 
+                ? "Este bolão está vinculado a um grupo. Membros do grupo podem ter acesso facilitado."
+                : "Vincule este bolão a um de seus grupos para centralizar a comunicação e membros."}
+            </p>
+          </div>
+          <button
+            onClick={onOpenEditParticipation}
+            className="shrink-0 rounded-xl bg-white px-4 py-2 text-[11px] font-black uppercase tracking-wider text-black transition-transform hover:scale-105 active:scale-95"
+          >
+            {currentGrupo ? "Alterar" : "Vincular"}
+          </button>
+        </div>
       </div>
     </div>
   );

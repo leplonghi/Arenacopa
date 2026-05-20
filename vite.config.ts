@@ -3,72 +3,63 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 
-// https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
-  const functionsTarget = env.VITE_FIREBASE_PROJECT_ID
-    ? `https://us-central1-${env.VITE_FIREBASE_PROJECT_ID}.cloudfunctions.net`
-    : undefined;
+  const projectId = env.VITE_FIREBASE_PROJECT_ID || "arenacopa-web-2026";
+  const useFirebaseEmulators = env.VITE_USE_FIREBASE_EMULATORS === "true";
+  const functionsRegion = env.VITE_FIREBASE_FUNCTIONS_REGION || "us-central1";
+  const functionsTarget = useFirebaseEmulators
+    ? `http://${env.VITE_FIREBASE_FUNCTIONS_EMULATOR_HOST || "127.0.0.1"}:${env.VITE_FIREBASE_FUNCTIONS_EMULATOR_PORT || "5001"}/${projectId}/${functionsRegion}`
+    : `https://${functionsRegion}-${projectId}.cloudfunctions.net`;
+  const functionsProxy = {
+    target: functionsTarget,
+    changeOrigin: true,
+    secure: !useFirebaseEmulators,
+    rewrite: (requestPath: string) => requestPath.replace(/^\/(__)?functions\/?/, ""),
+  };
 
   return {
     server: {
-      host: "::",
+      host: "localhost",
       port: 8080,
-      hmr: {
-        overlay: false,
+      proxy: {
+        "/__functions": functionsProxy,
+        "/functions": functionsProxy,
       },
-      proxy: functionsTarget
-        ? {
-            "/__functions": {
-              target: functionsTarget,
-              changeOrigin: true,
-              secure: true,
-              rewrite: (url) => url.replace(/^\/__functions/, ""),
-            },
-          }
-        : undefined,
     },
-    plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
+    plugins: [
+      react(),
+      mode === "development" && componentTagger(),
+    ].filter(Boolean),
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "./src"),
       },
-      dedupe: ["react", "react-dom", "react/jsx-runtime", "react/jsx-dev-runtime"],
-    },
-    optimizeDeps: {
-      include: ["react", "react-dom", "react/jsx-dev-runtime", "react/jsx-runtime"],
     },
     build: {
-      target: "esnext",
-      minify: "esbuild",
-      cssMinify: true,
-      sourcemap: false,
+      // Raise chunk size warning threshold to 600 KB (from default 500 KB)
+      chunkSizeWarningLimit: 600,
       rollupOptions: {
         output: {
-          entryFileNames: "assets/[name]-[hash].js",
-          chunkFileNames: "assets/[name]-[hash].js",
-          assetFileNames: "assets/[name]-[hash][extname]",
           manualChunks(id) {
-            if (id.includes("node_modules")) {
-              // Core frameworks
-              if (id.includes("react") || id.includes("react-dom") || id.includes("react-router")) {
-                return "vendor-core";
-              }
-              // Data fetching & State
-              if (id.includes("@tanstack") || id.includes("firebase")) {
-                return "vendor-data";
-              }
-              // UI & Icons
-              if (id.includes("lucide-react") || id.includes("@radix-ui")) {
-                return "vendor-ui";
-              }
-              // Animations
-              if (id.includes("framer-motion")) {
-                return "vendor-animations";
-              }
-              // Misc (i18n, charts, etc)
-              return "vendor-misc";
-            }
+            if (id.includes("@firebase") || id.includes("firebase/")) return "firebase";
+
+            if (id.includes("recharts")) return "charts";
+
+            // Animation library — heavy, only needed for animated pages
+            if (id.includes("framer-motion")) return "framer-motion";
+
+            // Icon library — tree-shaking helps but still worth isolating
+            if (id.includes("lucide-react")) return "lucide";
+
+            // Radix / shadcn UI primitives
+            if (id.includes("@radix-ui")) return "radix-ui";
+
+            // TanStack Query
+            if (id.includes("@tanstack/react-query")) return "react-query";
+
+            // Everything else in node_modules → vendor
+            if (id.includes("node_modules")) return "vendor";
           },
         },
       },

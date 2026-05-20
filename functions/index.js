@@ -1,6 +1,8 @@
-const functions = require("firebase-functions");
+const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
+const { FieldValue, Timestamp } = require("firebase-admin/firestore");
 const https = require("https");
+const crypto = require("crypto");
 const NEWS_SOURCES = require("./newsSources");
 const bolaoConfigHandlers = require("./bolao-config/handlers");
 const bolaoConfigRepository = require("./bolao-config/repository");
@@ -10,7 +12,7 @@ const commercialCampaignRepository = require("./commercial-campaigns/repository"
 const { resolveLegacyMatchPredictionPoints } = require("./bolao-ranking/scoring");
 const { saveExclusiveBolaoPalpite } = require("./bolao-exclusive/palpites");
 const { updateBolaoPrizeSettings } = require("./bolao-prize/settings");
-const { DEFAULT_SITE_URL } = require("./shared/constants");
+const { DEFAULT_SITE_URL, LEAGUE_CHAMPIONSHIPS } = require("./shared/constants");
 
 // Feature Modules
 const boloes = require("./features/boloes");
@@ -22,7 +24,15 @@ admin.initializeApp();
 const db = admin.firestore();
 
 function getRuntimeConfig() {
-    const runtimeConfig = functions.config();
+    let runtimeConfig = {};
+    try {
+        if (typeof functions.config === 'function') {
+            runtimeConfig = functions.config();
+        }
+    } catch (e) {
+        // Ignored, functions.config() is removed in v7
+    }
+
     const appConfig = runtimeConfig.app || {};
     const seedConfig = runtimeConfig.seed || {};
     const stripeConfig = runtimeConfig.stripe || {};
@@ -32,6 +42,8 @@ function getRuntimeConfig() {
         siteUrl: appConfig.site_url || process.env.SITE_URL || DEFAULT_SITE_URL,
         seedToken: seedConfig.token || process.env.SEED_TOKEN || "",
         footballDataApiKey: footballDataConfig.api_key || process.env.FOOTBALL_DATA_API_KEY || "",
+        stripeSecretKey: stripeConfig.secret_key || process.env.STRIPE_SECRET_KEY || "",
+        stripeWebhookSecret: stripeConfig.webhook_secret || process.env.STRIPE_WEBHOOK_SECRET || "",
         stripePremiumPriceId: stripeConfig.premium_price_id || process.env.STRIPE_PREMIUM_PRICE_ID || "",
         stripeCommercialCampaignPriceIds: {
             single_match:
@@ -100,11 +112,15 @@ function mapAuthedOperationError(error) {
     const errorMap = {
         auth_required: { status: 401, error: "auth_required" },
         permission_denied: { status: 403, error: "permission_denied" },
+        structure_locked: { status: 403, error: "structure_locked" },
         not_found: { status: 404, error: "not_found" },
         validation_failed: { status: 400, error: "validation_failed" },
         config_conflict: { status: 409, error: "config_conflict" },
         invalid_state: { status: 409, error: "invalid_state" },
         payment_required: { status: 402, error: "payment_required" },
+        removal_blocked: { status: 409, error: "removal_blocked" },
+        member_protected: { status: 409, error: "member_protected" },
+        join_requires_group: { status: 403, error: "join_requires_group" },
     };
     return errorMap[error?.message] || { status: 500, error: error?.message || "internal" };
 }
@@ -153,6 +169,20 @@ function chunkArray(items, size) {
     return chunks;
 }
 
+async function commitWriteOperations(operations, size = 450) {
+    for (const chunk of chunkArray(operations, size)) {
+        const batch = db.batch();
+        chunk.forEach((operation) => {
+            if (operation.type === "update") {
+                batch.update(operation.ref, operation.data);
+            } else {
+                batch.set(operation.ref, operation.data, operation.options || {});
+            }
+        });
+        await batch.commit();
+    }
+}
+
 function getResultType(homeScore, awayScore) {
     if (homeScore === awayScore) return "draw";
     return homeScore > awayScore ? "home" : "away";
@@ -172,9 +202,21 @@ function normalizeBreakdown(current = {}) {
 }
 
 function mapFootballDataStatus(status) {
-    if (status === "FINISHED" || status === "AWARDED") return "finished";
-    if (status === "IN_PLAY" || status === "PAUSED") return "live";
-    return "scheduled";
+    const map = {
+        FINISHED: "finished",
+        AWARDED: "finished",
+        IN_PLAY: "live",
+        LIVE: "live",
+        PAUSED: "live",
+        EXTRA_TIME: "live",
+        PENALTY_SHOOTOUT: "live",
+        SCHEDULED: "scheduled",
+        TIMED: "scheduled",
+        POSTPONED: "cancelled",
+        CANCELLED: "cancelled",
+        SUSPENDED: "cancelled",
+    };
+    return map[status] || "scheduled";
 }
 
 async function footballDataRequest(path) {
@@ -277,7 +319,7 @@ async function seedTeamsForChampionship(championship) {
         tla: team.tla || team.name.slice(0, 3).toUpperCase(),
         crest: team.crest || "",
         country: team.area?.name || "",
-        championships: admin.firestore.FieldValue.arrayUnion(championship.id),
+        championships: FieldValue.arrayUnion(championship.id),
     }));
 
     const batch = db.batch();
@@ -608,7 +650,7 @@ async function seedLeagueNewsCollection() {
 
 async function syncNewsSourcesCatalog() {
     const batch = db.batch();
-    const now = admin.firestore.FieldValue.serverTimestamp();
+    const now = FieldValue.serverTimestamp();
 
     NEWS_SOURCES.forEach((source) => {
         const { id, ...payload } = source;
@@ -711,8 +753,8 @@ async function recordNewsFetchRun(sourceId, status, details = {}) {
     await db.collection("news_fetch_runs").add({
         source_id: sourceId,
         status,
-        started_at: details.startedAt || admin.firestore.FieldValue.serverTimestamp(),
-        finished_at: admin.firestore.FieldValue.serverTimestamp(),
+        started_at: details.startedAt || FieldValue.serverTimestamp(),
+        finished_at: FieldValue.serverTimestamp(),
         articles_seen: details.articlesSeen || 0,
         articles_inserted: details.articlesInserted || 0,
         articles_updated: details.articlesUpdated || 0,
@@ -739,7 +781,7 @@ async function rebuildNewsLinksByChampionship(championshipIds) {
         await db.collection("news_links_by_championship").doc(championshipId).set({
             championship_id: championshipId,
             article_ids: sortedDocs.map((item) => item.id),
-            updated_at: admin.firestore.FieldValue.serverTimestamp(),
+            updated_at: FieldValue.serverTimestamp(),
         }, { merge: true });
     }
 }
@@ -789,12 +831,12 @@ async function ingestRssSources({ sourceIds = null } = {}) {
                 const docRef = db.collection("news_articles").doc(dedupeKey);
                 const existing = await docRef.get();
 
-                let publishedAt = admin.firestore.Timestamp.now();
+                let publishedAt = Timestamp.now();
                 const rawDate = item.pubDate || item.isoDate;
                 if (rawDate) {
                     const parsed = new Date(rawDate);
                     if (!Number.isNaN(parsed.getTime())) {
-                        publishedAt = admin.firestore.Timestamp.fromDate(parsed);
+                        publishedAt = Timestamp.fromDate(parsed);
                     }
                 }
 
@@ -810,7 +852,7 @@ async function ingestRssSources({ sourceIds = null } = {}) {
                     source_country: source.country,
                     language: source.language,
                     published_at: publishedAt,
-                    captured_at: admin.firestore.FieldValue.serverTimestamp(),
+                    captured_at: FieldValue.serverTimestamp(),
                     championship_ids: championshipIds,
                     team_ids: [],
                     tags: [],
@@ -823,7 +865,7 @@ async function ingestRssSources({ sourceIds = null } = {}) {
 
                 await db.collection("news_raw").doc(dedupeKey).set({
                     source_id: source.id,
-                    fetched_at: admin.firestore.FieldValue.serverTimestamp(),
+                    fetched_at: FieldValue.serverTimestamp(),
                     canonical_url: canonicalUrl,
                     checksum: dedupeKey,
                     payload: {
@@ -845,7 +887,7 @@ async function ingestRssSources({ sourceIds = null } = {}) {
             }
 
             await recordNewsFetchRun(source.id, "success", {
-                startedAt: admin.firestore.Timestamp.fromMillis(startedAt),
+                startedAt: Timestamp.fromMillis(startedAt),
                 articlesSeen,
                 articlesInserted,
                 articlesUpdated,
@@ -853,7 +895,7 @@ async function ingestRssSources({ sourceIds = null } = {}) {
             });
         } catch (error) {
             await recordNewsFetchRun(source.id, "failed", {
-                startedAt: admin.firestore.Timestamp.fromMillis(startedAt),
+                startedAt: Timestamp.fromMillis(startedAt),
                 articlesSeen,
                 articlesInserted,
                 articlesUpdated,
@@ -904,10 +946,20 @@ async function createBolaoActivity({ bolaoId, userId = null, type, title, descri
         description,
         market_id: marketId,
         match_id: matchId,
-        created_at: admin.firestore.FieldValue.serverTimestamp(),
+        created_at: FieldValue.serverTimestamp(),
     });
 
     return null;
+}
+
+function validateUserAndBolao(userId, bolaoId, contextName) {
+    if (userId && bolaoId) return true;
+
+    functions.logger.warn(`${contextName}: Missing userId or bolaoId`, {
+        userId: userId || null,
+        bolaoId: bolaoId || null,
+    });
+    return false;
 }
 
 function getMatchFirstScorer(matchData) {
@@ -1280,8 +1332,8 @@ async function recalculateBolaoRankingForUser({ bolaoId, userId }) {
                 special: breakdown.special,
             },
             rank: rankingSnapshot.exists ? rankingSnapshot.data()?.rank || 0 : 0,
-            created_at: rankingSnapshot.exists ? rankingSnapshot.data()?.created_at || admin.firestore.FieldValue.serverTimestamp() : admin.firestore.FieldValue.serverTimestamp(),
-            updated_at: admin.firestore.FieldValue.serverTimestamp(),
+            created_at: rankingSnapshot.exists ? rankingSnapshot.data()?.created_at || FieldValue.serverTimestamp() : FieldValue.serverTimestamp(),
+            updated_at: FieldValue.serverTimestamp(),
             breakdown_migrated_from: existingBreakdown.match || existingBreakdown.phase || existingBreakdown.tournament || existingBreakdown.special ? "recalculated" : "initialized",
         },
         { merge: true }
@@ -1336,7 +1388,7 @@ exports.onMatchResultUpdated = functions.firestore
                 away: matchAwayScore,
             });
 
-            const batch = db.batch();
+            const writeOperations = [];
             const affectedRankings = new Set();
             const legacyPredictionsSnapshot = await db.collection("bolao_palpites").where("match_id", "==", matchId).get();
             const legacyBolaoIds = Array.from(
@@ -1368,10 +1420,14 @@ exports.onMatchResultUpdated = functions.firestore
                     isPowerPlay: Boolean(palpite.is_power_play),
                 });
 
-                batch.update(docSnapshot.ref, {
+                writeOperations.push({
+                    type: "update",
+                    ref: docSnapshot.ref,
+                    data: {
                     points,
                     type,
-                    processed_at: admin.firestore.FieldValue.serverTimestamp(),
+                    processed_at: FieldValue.serverTimestamp(),
+                    },
                 });
 
                 affectedRankings.add(`${userId}__${bolaoId}`);
@@ -1409,17 +1465,27 @@ exports.onMatchResultUpdated = functions.firestore
                         });
 
                         if (!resolution.resolved) {
-                            batch.set(docSnapshot.ref, {
+                            writeOperations.push({
+                                type: "set",
+                                ref: docSnapshot.ref,
+                                data: {
                                 resolved: false,
-                                updated_at: admin.firestore.FieldValue.serverTimestamp(),
-                            }, { merge: true });
+                                updated_at: FieldValue.serverTimestamp(),
+                                },
+                                options: { merge: true },
+                            });
                         } else {
-                            batch.set(docSnapshot.ref, {
+                            writeOperations.push({
+                                type: "set",
+                                ref: docSnapshot.ref,
+                                data: {
                                 points_awarded: resolution.points,
                                 resolved: true,
-                                resolved_at: admin.firestore.FieldValue.serverTimestamp(),
-                                updated_at: admin.firestore.FieldValue.serverTimestamp(),
-                            }, { merge: true });
+                                resolved_at: FieldValue.serverTimestamp(),
+                                updated_at: FieldValue.serverTimestamp(),
+                                },
+                                options: { merge: true },
+                            });
                         }
 
                         if (prediction.user_id && prediction.bolao_id) {
@@ -1429,7 +1495,7 @@ exports.onMatchResultUpdated = functions.firestore
                 });
             }
 
-            await batch.commit();
+            await commitWriteOperations(writeOperations);
 
             await Promise.all(
                 Array.from(affectedRankings).map((key) => {
@@ -1487,7 +1553,7 @@ exports.onBolaoMarketWrite = functions.firestore
                 afterData.status === "resolved" &&
                 hasResolutionValue(afterData.resolution_value);
 
-            const batch = db.batch();
+            const writeOperations = [];
             const affectedRankings = new Set();
 
             predictionsSnapshot.forEach((docSnapshot) => {
@@ -1501,25 +1567,40 @@ exports.onBolaoMarketWrite = functions.firestore
                     });
 
                     if (resolution.resolved) {
-                        batch.set(docSnapshot.ref, {
+                        writeOperations.push({
+                            type: "set",
+                            ref: docSnapshot.ref,
+                            data: {
                             points_awarded: resolution.points,
                             resolved: true,
-                            resolved_at: admin.firestore.FieldValue.serverTimestamp(),
-                            updated_at: admin.firestore.FieldValue.serverTimestamp(),
-                        }, { merge: true });
+                            resolved_at: FieldValue.serverTimestamp(),
+                            updated_at: FieldValue.serverTimestamp(),
+                            },
+                            options: { merge: true },
+                        });
                     } else {
-                        batch.set(docSnapshot.ref, {
+                        writeOperations.push({
+                            type: "set",
+                            ref: docSnapshot.ref,
+                            data: {
                             points_awarded: null,
                             resolved: false,
-                            updated_at: admin.firestore.FieldValue.serverTimestamp(),
-                        }, { merge: true });
+                            updated_at: FieldValue.serverTimestamp(),
+                            },
+                            options: { merge: true },
+                        });
                     }
                 } else {
-                    batch.set(docSnapshot.ref, {
+                    writeOperations.push({
+                        type: "set",
+                        ref: docSnapshot.ref,
+                        data: {
                         points_awarded: null,
                         resolved: false,
-                        updated_at: admin.firestore.FieldValue.serverTimestamp(),
-                    }, { merge: true });
+                        updated_at: FieldValue.serverTimestamp(),
+                        },
+                        options: { merge: true },
+                    });
                 }
 
                 if (prediction.user_id && prediction.bolao_id) {
@@ -1527,7 +1608,7 @@ exports.onBolaoMarketWrite = functions.firestore
                 }
             });
 
-            await batch.commit();
+            await commitWriteOperations(writeOperations);
 
             await Promise.all(
                 Array.from(affectedRankings).map((key) => {
@@ -1594,8 +1675,8 @@ exports.onNewBolaoMember = functions.firestore
                         special: 0,
                     },
                     rank: 0,
-                    created_at: admin.firestore.FieldValue.serverTimestamp(),
-                    updated_at: admin.firestore.FieldValue.serverTimestamp(),
+                    created_at: FieldValue.serverTimestamp(),
+                    updated_at: FieldValue.serverTimestamp(),
                 });
                 functions.logger.info(`Initialized ranking for user ${userId} in bolão ${bolaoId}`);
                 await createBolaoActivity({
@@ -1724,8 +1805,6 @@ exports.onBolaoPredictionWrite = functions.firestore
 // Runs every 30 minutes.
 // =============================================
 
-const crypto = require("crypto");
-
 // Team name/alias -> FIFA code (used as country_filter in Firestore)
 const TEAM_KEYWORDS = {
     // South America
@@ -1848,8 +1927,269 @@ const RSS_FEEDS = [
     },
 ];
 
+const STRIPE_API_BASE_URL = "https://api.stripe.com/v1";
+const STRIPE_API_VERSION = "2026-02-25.clover";
+const ALLOWED_PREMIUM_ORIGIN = "https://arenacopa.com.br";
+
 function hashUrl(url) {
     return crypto.createHash("md5").update(url).digest("hex");
+}
+
+async function stripeApiRequest({ method, path, params = null, idempotencyKey = null }) {
+    const { stripeSecretKey } = getRuntimeConfig();
+
+    if (!stripeSecretKey) {
+        throw new Error("STRIPE_SECRET_KEY não configurada.");
+    }
+
+    const headers = {
+        Authorization: `Bearer ${stripeSecretKey}`,
+        "Stripe-Version": STRIPE_API_VERSION,
+    };
+
+    if (idempotencyKey) {
+        headers["Idempotency-Key"] = idempotencyKey;
+    }
+
+    let url = `${STRIPE_API_BASE_URL}${path}`;
+    const requestInit = { method, headers };
+
+    if (method === "GET" && params) {
+        url += `?${new URLSearchParams(params).toString()}`;
+    } else if (params) {
+        headers["Content-Type"] = "application/x-www-form-urlencoded";
+        requestInit.body = new URLSearchParams(params).toString();
+    }
+
+    const response = await fetch(url, requestInit);
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+        throw new Error(data?.error?.message || "Falha ao comunicar com o Stripe.");
+    }
+
+    return data;
+}
+
+function mapStripeSessionStatus(session) {
+    if (session.metadata?.premium_status === "refunded") {
+        return "refunded";
+    }
+    if (session.payment_status === "paid" || session.status === "complete") {
+        return "active";
+    }
+    if (session.status === "expired" || session.payment_status === "unpaid") {
+        return "expired";
+    }
+    return "pending";
+}
+
+async function getReusablePendingPremiumSession(userId) {
+    const snapshot = await db.collection("premium_subscriptions").doc(userId).get();
+    if (!snapshot.exists) {
+        return null;
+    }
+
+    const subscription = snapshot.data();
+    if (
+        subscription.status !== "pending" ||
+        !subscription.checkout_url ||
+        !subscription.stripe_checkout_session_id
+    ) {
+        return null;
+    }
+
+    return {
+        url: subscription.checkout_url,
+        sessionId: subscription.stripe_checkout_session_id,
+    };
+}
+
+async function hasActivePremium(userId) {
+    const snapshot = await db.collection("premium_subscriptions").doc(userId).get();
+    return snapshot.exists && snapshot.data()?.status === "active";
+}
+
+async function assertBolaoCreationLimit(userId) {
+    if (await hasActivePremium(userId)) {
+        return;
+    }
+
+    const snapshot = await db.collection("boloes")
+        .where("creator_id", "==", userId)
+        .where("status", "in", ["open", "active"])
+        .limit(2)
+        .get();
+
+    if (snapshot.size >= 2) {
+        throw new Error("payment_required");
+    }
+}
+
+async function upsertPremiumSubscriptionFromSession({ session, userId = null }) {
+    const resolvedUserId = userId || session.client_reference_id || session.metadata?.user_id || null;
+    if (!session?.id || !resolvedUserId) {
+        throw new Error("Sessão premium inválida.");
+    }
+
+    const status = mapStripeSessionStatus(session);
+    const currentRef = db.collection("premium_subscriptions").doc(resolvedUserId);
+    const historyRef = db.collection("premium_subscription_sessions").doc(`${resolvedUserId}_${session.id}`);
+    const currentSnapshot = await currentRef.get();
+    const previousStatus = currentSnapshot.exists ? currentSnapshot.data()?.status || null : null;
+    const payload = {
+        user_id: resolvedUserId,
+        status,
+        stripe_checkout_session_id: session.id,
+        checkout_url: session.url || null,
+        stripe_customer_id: session.customer || null,
+        amount_total: session.amount_total ?? null,
+        currency: session.currency ?? null,
+        payment_status: session.payment_status || null,
+        customer_email: session.customer_details?.email || session.customer_email || null,
+        updated_at: FieldValue.serverTimestamp(),
+    };
+
+    await currentRef.set({
+        ...payload,
+        created_at: currentSnapshot.exists
+            ? currentSnapshot.data()?.created_at || FieldValue.serverTimestamp()
+            : FieldValue.serverTimestamp(),
+    }, { merge: true });
+
+    await historyRef.set({
+        ...payload,
+        created_at: FieldValue.serverTimestamp(),
+    }, { merge: true });
+
+    if (status === "active" && previousStatus !== "active") {
+        await db.collection("notifications")
+            .doc(`premium_activated_${resolvedUserId}_${session.id}`)
+            .set({
+                user_id: resolvedUserId,
+                type: "premium",
+                title: "Premium ativado",
+                message: "Seu Copa Pass já está ativo.",
+                link: "/premium",
+                read: false,
+                created_at: FieldValue.serverTimestamp(),
+            }, { merge: true });
+    }
+}
+
+async function revokePremiumForRefundedCharge(charge) {
+    const paymentIntentId = charge?.payment_intent || null;
+    const userId = charge?.metadata?.user_id || null;
+    let session = null;
+
+    if (paymentIntentId) {
+        const sessions = await stripeApiRequest({
+            method: "GET",
+            path: "/checkout/sessions",
+            params: { payment_intent: paymentIntentId, limit: 1 },
+        });
+        session = sessions?.data?.[0] || null;
+    }
+
+    const resolvedUserId = userId || session?.client_reference_id || session?.metadata?.user_id || null;
+    if (!resolvedUserId) {
+        functions.logger.warn("Refunded charge without resolvable premium user", {
+            chargeId: charge?.id || null,
+            paymentIntentId,
+        });
+        return;
+    }
+
+    await upsertPremiumSubscriptionFromSession({
+        userId: resolvedUserId,
+        session: {
+            ...(session || {}),
+            id: session?.id || charge?.id,
+            payment_status: "refunded",
+            status: "complete",
+            customer: charge?.customer || session?.customer || null,
+            amount_total: charge?.amount_refunded ?? charge?.amount ?? null,
+            currency: charge?.currency || session?.currency || null,
+            customer_details: session?.customer_details || null,
+            metadata: {
+                ...(session?.metadata || {}),
+                user_id: resolvedUserId,
+                premium_status: "refunded",
+                refunded_charge_id: charge?.id || null,
+            },
+        },
+    });
+}
+
+function resolvePremiumCheckoutSiteUrl(requestSiteUrl) {
+    const normalized = typeof requestSiteUrl === "string" ? requestSiteUrl.replace(/\/$/, "") : "";
+    if (normalized === ALLOWED_PREMIUM_ORIGIN || isLocalDevOrigin(normalized)) {
+        return normalized;
+    }
+    throw new Error("origin_not_allowed");
+}
+
+function verifyStripeWebhookSignature(rawBody, signatureHeader, webhookSecret) {
+    if (!signatureHeader || !webhookSecret) {
+        throw new Error("Webhook Stripe sem assinatura ou segredo.");
+    }
+
+    const parts = Object.fromEntries(
+        signatureHeader.split(",").map((part) => {
+            const [key, value] = part.split("=");
+            return [key, value];
+        })
+    );
+    const timestamp = parts.t;
+    const signature = parts.v1;
+    if (!timestamp || !signature) {
+        throw new Error("Assinatura Stripe inválida.");
+    }
+
+    const ageSeconds = Math.abs(Math.floor(Date.now() / 1000) - Number(timestamp));
+    if (!Number.isFinite(ageSeconds) || ageSeconds > 300) {
+        throw new Error("Assinatura Stripe expirada.");
+    }
+
+    const signedPayload = `${timestamp}.${rawBody.toString("utf8")}`;
+    const expected = crypto
+        .createHmac("sha256", webhookSecret)
+        .update(signedPayload)
+        .digest("hex");
+
+    const expectedBuffer = Buffer.from(expected, "hex");
+    const signatureBuffer = Buffer.from(signature, "hex");
+    if (
+        expectedBuffer.length !== signatureBuffer.length ||
+        !crypto.timingSafeEqual(expectedBuffer, signatureBuffer)
+    ) {
+        throw new Error("Assinatura Stripe não confere.");
+    }
+}
+
+async function readRawRequestBody(req) {
+    if (Buffer.isBuffer(req.rawBody)) {
+        return req.rawBody;
+    }
+
+    if (Buffer.isBuffer(req.body)) {
+        return req.body;
+    }
+
+    if (typeof req.body === "string") {
+        return Buffer.from(req.body, "utf8");
+    }
+
+    if (req.readableEnded && req.body && typeof req.body === "object") {
+        return Buffer.from(JSON.stringify(req.body), "utf8");
+    }
+
+    return new Promise((resolve, reject) => {
+        const chunks = [];
+        req.on("data", (chunk) => chunks.push(Buffer.from(chunk)));
+        req.on("end", () => resolve(Buffer.concat(chunks)));
+        req.on("error", reject);
+    });
 }
 
 function detectTeam(text) {
@@ -1879,24 +2219,21 @@ exports.createPremiumCheckoutSession = functions.region("us-central1").https.onR
 
     try {
         const decodedToken = await verifyHttpUser(req);
-        const { stripePremiumPriceId, siteUrl: configuredSiteUrl } = getRuntimeConfig();
+        const { stripePremiumPriceId } = getRuntimeConfig();
         if (!stripePremiumPriceId) {
             throw new Error("Checkout premium indisponível.");
         }
 
-        const requestSiteUrl = typeof req.body?.siteUrl === "string" ? req.body.siteUrl.replace(/\/$/, "") : "";
-        const requestOriginAllowed = getAllowedOrigins(configuredSiteUrl).has(requestSiteUrl);
-        const resolvedSiteUrl = requestOriginAllowed ? requestSiteUrl : configuredSiteUrl;
+        const resolvedSiteUrl = resolvePremiumCheckoutSiteUrl(req.body?.siteUrl);
         const reusableSession = await getReusablePendingPremiumSession(decodedToken.uid);
         if (reusableSession) {
             return res.status(200).json(reusableSession);
         }
-        const normalizedSiteUrl = resolvedSiteUrl.replace(/\/$/, "");
 
         const params = {
             mode: "payment",
-            success_url: `${normalizedSiteUrl}/premium?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
-            cancel_url: `${normalizedSiteUrl}/premium?checkout=cancelled`,
+            success_url: `${resolvedSiteUrl}/premium?checkout=success&session_id={CHECKOUT_SESSION_ID}`,
+            cancel_url: `${resolvedSiteUrl}/premium?checkout=cancelled`,
             client_reference_id: decodedToken.uid,
             "line_items[0][price]": stripePremiumPriceId,
             "line_items[0][quantity]": "1",
@@ -1917,18 +2254,15 @@ exports.createPremiumCheckoutSession = functions.region("us-central1").https.onR
             idempotencyKey: `premium_checkout_${decodedToken.uid}_${Math.floor(Date.now() / 10000)}`,
         });
 
-        await db.collection("premium_subscriptions").add({
-            user_id: decodedToken.uid,
-            status: "pending",
-            stripe_checkout_session_id: session.id,
-            checkout_url: session.url || null,
-            stripe_customer_id: session.customer || null,
-            amount_total: session.amount_total ?? null,
-            currency: session.currency ?? null,
-            payment_status: session.payment_status || null,
-            customer_email: session.customer_details?.email || decodedToken.email || null,
-            created_at: admin.firestore.FieldValue.serverTimestamp(),
-            updated_at: admin.firestore.FieldValue.serverTimestamp(),
+        await upsertPremiumSubscriptionFromSession({
+            userId: decodedToken.uid,
+            session: {
+                ...session,
+                metadata: {
+                    ...(session.metadata || {}),
+                    user_id: decodedToken.uid,
+                },
+            },
         });
 
         return res.status(200).json({
@@ -1942,6 +2276,37 @@ exports.createPremiumCheckoutSession = functions.region("us-central1").https.onR
         return res.status(400).json({
             error: "Não foi possível iniciar o checkout premium.",
         });
+    }
+});
+
+exports.stripeWebhook = functions.region("us-central1").https.onRequest(async (req, res) => {
+    if (req.method !== "POST") {
+        return res.status(405).send("Method not allowed");
+    }
+
+    try {
+        const { stripeWebhookSecret } = getRuntimeConfig();
+        const rawBody = await readRawRequestBody(req);
+        verifyStripeWebhookSignature(rawBody, req.headers["stripe-signature"], stripeWebhookSecret);
+
+        const event = JSON.parse(rawBody.toString("utf8"));
+        if (
+            event.type === "checkout.session.completed" ||
+            event.type === "checkout.session.async_payment_succeeded"
+        ) {
+            await upsertPremiumSubscriptionFromSession({
+                session: event.data?.object,
+            });
+        } else if (event.type === "charge.refunded") {
+            await revokePremiumForRefundedCharge(event.data?.object);
+        }
+
+        return res.status(200).json({ received: true });
+    } catch (error) {
+        functions.logger.error("stripeWebhook failed", {
+            error: error?.message || error,
+        });
+        return res.status(400).send(`Webhook Error: ${error?.message || "invalid"}`);
     }
 });
 
@@ -2395,12 +2760,12 @@ exports.fetchNewsScheduled = functions.pubsub
                         const imageUrl = extractImageUrl(item);
 
                         // Parse publish date
-                        let publishedAt = admin.firestore.Timestamp.now();
+                        let publishedAt = Timestamp.now();
                         const rawDate = item.pubDate || item.isoDate;
                         if (rawDate) {
                             const parsed = new Date(rawDate);
                             if (!isNaN(parsed.getTime())) {
-                                publishedAt = admin.firestore.Timestamp.fromDate(parsed);
+                                publishedAt = Timestamp.fromDate(parsed);
                             }
                         }
 
@@ -2414,7 +2779,7 @@ exports.fetchNewsScheduled = functions.pubsub
                             country_filter: countryFilter || null,
                             published_at: publishedAt,
                             url_hash: urlHash,
-                            created_at: admin.firestore.FieldValue.serverTimestamp(),
+                            created_at: FieldValue.serverTimestamp(),
                         });
 
                         totalAdded++;
@@ -2436,7 +2801,7 @@ exports.fetchNewsScheduled = functions.pubsub
         try {
             const cutoffDate = new Date();
             cutoffDate.setDate(cutoffDate.getDate() - 7);
-            const cutoffTs = admin.firestore.Timestamp.fromDate(cutoffDate);
+            const cutoffTs = Timestamp.fromDate(cutoffDate);
 
             const oldDocs = await newsRef
                 .where("created_at", "<", cutoffTs)
@@ -2461,6 +2826,7 @@ exports.fetchNewsScheduled = functions.pubsub
     });
 
 exports.createBolaoDraft = createAuthedEndpoint(async ({ auth, nowIso, req }) => {
+    await assertBolaoCreationLimit(auth.uid);
     const bolaoRef = db.collection("boloes").doc();
     const payload = bolaoConfigHandlers.buildDraftBolaoDocument({
         bolaoId: bolaoRef.id,
@@ -2482,6 +2848,7 @@ exports.createBolaoDraft = createAuthedEndpoint(async ({ auth, nowIso, req }) =>
 });
 
 exports.createAndPublishBolao = createAuthedEndpoint(async ({ auth, nowIso, req }) => {
+    await assertBolaoCreationLimit(auth.uid);
     let grupoId = req.body?.context?.grupo_id || null;
     const groupCreation = req.body?.group_creation || null;
 
@@ -2726,6 +3093,7 @@ exports.requestBolaoJoin = social.requestBolaoJoin;
 exports.approveBolaoJoin = social.approveBolaoJoin;
 exports.rejectBolaoJoin = social.rejectBolaoJoin;
 exports.joinViaInvite = social.joinViaInvite;
+exports.resolvePublicInvite = social.resolvePublicInvite;
 
 exports.listUserBoloes = boloes.listUserBoloes;
 
@@ -2748,7 +3116,7 @@ exports.adminRecreateBolaoMarkets = functions
 
         // Admin secret check (simple protection)
         const adminSecret = req.body?.admin_secret || "";
-        const expectedSecret = process.env.ADMIN_SECRET || functions.config()?.admin?.secret || "";
+        const expectedSecret = process.env.ADMIN_SECRET || "";
         if (!expectedSecret || adminSecret !== expectedSecret) {
             return res.status(403).json({ error: "Acesso negado." });
         }
@@ -2853,6 +3221,37 @@ async function recreateMarketsForBolao(db, bolaoId, bolaoData, dryRun) {
         championship_id: championshipId,
     };
 }
+
+exports.syncLeaguesScheduled = functions.pubsub
+    .schedule("every 6 hours")
+    .timeZone("America/Sao_Paulo")
+    .onRun(async (_context) => {
+        functions.logger.info("[syncLeaguesScheduled] Iniciando sincronização automática de ligas");
+        const summary = [];
+        const errors = [];
+
+        for (const championship of LEAGUE_CHAMPIONSHIPS) {
+            try {
+                functions.logger.info(`[syncLeaguesScheduled] Sincronizando: ${championship.id}`);
+                const matchesCount = await seedMatchesForChampionship(championship);
+                const standingsCount = await seedStandingsForChampionship(championship);
+                summary.push({ id: championship.id, matches: matchesCount, standings: standingsCount });
+                functions.logger.info(`[syncLeaguesScheduled] ${championship.id} OK — partidas: ${matchesCount}, classificação: ${standingsCount}`);
+            } catch (error) {
+                functions.logger.error(`[syncLeaguesScheduled] Erro ao sincronizar ${championship.id}`, {
+                    error: error?.message || error,
+                });
+                errors.push({ id: championship.id, error: error?.message || "desconhecido" });
+            }
+        }
+
+        functions.logger.info("[syncLeaguesScheduled] Sincronização concluída", {
+            synced: summary.length,
+            failed: errors.length,
+            summary,
+            errors: errors.length ? errors : undefined,
+        });
+    });
 
 exports.socialProxy = require("./features/socialProxy").socialProxy;
 exports.sitemapProxy = require("./features/seo/sitemap").sitemapProxy;

@@ -6,6 +6,7 @@ import { useMonetization } from "@/contexts/MonetizationContext";
 import { monetizationEnv } from "@/lib/env";
 import { useTranslation } from "react-i18next";
 import { formatCurrency } from "@/i18n/currency";
+import { BRAND, PRICING } from "@/lib/premium-brand";
 import {
     getPremiumSupportMailto,
 } from "@/services/monetization/stripe.service";
@@ -22,8 +23,8 @@ export function PremiumModal({ isOpen, onClose, onSuccess }: PremiumModalProps) 
     const canStartPremiumCheckout = monetizationEnv.enablePremiumSimulation || monetizationEnv.premiumCheckoutEnabled;
     const supportMailto = getPremiumSupportMailto();
     const benefitTexts = t("modal.benefits", { returnObjects: true }) as string[];
-    const oldPrice = formatCurrency(i18n.resolvedLanguage || i18n.language, 19.9);
-    const currentPrice = formatCurrency(i18n.resolvedLanguage || i18n.language, 4.99);
+    const oldPrice = formatCurrency(i18n.resolvedLanguage || i18n.language, PRICING.copaPass.compareAtPrice);
+    const currentPrice = formatCurrency(i18n.resolvedLanguage || i18n.language, PRICING.copaPass.price);
 
     const handlePurchase = async () => {
         if (!canStartPremiumCheckout) {
@@ -64,7 +65,7 @@ export function PremiumModal({ isOpen, onClose, onSuccess }: PremiumModalProps) 
 
                         <div className="relative z-10 text-center text-white">
                             <Crown className="w-12 h-12 mx-auto drop-shadow-lg mb-2" />
-                            <h2 className="text-2xl font-black uppercase tracking-widest drop-shadow-md">{t("modal.title")}</h2>
+                            <h2 className="text-2xl font-black uppercase tracking-widest drop-shadow-md">{BRAND.premiumPlan}</h2>
                         </div>
 
                         <button

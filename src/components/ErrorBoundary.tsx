@@ -1,91 +1,72 @@
 import React, { Component, ReactNode } from "react";
-import i18n from "@/i18n/config";
 
-const SHOW_DEBUG_DETAILS = import.meta.env.DEV;
-
-interface Props {
-  children?: ReactNode;
-}
-
-interface State {
-  hasError: boolean;
-  error: Error | null;
-}
-
-export class ErrorBoundary extends Component<Props, State> {
-  public state: State = {
+// Zero-dependency ErrorBoundary to prevent infinite loops during initialization failures
+export class ErrorBoundary extends Component<{ children?: ReactNode }, { hasError: boolean; error: Error | null }> {
+  public state = {
     hasError: false,
     error: null,
   };
 
-  public static getDerivedStateFromError(error: Error): State {
+  public static getDerivedStateFromError(error: Error) {
     return { hasError: true, error };
   }
 
   public componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error("Uncaught error:", error, errorInfo);
+    console.error("Critical Uncaught Error:", error, errorInfo);
   }
 
   private handleRetry = () => {
-    this.setState({ hasError: false, error: null });
     window.location.reload();
   };
-
-  private handleGoHome = () => {
-    this.setState({ hasError: false, error: null });
-    window.location.assign("/");
-  };
-
-  private getMessage(key: string, fallback: string) {
-    const value = i18n.t(key, { defaultValue: fallback });
-    return value === key ? fallback : value;
-  }
 
   public render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen bg-[#04140f] px-6 py-10 text-white">
-          <div className="mx-auto flex min-h-[calc(100vh-5rem)] max-w-xl flex-col items-center justify-center text-center">
-            <div className="mb-6 inline-flex rounded-full border border-red-400/30 bg-red-500/10 px-4 py-2 text-[11px] font-black uppercase tracking-[0.18em] text-red-200">
-              {this.getMessage("errors:error_boundary.badge", "Recuperação de erro")}
-            </div>
-            <h1 className="text-4xl font-black tracking-tight text-white">{this.getMessage("errors:error_boundary.title", "Algo saiu do ritmo da partida")}</h1>
-            <p className="mt-4 max-w-md text-sm leading-6 text-white/75">
-              {this.getMessage("errors:error_boundary.description", "A tela encontrou um erro inesperado. Você pode tentar carregar novamente ou voltar para o início sem perder o restante do app.")}
-            </p>
-
-            <div className="mt-8 flex w-full max-w-sm flex-col gap-3">
-              <button
-                onClick={this.handleRetry}
-                className="w-full rounded-2xl bg-primary px-5 py-4 text-sm font-black uppercase tracking-[0.18em] text-black transition hover:brightness-110"
-              >
-                {this.getMessage("errors:error_boundary.retry", "Tentar novamente")}
-              </button>
-              <button
-                onClick={this.handleGoHome}
-                className="w-full rounded-2xl border border-white/10 bg-white/5 px-5 py-4 text-sm font-black uppercase tracking-[0.18em] text-white transition hover:bg-white/10"
-              >
-                {this.getMessage("errors:error_boundary.go_home", "Voltar ao início")}
-              </button>
-            </div>
-
-            {this.state.error && (
-              <details className="mt-8 w-full rounded-3xl border border-white/10 bg-black/30 p-5 text-left text-xs leading-6 text-white/75">
-                <summary className="cursor-pointer font-black uppercase tracking-[0.14em] text-white/80">
-                  Detalhes técnicos
-                </summary>
-                <pre className="mt-4 max-h-56 overflow-auto whitespace-pre-wrap">
-                  {this.state.error.toString()}
-                  {this.state.error.stack && SHOW_DEBUG_DETAILS && (
-                    <>
-                      {"\n\n"}
-                      {this.state.error.stack}
-                    </>
-                  )}
-                </pre>
-              </details>
-            )}
-          </div>
+        <div style={{
+          minHeight: '100vh',
+          backgroundColor: '#010604',
+          color: 'white',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          textAlign: 'center',
+          padding: '20px',
+          fontFamily: 'sans-serif'
+        }}>
+          <h1 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '16px' }}>
+            Ops! Algo deu errado.
+          </h1>
+          <p style={{ opacity: 0.8, marginBottom: '24px', maxWidth: '400px' }}>
+            A aplicação encontrou um erro crítico e não pôde carregar.
+          </p>
+          <button
+            onClick={this.handleRetry}
+            style={{
+              padding: '12px 24px',
+              backgroundColor: '#ffc107',
+              color: 'black',
+              border: 'none',
+              borderRadius: '8px',
+              fontWeight: 'bold',
+              cursor: 'pointer'
+            }}
+          >
+            Tentar Novamente
+          </button>
+          {this.state.error && (
+            <pre style={{
+              marginTop: '20px',
+              padding: '10px',
+              background: 'rgba(255,255,255,0.05)',
+              borderRadius: '4px',
+              fontSize: '12px',
+              maxWidth: '90vw',
+              overflow: 'auto'
+            }}>
+              {this.state.error.toString()}
+            </pre>
+          )}
         </div>
       );
     }

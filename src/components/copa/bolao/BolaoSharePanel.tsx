@@ -13,7 +13,7 @@ type BolaoSharePanelProps = {
 };
 
 export function BolaoSharePanel({
-  bolaoName,
+  bolaoName: _bolaoName,
   inviteCode,
   inviteUrl,
   shareText,
@@ -34,97 +34,64 @@ export function BolaoSharePanel({
   };
 
   return (
-    <div className="space-y-4">
-      <ArenaPanel className="p-4 sm:p-5">
-        <p className="arena-kicker text-primary">{tStatic("Compartilhar")}</p>
-        <h2 className="mt-2 break-words font-display text-[2.4rem] font-black uppercase leading-[0.92] tracking-[0.02em] text-white">
-          Convide sua turma para {bolaoName}
-        </h2>
-        <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-300">
-          Link, código e texto pronto ficam juntos aqui para WhatsApp, QR, cartaz ou divulgação manual.
-        </p>
-      </ArenaPanel>
+    <ArenaPanel className="p-4 sm:p-5">
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        {/* Invite code — compact */}
+        <div>
+          <p className="text-[10px] font-black uppercase tracking-[0.18em] text-zinc-500 mb-1">{tStatic("Código")}</p>
+          <p className="font-display text-2xl font-black uppercase tracking-[0.18em] text-primary">{inviteCode}</p>
+        </div>
 
-      <div className="grid gap-3 md:grid-cols-[0.85fr_1.15fr]">
-        <ArenaPanel className="p-4 sm:p-5">
-          <p className="text-[11px] font-black uppercase tracking-[0.18em] text-zinc-500">{tStatic("Código do bolão")}</p>
-          <div className="mt-4 rounded-[24px] border border-primary/25 bg-primary/10 p-5 text-center">
-            <p className="font-display text-[3.2rem] font-black uppercase tracking-[0.18em] text-primary">
-              {inviteCode}
-            </p>
-          </div>
-          <p className="mt-3 text-xs leading-5 text-zinc-400">
-            Quem já está no app também pode entrar usando só este código.
-          </p>
-        </ArenaPanel>
-
-        <ArenaPanel className="space-y-3 p-4 sm:p-5">
+        {/* Action buttons — horizontal row */}
+        <div className="flex flex-wrap gap-2">
           <button
             type="button"
             onClick={onNativeShare}
-            className="flex w-full items-center gap-4 rounded-[20px] border border-primary/30 bg-primary/10 p-4 text-left transition hover:bg-primary/15"
+            className="flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/10 px-3 py-2 text-xs font-black text-primary transition hover:bg-primary/20"
           >
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[16px] bg-primary text-black">
-              <Share2 className="h-5 w-5" />
-            </span>
-            <span className="min-w-0">
-              <span className="block font-bold text-white">{tStatic("Compartilhar agora")}</span>
-              <span className="mt-1 block text-xs leading-5 text-zinc-400">{tStatic("Usa o compartilhamento nativo quando disponível.")}</span>
-            </span>
+            <Share2 className="h-4 w-4" />
+            {tStatic("Compartilhar")}
           </button>
 
           <button
             type="button"
             onClick={copyInviteText}
-            className="flex w-full items-center gap-4 rounded-[20px] border border-white/10 bg-white/[0.04] p-4 text-left transition hover:bg-white/[0.07]"
+            className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-black text-white transition hover:bg-white/10"
           >
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[16px] bg-[#25D366] text-white">
-              <MessageCircle className="h-5 w-5" />
-            </span>
-            <span className="min-w-0">
-              <span className="block font-bold text-white">{tStatic("Copiar texto para WhatsApp")}</span>
-              <span className="mt-1 block text-xs leading-5 text-zinc-400">{tStatic("Mensagem pronta com link e instruções.")}</span>
-            </span>
+            <MessageCircle className="h-4 w-4 text-[#25D366]" />
+            {tStatic("WhatsApp")}
           </button>
 
           <button
             type="button"
             onClick={copyInviteUrl}
-            className="flex w-full items-center gap-4 rounded-[20px] border border-white/10 bg-white/[0.04] p-4 text-left transition hover:bg-white/[0.07]"
+            className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-black text-white transition hover:bg-white/10"
           >
-            <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[16px] bg-blue-500 text-white">
-              <Link2 className="h-5 w-5" />
-            </span>
-            <span className="min-w-0">
-              <span className="block font-bold text-white">{tStatic("Copiar link direto")}</span>
-              <span className="mt-1 block break-all text-xs leading-5 text-zinc-400">{inviteUrl}</span>
-            </span>
+            <Link2 className="h-4 w-4 text-blue-400" />
+            {tStatic("Copiar link")}
           </button>
-        </ArenaPanel>
-      </div>
 
-      <ArenaPanel className="p-4 sm:p-5">
-        <div className="flex items-start gap-3">
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] border border-white/10 bg-white/[0.04] text-zinc-300">
+          {canGenerateVipCard && (
+            <button
+              type="button"
+              onClick={onGenerateVipCard}
+              className="flex items-center gap-2 rounded-xl bg-copa-gold px-3 py-2 text-xs font-black uppercase tracking-widest text-black shadow-lg shadow-copa-gold/20 transition hover:scale-105 active:scale-95"
+            >
+              <ImageIcon className="h-4 w-4" />
+              {tStatic("Cartão VIP")}
+            </button>
+          )}
+
+          <button
+            type="button"
+            onClick={copyInviteUrl}
+            className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-black text-zinc-400 transition hover:bg-white/10"
+          >
             <Copy className="h-4 w-4" />
-          </span>
-          <div>
-            <p className="font-bold text-white">{tStatic("Materiais de divulgação")}</p>
-            <p className="mt-1 text-sm leading-6 text-zinc-400">
-              Crie cartões personalizados e imagens exclusivas para aumentar as adesões.
-            </p>
-            {canGenerateVipCard && (
-              <button
-                onClick={onGenerateVipCard}
-                className="mt-4 flex items-center gap-2 rounded-xl bg-copa-gold px-4 py-2 text-xs font-black uppercase tracking-widest text-black shadow-lg shadow-copa-gold/20 transition hover:scale-105 active:scale-95"
-              >
-                <ImageIcon className="h-4 w-4" />
-                Gerar Cartão VIP
-              </button>
-            )}
-          </div>
+            {tStatic("Materiais")}
+          </button>
         </div>
-      </ArenaPanel>
-    </div>
+      </div>
+    </ArenaPanel>
   );
 }

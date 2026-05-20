@@ -6,7 +6,6 @@ import {
   where,
   getDocs,
   getCountFromServer,
-  limit,
 } from "firebase/firestore";
 import { logger } from "@/lib/logger";
 
@@ -35,22 +34,9 @@ export function useProfileStats(userId: string | undefined) {
         const totalPoints = rankings.reduce((acc, curr) => acc + (curr.total_points || 0), 0) || 0;
         const totalExacts = rankings.reduce((acc, curr) => acc + (curr.exact_matches || 0), 0) || 0;
 
-        // 2. Titles calculation (Boloes where user is #1)
-        let titlesCount = 0;
-        if (rankings.length > 0) {
-          const titlesPromises = rankings.map(async (r) => {
-            const othersQuery = query(
-              rankingsRef, 
-              where("bolao_id", "==", r.bolao_id),
-              where("total_points", ">", r.total_points),
-              limit(1)
-            );
-            const othersSnapshot = await getDocs(othersQuery);
-            return othersSnapshot.empty ? 1 : 0;
-          });
-          const titleResults = await Promise.all(titlesPromises);
-          titlesCount = titleResults.reduce((acc, val) => acc + val, 0);
-        }
+        // Titles: client-side calculation from the `position` field already in each ranking row.
+        // Avoids a composite query (bolao_id + total_points) that would require a Firestore index.
+        const titlesCount = rankings.filter(r => (r.position ?? 999) === 1).length;
 
         const totalPredictions = predictionsCountSnapshot.data().count;
 

@@ -96,6 +96,8 @@ export async function deleteBolao(input: {
   return mapBolaoConfigDocument(raw);
 }
 
+
+
 export async function removePoolMember(input: {
   token?: string;
   payload: RemovePoolMemberPayload;

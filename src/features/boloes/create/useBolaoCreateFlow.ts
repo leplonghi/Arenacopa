@@ -51,6 +51,7 @@ type WizardState = {
   newGroupAdmissionMode: "approval" | "direct_code_or_invite";
   championshipId: string | null;
   allowedMatchIds: string[] | "all";
+  includeChampionBet: boolean;
 };
 
 const poolTypeConfig: Record<PoolTypeId, { formatId: BolaoFormatSlug; preset: PresetKey }> = {
@@ -115,7 +116,8 @@ export function useBolaoCreateFlow(initialGrupoId: string | null) {
     newGroupVisibility: "private",
     newGroupAdmissionMode: "approval",
     championshipId: null,
-    allowedMatchIds: "all",
+    allowedMatchIds: [],
+    includeChampionBet: false,
   });
 
   const canAdvance = useMemo(() => {
@@ -184,6 +186,17 @@ export function useBolaoCreateFlow(initialGrupoId: string | null) {
     setState,
     setStep,
     state,
+    setStepByIndex: (index: number) => {
+      switch (index) {
+        case 1: setStep("quick"); break;
+        case 2: setStep("catalog"); break;
+        case 3: setStep("context"); break;
+        case 4: setStep("type"); break;
+        case 5: setStep("admission"); break;
+        case 6: setStep("review"); break;
+      }
+    },
+
     step,
   };
 }

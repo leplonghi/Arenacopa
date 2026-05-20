@@ -19,11 +19,11 @@ const creatorTools = [
     to: "/boloes/criar",
   },
   {
-    title: "Comunidades",
+    title: "Grupos",
     description: "Organize várias edições com a mesma turma ao longo da temporada.",
     icon: Users2,
-    cta: "Abrir comunidades",
-    to: "/comunidades",
+    cta: "Abrir grupos",
+    to: "/grupos",
   },
   {
     title: "Sponsor próprio",
@@ -101,7 +101,7 @@ export default function CreatorPro() {
         <ArenaSectionHeader
           eyebrow="Bolões"
           title="Creator Pro"
-          hint="Organize bolões com cara profissional, engaje sua comunidade e gere materiais prontos para divulgação."
+          hint="Organize bolões com cara profissional, engaje seu grupo e gere materiais prontos para divulgação."
           action={
             <Link
               to="/boloes/criar"
@@ -114,7 +114,7 @@ export default function CreatorPro() {
         />
 
         <p className="mt-4 max-w-3xl text-sm leading-6 text-zinc-300">
-          Organize bolões com cara profissional, engaje sua comunidade e gere materiais prontos para divulgação.
+          Organize bolões com cara profissional, engaje seu grupo e gere materiais prontos para divulgação.
         </p>
 
         <div className="mt-5 grid gap-3 sm:grid-cols-3">
@@ -177,7 +177,7 @@ export default function CreatorPro() {
             <EmptyState
               icon="🏆"
               title="Você ainda não tem bolões criados"
-              description="Crie sua primeira edição e depois volte aqui para organizar divulgação, comunidade e materiais."
+              description="Crie sua primeira edição e depois volte aqui para organizar divulgação, grupos e materiais."
               className="mt-4 rounded-[24px] border border-dashed border-white/10 bg-white/[0.03]"
               glowColor="green"
             />

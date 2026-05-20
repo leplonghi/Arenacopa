@@ -1,4 +1,5 @@
 const admin = require("firebase-admin");
+const { FieldValue } = require("firebase-admin/firestore");
 const bolaoConfigHandlers = require("../bolao-config/handlers");
 const bolaoConfigRepository = require("../bolao-config/repository");
 const {
@@ -149,7 +150,7 @@ async function writeCommercialAudit({ db, actorId, merchantId, campaignId = null
         before,
         after,
         reason,
-        created_at: admin.firestore.FieldValue.serverTimestamp(),
+        created_at: FieldValue.serverTimestamp(),
     });
 }
 

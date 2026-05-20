@@ -161,10 +161,11 @@ export default function Descobrir() {
 
   // ── Live / upcoming matches filtered to current championship ──────────────
   const relevantMatches = useMemo(() => {
+    if (!Array.isArray(allMatches)) return [];
     return allMatches
       .filter(
         (m) =>
-          (m.status === "live" || m.status === "upcoming") &&
+          (m.status === "live" || m.status === "scheduled") &&
           m.championshipId === championship.id,
       )
       .slice(0, 5);
@@ -321,7 +322,7 @@ export default function Descobrir() {
         {/* ── HEADER ─────────────────────────────────────────────────────── */}
         <motion.div variants={item}>
           <p className="arena-kicker text-primary">{t('eyebrow')}</p>
-          <h1 className="mt-1 text-[2.5rem] font-bold leading-tight text-white sm:text-[3.8rem]">
+          <h1 className="mt-1 text-3xl font-bold leading-tight text-white sm:text-4xl">
             {t('title')}
           </h1>
           <p className="mt-2 text-sm leading-6 text-zinc-400">
@@ -477,9 +478,8 @@ export default function Descobrir() {
                 <Users className="h-4 w-4 shrink-0 text-zinc-500" />
                 <p className="text-sm text-zinc-400">
                   <Trans i18nKey="rankings.summary" ns="arena" values={{ count: rankRows.length }}>
-                    <span className="font-bold text-white">{{count}}</span> jogadores no ranking geral desta temporada.
-                  </Trans>
-                </p>
+                    <span className="font-bold text-white">{"{{count}}"}</span> jogadores no ranking geral desta temporada.
+                  </Trans>                </p>
               </div>
             )}
           </ArenaPanel>
@@ -541,7 +541,7 @@ export default function Descobrir() {
         <motion.div variants={item}>
           <Link
             to="/criar-bolao"
-            className="group flex min-h-[96px] w-full items-center justify-between gap-4 rounded-[26px] border border-primary/25 bg-primary/[0.07] px-6 py-5 transition hover:border-primary/40 hover:bg-primary/[0.11]"
+            className="group flex min-h-[72px] w-full items-center justify-between gap-4 rounded-[20px] border border-primary/25 bg-primary/[0.07] px-6 py-4 transition hover:border-primary/40 hover:bg-primary/[0.11]"
           >
             <div>
               <p className="arena-kicker text-primary">{t('cta.eyebrow')}</p>

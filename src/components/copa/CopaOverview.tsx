@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import {
   ArrowRight,
+  BookOpen,
   CalendarDays,
   Clock3,
   Globe2,
@@ -145,7 +145,8 @@ function FeaturedFixture({
 
 export function CopaOverview() {
   const navigate = useNavigate();
-  const { data: matches = [], isLoading } = useMatches();
+  const { data: matchesData = [], isLoading } = useMatches();
+  const matches = useMemo(() => matchesData ?? [], [matchesData]);
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
   const [nowTick, setNowTick] = useState(() => Date.now());
 
@@ -210,8 +211,15 @@ export function CopaOverview() {
                 onClick={() => navigate("/copa/calendario")}
                 className="inline-flex items-center gap-1.5 rounded-lg bg-primary/15 px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.12em] text-primary transition hover:bg-primary/25"
               >
-                <Calendar className="h-3.5 w-3.5" />
+                <CalendarDays className="h-3.5 w-3.5" />
                 Calendário
+              </button>
+              <button
+                onClick={() => navigate("/copa/guia")}
+                className="inline-flex items-center gap-1.5 rounded-lg bg-blue-500/15 px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.12em] text-blue-300 transition hover:bg-blue-500/25"
+              >
+                <BookOpen className="h-3.5 w-3.5" />
+                Guia da Copa
               </button>
               <button
                 onClick={() => navigate("/boloes/criar", { state: { championship_id: "wc2026" } })}
@@ -303,7 +311,7 @@ export function CopaOverview() {
 
       <ArenaPanel className="p-5">
         <ArenaSectionHeader
-          eyebrow="Comunidades"
+          eyebrow="Grupos"
           title="Panorama inicial"
           action={<button onClick={() => navigate("/copa/grupos")} className="arena-button-green px-4 py-2 text-sm">{tStatic("Ver grupos")}</button>}
         />

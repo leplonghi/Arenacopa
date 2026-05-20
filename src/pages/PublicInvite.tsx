@@ -5,7 +5,6 @@ import {
   Users,
   ShieldCheck,
   LockOpen,
-  ArrowRight,
   Trophy,
   Sparkles,
   ChevronRight,
@@ -20,8 +19,9 @@ import { resolvePublicBolaoInvite } from "@/services/public-invite/public-invite
 import { BolaoAvatar } from "@/components/BolaoAvatar";
 import { JoinCTA } from "@/features/social/JoinCTA";
 import { joinViaInvite } from "@/services/groups/group-access.service";
-import { Button } from "@/components/ui/button";
 import { tStatic } from "@/i18n/staticText";
+import { getArenaAssetSrc } from "@/lib/arena-assets";
+import { ArenaImageButton, ArenaStateBlock } from "@/components/arena/ArenaExperience";
 
 type PublicInviteBolao = Awaited<ReturnType<typeof resolvePublicBolaoInvite>>;
 
@@ -54,7 +54,6 @@ export default function PublicInvite() {
   const { toast } = useToast();
   const [bolao, setBolao] = useState<PublicInviteBolao>(null);
   const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string | null>(null);
 
   const loadBolao = useCallback(async () => {
     if (!inviteCode) {
@@ -63,12 +62,10 @@ export default function PublicInvite() {
     }
 
     try {
-      setLoadError(null);
       const resolvedBolao = await resolvePublicBolaoInvite(inviteCode.toUpperCase());
 
       if (!resolvedBolao) {
-        toast({ title: "Bolão não encontrado", variant: "destructive" });
-        navigate("/", { replace: true });
+        setBolao(null);
         return;
       }
 
@@ -84,7 +81,6 @@ export default function PublicInvite() {
     } catch (error) {
       console.error("[PublicInvite] loadBolao error:", error);
       const msg = error instanceof Error ? error.message : String(error);
-      setLoadError(msg);
       toast({ title: "Não foi possível carregar o convite", description: msg, variant: "destructive" });
     } finally {
       setLoading(false);
@@ -116,7 +112,9 @@ export default function PublicInvite() {
         });
 
         if (result.status === "joined" || result.status === "already_member") {
-          navigate(`/boloes/${result.bolao_id}`, { replace: true });
+          // result is a union type — narrow to BolaoJoinResponse via 'bolao_id'
+          const bolaoId = "bolao_id" in result ? result.bolao_id : bolao?.id;
+          navigate(`/boloes/${bolaoId}`, { replace: true });
           return;
         }
 
@@ -154,18 +152,17 @@ export default function PublicInvite() {
   }
 
   if (!bolao) {
+    const invalidInviteSrc = getArenaAssetSrc("generated/invalid-invite.webp");
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#050505] p-6">
-        <div className="text-center">
-          <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-white/5">
-            <Sparkles className="h-8 w-8 text-gray-500" />
-          </div>
-          <h2 className="mb-2 text-xl font-bold text-white">{tStatic("Convite não encontrado")}</h2>
-          <p className="mb-6 text-sm text-gray-400">{tStatic("Esse código pode ter expirado ou o bolão foi removido.")}</p>
-          <Button onClick={() => navigate("/")} variant="outline" className="border-white/10 bg-white/5 text-white hover:bg-white/10">
-            Voltar para o início
-          </Button>
-        </div>
+      <div className="flex min-h-screen items-center justify-center bg-[#050505] p-6 text-white">
+        <ArenaStateBlock
+          image={{ src: invalidInviteSrc, alt: "", eager: true }}
+          icon={<Sparkles className="h-7 w-7" />}
+          title={tStatic("Convite não encontrado")}
+          description={tStatic("Esse código pode ter expirado, ter sido removido ou pertencer a um bolão que não está mais aceitando participantes.")}
+          action={<ArenaImageButton onClick={() => navigate("/auth")} variant="gold">Entrar na Arena</ArenaImageButton>}
+          className="min-h-[420px] w-full max-w-xl border-red-400/25"
+        />
       </div>
     );
   }
@@ -173,11 +170,13 @@ export default function PublicInvite() {
   const isPrivate = bolao.visibility === "private";
   const requiresApproval = ctaMode === "request";
   const requiresGroup = ctaMode === "group_first";
+  const inviteHeroSrc = getArenaAssetSrc("generated/pool-detail-hero.webp");
 
   return (
     <div className="relative min-h-screen bg-[#050505] text-white">
       {/* Background ambience */}
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        {inviteHeroSrc ? <img src={inviteHeroSrc} alt="" className="absolute inset-0 h-full w-full object-cover opacity-24" loading="eager" decoding="async" /> : null}
         <div className="absolute -top-[200px] -right-[200px] h-[600px] w-[600px] rounded-full bg-primary/10 blur-[150px]" />
         <div className="absolute -bottom-[200px] -left-[200px] h-[500px] w-[500px] rounded-full bg-blue-500/10 blur-[150px]" />
       </div>

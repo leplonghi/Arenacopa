@@ -11,9 +11,14 @@ vi.mock("@/integrations/firebase/client", () => ({
 
 vi.mock("firebase/firestore", () => ({
   collection: vi.fn((...args: unknown[]) => ({ type: "collection", args })),
+  limit: vi.fn((...args: unknown[]) => ({ type: "limit", args })),
   onSnapshot: (...args: unknown[]) => onSnapshotMock(...args),
   orderBy: vi.fn((...args: unknown[]) => ({ type: "orderBy", args })),
   query: vi.fn((...args: unknown[]) => ({ type: "query", args })),
+  Timestamp: {
+    fromDate: vi.fn((date: Date) => ({ type: "timestamp", date })),
+  },
+  where: vi.fn((...args: unknown[]) => ({ type: "where", args })),
 }));
 
 function DashboardConsumer() {

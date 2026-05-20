@@ -10,12 +10,12 @@ interface TabItem {
 interface BolaoTabsProps {
   tabs: TabItem[];
   activeTab: string;
-  onTabChange: (id: any) => void;
+  onTabChange: (id: string) => void;
 }
 
 export function BolaoTabs({ tabs, activeTab, onTabChange }: BolaoTabsProps) {
   return (
-    <div className="mb-8 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:flex lg:flex-wrap lg:gap-3">
+    <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:flex lg:flex-wrap lg:gap-3">
       {tabs.map((tab) => (
         <button
           key={tab.id}

@@ -13,7 +13,9 @@ import { useDateLocale } from "@/hooks/useDateLocale";
 import { motion, AnimatePresence } from "framer-motion";
 import { staggerContainer } from "../animations";
 import { useMatches } from "@/hooks/useMatches";
+import { Flag } from "@/components/Flag";
 import { saveBolaoPalpite } from "@/services/boloes/bolao.service";
+
 
 interface PalpitesTabProps {
     bolaoId: string;
@@ -215,7 +217,7 @@ export function PalpitesTab({ bolaoId, palpites, setPalpites, userId }: Palpites
                                 <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
                                     <div className="text-right">
                                         <div className="flex flex-col items-end group/team" onClick={() => navigate(`/team/${home.code}`)}>
-                                            <span className="text-[28px] mb-1 filter drop-shadow-md transition-transform group-hover/team:scale-110">{home?.flag}</span>
+                                            <Flag code={home?.code} size="md" className="mb-1 filter drop-shadow-md transition-transform group-hover/team:scale-110" />
                                             <span className="text-xs font-black text-white group-hover/team:text-primary transition-colors">{home?.code}</span>
                                         </div>
                                     </div>
@@ -236,7 +238,7 @@ export function PalpitesTab({ bolaoId, palpites, setPalpites, userId }: Palpites
 
                                     <div className="text-left">
                                         <div className="flex flex-col items-start group/team" onClick={() => navigate(`/team/${away.code}`)}>
-                                            <span className="text-[28px] mb-1 filter drop-shadow-md transition-transform group-hover/team:scale-110">{away?.flag}</span>
+                                            <Flag code={away?.code} size="md" className="mb-1 filter drop-shadow-md transition-transform group-hover/team:scale-110" />
                                             <span className="text-xs font-black text-white group-hover/team:text-primary transition-colors">{away?.code}</span>
                                         </div>
                                     </div>

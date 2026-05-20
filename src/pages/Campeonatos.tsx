@@ -261,6 +261,7 @@ function CompetitionTile({
   const { t } = useTranslation("championships");
   const display = getDisplayName(championship);
   const assetSrc = assetName ? getArenaAssetSrc(assetName) : null;
+  const logoSrc = assetSrc ?? championship.logoUrl ?? null;
   const bg = CHAMPIONSHIP_CARD_BG[championship.id] ?? {
     from: championship.gradient[0],
     to: championship.gradient[1],
@@ -290,38 +291,21 @@ function CompetitionTile({
     >
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(255,255,255,0.03),transparent_42%)]" />
 
-      <div className="relative z-10 flex h-full items-center gap-3 p-3 sm:gap-3.5 sm:p-3.5">
-        {/* Left: Logo image column */}
-        <div className="flex shrink-0 items-center justify-center">
-          <div className="relative flex h-16 w-16 items-center justify-center sm:h-20 sm:w-20">
-            {assetName ? (
-              <ArenaAssetSlot
-                name={assetName}
-                label={display.title}
-                src={assetSrc}
-                variant="cutout"
-                className="absolute h-[110px] w-[110px] bg-transparent shadow-none sm:h-[130px] sm:w-[130px]"
-                imgClassName="p-0 object-contain drop-shadow-[0_12px_24px_rgba(0,0,0,0.7)] scale-110"
-                fallbackClassName="scale-125"
-              />
-            ) : championship.logoUrl ? (
-              <img
-                src={championship.logoUrl}
-                alt={championship.name}
-                className="absolute h-[100px] w-[100px] object-contain drop-shadow-[0_12px_24px_rgba(0,0,0,0.7)] scale-110 sm:h-[120px] sm:w-[120px]"
-              />
-            ) : (
-              <span className="text-3xl sm:text-4xl">{championship.logo}</span>
-            )}
-          </div>
-        </div>
+      <div className="relative z-10 grid min-h-[136px] grid-cols-[76px_minmax(0,1fr)_20px] items-center gap-3 p-3 sm:grid-cols-[88px_minmax(0,1fr)_20px] sm:gap-3.5 sm:p-3.5">
+        <ArenaAssetSlot
+          name={assetName ?? `${championship.id}-logo`}
+          label={display.title}
+          src={logoSrc}
+          className="h-[76px] w-[76px] rounded-[18px] border-white/10 bg-[radial-gradient(circle_at_50%_25%,rgba(255,255,255,0.14),transparent_38%),linear-gradient(145deg,rgba(255,255,255,0.08),rgba(0,0,0,0.18))] shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_16px_28px_-22px_rgba(0,0,0,0.9)] sm:h-[88px] sm:w-[88px]"
+          imgClassName="p-2.5 object-contain drop-shadow-[0_12px_22px_rgba(0,0,0,0.65)]"
+          fallbackClassName="scale-75"
+        />
 
-        {/* Right: Info — tight vertical packing */}
         <div className="flex min-w-0 flex-1 flex-col justify-center">
-          <p className="text-[10px] font-medium text-white/40">
+          <p className="truncate text-[10px] font-medium text-white/40">
             {(championship.confederation ?? championship.country ?? "").toUpperCase()} <span className="text-white/20">•</span> {championship.season}
           </p>
-          <h2 className="mt-0 font-sans text-[1.05rem] font-bold leading-[1.15] tracking-[-0.02em] text-white sm:text-[1.15rem]">
+          <h2 className="mt-1 font-sans text-[1rem] font-bold leading-tight text-white sm:text-[1.12rem]">
             {display.title}
           </h2>
           {display.subtitle ? (
@@ -347,11 +331,10 @@ function CompetitionTile({
 
           <div className="mt-1.5 flex items-center gap-1 text-white/50">
             <Users className="h-3 w-3 shrink-0" />
-            <span className="font-sans text-[0.75rem] font-medium">{getPoolLabel(bolaoCount, t)}</span>
+            <span className="truncate font-sans text-[0.75rem] font-medium">{getPoolLabel(bolaoCount, t)}</span>
           </div>
         </div>
 
-        {/* Chevron */}
         <ChevronRight className="h-4 w-4 shrink-0 text-white/25 transition group-hover:translate-x-0.5 group-hover:text-white/50" />
       </div>
     </motion.button>
@@ -460,7 +443,7 @@ export default function Campeonatos() {
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.08, duration: 0.3 }}
-          className="mt-5 grid grid-cols-2 gap-3 sm:gap-4"
+          className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4"
         >
           {leagueCards.map((championship, index) => (
             <CompetitionTile

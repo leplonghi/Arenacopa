@@ -1,5 +1,6 @@
-const functions = require("firebase-functions");
+const functions = require("firebase-functions/v1");
 const admin = require("firebase-admin");
+const { FieldValue } = require("firebase-admin/firestore");
 
 /**
  * Automatically updates member_count in the bolao document
@@ -25,8 +26,8 @@ exports.onBolaoMemberWrite = functions.firestore
 
         try {
             await db.collection("boloes").doc(bolaoId).update({
-                member_count: admin.firestore.FieldValue.increment(increment),
-                "integrity.last_updated_at": admin.firestore.FieldValue.serverTimestamp(),
+                member_count: FieldValue.increment(increment),
+                "integrity.last_updated_at": FieldValue.serverTimestamp(),
             });
             console.log(`Updated member_count for bolao ${bolaoId} by ${increment}`);
         } catch (error) {

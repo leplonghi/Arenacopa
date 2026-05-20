@@ -70,7 +70,9 @@ export function useBolaoDetail(id: string | undefined) {
   const [myPalpites, setMyPalpites] = useState<Palpite[]>([]);
   const [bolaoMarkets, setBolaoMarkets] = useState<BolaoMarket[]>([]);
   const [myMarketPredictions, setMyMarketPredictions] = useState<BolaoPrediction[]>([]);
-  const [allMarketPredictions, setAllMarketPredictions] = useState<BolaoPrediction[]>([]);
+  // [BUG-008 FIX] Removed allMarketPredictions state — the global listener fetched
+  // ALL users' predictions for the bolão but OverviewTab never rendered them.
+  // Keeping only the per-user listener (myMarketPredictions) to avoid wasted reads.
   const [activityFeed, setActivityFeed] = useState<BolaoActivity[]>([]);
   const [onboardingState, setOnboardingState] = useState<BolaoOnboardingState | null>(null);
   const [showBolaoIntro, setShowBolaoIntro] = useState(false);
@@ -79,6 +81,7 @@ export function useBolaoDetail(id: string | undefined) {
   const [championOpen, setChampionOpen] = useState(false);
   const [championSelection, setChampionSelection] = useState("");
   const [myChampion, setMyChampion] = useState<string | null>(null);
+  const [memberPredictionCounts, setMemberPredictionCounts] = useState<Record<string, number>>({});
   const [activeTab, setActiveTab] = useState<BolaoDetailTab>(requestedTab ?? (highlightedMatch ? "palpites" : "turma"));
   const [showEditPanel, setShowEditPanel] = useState(false);
   const initialTabHydratedRef = useRef(false);
@@ -410,9 +413,8 @@ export function useBolaoDetail(id: string | undefined) {
       setMyMarketPredictions(snapshot.docs.map(d => ({ id: d.id, ...d.data() })) as BolaoPrediction[]);
     });
 
-    const unsubscribeAllPredictions = onSnapshot(query(collection(db, "bolao_predictions"), where("bolao_id", "==", id)), (snapshot) => {
-      setAllMarketPredictions(snapshot.docs.map(d => ({ id: d.id, ...d.data() })) as BolaoPrediction[]);
-    });
+    // [BUG-008 FIX] Global predictions listener removed — was fetching every member's
+    // predictions (O(members × matches) reads) without any consumer rendering the data.
 
     const unsubscribeActivity = onSnapshot(query(collection(db, "bolao_activity"), where("bolao_id", "==", id), orderBy("created_at", "desc"), limit(12)), (snapshot) => {
       setActivityFeed(snapshot.docs.map(d => ({
@@ -438,12 +440,64 @@ export function useBolaoDetail(id: string | undefined) {
       unsubscribePalpites();
       unsubscribeMarkets();
       unsubscribePredictions();
-      unsubscribeAllPredictions();
+      // unsubscribeAllPredictions removed (BUG-008)
       unsubscribeActivity();
       unsubscribeOnboarding();
       unsubscribeRequests?.();
     };
   }, [bolao, id, isCreator, user]);
+
+  const [matchPredictionCounts, setMatchPredictionCounts] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    if (activeTab !== "palpites" || !id || bolaoMarkets.length === 0) return;
+
+    const fetchMatchCounts = async () => {
+      const counts: Record<string, number> = {};
+      const matchIds = Array.from(new Set(bolaoMarkets.map(m => m.match_id).filter(Boolean))) as string[];
+      
+      const promises = matchIds.map(async (matchId) => {
+        const q = query(
+          collection(db, "bolao_palpites"),
+          where("bolao_id", "==", id),
+          where("match_id", "==", matchId)
+        );
+        const snap = await getCountFromServer(q);
+        counts[matchId] = snap.data().count;
+      });
+
+      await Promise.all(promises);
+      if (mountedRef.current) {
+        setMatchPredictionCounts(counts);
+      }
+    };
+
+    fetchMatchCounts();
+  }, [activeTab, id, bolaoMarkets.length, myPalpites.length, myMarketPredictions.length, activityFeed]);
+
+  useEffect(() => {
+    if (activeTab !== "turma" || !id || members.length === 0) return;
+
+    const fetchCounts = async () => {
+      const counts: Record<string, number> = {};
+      const promises = members.map(async (member) => {
+        const q = query(
+          collection(db, "bolao_palpites"),
+          where("bolao_id", "==", id),
+          where("user_id", "==", member.user_id)
+        );
+        const snap = await getCountFromServer(q);
+        counts[member.user_id] = snap.data().count;
+      });
+
+      await Promise.all(promises);
+      if (mountedRef.current) {
+        setMemberPredictionCounts(counts);
+      }
+    };
+
+    fetchCounts();
+  }, [activeTab, id, members.length, myPalpites.length, myMarketPredictions.length, activityFeed]);
 
   useEffect(() => {
     if (!championMarket) return;
@@ -518,22 +572,28 @@ export function useBolaoDetail(id: string | undefined) {
   }, [highlightedMatch]);
 
   useEffect(() => {
-    const fallbackTab: BolaoDetailTab = highlightedMatch || pendingOverview.totalPending > 0 ? "palpites" : "turma";
+    // Bolão com jogos selecionados explicitamente → vai direto para palpites
+    const hasSelectedMatches = Array.isArray(bolao?.allowed_match_ids) && bolao.allowed_match_ids.length > 0;
+    const fallbackTab: BolaoDetailTab =
+      highlightedMatch || pendingOverview.totalPending > 0 || hasSelectedMatches
+        ? "palpites"
+        : "turma";
     const nextTab = requestedTab ?? fallbackTab;
     if (!initialTabHydratedRef.current || requestedTab) {
       setActiveTab(nextTab);
       initialTabHydratedRef.current = true;
     }
-  }, [highlightedMatch, pendingOverview.totalPending, requestedTab]);
+  }, [bolao?.allowed_match_ids, highlightedMatch, pendingOverview.totalPending, requestedTab]);
 
   return {
     bolao, members, memberCount, joinRequests, myPalpites, bolaoMarkets, myMarketPredictions,
-    allMarketPredictions, activityFeed, onboardingState, showBolaoIntro, loading, infoOpen,
+    activityFeed, onboardingState, showBolaoIntro, loading, infoOpen,
     championOpen, championSelection, myChampion, activeTab, showEditPanel, setBolao,
     setInfoOpen, setChampionOpen, setChampionSelection, setActiveTab, setShowEditPanel,
     saveChampion, handleShareInvite, closeBolaoIntro: () => { void persistBolaoIntroState(); setShowBolaoIntro(false); },
     handleBolaoIntroToPredictions: () => { void persistBolaoIntroState({ seen_markets: true }); setActiveTab("palpites"); setShowBolaoIntro(false); },
     dismissTour, activeTourTab, isCreator, formatLabel, pendingOverview, joinRequestItems,
-    matchMarkets, phaseMarkets, specialMarkets, tournamentMarkets, championMarket, highlightedMatch
+    matchMarkets, phaseMarkets, specialMarkets, tournamentMarkets, championMarket, highlightedMatch,
+    memberPredictionCounts, matchPredictionCounts
   };
 }

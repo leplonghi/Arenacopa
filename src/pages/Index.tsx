@@ -13,6 +13,8 @@ import {
   Plus,
   Flame,
   Shield,
+  ListChecks,
+  RefreshCw,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
@@ -22,12 +24,14 @@ import { useTranslation } from "react-i18next";
 import { ElitePassModal } from "@/components/ElitePassModal";
 import { usePendingPredictions } from "@/hooks/usePendingPredictions";
 import { usePendingJoinRequests } from "@/hooks/usePendingJoinRequests";
-import { getDashboardData, type DashboardBolaoSummary } from "@/services/dashboard/dashboard.service";
+import { listUserBoloes } from "@/services/boloes/bolao-listing.service";
+import { getProfile } from "@/services/profile/profile.service";
 import { getArenaLevel } from "@/lib/profile-level";
 import { useDashboardMatches } from "@/hooks/useDashboardMatches";
 import { SpotlightMatchCard } from "@/components/home/SpotlightMatchCard";
 import { cn } from "@/lib/utils";
 import { getArenaAssetSrc } from "@/lib/arena-assets";
+import type { MatchFeedItem } from "@/types/match-feed";
 
 /* ─── Animation variants ─── */
 const containerVariants = {
@@ -37,6 +41,27 @@ const containerVariants = {
 const itemVariants = {
   hidden: { opacity: 0, y: 14 },
   visible: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 360, damping: 28 } },
+};
+
+type DashboardBolaoSummary = {
+  id: string;
+  name: string;
+  memberCount: number;
+  myPoints: number;
+  myRank: number;
+  pendingCount: number;
+  createdAt: string;
+};
+
+type DashboardListingBolao = {
+  id: string;
+  name: string;
+  member_count?: number;
+  latest_match_closes_at?: string;
+};
+
+type DashboardListing = {
+  myBoloes: DashboardListingBolao[];
 };
 
 function isCurrentOrUpcomingMatch(matchDate: string) {
@@ -125,17 +150,17 @@ const QuickStats = memo(function QuickStats({
           <Link
             to={to}
             className={cn(
-              "flex flex-col gap-1.5 rounded-[18px] border p-3 h-full transition",
+              "flex min-h-[76px] flex-col justify-between gap-1 rounded-[16px] border px-3 py-2.5 transition",
               accent
                 ? "border-primary/30 bg-primary/[0.07] hover:bg-primary/[0.11]"
                 : "border-white/[0.07] bg-white/[0.02] hover:border-white/[0.12] hover:bg-white/[0.04]"
             )}
           >
             <Icon className={cn("h-4 w-4", accent ? "text-primary" : "text-zinc-500")} />
-            <p className={cn("text-2xl font-black leading-none", accent ? "text-primary" : "text-white")}>
+            <p className={cn("text-xl font-black leading-none", accent ? "text-primary" : "text-white")}>
               {value}
             </p>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-600 leading-tight">
+            <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-zinc-600 leading-tight">
               {label}
             </p>
           </Link>
@@ -145,10 +170,65 @@ const QuickStats = memo(function QuickStats({
   );
 });
 
+function getMatchHref(match: MatchFeedItem, pendingByMatchId: Map<string, string[]>) {
+  const firstBolaoId = pendingByMatchId.get(match.id)?.[0];
+  if (firstBolaoId) return `/boloes/${firstBolaoId}?tab=jogos&match=${match.id}`;
+  if (match.championshipId) return `/campeonato/${match.championshipId}?tab=jogos`;
+  return "/campeonatos";
+}
+
+function HomeMatchRail({
+  title,
+  hint,
+  matches,
+  pendingByMatchId,
+  locale,
+}: {
+  title: string;
+  hint: string;
+  matches: MatchFeedItem[];
+  pendingByMatchId: Map<string, string[]>;
+  locale: string;
+}) {
+  if (matches.length === 0) return null;
+
+  return (
+    <div className="rounded-[20px] border border-white/[0.07] bg-white/[0.02] p-3">
+      <div className="mb-2 flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <p className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-primary">
+            <ListChecks className="h-3.5 w-3.5" />
+            {title}
+          </p>
+          <p className="mt-0.5 text-[11px] leading-snug text-zinc-500">{hint}</p>
+        </div>
+        <Link to="/boloes" className="shrink-0 text-[10px] font-black uppercase tracking-wider text-primary hover:underline">
+          Ver bolões
+        </Link>
+      </div>
+      <div className="space-y-2">
+        {matches.slice(0, 3).map((match) => (
+          <SpotlightMatchCard
+            key={match.id}
+            match={match}
+            href={getMatchHref(match, pendingByMatchId)}
+            locale={locale}
+            compact
+            contextLabel={pendingByMatchId.has(match.id) ? "Dos seus bolões" : match.championship?.shortName || "Campeonato"}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /* ─── My Pool Row ─── */
-const MyPoolRow = memo(function MyPoolRow({ bolao }: { bolao: DashboardBolaoSummary }) {
+const MyPoolRow = memo(function MyPoolRow({ bolao, pendingCountGlobal }: { bolao: DashboardBolaoSummary, pendingCountGlobal?: number }) {
   const { t } = useTranslation("home");
-  const hasPending = (bolao.pendingCount ?? 0) > 0;
+  // Use global pending count if available, otherwise fallback to bolao property
+  const pCount = pendingCountGlobal !== undefined ? pendingCountGlobal : (bolao.pendingCount ?? 0);
+  const hasPending = pCount > 0;
+  
   return (
     <Link
       to={`/boloes/${bolao.id}`}
@@ -157,8 +237,8 @@ const MyPoolRow = memo(function MyPoolRow({ bolao }: { bolao: DashboardBolaoSumm
       <div className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-[13px] border border-white/8 bg-white/5 text-xl">
         ⚽
         {hasPending && (
-          <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-black text-black">
-            {bolao.pendingCount}
+          <span className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-black text-black animate-pulse">
+            {pCount}
           </span>
         )}
       </div>
@@ -168,7 +248,7 @@ const MyPoolRow = memo(function MyPoolRow({ bolao }: { bolao: DashboardBolaoSumm
           <span>{t("pool_row.members", { count: bolao.memberCount ?? 0 })}</span>
           <span>·</span>
           <span className={cn(hasPending && "font-bold text-primary")}>
-            {hasPending ? t("pool_row.pending", { count: bolao.pendingCount }) : `${t("pool_row.up_to_date")} ✓`}
+            {hasPending ? t("pool_row.pending", { count: pCount }) : `${t("pool_row.up_to_date")} ✓`}
           </span>
         </div>
       </div>
@@ -215,29 +295,58 @@ function DiscoverTile({
 const Index = () => {
   const { user } = useAuth();
   const { i18n, t } = useTranslation("home");
-  const pendingPredictionItems = usePendingPredictions();
+  const { pendingItems: pendingPredictionItems } = usePendingPredictions();
   const pendingJoinInfo = usePendingJoinRequests(user?.id);
 
   const [myBoloes, setMyBoloes] = useState<DashboardBolaoSummary[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [profile, setProfile] = useState<{ name: string; avatar?: string } | null>(null);
   const [isEliteModalOpen, setIsEliteModalOpen] = useState(false);
 
-  useEffect(() => {
+  const fetchDashboardData = async () => {
     if (!user) { setProfile(null); setMyBoloes([]); setLoading(false); return; }
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        const data = await getDashboardData(user.id);
-        setProfile({ name: data.profile?.name || "", avatar: data.profile?.avatar_url || "" });
-        setMyBoloes(data.myBoloes);
-      } catch (err) {
-        console.error("Dashboard load error:", err);
-      } finally {
-        setLoading(false);
+    setLoadError(false);
+    setLoading(true);
+    try {
+      // Step 1: Use the robust Cloud Function instead of direct Firestore queries
+      const [listingData, profileData] = await Promise.all([
+        listUserBoloes({ userId: user.id }),
+        getProfile(user.id)
+      ]);
+
+      if (profileData) {
+        setProfile({ name: profileData.name || "", avatar: profileData.avatar_url || "" });
       }
-    };
-    fetchData();
+
+      // Step 2: Map listing cards to dashboard summary
+      const mapToSummary = (listing: DashboardListing) => listing.myBoloes.map((b) => ({
+        id: b.id,
+        name: b.name,
+        memberCount: b.member_count,
+        myPoints: 0, 
+        myRank: 0,
+        pendingCount: 0, 
+        createdAt: b.latest_match_closes_at || ""
+      }));
+
+      setMyBoloes(mapToSummary(listingData));
+
+      // Background revalidation: handle stale data update
+      await listUserBoloes({ userId: user.id }, (fresh) => {
+        setMyBoloes(mapToSummary(fresh));
+      });
+    } catch (err) {
+      console.error("Dashboard load error:", err);
+      setLoadError(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    void fetchDashboardData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const { data: allMatches = [] } = useDashboardMatches();
@@ -257,6 +366,15 @@ const Index = () => {
   const todayMatches = allMatches
     .filter((m) => m.status === "live" || (m.status === "scheduled" && isCurrentOrUpcomingMatch(m.matchDate)))
     .slice(0, 4);
+  const pendingByMatchId = new Map(pendingPredictionItems.map((item) => [item.match.id, item.bolaoIds]));
+  const userPoolMatches = pendingPredictionItems
+    .map((item) => allMatches.find((match) => match.id === item.match.id))
+    .filter(Boolean) as MatchFeedItem[];
+  const nextPoolMatches = userPoolMatches.length > 0
+    ? userPoolMatches
+    : allMatches
+        .filter((m) => m.status === "scheduled" && isCurrentOrUpcomingMatch(m.matchDate))
+        .slice(0, 3);
 
   const hasBoloes = myBoloes.length > 0;
   const hasPending = pendingMatchCount > 0;
@@ -355,11 +473,20 @@ const Index = () => {
               </div>
               <SpotlightMatchCard
                 match={featuredMatch}
-                href={featuredMatch.championshipId ? `/campeonato/${featuredMatch.championshipId}` : "/campeonatos"}
+                href={getMatchHref(featuredMatch, pendingByMatchId)}
                 locale={i18n.language}
+                contextLabel={pendingByMatchId.has(featuredMatch.id) ? "Dos seus bolões" : featuredMatch.championship?.shortName || "Campeonato"}
               />
             </div>
           )}
+
+          <HomeMatchRail
+            title={hasBoloes ? "Próximos jogos dos seus bolões" : "Próximos jogos"}
+            hint={hasBoloes ? "Partidas ligadas aos campeonatos dos bolões em que você participa." : "Entre em um bolão para transformar jogos em palpites."}
+            matches={nextPoolMatches}
+            pendingByMatchId={pendingByMatchId}
+            locale={i18n.language}
+          />
         </motion.div>
 
         {/* ─── ZONA 2: MEUS BOLÕES ─── */}
@@ -373,7 +500,22 @@ const Index = () => {
             )}
           </div>
 
-          {loading ? (
+          {loadError ? (
+            <div className="rounded-[20px] border border-red-500/20 bg-red-500/[0.06] p-4">
+              <p className="text-sm font-bold text-white">{t("load_error.title", { defaultValue: "Não foi possível carregar sua arena" })}</p>
+              <p className="mt-1 text-[11px] leading-snug text-zinc-500">
+                {t("load_error.desc", { defaultValue: "Confira sua conexão e tente novamente." })}
+              </p>
+              <button
+                type="button"
+                onClick={() => void fetchDashboardData()}
+                className="mt-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.04] px-3 py-2 text-[11px] font-black uppercase tracking-wider text-white transition hover:bg-white/[0.08]"
+              >
+                <RefreshCw className="h-3.5 w-3.5" />
+                {t("load_error.retry", { defaultValue: "Tentar novamente" })}
+              </button>
+            </div>
+          ) : loading ? (
             <div className="space-y-2">
               <Skeleton className="h-16 w-full rounded-[16px] bg-white/5" />
               <Skeleton className="h-16 w-full rounded-[16px] bg-white/5" />
@@ -401,7 +543,7 @@ const Index = () => {
                   </div>
                 </Link>
                 <Link
-                  to="/descobrir"
+                  to="/boloes"
                   className="group flex flex-col items-start gap-2 rounded-[18px] border border-white/[0.07] bg-white/[0.02] p-3.5 transition hover:border-white/[0.14] hover:bg-white/[0.05]"
                 >
                   <Flame className="h-5 w-5 text-zinc-400" />
@@ -414,9 +556,11 @@ const Index = () => {
             </div>
           ) : (
             <div className="space-y-2">
-              {myBoloes.slice(0, 3).map((b) => (
-                <MyPoolRow key={b.id} bolao={b} />
-              ))}
+              {myBoloes.slice(0, 3).map((b) => {
+                // Sincronização global: filtrar pendências do hook para este bolão específico
+                const pendingForThisBolao = pendingPredictionItems.filter(p => p.bolaoIds.includes(b.id)).length;
+                return <MyPoolRow key={b.id} bolao={b} pendingCountGlobal={pendingForThisBolao} />;
+              })}
               {myBoloes.length > 3 && (
                 <Link to="/boloes" className="block text-center text-[10px] font-bold uppercase tracking-wider text-zinc-500 py-1 hover:text-zinc-300 transition">
                   {t("pool_actions.remaining", { count: myBoloes.length - 3 })}

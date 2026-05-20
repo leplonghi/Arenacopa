@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { teams, getTeam } from "@/data/mockData";
 import { Flag } from "@/components/Flag";
@@ -22,7 +22,8 @@ import { Flag as FlagIcon } from "lucide-react";
 import { updateFavoriteTeam, updateProfile, uploadAvatar } from "@/services/profile/profile.service";
 import type { ProfileRecord } from "@/services/profile/profile.types";
 import { useCurrentProfile } from "@/hooks/useCurrentProfile";
-import { setStoredFavoriteTeam } from "@/lib/favorite-team";
+import { getStoredFavoriteTeams, setStoredFavoriteTeams } from "@/lib/favorite-team";
+import { FAVORITE_TEAM_CHOICES, getFavoriteTeamChoice, type FavoriteTeamType } from "@/data/favoriteTeams";
 import { ArenaMetric, ArenaPanel, ArenaSectionHeader } from "@/components/arena/ArenaPrimitives";
 import { getArenaLevel } from "@/lib/profile-level";
 import { AchievementRail } from "@/components/profile/AchievementRail";
@@ -62,6 +63,10 @@ const Perfil = () => {
     nationality: ""
   });
   const [showTeamPicker, setShowTeamPicker] = useState(false);
+  const [teamSearch, setTeamSearch] = useState("");
+  const [teamTypeFilter, setTeamTypeFilter] = useState<"all" | FavoriteTeamType>("all");
+  const [teamCountryFilter, setTeamCountryFilter] = useState("all");
+  const [selectedFavoriteTeams, setSelectedFavoriteTeams] = useState<string[]>(() => getStoredFavoriteTeams());
   const [loading, setLoading] = useState(true);
 
   const { data: stats } = useProfileStats(user?.id);
@@ -89,16 +94,60 @@ const Perfil = () => {
   };
 
   const setFavoriteTeam = async (code: string) => {
-    setProfile(prev => prev ? { ...prev, favorite_team: code } : null);
+    const normalizedCode = code.toUpperCase();
+    const nextFavorites = [normalizedCode, ...selectedFavoriteTeams.filter((teamCode) => teamCode.toUpperCase() !== normalizedCode)];
+    setSelectedFavoriteTeams(nextFavorites);
+    setProfile(prev => prev ? { ...prev, favorite_team: normalizedCode } : null);
     if (user?.id) {
-      await updateFavoriteTeam(user.id, code);
+      await updateFavoriteTeam(user.id, normalizedCode);
     }
-    setStoredFavoriteTeam(code);
+    setStoredFavoriteTeams(nextFavorites);
+  };
+
+  const toggleFavoriteTeam = async (code: string) => {
+    const normalizedCode = code.toUpperCase();
+    const exists = selectedFavoriteTeams.some((teamCode) => teamCode.toUpperCase() === normalizedCode);
+    const nextFavorites = exists
+      ? selectedFavoriteTeams.filter((teamCode) => teamCode.toUpperCase() !== normalizedCode)
+      : [...selectedFavoriteTeams, normalizedCode];
+    const primary = nextFavorites[0] ?? normalizedCode;
+
+    setSelectedFavoriteTeams(nextFavorites);
+    setProfile(prev => prev ? { ...prev, favorite_team: primary } : null);
+    setStoredFavoriteTeams(nextFavorites);
+    if (user?.id && primary) {
+      await updateFavoriteTeam(user.id, primary);
+    }
   };
 
   /* Safe access to team with fallback */
   const favoriteTeam = profile?.favorite_team || localStorage.getItem("favorite_team") || "BRA";
   const team = getTeam(favoriteTeam) || getTeam("BRA") || teams[0];
+  const primaryFavoriteChoice = getFavoriteTeamChoice(favoriteTeam);
+  const favoriteTeamChoices = selectedFavoriteTeams
+    .map((code) => getFavoriteTeamChoice(code))
+    .filter((choice): choice is NonNullable<ReturnType<typeof getFavoriteTeamChoice>> => Boolean(choice));
+  const teamCountryOptions = useMemo(
+    () =>
+      Array.from(
+        new Map(FAVORITE_TEAM_CHOICES.map((choice) => [choice.country, choice.countryName])).entries()
+      ).sort((a, b) => a[1].localeCompare(b[1], "pt-BR")),
+    []
+  );
+  const filteredTeamChoices = useMemo(() => {
+    const search = teamSearch.trim().toLowerCase();
+    return FAVORITE_TEAM_CHOICES.filter((choice) => {
+      const matchesType = teamTypeFilter === "all" || choice.type === teamTypeFilter;
+      const matchesCountry = teamCountryFilter === "all" || choice.country === teamCountryFilter;
+      const matchesSearch =
+        !search ||
+        choice.name.toLowerCase().includes(search) ||
+        choice.code.toLowerCase().includes(search) ||
+        choice.category.toLowerCase().includes(search) ||
+        choice.countryName.toLowerCase().includes(search);
+      return matchesType && matchesCountry && matchesSearch;
+    });
+  }, [teamCountryFilter, teamSearch, teamTypeFilter]);
   const displayName = profile?.name || user?.email?.split("@")[0] || t('default_user_name');
   const initials = displayName.slice(0, 2).toUpperCase();
   const levelInfo = getArenaLevel(stats?.points);
@@ -403,7 +452,7 @@ const Perfil = () => {
       <ArenaPanel className="p-5">
         <ArenaSectionHeader
           eyebrow={t('my_team')}
-          title={t('favorite_team_title')}
+          title="Times favoritos"
           action={
             <button
               onClick={() => setShowTeamPicker(!showTeamPicker)}
@@ -417,27 +466,43 @@ const Perfil = () => {
 
         <div className="mt-4 rounded-[26px] border border-white/10 bg-white/[0.03] p-4">
           <div className="flex items-center gap-3 border-b border-white/10 pb-4">
-            <Flag code={team.code} size="xl" className="border-2 border-primary/25" />
+            {primaryFavoriteChoice?.type === "club" ? (
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border-2 border-primary/25 bg-primary/10 font-display text-lg font-black text-primary">
+                {primaryFavoriteChoice.code.slice(0, 3)}
+              </div>
+            ) : (
+              <Flag code={team.code} size="xl" className="border-2 border-primary/25" />
+            )}
             <div>
-              <h4 className="font-display text-[1.7rem] font-semibold uppercase text-white">{team.name}</h4>
-              <span className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-400">{t('bolao:common.group')} {team.group}</span>
+              <h4 className="font-display text-[1.7rem] font-semibold uppercase text-white">
+                {primaryFavoriteChoice?.name || team.name}
+              </h4>
+              <span className="text-xs font-semibold uppercase tracking-[0.12em] text-zinc-400">
+                {primaryFavoriteChoice?.type === "club"
+                  ? `${primaryFavoriteChoice.countryName} · ${primaryFavoriteChoice.championshipName}`
+                  : `${t('bolao:common.group')} ${team.group}`}
+              </span>
             </div>
           </div>
 
           <div className="pt-4">
-            <span className="mb-3 block text-[11px] font-black uppercase tracking-[0.12em] text-zinc-400">{t('quick_switch')}</span>
-            <div className="flex gap-2">
-              {teams.slice(0, 4).map((teamOption) => (
+            <span className="mb-3 block text-[11px] font-black uppercase tracking-[0.12em] text-zinc-400">Favoritos ativos</span>
+            <div className="flex flex-wrap gap-2">
+              {(favoriteTeamChoices.length > 0 ? favoriteTeamChoices : FAVORITE_TEAM_CHOICES.slice(0, 4)).slice(0, 8).map((teamOption) => (
                 <button
                   key={teamOption.code}
                   onClick={() => setFavoriteTeam(teamOption.code)}
                   aria-label={t('favorite_team.select_aria', { team: teamOption.name })}
                   className={cn(
-                    "flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border transition-all",
-                    favoriteTeam === teamOption.code ? "border-primary shadow-[0_0_18px_rgba(145,255,59,0.22)]" : "border-white/10"
+                    "flex h-11 min-w-11 items-center justify-center overflow-hidden rounded-full border px-2 transition-all",
+                    favoriteTeam === teamOption.code ? "border-primary bg-primary/10 shadow-[0_0_18px_rgba(145,255,59,0.22)]" : "border-white/10"
                   )}
                 >
-                  <Flag code={teamOption.code} size="md" className="w-11 h-11" />
+                  {teamOption.type === "national" ? (
+                    <Flag code={teamOption.code} size="md" className="w-11 h-11" />
+                  ) : (
+                    <span className="font-display text-sm font-black uppercase text-white">{teamOption.code}</span>
+                  )}
                 </button>
               ))}
               <button
@@ -452,24 +517,68 @@ const Perfil = () => {
         </div>
 
         {showTeamPicker && (
-          <div className="mt-3 max-h-60 overflow-y-auto rounded-[26px] border border-white/10 bg-white/[0.03] p-3">
-            <div className="grid grid-cols-5 gap-1.5">
-              {teams.map((teamOption) => (
+          <div className="mt-3 rounded-[26px] border border-white/10 bg-white/[0.03] p-3">
+            <div className="grid gap-2 sm:grid-cols-[1fr_auto_auto]">
+              <Input
+                value={teamSearch}
+                onChange={(event) => setTeamSearch(event.target.value)}
+                placeholder="Buscar país, clube ou campeonato"
+                className="border-white/10 bg-black/25 text-white placeholder:text-zinc-600"
+              />
+              <Select value={teamTypeFilter} onValueChange={(value) => setTeamTypeFilter(value as "all" | FavoriteTeamType)}>
+                <SelectTrigger className="border-white/10 bg-black/25 text-white sm:w-36">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="national">Países</SelectItem>
+                  <SelectItem value="club">Clubes</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={teamCountryFilter} onValueChange={setTeamCountryFilter}>
+                <SelectTrigger className="border-white/10 bg-black/25 text-white sm:w-44">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os países</SelectItem>
+                  {teamCountryOptions.map(([countryCode, countryName]) => (
+                    <SelectItem key={countryCode} value={countryCode}>{countryName}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <p className="mt-3 text-[11px] leading-relaxed text-zinc-500">
+              Você pode marcar mais de um favorito. As notícias aparecem priorizando esses times.
+            </p>
+            <div className="mt-3 max-h-72 overflow-y-auto pr-1">
+              <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+              {filteredTeamChoices.map((teamOption) => {
+                const selected = selectedFavoriteTeams.some((code) => code.toUpperCase() === teamOption.code.toUpperCase());
+                return (
                 <button
                   key={teamOption.code}
                   onClick={() => {
-                    setFavoriteTeam(teamOption.code);
-                    setShowTeamPicker(false);
+                    void toggleFavoriteTeam(teamOption.code);
                   }}
                   className={cn(
-                    "flex flex-col items-center gap-1 rounded-[14px] border p-2 transition-colors",
-                    favoriteTeam === teamOption.code ? "border-primary/40 bg-primary/12" : "border-white/10 hover:bg-white/[0.05]"
+                    "flex min-h-[86px] flex-col items-center justify-center gap-1 rounded-[14px] border p-2 text-center transition-colors",
+                    selected ? "border-primary/40 bg-primary/12" : "border-white/10 hover:bg-white/[0.05]"
                   )}
                 >
-                  <Flag code={teamOption.code} size="sm" />
+                  {teamOption.type === "national" ? (
+                    <Flag code={teamOption.code} size="sm" />
+                  ) : (
+                    <span className="rounded-lg border border-white/10 bg-white/5 px-2 py-1 font-display text-sm font-black text-primary">{teamOption.code}</span>
+                  )}
                   <span className="text-[10px] font-black uppercase tracking-[0.08em] text-white">{teamOption.code}</span>
+                  <span className="line-clamp-1 max-w-full text-[10px] text-zinc-500">{teamOption.name}</span>
+                  <span className="line-clamp-1 max-w-full text-[9px] uppercase tracking-[0.08em] text-zinc-600">
+                    {teamOption.type === "club" ? teamOption.category : teamOption.countryName}
+                  </span>
                 </button>
-              ))}
+                );
+              })}
+              </div>
             </div>
           </div>
         )}

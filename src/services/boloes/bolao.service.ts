@@ -1,10 +1,14 @@
 import { db } from "@/integrations/firebase/client";
 import { 
   doc, 
-  setDoc, 
   getDoc,
   serverTimestamp,
-  updateDoc
+  collection,
+  query,
+  where,
+  getDocs,
+  limit,
+  writeBatch,
 } from "firebase/firestore";
 import type { MemberData, Palpite } from "@/types/bolao";
 import { leaveBolao, updatePoolMemberPaymentStatus } from "@/services/boloes/bolao-config.service";
@@ -36,6 +40,7 @@ export async function saveBolaoPalpite(input: {
   awayScore: number;
   isPowerPlay: boolean;
   existingId?: string;
+  existingPredictionId?: string;
 }) {
   try {
     const [bolaoDoc, matchDoc] = await Promise.all([
@@ -45,6 +50,18 @@ export async function saveBolaoPalpite(input: {
     const bolaoData = typeof bolaoDoc.exists === "function" && bolaoDoc.exists() ? bolaoDoc.data() : null;
     const matchData = typeof matchDoc.exists === "function" && matchDoc.exists() ? matchDoc.data() : null;
 
+    // [BUG-007] Fetch exact_score market for deadline + atomic write
+    const marketQuery = query(
+      collection(db, "bolao_markets"),
+      where("bolao_id", "==", input.bolaoId),
+      where("match_id", "==", input.matchId),
+      where("slug", "==", "exact_score"),
+      limit(1)
+    );
+    const marketSnap = await getDocs(marketQuery);
+    const marketDoc = !marketSnap.empty ? marketSnap.docs[0] : null;
+    const marketData = marketDoc?.data() ?? null;
+
     if (matchData) {
       assertMatchPredictionOpen({
         matchDate: matchData.match_date,
@@ -53,14 +70,19 @@ export async function saveBolaoPalpite(input: {
           bolaoData?.competition_rules?.prediction_cutoff_minutes ??
           bolaoData?.prediction_cutoff_minutes ??
           0,
+        closesAt: marketData?.closes_at_ts ?? marketData?.closes_at ?? null,
       });
     }
 
-    // We can use a deterministic ID: userId_bolaoId_matchId to avoid duplicates
+    const now = new Date().toISOString();
     const palpiteId = input.existingId || buildBolaoPalpiteId(input);
-    const docRef = doc(db, "bolao_palpites", palpiteId);
+    const palpiteRef = doc(db, "bolao_palpites", palpiteId);
 
-    const payload = {
+    // [BUG-003 FIX] Atomic batch: bolao_palpites + bolao_predictions (exact_score)
+    // A failure in one would previously leave the DB in an inconsistent partial state.
+    const batch = writeBatch(db);
+
+    const palpitePayload = {
       bolao_id: input.bolaoId,
       user_id: input.userId,
       match_id: input.matchId,
@@ -71,23 +93,52 @@ export async function saveBolaoPalpite(input: {
     };
 
     if (input.existingId) {
-      await updateDoc(docRef, payload);
+      batch.update(palpiteRef, palpitePayload);
     } else {
-      await setDoc(docRef, {
-        ...payload,
-        id: palpiteId,
-        created_at: new Date().toISOString(),
-        points: null,
-      });
+      batch.set(palpiteRef, { ...palpitePayload, id: palpiteId, created_at: now, points: null });
     }
 
-    const updatedDoc = await getDoc(docRef);
-    const data = updatedDoc.data();
+    // Mirror the score into bolao_predictions for the exact_score market if it exists
+    if (marketDoc) {
+      const marketId = marketDoc.id;
+      const predictionId = input.existingPredictionId ?? `${input.userId}_${input.bolaoId}_${marketId}`;
+      const predictionRef = doc(db, "bolao_predictions", predictionId);
+      const predictionPayload = {
+        bolao_id: input.bolaoId,
+        market_id: marketId,
+        user_id: input.userId,
+        prediction_value: { home: input.homeScore, away: input.awayScore },
+        prediction_meta: { is_power_play: input.isPowerPlay },
+        updated_at: serverTimestamp(),
+      };
+
+      const predSnap = await getDoc(predictionRef);
+      if (predSnap.exists()) {
+        batch.update(predictionRef, predictionPayload);
+      } else {
+        batch.set(predictionRef, {
+          id: predictionId,
+          ...predictionPayload,
+          points_awarded: null,
+          resolved: false,
+          created_at: now,
+        });
+      }
+    }
+
+    await batch.commit();
 
     return {
-      id: updatedDoc.id,
-      ...data,
-      is_power_play: data?.is_power_play ?? false,
+      id: palpiteId,
+      bolao_id: input.bolaoId,
+      user_id: input.userId,
+      match_id: input.matchId,
+      home_score: input.homeScore,
+      away_score: input.awayScore,
+      is_power_play: input.isPowerPlay,
+      points: null,
+      created_at: now,
+      updated_at: now,
     } as Palpite;
   } catch (error) {
     throw mapFirebaseError(error, "BOLAO_SAVE_PALPITE_FAILED");

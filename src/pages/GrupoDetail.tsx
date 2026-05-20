@@ -88,7 +88,7 @@ export default function GrupoDetail() {
 
       const groupData = {
         id: gSnap.id,
-        name: String(gSnap.data().name || "Comunidade"),
+        name: String(gSnap.data().name || "Grupo"),
         emoji: String(gSnap.data().emoji || "👥"),
         description: (gSnap.data().description as string | null) ?? null,
         invite_code: String(gSnap.data().invite_code || ""),
@@ -196,7 +196,7 @@ export default function GrupoDetail() {
       requests.map((request) => ({
         id: request.id,
         title: request.display_name,
-        subtitle: "Quer entrar nesta comunidade.",
+        subtitle: "Quer entrar neste grupo.",
         meta: request.updated_at ? `Atualizado em ${new Date(request.updated_at).toLocaleString("pt-BR")}` : null,
         status: "Pendente",
         primaryActionLabel: "Aprovar",
@@ -346,14 +346,14 @@ export default function GrupoDetail() {
         <div className="flex items-center gap-3">
           <button
             aria-label="Voltar"
-            onClick={() => navigate("/comunidades")}
+            onClick={() => navigate("/grupos")}
             className="flex h-12 w-12 items-center justify-center rounded-[20px] bg-white/5"
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
           <div className="flex h-14 w-14 items-center justify-center rounded-[22px] bg-primary/10 text-2xl">{grupo.emoji}</div>
           <div>
-            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">{tStatic("Comunidade")}</p>
+            <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">{tStatic("Grupo")}</p>
             <h1 className="text-3xl font-black">{grupo.name}</h1>
             {grupo.description ? <p className="text-sm text-zinc-400">{grupo.description}</p> : null}
           </div>
@@ -380,7 +380,7 @@ export default function GrupoDetail() {
               className="inline-flex items-center gap-2 rounded-2xl border border-white/10 px-4 py-3 text-sm font-bold text-white"
             >
               <LogOut className="h-4 w-4 text-primary" />
-              Sair da comunidade
+              Sair do grupo
             </button>
           )}
         </div>
@@ -402,14 +402,12 @@ export default function GrupoDetail() {
             <FeaturedBolaoCard bolao={featuredBolao} />
 
             <section className="rounded-[32px] border border-white/10 bg-white/5 p-5">
-              <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">{tStatic("Bolões da comunidade")}</p>
-              <p className="mt-2 text-sm text-zinc-400">
-                A comunidade pode ter vários bolões, mas só um fica em destaque para não poluir a experiência.
-              </p>
+              <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">{tStatic("Bolões do grupo")}</p>
+                O grupo pode ter vários bolões, mas só um fica em destaque para não poluir a experiência.
 
               {boloes.length === 0 ? (
                 <div className="mt-4">
-                  <EmptyState icon="⚽" title="Nenhum bolão ainda" description="Crie um bolão e vincule a esta comunidade." />
+                  <EmptyState icon="⚽" title="Nenhum bolão ainda" description="Crie um bolão e vincule a este grupo." />
                 </div>
               ) : (
                 <div className="mt-4 grid gap-3 md:grid-cols-2">
@@ -449,7 +447,7 @@ export default function GrupoDetail() {
             {isManager ? (
               <AdmissionInbox
                 title="Solicitações para entrar"
-                description="Aqui ficam só as entradas pendentes, sem misturar com os bolões da comunidade."
+                description="Aqui ficam só as entradas pendentes, sem misturar com os bolões do grupo."
                 emptyTitle="Nenhuma solicitação pendente"
                 emptyDescription="Quando alguém pedir entrada, ela aparece aqui."
                 items={requestItems}

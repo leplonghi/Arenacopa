@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { db } from "@/integrations/firebase/client";
 import { 
     collection, 

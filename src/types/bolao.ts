@@ -200,6 +200,7 @@ export interface BolaoData {
     scoring_mode?: "default" | "custom" | "exclusive";
     prediction_cutoff_minutes?: number;
     grupo_id?: string | null;
+    group_binding_mode?: "none" | "linked_discovery" | "group_gated";
     visibility_mode?: "hidden_until_deadline" | "visible_after_save" | "always_hidden";
     cutoff_mode?: "per_match" | "per_phase" | "manual";
     /** Championship this bolão belongs to. Defaults to "wc2026" for legacy records. */

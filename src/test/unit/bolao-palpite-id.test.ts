@@ -4,6 +4,16 @@ import { buildBolaoPalpiteId, buildLegacyBolaoPalpiteId, saveBolaoPalpite } from
 const docMock = vi.hoisted(() => vi.fn((_, collectionName: string, id: string) => ({ collectionName, id })));
 const setDocMock = vi.hoisted(() => vi.fn(async () => undefined));
 const updateDocMock = vi.hoisted(() => vi.fn(async () => undefined));
+const batchSetMock = vi.hoisted(() => vi.fn());
+const batchUpdateMock = vi.hoisted(() => vi.fn());
+const batchCommitMock = vi.hoisted(() => vi.fn(async () => undefined));
+const writeBatchMock = vi.hoisted(() =>
+  vi.fn(() => ({
+    set: batchSetMock,
+    update: batchUpdateMock,
+    commit: batchCommitMock,
+  })),
+);
 const getDocMock = vi.hoisted(() =>
   vi.fn(async (ref: { id: string }) => ({
     id: ref.id,
@@ -23,10 +33,16 @@ vi.mock("@/integrations/firebase/client", () => ({
 }));
 
 vi.mock("firebase/firestore", () => ({
+  collection: vi.fn((_, collectionName: string) => ({ collectionName })),
   doc: docMock,
+  getDocs: vi.fn(async () => ({ empty: true, docs: [] })),
   setDoc: setDocMock,
   getDoc: getDocMock,
+  limit: vi.fn(),
+  query: vi.fn((source) => source),
   updateDoc: updateDocMock,
+  where: vi.fn(),
+  writeBatch: writeBatchMock,
   serverTimestamp: () => "server-timestamp",
 }));
 
@@ -54,7 +70,8 @@ describe("bolao palpite ids", () => {
     });
 
     expect(docMock).toHaveBeenCalledWith({}, "bolao_palpites", "user-1_bolao-1_match-1");
-    expect(setDocMock).toHaveBeenCalled();
+    expect(batchSetMock).toHaveBeenCalled();
+    expect(batchCommitMock).toHaveBeenCalled();
   });
 
   it("updates an existing legacy id when read compatibility found one", async () => {
@@ -69,6 +86,7 @@ describe("bolao palpite ids", () => {
     });
 
     expect(docMock).toHaveBeenCalledWith({}, "bolao_palpites", "user-1_match-1_bolao-1");
-    expect(updateDocMock).toHaveBeenCalled();
+    expect(batchUpdateMock).toHaveBeenCalled();
+    expect(batchCommitMock).toHaveBeenCalled();
   });
 });

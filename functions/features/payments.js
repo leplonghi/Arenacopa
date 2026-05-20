@@ -1,11 +1,12 @@
 const { createHttpFunction } = require("../shared/middleware");
 const commercialCampaignRepository = require("../commercial-campaigns/repository");
+const { getRuntimeConfig } = require("../shared/runtime-config");
 
 // Helper (porting from index.js)
 async function stripeApiRequest({ method, path, params = null, idempotencyKey = null }) {
-    const functions = require("firebase-functions");
-    const runtimeConfig = functions.config();
-    const stripeSecretKey = runtimeConfig?.stripe?.secret_key || process.env.STRIPE_SECRET_KEY || "";
+    const functions = require("firebase-functions/v1");
+    const runtimeConfig = getRuntimeConfig(functions);
+    const stripeSecretKey = runtimeConfig.stripeSecretKey;
     
     if (!stripeSecretKey) {
         throw new Error("STRIPE_SECRET_KEY não configurada.");
@@ -53,16 +54,16 @@ exports.createCommercialCampaignCheckout = createHttpFunction(async ({ actorId, 
         throw new Error("validation_failed");
     }
 
-    const functions = require("firebase-functions");
-    const runtimeConfig = functions.config();
-    const siteUrl = runtimeConfig?.app?.site_url || "https://arenacopa.app";
+    const functions = require("firebase-functions/v1");
+    const runtimeConfig = getRuntimeConfig(functions);
+    const siteUrl = runtimeConfig.siteUrl;
 
     const campaign = await commercialCampaignRepository.loadCampaignView({ db, campaignId });
     if (!campaign || campaign.creator_id !== actorId) {
         throw new Error("permission_denied");
     }
 
-    const priceIds = runtimeConfig?.stripe?.commercial_campaign_price_ids || {};
+    const priceIds = runtimeConfig.stripeCommercialCampaignPriceIds || {};
     const stripePriceId = priceIds[pricingPlanId];
     if (!stripePriceId) {
         throw new Error("invalid_pricing_plan");

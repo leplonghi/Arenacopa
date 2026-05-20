@@ -1,0 +1,16 @@
+<svg width="256" height="256" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="256" height="256" rx="58" fill="#07111F"/>
+  <path d="M128 22L215 58V125C215 174 181 215 128 234C75 215 41 174 41 125V58L128 22Z" fill="#0A243A" stroke="#FFFFFF" stroke-width="10"/>
+  <path d="M54 65L128 35L202 65V122C202 164 173 199 128 217C83 199 54 164 54 122V65Z" fill="#0B4A6A"/>
+  <path d="M69 81L128 57L187 81V120C187 154 165 183 128 199C91 183 69 154 69 120V81Z" fill="#F4F7FB"/>
+  <path d="M69 81L128 57L187 81V120C187 154 165 183 128 199V57L69 81Z" fill="#D71920"/>
+  <path d="M128 57L187 81V120C187 154 165 183 128 199V57Z" fill="#0B4A6A"/>
+  <circle cx="92" cy="95" r="7" fill="#F4F7FB"/>
+  <circle cx="108" cy="116" r="5" fill="#F4F7FB"/>
+  <circle cx="87" cy="132" r="4" fill="#F4F7FB"/>
+  <path d="M146 91H172" stroke="#F4F7FB" stroke-width="8" stroke-linecap="round"/>
+  <path d="M146 114H178" stroke="#F4F7FB" stroke-width="8" stroke-linecap="round"/>
+  <path d="M146 137H170" stroke="#F4F7FB" stroke-width="8" stroke-linecap="round"/>
+  <path d="M78 173H178" stroke="#07111F" stroke-width="11" stroke-linecap="round"/>
+  <text x="128" y="178" text-anchor="middle" font-family="Arial, Helvetica, sans-serif" font-size="40" font-weight="900" letter-spacing="0" fill="#F4F7FB">MLS</text>
+</svg>

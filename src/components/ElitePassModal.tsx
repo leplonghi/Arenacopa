@@ -6,6 +6,7 @@ import { useToast } from '@/hooks/use-toast';
 import { monetizationEnv } from '@/lib/env';
 import { useTranslation } from 'react-i18next';
 import { formatCurrency, formatCurrencyParts } from '@/i18n/currency';
+import { BRAND, PRICING } from '@/lib/premium-brand';
 import {
     getPremiumSupportMailto,
 } from '@/services/monetization/stripe.service';
@@ -18,8 +19,8 @@ export function ElitePassModal({ isOpen, onClose }: { isOpen: boolean; onClose: 
     const supportMailto = getPremiumSupportMailto();
     const benefits = t('elite.benefits', { returnObjects: true }) as Array<{ title: string; desc: string }>;
     const activeLanguage = i18n.resolvedLanguage || i18n.language;
-    const oldPrice = useMemo(() => formatCurrency(activeLanguage, 49.9), [activeLanguage]);
-    const currentPrice = useMemo(() => formatCurrencyParts(activeLanguage, 29.9), [activeLanguage]);
+    const oldPrice = useMemo(() => formatCurrency(activeLanguage, PRICING.copaPass.compareAtPrice), [activeLanguage]);
+    const currentPrice = useMemo(() => formatCurrencyParts(activeLanguage, PRICING.copaPass.price), [activeLanguage]);
 
     // If they already bought it, no need to show the sales pitch again
     if (isPremium) {
@@ -97,7 +98,7 @@ export function ElitePassModal({ isOpen, onClose }: { isOpen: boolean; onClose: 
                                         </div>
                                     </motion.div>
 
-                                    <h2 className="text-4xl font-black text-white tracking-tighter mb-2">{t('elite.title')}</h2>
+                                    <h2 className="text-4xl font-black text-white tracking-tighter mb-2">{BRAND.premiumPlan}</h2>
                                     <p className="text-[11px] font-black text-yellow-500 uppercase tracking-[0.3em] flex items-center justify-center gap-2">
                                         <Sparkles className="w-3.5 h-3.5" /> {t('elite.subtitle')}
                                     </p>

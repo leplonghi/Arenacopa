@@ -120,8 +120,8 @@ export function ModeChoiceCard({
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
             className={cn(
-              "group relative w-full overflow-hidden rounded-[24px] border text-left transition-all duration-500 ease-out",
-              "p-6 sm:p-7",
+              "group relative w-full overflow-hidden rounded-[18px] border text-left transition-all duration-500 ease-out",
+              "p-3 sm:p-3.5",
               cfg.cardBg,
               cfg.cardBgHover,
               cfg.borderBase,
@@ -155,7 +155,7 @@ export function ModeChoiceCard({
 
             {/* Ambient glow behind icon */}
             <div
-              className="absolute top-6 left-6 h-24 w-24 rounded-full blur-[60px] opacity-0 transition-opacity duration-700 pointer-events-none"
+              className="absolute top-5 left-5 h-20 w-20 rounded-full blur-[50px] opacity-0 transition-opacity duration-700 pointer-events-none"
               style={{
                 background: cfg.glowColor,
                 opacity: isHovered ? 0.5 : 0,
@@ -164,7 +164,7 @@ export function ModeChoiceCard({
 
             {/* Top shimmer line */}
             <div
-              className="absolute top-0 left-6 right-6 h-px opacity-0 transition-opacity duration-500"
+              className="absolute top-0 left-5 right-5 h-px opacity-0 transition-opacity duration-500"
               style={{
                 background: `linear-gradient(90deg, transparent, ${variant === "traditional" ? "rgba(74,222,128,0.3)" : "rgba(251,191,36,0.3)"}, transparent)`,
                 opacity: isHovered ? 1 : 0,
@@ -175,7 +175,7 @@ export function ModeChoiceCard({
             {badge && (
               <div
                 className={cn(
-                  "absolute top-5 right-5 rounded-full border px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.15em] backdrop-blur-sm",
+                  "absolute top-4 right-4 rounded-full border px-2 py-0.5 text-[8px] font-black uppercase tracking-[0.15em] backdrop-blur-sm",
                   cfg.badgeBg,
                   cfg.badgeBorder,
                   cfg.badgeText
@@ -186,25 +186,25 @@ export function ModeChoiceCard({
             )}
 
             {/* Content */}
-            <div className="relative z-10 flex items-start gap-5">
+            <div className="relative z-10 flex items-start gap-4">
               {/* Icon container */}
               <div className="relative flex-shrink-0">
                 <motion.div
                   animate={isHovered ? { scale: 1.06 } : { scale: 1 }}
                   transition={{ duration: 0.4, ease: "easeOut" }}
                   className={cn(
-                    "flex h-[52px] w-[52px] items-center justify-center rounded-[16px] border transition-all duration-500",
+                    "flex h-[34px] w-[34px] items-center justify-center rounded-[10px] border transition-all duration-500",
                     cfg.iconBg,
                     cfg.iconBorder,
                     cfg.iconGlow,
                     cfg.iconGlowHover
                   )}
                 >
-                  <Icon className={cn("h-6 w-6", cfg.iconColor)} strokeWidth={1.8} />
+                  <Icon className={cn("h-4 w-4", cfg.iconColor)} strokeWidth={1.8} />
                 </motion.div>
 
                 {/* Status dot */}
-                <span className="absolute -right-1 -top-1 flex h-3 w-3">
+                <span className="absolute -right-1 -top-1 flex h-2.5 w-2.5">
                   <span
                     className={cn(
                       "absolute inline-flex h-full w-full animate-ping rounded-full opacity-40",
@@ -213,7 +213,7 @@ export function ModeChoiceCard({
                   />
                   <span
                     className={cn(
-                      "relative inline-flex h-3 w-3 rounded-full border-2 border-[#061a10]",
+                      "relative inline-flex h-2.5 w-2.5 rounded-full border-2 border-[#061a10]",
                       cfg.pulseColor
                     )}
                   />
@@ -225,7 +225,7 @@ export function ModeChoiceCard({
                 <div className="flex items-center justify-between gap-3">
                   <h3
                     className={cn(
-                      "font-display text-lg font-black uppercase tracking-wide",
+                      "font-display text-sm font-black uppercase tracking-wide",
                       cfg.titleColor
                     )}
                   >
@@ -236,26 +236,27 @@ export function ModeChoiceCard({
                     transition={{ duration: 0.3 }}
                   >
                     <ArrowRight
-                      className={cn("h-5 w-5 transition-colors duration-300", cfg.arrowColor)}
+                      className={cn("h-4 w-4 transition-colors duration-300", cfg.arrowColor)}
                     />
                   </motion.div>
                 </div>
 
-                <p className={cn("mt-1.5 text-[13px] leading-relaxed", cfg.descColor)}>
+                <p className={cn("mt-0.5 text-[11px] leading-snug", cfg.descColor)}>
                   {description}
                 </p>
 
                 {/* Tags */}
-                <div className="mt-4 flex flex-wrap gap-2">
+                <div className="mt-2 flex flex-wrap gap-1">
                   {tags.map((tag) => (
                     <span
                       key={tag}
                       className={cn(
-                        "inline-flex items-center rounded-full border px-3 py-1 text-[10px] font-semibold tracking-wide backdrop-blur-sm transition-all duration-300",
+                        "inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold tracking-wide backdrop-blur-sm transition-all duration-300",
                         cfg.tagText,
                         cfg.tagBg,
                         cfg.tagBorder,
-                        "group-hover:brightness-110"
+                        "group-hover:brightness-110",
+                        "h-5 flex items-center"
                       )}
                     >
                       {tag}
@@ -267,7 +268,7 @@ export function ModeChoiceCard({
                 <motion.div
                   animate={isHovered ? { opacity: 1, y: 0 } : { opacity: 0, y: 4 }}
                   transition={{ duration: 0.3 }}
-                  className="mt-4 flex items-center gap-1.5"
+                  className="mt-2 flex items-center gap-1.5"
                 >
                   <span
                     className={cn(
@@ -302,25 +303,25 @@ export function ModeChoiceCard({
           side="top"
           sideOffset={10}
           className={cn(
-            "max-w-[270px] border p-4 shadow-2xl backdrop-blur-xl",
+            "max-w-[270px] border p-3 shadow-2xl backdrop-blur-xl",
             variant === "traditional"
               ? "border-[#22c55e]/20 bg-[#0c1912]/95"
               : "border-amber-500/20 bg-[#1a1508]/95"
           )}
         >
-          <div className="flex items-start gap-3">
+          <div className="flex items-start gap-2.5">
             <div
               className={cn(
-                "flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border",
+                "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border",
                 cfg.iconBg,
                 cfg.iconBorder
               )}
             >
-              <HelpCircle className={cn("h-4 w-4", cfg.iconColor)} />
+              <HelpCircle className={cn("h-3.5 w-3.5", cfg.iconColor)} />
             </div>
             <div>
-              <p className="text-sm font-bold text-white">{tooltipTitle}</p>
-              <p className="mt-0.5 text-xs leading-relaxed text-white/50">
+              <p className="text-xs font-bold text-white">{tooltipTitle}</p>
+              <p className="mt-0.5 text-[10px] leading-relaxed text-white/50">
                 {tooltipDescription}
               </p>
             </div>
@@ -330,3 +331,4 @@ export function ModeChoiceCard({
     </TooltipProvider>
   );
 }
+

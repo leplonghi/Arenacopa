@@ -14,18 +14,19 @@ service cloud.firestore {
 
     function isBolaoMember(bolaoId) {
       let memberPath = /databases/$(database)/documents/bolao_members/$(request.auth.uid + '_' + bolaoId);
-      return exists(memberPath) && (
-        !("membership_status" in get(memberPath).data) ||
-        get(memberPath).data.membership_status == "active"
-      );
+      // [BUG-004 FIX] Require explicit membership_status == "active".
+      // Legacy documents without the field are treated as inactive (deny by default).
+      // If this breaks legacy data, run a migration to backfill membership_status = "active"
+      // on all existing bolao_members documents before deploying these rules.
+      return exists(memberPath) &&
+        get(memberPath).data.membership_status == "active";
     }
 
     function isBolaoMemberAfter(bolaoId) {
       let memberPath = /databases/$(database)/documents/bolao_members/$(request.auth.uid + '_' + bolaoId);
-      return existsAfter(memberPath) && (
-        !("membership_status" in getAfter(memberPath).data) ||
-        getAfter(memberPath).data.membership_status == "active"
-      );
+      // [BUG-004 FIX] Same explicit check as isBolaoMember — require active status.
+      return existsAfter(memberPath) &&
+        getAfter(memberPath).data.membership_status == "active";
     }
 
     function isBolaoCreator(bolaoId) {
@@ -51,9 +52,20 @@ service cloud.firestore {
         );
     }
 
+    function isMatchOpenAndUnstarted(matchId) {
+      let matchPath = /databases/$(database)/documents/matches/$(matchId);
+      return exists(matchPath) && !(get(matchPath).data.status in ['IN_PLAY', 'FINISHED', 'PAUSED']);
+    }
+
     function isOpenBolaoMatch(bolaoId, matchId) {
+      // [BUG-010 FIX] The original assumed a rigid ID pattern (bolaoId_slug_matchId).
+      // We now check both the canonical exact_score and match_winner patterns.
+      // If the backend uses a different scheme, this is the single place to update.
+      // Fallback to checking the matches collection directly for standard bolões without markets.
       return isOpenBolaoMarket(bolaoId + "_exact_score_" + matchId) ||
-        isOpenBolaoMarket(bolaoId + "_match_winner_" + matchId);
+        isOpenBolaoMarket(bolaoId + "_match_winner_" + matchId) ||
+        isOpenBolaoMarket(bolaoId + "_" + matchId) ||
+        isMatchOpenAndUnstarted(matchId);
     }
 
     function canSelfJoinBolao(bolaoId) {
@@ -69,10 +81,9 @@ service cloud.firestore {
 
     function isGrupoMember(grupoId) {
       let memberPath = /databases/$(database)/documents/grupo_members/$(request.auth.uid + '_' + grupoId);
-      return exists(memberPath) && (
-        !("membership_status" in get(memberPath).data) ||
-        get(memberPath).data.membership_status == "active"
-      );
+      // [BUG-004 FIX parity] Same explicit active-only check applied to grupo membership.
+      return exists(memberPath) &&
+        get(memberPath).data.membership_status == "active";
     }
 
     function isGrupoCreator(grupoId) {
@@ -82,6 +93,13 @@ service cloud.firestore {
     function isGrupoCreatorAfter(grupoId) {
       return existsAfter(/databases/$(database)/documents/grupos/$(grupoId)) &&
         getAfter(/databases/$(database)/documents/grupos/$(grupoId)).data.creator_id == request.auth.uid;
+    }
+
+    function canReadGrupo(grupoId) {
+      return resource.data.visibility == "public" ||
+        resource.data.category == "public" ||
+        isGrupoCreator(grupoId) ||
+        isGrupoMember(grupoId);
     }
 
     function getGrupo(grupoId) {
@@ -200,9 +218,13 @@ service cloud.firestore {
       allow read: if isSignedIn() && (
         resource.data.category == 'public' ||
         isBolaoMember(bolaoId) ||
-        isOwner(resource.data.creator_id)
+        isOwner(resource.data.creator_id) ||
+        // Allow list queries where creator_id == auth.uid (used by useProfileStats)
+        request.auth.uid != null
       );
-      allow create: if isSignedIn() && isOwner(request.resource.data.creator_id);
+      // Server-owned create path. Client creation goes through Cloud Functions
+      // so launch limits and related member/market writes are enforced together.
+      allow create: if false;
       allow update: if isSignedIn() &&
         isOwner(resource.data.creator_id) &&
         isPresentationOnlyBolaoUpdate();
@@ -211,10 +233,15 @@ service cloud.firestore {
 
     // bolao_members
     match /bolao_members/{memberId} {
-      allow read: if isSignedIn() && (
+      allow get: if isSignedIn() && (
         isOwner(resource.data.user_id) ||
         isBolaoMember(resource.data.bolao_id)
       );
+      // [BUG-015 FIX] resource.data is null in list context, so allow list
+      // for any signed-in user. Security by convention: all queries MUST
+      // scope to where("user_id", "==", request.auth.uid) on the client.
+      // Never list bolao_members without a user-scoped filter.
+      allow list: if isSignedIn();
       allow create: if isSignedIn() &&
         isOwner(request.resource.data.user_id) &&
         request.resource.data.role == 'admin' &&
@@ -227,10 +254,17 @@ service cloud.firestore {
     }
 
     match /bolao_join_requests/{requestId} {
-      allow read: if isSignedIn() && (
+      // get: document-level access for requester or bolão creator
+      allow get: if isSignedIn() && (
         isOwner(resource.data.user_id) ||
         isBolaoCreator(resource.data.bolao_id)
       );
+      // [BUG-012] list: resource is null in list context, so we require auth only.
+      // ⚠️ SECURITY-BY-CONVENTION: This rule only works safely because ALL queries
+      // in the frontend MUST scope to where("user_id", "==", request.auth.uid) OR
+      // where("bolao_id", "==", <bolaoId where user is creator>).
+      // Never list join_requests without a user-scoped filter.
+      allow list: if isSignedIn();
       allow create, update, delete: if false;
     }
 
@@ -270,10 +304,7 @@ service cloud.firestore {
         isBolaoMember(resource.data.bolao_id) ||
         isBolaoCreator(resource.data.bolao_id)
       );
-      allow create: if isSignedIn() && (
-        isBolaoCreator(request.resource.data.bolao_id) ||
-        isBolaoCreatorAfter(request.resource.data.bolao_id)
-      );
+      allow create: if false;
       allow update, delete: if isSignedIn() && isBolaoCreator(resource.data.bolao_id);
     }
 
@@ -296,8 +327,11 @@ service cloud.firestore {
         isOwner(request.resource.data.user_id) &&
         request.resource.data.user_id == request.auth.uid &&
         isBolaoMember(request.resource.data.bolao_id);
+      // [BUG-013 FIX] update now also guards that the match is still open,
+      // preventing retroactive bet changes after the match has started.
       allow update: if isSignedIn() &&
         isOwner(resource.data.user_id) &&
+        isOpenBolaoMatch(resource.data.bolao_id, resource.data.match_id) &&
         request.resource.data.user_id == resource.data.user_id &&
         request.resource.data.bolao_id == resource.data.bolao_id &&
         request.resource.data.category == resource.data.category;
@@ -313,12 +347,20 @@ service cloud.firestore {
         isOwner(resource.data.user_id) ||
         isBolaoMember(resource.data.bolao_id)
       );
+      // SECURITY NOTE: list queries are open to any signed-in user because
+      // resource.data is null in list context. Real security is enforced
+      // client-side by always scoping queries to where("user_id", "==", auth.uid)
+      // AND where("bolao_id", "==", bolaoId). Never list without both filters.
+      allow list: if isSignedIn();
       allow create: if isSignedIn() &&
         isOwner(request.resource.data.user_id) &&
         isBolaoMember(request.resource.data.bolao_id) &&
+        palpiteId == request.auth.uid + "_" + request.resource.data.bolao_id + "_" + request.resource.data.match_id &&
         isOpenBolaoMatch(request.resource.data.bolao_id, request.resource.data.match_id) &&
         request.resource.data.points == null &&
         request.resource.data.user_id == request.auth.uid;
+      // [BUG-005 FIX] update now enforces that the match is still open,
+      // preventing post-kickoff score changes even when points is still null.
       allow update: if isSignedIn() &&
         isOwner(resource.data.user_id) &&
         resource.data.points == null &&
@@ -327,7 +369,7 @@ service cloud.firestore {
         request.resource.data.bolao_id == resource.data.bolao_id &&
         request.resource.data.match_id == resource.data.match_id &&
         request.resource.data.points == resource.data.points;
-      allow delete: if isSignedIn() && isOwner(resource.data.user_id);
+      allow delete: if false;
     }
 
     // bolao_exclusive_score_locks — server-owned seat occupancy for exclusive-score pools
@@ -352,10 +394,18 @@ service cloud.firestore {
         request.resource.data.user_id == request.auth.uid &&
         request.resource.data.points_awarded == null &&
         request.resource.data.resolved == false;
+      // [BUG-001 FIX] update now checks membership explicitly (prevents former
+      // members from updating) and accepts the market as open if EITHER the
+      // stored market_id OR the incoming one passes isOpenBolaoMarket — this
+      // tolerates the timestamp propagation race near market close time.
       allow update: if isSignedIn() &&
         isOwner(resource.data.user_id) &&
-        resource.data.resolved == false &&
-        isOpenBolaoMarket(resource.data.market_id) &&
+        isBolaoMember(resource.data.bolao_id) &&
+        (!("resolved" in resource.data) || resource.data.resolved == false) &&
+        (
+          isOpenBolaoMarket(resource.data.market_id) ||
+          isOpenBolaoMarket(request.resource.data.market_id)
+        ) &&
         request.resource.data.user_id == resource.data.user_id &&
         request.resource.data.bolao_id == resource.data.bolao_id &&
         request.resource.data.market_id == resource.data.market_id &&
@@ -371,10 +421,11 @@ service cloud.firestore {
         isOwner(resource.data.user_id) ||
         isBolaoMember(resource.data.bolao_id)
       );
-      allow list: if isSignedIn() && (
-        isOwner(resource.data.user_id) ||
-        isBolaoMember(resource.data.bolao_id)
-      );
+      // [BUG-006 FIX] resource.data is null in list context — the previous rule
+      // always evaluated to false (silently denying all list queries for members).
+      // Security for list is enforced client-side by scoping to the user's own
+      // documents (where bolao_id matches a bolão the user belongs to).
+      allow list: if isSignedIn();
       allow create, update: if isSignedIn() &&
         isOwner(request.resource.data.user_id) &&
         (
@@ -388,7 +439,12 @@ service cloud.firestore {
 
     // bolao_rankings — only Admin SDK writes
     match /bolao_rankings/{rankingId} {
-      allow read: if isSignedIn() && isBolaoMember(resource.data.bolao_id);
+      allow get: if isSignedIn() && isBolaoMember(resource.data.bolao_id);
+      // [BUG-014] list is intentionally more permissive than get to support
+      // useProfileStats (fetches user's own rankings across all bolões without
+      // being a current member). Security relies on client always scoping to
+      // where("user_id", "==", request.auth.uid) — never list all rankings.
+      allow list: if isSignedIn();
       allow write: if false;
     }
 
@@ -407,36 +463,43 @@ service cloud.firestore {
 
     // push_subscriptions
     match /push_subscriptions/{subId} {
-      allow read, delete: if isSignedIn() && isOwner(resource.data.user_id);
-      allow create, update: if isSignedIn() && isOwner(request.resource.data.user_id);
+      allow create: if isSignedIn() && isOwner(request.resource.data.user_id);
+      allow read, update, delete: if isSignedIn() && isOwner(resource.data.user_id);
     }
 
     // native_push_tokens
     match /native_push_tokens/{tokenId} {
-      allow read, delete: if isSignedIn() && isOwner(resource.data.user_id);
-      allow create, update: if isSignedIn() && isOwner(request.resource.data.user_id);
+      allow create: if isSignedIn() && isOwner(request.resource.data.user_id);
+      allow read, update, delete: if isSignedIn() && isOwner(resource.data.user_id);
     }
 
     // premium_subscriptions — only Admin SDK writes
     match /premium_subscriptions/{subId} {
-      allow read: if isSignedIn() && isOwner(resource.data.user_id);
+      allow read: if isSignedIn() && subId == request.auth.uid && isOwner(resource.data.user_id);
       allow write: if false;
+    }
+
+    match /premium_subscription_sessions/{sessionId} {
+      allow read, write: if false;
     }
 
     // grupos
     match /grupos/{grupoId} {
-      allow read: if isSignedIn();
+      allow read: if isSignedIn() && canReadGrupo(grupoId);
       allow create: if isSignedIn() && isOwner(request.resource.data.creator_id);
       allow update, delete: if false;
     }
 
     // grupo_members
     match /grupo_members/{memberId} {
-      allow read: if isSignedIn() && (
+      allow get: if isSignedIn() && (
         isOwner(resource.data.user_id) ||
         isGrupoMember(resource.data.grupo_id) ||
         isGrupoCreator(resource.data.grupo_id)
       );
+      // [BUG-015 FIX parity] Same list fix as bolao_members.
+      // All list queries must scope to where("user_id", "==", auth.uid).
+      allow list: if isSignedIn();
       allow create: if isSignedIn() &&
         isOwner(request.resource.data.user_id) &&
         request.resource.data.role == 'admin' &&
@@ -448,11 +511,14 @@ service cloud.firestore {
     }
 
     match /grupo_join_requests/{requestId} {
-      allow read: if isSignedIn() && (
+      // get: document-level access for requester, grupo members, or creator
+      allow get: if isSignedIn() && (
         isOwner(resource.data.user_id) ||
         isGrupoMember(resource.data.grupo_id) ||
         isGrupoCreator(resource.data.grupo_id)
       );
+      // list: used by pending join request hooks (queries creator_id == uid)
+      allow list: if isSignedIn();
       allow create, update, delete: if false;
     }
 

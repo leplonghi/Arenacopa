@@ -1,4 +1,4 @@
-import { Suspense, lazy, useState } from "react";
+import React, { Suspense, lazy, useState } from "react";
 import { useParams } from "react-router-dom";
 import { ChevronDown } from "lucide-react";
 import type { TFunction } from "i18next";
@@ -54,15 +54,22 @@ export default function BolaoDetail() {
 
   const {
     bolao, members, memberCount, joinRequests, myPalpites, bolaoMarkets, myMarketPredictions,
-    allMarketPredictions, activityFeed, showBolaoIntro, loading, infoOpen,
+    activityFeed, showBolaoIntro, loading, infoOpen,
     championOpen, championSelection, myChampion, activeTab, showEditPanel, setBolao,
     setInfoOpen, setChampionOpen, setChampionSelection, setActiveTab, setShowEditPanel,
     saveChampion, handleShareInvite, closeBolaoIntro, handleBolaoIntroToPredictions,
     dismissTour, activeTourTab, isCreator, formatLabel, pendingOverview, joinRequestItems,
-    matchMarkets, phaseMarkets, specialMarkets, tournamentMarkets, championMarket, highlightedMatch
+    matchMarkets, phaseMarkets, specialMarkets, tournamentMarkets, championMarket, highlightedMatch,
+    memberPredictionCounts, matchPredictionCounts
   } = useBolaoDetail(id);
 
   const [shareVipOpen, setShareVipOpen] = useState(false);
+  const [editTab, setEditTab] = useState<"general" | "participation" | "rules" | "finance">("general");
+
+  const openEditAtTab = (tab: "general" | "participation" | "rules" | "finance") => {
+    setEditTab(tab);
+    setShowEditPanel(true);
+  };
 
   if (loading) return <BolaoDetailSkeleton t={t} />;
   if (!bolao) return <EmptyState icon="🏆" title={t('bolao_detail.not_found_title')} description={t('bolao_detail.not_found_desc')} />;
@@ -91,7 +98,7 @@ export default function BolaoDetail() {
       <BolaoHeader
         bolao={bolao} isCreator={isCreator} memberCount={memberCount} formatLabel={formatLabel}
         bolaoMarkets={bolaoMarkets} championMarket={championMarket} myChampion={myChampion}
-        onEdit={() => setShowEditPanel(true)} onShare={handleShareInvite} onOpenInfo={() => setInfoOpen(true)}
+        onEdit={() => openEditAtTab("general")} onShare={handleShareInvite} onOpenInfo={() => setInfoOpen(true)}
       />
 
       <BolaoActionCenter pendingOverview={pendingOverview} completionPercent={completionPercent} onAction={setActiveTab} />
@@ -106,13 +113,21 @@ export default function BolaoDetail() {
         <BolaoEditPanel
           bolao={bolao} open={showEditPanel} onOpenChange={setShowEditPanel}
           memberCount={memberCount}
+          initialTab={editTab}
           onBolaoUpdated={(patch) => setBolao(curr => curr ? { ...curr, ...patch } : curr)}
         />
 
         {activeTab === "palpites" && (
           <Suspense fallback={<DetailSectionFallback />}>
             <div className="space-y-4">
-              <JogosTab bolaoId={bolao.id} bolao={bolao} highlightedMatchId={highlightedMatch || undefined} markets={bolaoMarkets} predictions={myMarketPredictions} />
+              <JogosTab 
+                bolaoId={bolao.id} 
+                bolao={bolao} 
+                highlightedMatchId={highlightedMatch || undefined} 
+                markets={bolaoMarkets} 
+                predictions={myMarketPredictions}
+                matchPredictionCounts={matchPredictionCounts}
+              />
               <Accordion type="multiple" className="space-y-2">
                 {phaseMarkets.length > 0 && (
                   <AccordionItem value="fase" className="rounded-2xl border-0 bg-white/5 overflow-hidden">
@@ -172,7 +187,7 @@ export default function BolaoDetail() {
                 onNativeShare={handleShareInvite} 
                 onGenerateVipCard={() => setShareVipOpen(true)}
               />
-              <OverviewTab bolao={bolao} members={members} palpites={myPalpites} userId={user!.id} isCreator={isCreator} markets={bolaoMarkets} marketPredictions={allMarketPredictions} activityFeed={activityFeed} onShare={handleShareInvite} />
+              <OverviewTab bolao={bolao} members={members} palpites={myPalpites} userId={user!.id} isCreator={isCreator} markets={bolaoMarkets} activityFeed={activityFeed} onShare={handleShareInvite} />
               {isCreator && bolao.category === "private" && (
                 <AdmissionInbox
                   title={joinRequests.length > 0 ? `${joinRequests.length} solicitação${joinRequests.length > 1 ? "ões" : ""} pendente${joinRequests.length > 1 ? "s" : ""}` : "Solicitações para entrar"}
@@ -181,11 +196,26 @@ export default function BolaoDetail() {
               )}
               <div className="space-y-4">
                 <div className="mb-4 flex gap-2">
-                  <button onClick={() => setGaleraView("rivais")} className={cn("rounded-2xl px-4 py-2 text-sm font-black transition-all", galeraView === "rivais" ? "bg-white text-black" : "surface-card-soft text-zinc-400")}>{t('bolao_detail.rivals_tab')}</button>
-                  <button onClick={() => setGaleraView("membros")} className={cn("rounded-2xl px-4 py-2 text-sm font-black transition-all", galeraView === "membros" ? "bg-white text-black" : "surface-card-soft text-zinc-400")}>{t('bolao_detail.members_tab')}</button>
+                  <button onClick={() => setGaleraView("rivais")} className={cn("rounded-2xl px-4 py-2 text-sm font-black transition-all", galeraView === "rivais" ? "bg-white text-black" : "surface-card-soft text-zinc-400")}>
+                    {t('bolao_detail.galera_palpites_tab', 'Palpites da Galera')}
+                  </button>
+                  <button onClick={() => setGaleraView("membros")} className={cn("rounded-2xl px-4 py-2 text-sm font-black transition-all", galeraView === "membros" ? "bg-white text-black" : "surface-card-soft text-zinc-400")}>
+                    {t('bolao_detail.members_tab', 'Membros')}
+                  </button>
                 </div>
                 {galeraView === "rivais" && <PublicPalpitesTab bolaoId={bolao.id} />}
-                {galeraView === "membros" && <MembrosTab members={members} userId={user!.id} bolaoId={bolao.id} isCreator={isCreator} isPaid={Boolean(bolao.is_paid)} onRefresh={() => {}} />}
+                {galeraView === "membros" && (
+                  <MembrosTab 
+                    members={members} 
+                    userId={user!.id} 
+                    bolaoId={bolao.id} 
+                    isCreator={isCreator} 
+                    isPaid={Boolean(bolao.is_paid)} 
+                    onRefresh={() => {}} 
+                    predictionCounts={memberPredictionCounts}
+                    totalMarkets={bolaoMarkets.length}
+                  />
+                )}
               </div>
               <div className="border-t border-white/10 pt-6">
                 <p className="mb-4 text-xs font-black uppercase tracking-widest text-zinc-400">{t('bolao_detail.caixinha_header')}</p>
@@ -193,7 +223,12 @@ export default function BolaoDetail() {
               </div>
               {isCreator && (
                 <div className="border-t border-white/10 pt-6">
-                  <GrupoLinkPanel bolaoId={bolao.id} currentGrupoId={bolao.grupo_id || null} onLinkedGroupChange={(gid) => setBolao(curr => curr ? { ...curr, grupo_id: gid } : curr)} />
+                  <GrupoLinkPanel 
+                    bolaoId={bolao.id} 
+                    currentGrupoId={bolao.grupo_id || null} 
+                    onLinkedGroupChange={(gid) => setBolao(curr => curr ? { ...curr, grupo_id: gid } : curr)} 
+                    onOpenEditParticipation={() => openEditAtTab("participation")}
+                  />
                 </div>
               )}
             </div>

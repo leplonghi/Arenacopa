@@ -110,7 +110,7 @@
     "desc": "Toque para revisar e aprovar"
   },
   "quick_stats": {
-    "pending": "Chutes pendentes",
+    "pending": "Palpites pend.",
     "today": "Jogos hoje",
     "pools": "Meus bolões"
   },
@@ -141,8 +141,8 @@
     "news_desc": "Últimas do futebol",
     "ranking": "Ranking",
     "ranking_desc": "Sua posição",
-    "communities": "Comunidades",
-    "communities_desc": "Turmas recorrentes"
+    "communities": "Grupos",
+    "communities_desc": "Turmas e disputas"
   },
   "today_more": {
     "title": "Mais jogos hoje",

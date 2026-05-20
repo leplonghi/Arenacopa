@@ -205,28 +205,33 @@ function normalizeBolaoDocument(source) {
   const derived = recomputeDerivedState(normalized, normalized.audit_meta.last_updated_at);
   normalized.integrity = derived.integrity;
   normalized.editable_sections = derived.editable_sections;
-  normalized.name = normalized.presentation.name;
-  normalized.description = normalized.presentation.description || null;
-  normalized.avatar_url = normalized.presentation.emoji || "⚽";
-  normalized.category =
-    normalized.access_policy.join_mode === "public_open" ? "public" : "private";
-  normalized.is_paid = normalized.finance_rules.finance_mode === "paid_external";
-  normalized.entry_fee = normalized.finance_rules.entry_fee_amount;
-  normalized.prize_distribution =
-    normalized.finance_rules.distribution_custom_text ||
-    normalized.finance_rules.distribution_model ||
+  return applyLegacyProjection(normalized, source);
+}
+
+function applyLegacyProjection(target, source = target) {
+  target.name = target.presentation.name;
+  target.description = target.presentation.description || null;
+  target.avatar_url = target.presentation.emoji || "⚽";
+  target.category =
+    target.access_policy.join_mode === "public_open" ? "public" : "private";
+  target.is_paid = target.finance_rules.finance_mode === "paid_external";
+  target.entry_fee = target.finance_rules.entry_fee_amount;
+  target.prize_distribution =
+    target.finance_rules.distribution_custom_text ||
+    target.finance_rules.distribution_model ||
     null;
-  normalized.payment_details = normalized.finance_rules.payment_details || null;
-  normalized.grupo_id = normalized.context.grupo_id || null;
-  normalized.format_id = normalized.competition_rules.format;
-  normalized.scoring_mode = normalized.competition_rules.scoring_mode || "default";
-  normalized.scoring_rules = clone(normalized.competition_rules.scoring_rules);
-  normalized.prediction_cutoff_minutes = normalized.competition_rules.prediction_cutoff_minutes;
-  normalized.visibility_mode = source.visibility_mode || "hidden_until_deadline";
-  normalized.cutoff_mode = source.cutoff_mode || "per_match";
-  normalized.status = legacyStatusFromLifecycle(normalized.lifecycle.status);
-  normalized.invite_code = source.invite_code || buildInviteCode(normalized.id);
-  return normalized;
+  target.payment_details = target.finance_rules.payment_details || null;
+  target.grupo_id = target.context.grupo_id || null;
+  target.group_binding_mode = target.context.group_binding_mode || "none";
+  target.format_id = target.competition_rules.format;
+  target.scoring_mode = target.competition_rules.scoring_mode || "default";
+  target.scoring_rules = clone(target.competition_rules.scoring_rules);
+  target.prediction_cutoff_minutes = target.competition_rules.prediction_cutoff_minutes;
+  target.visibility_mode = source.visibility_mode || target.visibility_mode || "hidden_until_deadline";
+  target.cutoff_mode = source.cutoff_mode || target.cutoff_mode || "per_match";
+  target.status = legacyStatusFromLifecycle(target.lifecycle.status);
+  target.invite_code = source.invite_code || target.invite_code || buildInviteCode(target.id);
+  return target;
 }
 
 function nextAuditMeta(source, actorId, nowIso) {
@@ -434,10 +439,18 @@ function buildConfigurationUpdate({
   next.audit_meta = nextAuditMeta(normalized, actorId, nowIso);
   next.updated_at = nowIso;
 
+  // Cross-section validation: group_gated cannot coexist with public_open
+  if (
+    next.context?.group_binding_mode === "group_gated" &&
+    next.access_policy?.join_mode === "public_open"
+  ) {
+    throw new Error("validation_failed");
+  }
+
   const derived = recomputeDerivedState(next, nowIso);
   next.integrity = derived.integrity;
   next.editable_sections = derived.editable_sections;
-  return next;
+  return applyLegacyProjection(next);
 }
 
 function validateBolaoForPublish(source) {
@@ -480,7 +493,7 @@ function buildPublishUpdate({ current, expectedConfigVersion, actorId, nowIso })
   const derived = recomputeDerivedState(next, nowIso);
   next.integrity = derived.integrity;
   next.editable_sections = derived.editable_sections;
-  return next;
+  return applyLegacyProjection(next);
 }
 
 function buildDuplicateDraftDocument({
@@ -528,7 +541,7 @@ function buildPresentationUpdate({
   const derived = recomputeDerivedState(next, nowIso);
   next.integrity = derived.integrity;
   next.editable_sections = derived.editable_sections;
-  return next;
+  return applyLegacyProjection(next);
 }
 
 function buildLifecycleUpdate({
@@ -571,7 +584,7 @@ function buildLifecycleUpdate({
   const derived = recomputeDerivedState(next, nowIso);
   next.integrity = derived.integrity;
   next.editable_sections = derived.editable_sections;
-  return next;
+  return applyLegacyProjection(next);
 }
 
 function buildDeleteBolaoUpdate({
@@ -622,7 +635,7 @@ function buildDeleteBolaoUpdate({
     finance_rules: false,
     operation: false,
   };
-  return next;
+  return applyLegacyProjection(next);
 }
 
 module.exports = {

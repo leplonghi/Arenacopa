@@ -1,4 +1,5 @@
-const { createHttpFunction } = require("../shared/middleware");
+const { createHttpFunction, applyCors } = require("../shared/middleware");
+const { mapHttpFunctionError } = require("../shared/error-map");
 const bolaoConfigHandlers = require("../bolao-config/handlers");
 const bolaoConfigRepository = require("../bolao-config/repository");
 const bolaoListingRepository = require("../bolao-listing/repository");
@@ -221,9 +222,36 @@ exports.updateBolaoPrizeSettings = createHttpFunction(async ({ actorId, payload,
     });
 });
 
-exports.listUserBoloes = createHttpFunction(async ({ actorId, db }) => {
-    return bolaoListingRepository.listUserBoloes({
-        db,
-        actorId,
-    });
-});
+// listUserBoloes is declared with explicit 512MB memory to prevent OOM (default 256MB is insufficient)
+exports.listUserBoloes = (() => {
+    const functions = require("firebase-functions/v1");
+    return functions
+        .region("us-central1")
+        .runWith({ timeoutSeconds: 30, memory: "1GB" })
+        .https.onRequest(async (req, res) => {
+            applyCors(req, res);
+            if (req.method === "OPTIONS") {
+                res.status(204).send("");
+                return;
+            }
+            try {
+                const authHeader = req.headers.authorization;
+                if (!authHeader || !authHeader.startsWith("Bearer ")) {
+                    throw new Error("auth_required");
+                }
+                const token = authHeader.split("Bearer ")[1];
+                const admin = require("firebase-admin");
+                const decoded = await admin.auth().verifyIdToken(token);
+                const db = admin.firestore();
+                const result = await bolaoListingRepository.listUserBoloes({
+                    db,
+                    actorId: decoded.uid,
+                });
+                if (!res.headersSent) res.status(200).json(result);
+            } catch (error) {
+                console.error("[listUserBoloes] error:", error.message);
+                const mapped = mapHttpFunctionError(error);
+                if (!res.headersSent) res.status(mapped.status).json({ error: mapped.error });
+            }
+        });
+})();

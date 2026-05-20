@@ -3,6 +3,7 @@ export interface Team {
   code: string;
   name: string;
   flag: string;
+  flagUrl?: string;
   group: string;
   confederation: string;
   fifaRanking?: number;
@@ -29,169 +30,169 @@ export interface Team {
 export const teams: Team[] = [
   // Group A
   {
-    code: "MEX", name: "México", flag: "🇲🇽", group: "A", confederation: "CONCACAF",
+    code: "MEX", name: "México", flag: "🇲🇽", flagUrl: "/images/flags/mx.svg", group: "A", confederation: "CONCACAF",
     fifaRanking: 16, fifaTitles: 0,
     demographics: { capital: "Cidade do México", population: "128 milhões", currency: "Peso Mexicano", language: "Espanhol", coordinates: { lat: 19.4326, lng: -99.1332 } },
     stats: { titles: 0, appearances: 17, firstAppearance: 1930, bestResult: "Quartas (1970, 1986)", hdi: 0.758, area: 1964375, gdp: 1272 },
     qualifiers: "Classificado como país-sede (anfitrião)"
   },
   {
-    code: "RSA", name: "África do Sul", flag: "🇿🇦", group: "A", confederation: "CAF",
+    code: "RSA", name: "África do Sul", flag: "🇿🇦", flagUrl: "/images/flags/za.svg", group: "A", confederation: "CAF",
     fifaRanking: 66, fifaTitles: 0,
     demographics: { capital: "Pretória", population: "60 milhões", currency: "Rand", language: "11 línguas oficiais", coordinates: { lat: -25.7479, lng: 28.2293 } },
     stats: { titles: 0, appearances: 3, firstAppearance: 1998, bestResult: "Fase de Grupos", hdi: 0.713, area: 1221037, gdp: 405 },
     qualifiers: "Vencedor do Grupo C das Eliminatórias Africanas"
   },
   {
-    code: "KOR", name: "Coreia do Sul", flag: "🇰🇷", group: "A", confederation: "AFC",
+    code: "KOR", name: "Coreia do Sul", flag: "🇰🇷", flagUrl: "/images/flags/kr.svg", group: "A", confederation: "AFC",
     fifaRanking: 23, fifaTitles: 0,
     demographics: { capital: "Seul", population: "51 milhões", currency: "Won", language: "Coreano", coordinates: { lat: 37.5665, lng: 126.9780 } },
     stats: { titles: 0, appearances: 11, firstAppearance: 1954, bestResult: "4º Lugar (2002)", hdi: 0.925, area: 100210, gdp: 1810 },
     qualifiers: "2º lugar no Grupo B das Eliminatórias Asiáticas"
   },
-  { code: "EPD", name: "Playoff Euro D", flag: "🏳️", group: "A", confederation: "UEFA" },
+  { code: "EPD", name: "Playoff Euro D", flag: "🏳️", flagUrl: "/images/flags/playoff-slot.svg", group: "A", confederation: "UEFA" },
   // Group B
   {
-    code: "CAN", name: "Canadá", flag: "🇨🇦", group: "B", confederation: "CONCACAF",
+    code: "CAN", name: "Canadá", flag: "🇨🇦", flagUrl: "/images/flags/ca.svg", group: "B", confederation: "CONCACAF",
     fifaRanking: 48, fifaTitles: 0,
     demographics: { capital: "Ottawa", population: "38 milhões", currency: "Dólar Canadense", language: "Inglês/Francês", coordinates: { lat: 45.4215, lng: -75.6972 } },
     stats: { titles: 0, appearances: 2, firstAppearance: 1986, bestResult: "Fase de Grupos", hdi: 0.936, area: 9984670, gdp: 2140 },
     qualifiers: "Classificado como país-sede (anfitrião)"
   },
-  { code: "EPA", name: "Playoff Euro A", flag: "🏳️", group: "B", confederation: "UEFA" },
+  { code: "EPA", name: "Playoff Euro A", flag: "🏳️", flagUrl: "/images/flags/playoff-slot.svg", group: "B", confederation: "UEFA" },
   {
-    code: "QAT", name: "Catar", flag: "🇶🇦", group: "B", confederation: "AFC",
+    code: "QAT", name: "Catar", flag: "🇶🇦", flagUrl: "/images/flags/qa.svg", group: "B", confederation: "AFC",
     demographics: { capital: "Doha", population: "3.2 milhões", currency: "Qatari riyal", language: "Arabic", coordinates: { lat: 25.2854, lng: 51.5310 } },
     stats: { titles: 0, appearances: 1, firstAppearance: 2022, bestResult: "Fase de Grupos", hdi: 0.855, area: 11586, gdp: 237 }
   },
   {
-    code: "SUI", name: "Suíça", flag: "🇨🇭", group: "B", confederation: "UEFA",
+    code: "SUI", name: "Suíça", flag: "🇨🇭", flagUrl: "/images/flags/ch.svg", group: "B", confederation: "UEFA",
     demographics: { capital: "Bern", population: "9.1 milhões", currency: "Swiss franc", language: "French, Swiss German, Italian, Romansh", coordinates: { lat: 46.9480, lng: 7.4474 } },
     stats: { titles: 0, appearances: 12, firstAppearance: 1934, bestResult: "Quartas (1934, 1938, 1954)", hdi: 0.962, area: 41285, gdp: 808 }
   },
   // Group C
   {
-    code: "BRA", name: "Brasil", flag: "🇧🇷", group: "C", confederation: "CONMEBOL",
+    code: "BRA", name: "Brasil", flag: "🇧🇷", flagUrl: "/images/flags/br.svg", group: "C", confederation: "CONMEBOL",
     fifaRanking: 5, fifaTitles: 5,
     demographics: { capital: "Brasília", population: "214 milhões", currency: "Real", language: "Português", coordinates: { lat: -15.7801, lng: -47.9292 } },
     stats: { titles: 5, appearances: 22, firstAppearance: 1930, bestResult: "Campeão (1958, 1962, 1970, 1994, 2002)", hdi: 0.754, area: 8515767, gdp: 1608 },
     qualifiers: "1º lugar nas Eliminatórias Sul-Americanas com campanha invicta em casa."
   },
   {
-    code: "MAR", name: "Marrocos", flag: "🇲🇦", group: "C", confederation: "CAF",
+    code: "MAR", name: "Marrocos", flag: "🇲🇦", flagUrl: "/images/flags/ma.svg", group: "C", confederation: "CAF",
     demographics: { capital: "Rabat", population: "36.8 milhões", currency: "Moroccan dirham", language: "Arabic, Berber", coordinates: { lat: 34.0209, lng: -6.8416 } },
     stats: { titles: 0, appearances: 6, firstAppearance: 1970, bestResult: "4º Lugar (2022)", hdi: 0.686, area: 446550, gdp: 134 }
   },
   {
-    code: "HAI", name: "Haiti", flag: "🇭🇹", group: "C", confederation: "CONCACAF",
+    code: "HAI", name: "Haiti", flag: "🇭🇹", flagUrl: "/images/flags/ht.svg", group: "C", confederation: "CONCACAF",
     demographics: { capital: "Port-au-Prince", population: "11.9 milhões", currency: "Haitian gourde", language: "French, Haitian Creole", coordinates: { lat: 18.5944, lng: -72.3074 } },
     stats: { titles: 0, appearances: 1, firstAppearance: 1974, bestResult: "Fase de Grupos", hdi: 0.535, area: 27750, gdp: 21 }
   },
   {
-    code: "SCO", name: "Escócia", flag: "🏴󠁧󠁢󠁳󠁣󠁴󠁿", group: "C", confederation: "UEFA",
+    code: "SCO", name: "Escócia", flag: "🏴󠁧󠁢󠁳󠁣󠁴󠁿", flagUrl: "/images/flags/gb-sct.svg", group: "C", confederation: "UEFA",
     demographics: { capital: "Edinburgh", population: "5.5 milhões", currency: "British pound", language: "English", coordinates: { lat: 55.9533, lng: -3.1883 } },
     stats: { titles: 0, appearances: 8, firstAppearance: 1954, bestResult: "Fase de Grupos", hdi: 0.929, area: 77933, gdp: 3165 } // Using UK GDP/HDI roughly or specific if available
   },
   // Group D
   {
-    code: "USA", name: "Estados Unidos", flag: "🇺🇸", group: "D", confederation: "CONCACAF",
+    code: "USA", name: "Estados Unidos", flag: "🇺🇸", flagUrl: "/images/flags/us.svg", group: "D", confederation: "CONCACAF",
     fifaRanking: 11, fifaTitles: 0,
     demographics: { capital: "Washington, D.C.", population: "332 milhões", currency: "Dólar Americano", language: "Inglês", coordinates: { lat: 38.9072, lng: -77.0369 } },
     stats: { titles: 0, appearances: 11, firstAppearance: 1930, bestResult: "3º Lugar (1930)", hdi: 0.921, area: 9833520, gdp: 25460 },
     qualifiers: "Classificado como país-sede (anfitrião)"
   },
   {
-    code: "PAR", name: "Paraguai", flag: "🇵🇾", group: "D", confederation: "CONMEBOL",
+    code: "PAR", name: "Paraguai", flag: "🇵🇾", flagUrl: "/images/flags/py.svg", group: "D", confederation: "CONMEBOL",
     demographics: { capital: "Asunción", population: "6.1 milhões", currency: "Paraguayan guaraní", language: "Guaraní, Spanish", coordinates: { lat: -25.2637, lng: -57.5759 } },
     stats: { titles: 0, appearances: 8, firstAppearance: 1930, bestResult: "Quartas (2010)", hdi: 0.717, area: 406752, gdp: 41 }
   },
   {
-    code: "AUS", name: "Austrália", flag: "🇦🇺", group: "D", confederation: "AFC",
+    code: "AUS", name: "Austrália", flag: "🇦🇺", flagUrl: "/images/flags/au.svg", group: "D", confederation: "AFC",
     demographics: { capital: "Canberra", population: "27.5 milhões", currency: "Australian dollar", language: "English", coordinates: { lat: -35.2809, lng: 149.1300 } },
     stats: { titles: 0, appearances: 6, firstAppearance: 1974, bestResult: "Oitavas (2006, 2022)", hdi: 0.951, area: 7692024, gdp: 1675 }
   },
-  { code: "EPC", name: "Playoff Euro C", flag: "🏳️", group: "D", confederation: "UEFA" },
+  { code: "EPC", name: "Playoff Euro C", flag: "🏳️", flagUrl: "/images/flags/playoff-slot.svg", group: "D", confederation: "UEFA" },
   // Group E
   {
-    code: "GER", name: "Alemanha", flag: "🇩🇪", group: "E", confederation: "UEFA",
+    code: "GER", name: "Alemanha", flag: "🇩🇪", flagUrl: "/images/flags/de.svg", group: "E", confederation: "UEFA",
     fifaRanking: 10, fifaTitles: 4,
     demographics: { capital: "Berlim", population: "84 milhões", currency: "Euro", language: "Alemão", coordinates: { lat: 52.5200, lng: 13.4050 } },
     stats: { titles: 4, appearances: 20, firstAppearance: 1934, bestResult: "Campeão (1954, 1974, 1990, 2014)", hdi: 0.942, area: 357022, gdp: 4260 },
     qualifiers: "Vencedor do Grupo J das Eliminatórias Europeias"
   },
   {
-    code: "CUR", name: "Curaçao", flag: "🇨🇼", group: "E", confederation: "CONCACAF",
+    code: "CUR", name: "Curaçao", flag: "🇨🇼", flagUrl: "/images/flags/cw.svg", group: "E", confederation: "CONCACAF",
     demographics: { capital: "Willemstad", population: "155 mil", currency: "Florim das Antilhas", language: "Holandês, Papiamento, Inglês", coordinates: { lat: 12.1224, lng: -68.9324 } },
     stats: { titles: 0, appearances: 0, firstAppearance: 2026, bestResult: "Estreante", hdi: 0.760, area: 444, gdp: 3 }
   },
   {
-    code: "CIV", name: "Costa do Marfim", flag: "🇨🇮", group: "E", confederation: "CAF",
+    code: "CIV", name: "Costa do Marfim", flag: "🇨🇮", flagUrl: "/images/flags/ci.svg", group: "E", confederation: "CAF",
     demographics: { capital: "Yamoussoukro", population: "31.7 milhões", currency: "West African CFA franc", language: "French", coordinates: { lat: 6.8276, lng: -5.2893 } },
     stats: { titles: 0, appearances: 3, firstAppearance: 2006, bestResult: "Fase de Grupos", hdi: 0.550, area: 322463, gdp: 70 }
   },
   {
-    code: "ECU", name: "Equador", flag: "🇪🇨", group: "E", confederation: "CONMEBOL",
+    code: "ECU", name: "Equador", flag: "🇪🇨", flagUrl: "/images/flags/ec.svg", group: "E", confederation: "CONMEBOL",
     demographics: { capital: "Quito", population: "18.1 milhões", currency: "United States dollar", language: "Spanish", coordinates: { lat: -0.1807, lng: -78.4678 } },
     stats: { titles: 0, appearances: 4, firstAppearance: 2002, bestResult: "Oitavas (2006)", hdi: 0.740, area: 283561, gdp: 115 }
   },
   // Group F
   {
-    code: "NED", name: "Holanda", flag: "🇳🇱", group: "F", confederation: "UEFA",
+    code: "NED", name: "Holanda", flag: "🇳🇱", flagUrl: "/images/flags/nl.svg", group: "F", confederation: "UEFA",
     demographics: { capital: "Amsterdam", population: "18.1 milhões", currency: "euro", language: "Dutch", coordinates: { lat: 52.3676, lng: 4.9041 } },
     stats: { titles: 0, appearances: 11, firstAppearance: 1934, bestResult: "Vice-campeão (1974, 1978, 2010)", hdi: 0.941, area: 41543, gdp: 991 }
   },
   {
-    code: "JPN", name: "Japão", flag: "🇯🇵", group: "F", confederation: "AFC",
+    code: "JPN", name: "Japão", flag: "🇯🇵", flagUrl: "/images/flags/jp.svg", group: "F", confederation: "AFC",
     demographics: { capital: "Tokyo", population: "123.2 milhões", currency: "Japanese yen", language: "Japanese", coordinates: { lat: 35.6762, lng: 139.6503 } },
     stats: { titles: 0, appearances: 7, firstAppearance: 1998, bestResult: "Oitavas (2002, 2010, 2018, 2022)", hdi: 0.925, area: 377975, gdp: 4230 }
   },
-  { code: "EPB", name: "Playoff Euro B", flag: "🏳️", group: "F", confederation: "UEFA" },
+  { code: "EPB", name: "Playoff Euro B", flag: "🏳️", flagUrl: "/images/flags/playoff-slot.svg", group: "F", confederation: "UEFA" },
   {
-    code: "TUN", name: "Tunísia", flag: "🇹🇳", group: "F", confederation: "CAF",
+    code: "TUN", name: "Tunísia", flag: "🇹🇳", flagUrl: "/images/flags/tn.svg", group: "F", confederation: "CAF",
     demographics: { capital: "Tunis", population: "12.0 milhões", currency: "Tunisian dinar", language: "Arabic", coordinates: { lat: 36.8065, lng: 10.1815 } },
     stats: { titles: 0, appearances: 6, firstAppearance: 1978, bestResult: "Fase de Grupos", hdi: 0.731, area: 163610, gdp: 46 }
   },
   // Group G
   {
-    code: "BEL", name: "Bélgica", flag: "🇧🇪", group: "G", confederation: "UEFA",
+    code: "BEL", name: "Bélgica", flag: "🇧🇪", flagUrl: "/images/flags/be.svg", group: "G", confederation: "UEFA",
     demographics: { capital: "Brussels", population: "11.8 milhões", currency: "euro", language: "German, French, Dutch", coordinates: { lat: 50.8503, lng: 4.3517 } },
     stats: { titles: 0, appearances: 14, firstAppearance: 1930, bestResult: "3º Lugar (2018)", hdi: 0.937, area: 30528, gdp: 578 }
   },
   {
-    code: "EGY", name: "Egito", flag: "🇪🇬", group: "G", confederation: "CAF",
+    code: "EGY", name: "Egito", flag: "🇪🇬", flagUrl: "/images/flags/eg.svg", group: "G", confederation: "CAF",
     demographics: { capital: "Cairo", population: "107.3 milhões", currency: "Egyptian pound", language: "Arabic", coordinates: { lat: 30.0444, lng: 31.2357 } },
     stats: { titles: 0, appearances: 3, firstAppearance: 1934, bestResult: "Fase de Grupos", hdi: 0.731, area: 1001450, gdp: 476 }
   },
   {
-    code: "IRN", name: "Irã", flag: "🇮🇷", group: "G", confederation: "AFC",
+    code: "IRN", name: "Irã", flag: "🇮🇷", flagUrl: "/images/flags/ir.svg", group: "G", confederation: "AFC",
     demographics: { capital: "Tehran", population: "86.0 milhões", currency: "Iranian rial", language: "Persian (Farsi)", coordinates: { lat: 35.6892, lng: 51.3890 } },
     stats: { titles: 0, appearances: 6, firstAppearance: 1978, bestResult: "Fase de Grupos", hdi: 0.774, area: 1648195, gdp: 388 }
   },
   {
-    code: "NZL", name: "Nova Zelândia", flag: "🇳🇿", group: "G", confederation: "OFC",
+    code: "NZL", name: "Nova Zelândia", flag: "🇳🇿", flagUrl: "/images/flags/nz.svg", group: "G", confederation: "OFC",
     demographics: { capital: "Wellington", population: "5.3 milhões", currency: "New Zealand dollar", language: "English, Māori", coordinates: { lat: -41.2865, lng: 174.7762 } },
     stats: { titles: 0, appearances: 2, firstAppearance: 1982, bestResult: "Fase de Grupos", hdi: 0.937, area: 268021, gdp: 247 }
   },
   // Group H
   {
-    code: "ESP", name: "Espanha", flag: "🇪🇸", group: "H", confederation: "UEFA",
+    code: "ESP", name: "Espanha", flag: "🇪🇸", flagUrl: "/images/flags/es.svg", group: "H", confederation: "UEFA",
     fifaRanking: 8, fifaTitles: 1,
     demographics: { capital: "Madri", population: "47 milhões", currency: "Euro", language: "Espanhol", coordinates: { lat: 40.4168, lng: -3.7038 } },
     stats: { titles: 1, appearances: 16, firstAppearance: 1934, bestResult: "Campeão (2010)", hdi: 0.905, area: 505990, gdp: 1425 },
     qualifiers: "Vencedor do Grupo B das Eliminatórias Europeias"
   },
   {
-    code: "CPV", name: "Cabo Verde", flag: "🇨🇻", group: "H", confederation: "CAF",
+    code: "CPV", name: "Cabo Verde", flag: "🇨🇻", flagUrl: "/images/flags/cv.svg", group: "H", confederation: "CAF",
     demographics: { capital: "Praia", population: "491,233", currency: "Cape Verdean escudo", language: "Portuguese", coordinates: { lat: 14.9330, lng: -23.5133 } },
     stats: { titles: 0, appearances: 0, firstAppearance: 2026, bestResult: "Estreante", hdi: 0.662, area: 4033, gdp: 2 }
   },
   {
-    code: "SAU", name: "Arábia Saudita", flag: "🇸🇦", group: "H", confederation: "AFC",
+    code: "SAU", name: "Arábia Saudita", flag: "🇸🇦", flagUrl: "/images/flags/sa.svg", group: "H", confederation: "AFC",
     demographics: { capital: "Riyadh", population: "35.3 milhões", currency: "Saudi riyal", language: "Arabic", coordinates: { lat: 24.7136, lng: 46.6753 } },
     stats: { titles: 0, appearances: 6, firstAppearance: 1994, bestResult: "Oitavas (1994)", hdi: 0.875, area: 2149690, gdp: 1108 }
   },
   {
-    code: "URU", name: "Uruguai", flag: "🇺🇾", group: "H", confederation: "CONMEBOL",
+    code: "URU", name: "Uruguai", flag: "🇺🇾", flagUrl: "/images/flags/uy.svg", group: "H", confederation: "CONMEBOL",
     fifaRanking: 14, fifaTitles: 2,
     demographics: { capital: "Montevidéu", population: "3.5 milhões", currency: "Peso Uruguaio", language: "Espanhol", coordinates: { lat: -34.9011, lng: -56.1645 } },
     stats: { titles: 2, appearances: 14, firstAppearance: 1930, bestResult: "Campeão (1930, 1950)", hdi: 0.817, area: 176215, gdp: 59 },
@@ -199,85 +200,85 @@ export const teams: Team[] = [
   },
   // Group I
   {
-    code: "FRA", name: "França", flag: "🇫🇷", group: "I", confederation: "UEFA",
+    code: "FRA", name: "França", flag: "🇫🇷", flagUrl: "/images/flags/fr.svg", group: "I", confederation: "UEFA",
     fifaRanking: 2, fifaTitles: 2,
     demographics: { capital: "Paris", population: "67 milhões", currency: "Euro", language: "Francês", coordinates: { lat: 48.8566, lng: 2.3522 } },
     stats: { titles: 2, appearances: 16, firstAppearance: 1930, bestResult: "Campeão (1998, 2018)", hdi: 0.903, area: 551695, gdp: 2937 },
     qualifiers: "Vencedor do Grupo D das Eliminatórias Europeias"
   },
   {
-    code: "SEN", name: "Senegal", flag: "🇸🇳", group: "I", confederation: "CAF",
+    code: "SEN", name: "Senegal", flag: "🇸🇳", flagUrl: "/images/flags/sn.svg", group: "I", confederation: "CAF",
     demographics: { capital: "Dakar", population: "18.6 milhões", currency: "West African CFA franc", language: "French", coordinates: { lat: 14.7167, lng: -17.4677 } },
     stats: { titles: 0, appearances: 3, firstAppearance: 2002, bestResult: "Quartas (2002)", hdi: 0.512, area: 196722, gdp: 31 }
   },
-  { code: "FP2", name: "Playoff FIFA 2", flag: "🏳️", group: "I", confederation: "CONMEBOL" },
+  { code: "FP2", name: "Playoff FIFA 2", flag: "🏳️", flagUrl: "/images/flags/playoff-slot.svg", group: "I", confederation: "CONMEBOL" },
   {
-    code: "NOR", name: "Noruega", flag: "🇳🇴", group: "I", confederation: "UEFA",
+    code: "NOR", name: "Noruega", flag: "🇳🇴", flagUrl: "/images/flags/no.svg", group: "I", confederation: "UEFA",
     demographics: { capital: "Oslo", population: "5.6 milhões", currency: "Norwegian krone", language: "Norwegian", coordinates: { lat: 59.9139, lng: 10.7522 } },
     stats: { titles: 0, appearances: 3, firstAppearance: 1938, bestResult: "Oitavas (1998)", hdi: 0.961, area: 385207, gdp: 485 }
   },
   // Group J
   {
-    code: "ARG", name: "Argentina", flag: "🇦🇷", group: "J", confederation: "CONMEBOL",
+    code: "ARG", name: "Argentina", flag: "🇦🇷", flagUrl: "/images/flags/ar.svg", group: "J", confederation: "CONMEBOL",
     fifaRanking: 1, fifaTitles: 3,
     demographics: { capital: "Buenos Aires", population: "46 milhões", currency: "Peso Argentino", language: "Espanhol", coordinates: { lat: -34.6037, lng: -58.3816 } },
     stats: { titles: 3, appearances: 18, firstAppearance: 1930, bestResult: "Campeão (1978, 1986, 2022)", hdi: 0.842, area: 2780400, gdp: 487 },
     qualifiers: "Líder invicto das Eliminatórias Sul-Americanas"
   },
   {
-    code: "ALG", name: "Argélia", flag: "🇩🇿", group: "J", confederation: "CAF",
+    code: "ALG", name: "Argélia", flag: "🇩🇿", flagUrl: "/images/flags/dz.svg", group: "J", confederation: "CAF",
     demographics: { capital: "Algiers", population: "47.4 milhões", currency: "Algerian dinar", language: "Arabic", coordinates: { lat: 36.7538, lng: 3.0588 } },
     stats: { titles: 0, appearances: 4, firstAppearance: 1982, bestResult: "Oitavas (2014)", hdi: 0.745, area: 2381741, gdp: 191 }
   },
   {
-    code: "AUT", name: "Áustria", flag: "🇦🇹", group: "J", confederation: "UEFA",
+    code: "AUT", name: "Áustria", flag: "🇦🇹", flagUrl: "/images/flags/at.svg", group: "J", confederation: "UEFA",
     demographics: { capital: "Vienna", population: "9.2 milhões", currency: "euro", language: "German", coordinates: { lat: 48.2082, lng: 16.3738 } },
     stats: { titles: 0, appearances: 7, firstAppearance: 1934, bestResult: "3º Lugar (1954)", hdi: 0.916, area: 83871, gdp: 471 }
   },
   {
-    code: "JOR", name: "Jordânia", flag: "🇯🇴", group: "J", confederation: "AFC",
+    code: "JOR", name: "Jordânia", flag: "🇯🇴", flagUrl: "/images/flags/jo.svg", group: "J", confederation: "AFC",
     demographics: { capital: "Amman", population: "11.7 milhões", currency: "Jordanian dinar", language: "Arabic", coordinates: { lat: 31.9454, lng: 35.9284 } },
     stats: { titles: 0, appearances: 0, firstAppearance: 2026, bestResult: "Estreante", hdi: 0.736, area: 89342, gdp: 48 }
   },
   // Group K
   {
-    code: "POR", name: "Portugal", flag: "🇵🇹", group: "K", confederation: "UEFA",
+    code: "POR", name: "Portugal", flag: "🇵🇹", flagUrl: "/images/flags/pt.svg", group: "K", confederation: "UEFA",
     fifaRanking: 7, fifaTitles: 0,
     demographics: { capital: "Lisboa", population: "10 milhões", currency: "Euro", language: "Português", coordinates: { lat: 38.7223, lng: -9.1393 } },
     stats: { titles: 0, appearances: 8, firstAppearance: 1966, bestResult: "3º Lugar (1966)", hdi: 0.866, area: 92212, gdp: 251 },
     qualifiers: "Vencedor do Grupo J das Eliminatórias Europeias com 100% de aproveitamento"
   },
-  { code: "FP1", name: "Playoff FIFA 1", flag: "🏳️", group: "K", confederation: "CONCACAF" },
+  { code: "FP1", name: "Playoff FIFA 1", flag: "🏳️", flagUrl: "/images/flags/playoff-slot.svg", group: "K", confederation: "CONCACAF" },
   {
-    code: "UZB", name: "Uzbequistão", flag: "🇺🇿", group: "K", confederation: "AFC",
+    code: "UZB", name: "Uzbequistão", flag: "🇺🇿", flagUrl: "/images/flags/uz.svg", group: "K", confederation: "AFC",
     demographics: { capital: "Tashkent", population: "37.9 milhões", currency: "Uzbekistani soʻm", language: "Russian, Uzbek", coordinates: { lat: 41.2995, lng: 69.2401 } },
     stats: { titles: 0, appearances: 0, firstAppearance: 2026, bestResult: "Estreante", hdi: 0.727, area: 447400, gdp: 80 }
   },
   {
-    code: "COL", name: "Colômbia", flag: "🇨🇴", group: "K", confederation: "CONMEBOL",
+    code: "COL", name: "Colômbia", flag: "🇨🇴", flagUrl: "/images/flags/co.svg", group: "K", confederation: "CONMEBOL",
     demographics: { capital: "Bogotá", population: "53.1 milhões", currency: "Colombian peso", language: "Spanish", coordinates: { lat: 4.7110, lng: -74.0721 } },
     stats: { titles: 0, appearances: 6, firstAppearance: 1962, bestResult: "Quartas (2014)", hdi: 0.752, area: 1141748, gdp: 343 }
   },
   // Group L
   {
-    code: "ENG", name: "Inglaterra", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", group: "L", confederation: "UEFA",
+    code: "ENG", name: "Inglaterra", flag: "🏴󠁧󠁢󠁥󠁮󠁧󠁿", flagUrl: "/images/flags/gb-eng.svg", group: "L", confederation: "UEFA",
     fifaRanking: 3, fifaTitles: 1,
     demographics: { capital: "Londres", population: "56 milhões", currency: "Libra Esterlina", language: "Inglês", coordinates: { lat: 51.5074, lng: -0.1278 } },
     stats: { titles: 1, appearances: 16, firstAppearance: 1950, bestResult: "Campeão (1966)", hdi: 0.929, area: 130279, gdp: 3100 },
     qualifiers: "Vencedor do Grupo I das Eliminatórias Europeias"
   },
   {
-    code: "CRO", name: "Croácia", flag: "🇭🇷", group: "L", confederation: "UEFA",
+    code: "CRO", name: "Croácia", flag: "🇭🇷", flagUrl: "/images/flags/hr.svg", group: "L", confederation: "UEFA",
     demographics: { capital: "Zagreb", population: "3.9 milhões", currency: "euro", language: "Croatian", coordinates: { lat: 45.8150, lng: 15.9819 } },
     stats: { titles: 0, appearances: 6, firstAppearance: 1998, bestResult: "Vice-campeão (2018)", hdi: 0.858, area: 56594, gdp: 71 }
   },
   {
-    code: "GHA", name: "Gana", flag: "🇬🇭", group: "L", confederation: "CAF",
+    code: "GHA", name: "Gana", flag: "🇬🇭", flagUrl: "/images/flags/gh.svg", group: "L", confederation: "CAF",
     demographics: { capital: "Accra", population: "33.7 milhões", currency: "Ghanaian cedi", language: "English", coordinates: { lat: 5.6037, lng: -0.1870 } },
     stats: { titles: 0, appearances: 4, firstAppearance: 2006, bestResult: "Quartas (2010)", hdi: 0.632, area: 238533, gdp: 77 }
   },
   {
-    code: "PAN", name: "Panamá", flag: "🇵🇦", group: "L", confederation: "CONCACAF",
+    code: "PAN", name: "Panamá", flag: "🇵🇦", flagUrl: "/images/flags/pa.svg", group: "L", confederation: "CONCACAF",
     demographics: { capital: "Panama City", population: "4.1 milhões", currency: "Panamanian balboa, United States dollar", language: "Spanish", coordinates: { lat: 8.9824, lng: -79.5199 } },
     stats: { titles: 0, appearances: 1, firstAppearance: 2018, bestResult: "Fase de Grupos", hdi: 0.805, area: 75417, gdp: 76 }
   },
@@ -290,6 +291,7 @@ function createFallbackTeam(code: string): Team {
     code: normalizedCode,
     name: normalizedCode,
     flag: "🏳️",
+    flagUrl: "/images/flags/playoff-slot.svg",
     group: "?",
     confederation: "Unknown",
     demographics: {

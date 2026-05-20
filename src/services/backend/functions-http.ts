@@ -32,14 +32,28 @@ export async function postAuthedFunction<T>(
   tokenOverride?: string,
 ): Promise<T> {
   const idToken = await resolveIdToken(tokenOverride);
-  const response = await fetch(`${getFunctionsBaseUrl()}/${functionName}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${idToken}`,
-    },
-    body: JSON.stringify(payload),
-  });
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 30_000); // 30s guard
+
+  let response: Response;
+  try {
+    response = await fetch(`${getFunctionsBaseUrl()}/${functionName}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${idToken}`,
+      },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    });
+  } catch (err) {
+    if (err instanceof Error && err.name === "AbortError") {
+      throw new Error(`function_timeout:${functionName}`);
+    }
+    throw err;
+  } finally {
+    clearTimeout(timeoutId);
+  }
 
   const data = (await response.json().catch(() => ({}))) as { error?: string } & Record<string, unknown>;
   if (!response.ok) {
@@ -57,7 +71,6 @@ export async function postPublicFunction<T>(
   payload: Record<string, unknown>,
 ): Promise<T> {
   const url = `${getFunctionsBaseUrl()}/${functionName}`;
-  console.warn(`[functions-http] POST ${url}`, payload);
 
   let response: Response;
   try {
@@ -76,11 +89,9 @@ export async function postPublicFunction<T>(
   let data: { error?: string } & Record<string, unknown> = {};
   try {
     const text = await response.text();
-    console.warn(`[functions-http] ${functionName} response ${response.status}:`, text.substring(0, 500));
     data = text ? (JSON.parse(text) as { error?: string } & Record<string, unknown>) : {};
   } catch (parseError) {
     console.error(`[functions-http] Failed to parse response from ${functionName}:`, parseError);
-    // If we can't parse, still check status
   }
 
   if (!response.ok) {

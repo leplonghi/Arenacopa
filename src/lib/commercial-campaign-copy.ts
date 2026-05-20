@@ -2,7 +2,7 @@ export const commercialCampaignAudienceCopy = {
   eyebrow: "ArenaCup para negócios",
   title: "ArenaCup para Negócios",
   description:
-    "Ative seu público em dias de jogo com bolões, QR codes, promoções e campanhas prontas para empresas, bares, restaurantes, escolas, comunidades e eventos.",
+    "Ative seu público em dias de jogo com bolões, QR codes, promoções e campanhas prontas para empresas, bares, restaurantes, escolas, grupos e eventos.",
   priceNote: "Uma rodada/evento publicado para o seu negócio.",
 };
 

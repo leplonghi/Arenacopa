@@ -1,4 +1,5 @@
 const admin = require("firebase-admin");
+const { FieldValue } = require("firebase-admin/firestore");
 const { normalizeBolaoDocument } = require("../bolao-config/handlers");
 const { writeAuditLog: writeBolaoAuditLog } = require("../bolao-config/repository");
 const {
@@ -32,7 +33,7 @@ async function writeGroupAuditLog({
     after: after || null,
     reason_code: reasonCode || null,
     policy_snapshot: policySnapshot || null,
-    created_at: admin.firestore.FieldValue.serverTimestamp(),
+    created_at: FieldValue.serverTimestamp(),
   });
 }
 
@@ -275,7 +276,7 @@ async function requestGroupJoin({ db, groupId, actorId, nowIso, inviteCode, orig
     );
     await ref.set(
       {
-        member_count: admin.firestore.FieldValue.increment(1),
+        member_count: FieldValue.increment(1),
         updated_at: nowIso,
       },
       { merge: true },
@@ -379,7 +380,7 @@ async function approveGroupJoin({ db, groupId, requestId, actorId, nowIso, reaso
   );
   await ref.set(
     {
-      member_count: admin.firestore.FieldValue.increment(1),
+      member_count: FieldValue.increment(1),
       updated_at: nowIso,
     },
     { merge: true },
@@ -468,7 +469,7 @@ async function leaveGroup({ db, groupId, actorId, nowIso }) {
   );
   await ref.set(
     {
-      member_count: admin.firestore.FieldValue.increment(-1),
+      member_count: FieldValue.increment(-1),
       updated_at: nowIso,
     },
     { merge: true },
@@ -515,7 +516,7 @@ async function removeGroupMember({ db, groupId, memberId, actorId, nowIso, reaso
   );
   await ref.set(
     {
-      member_count: admin.firestore.FieldValue.increment(-1),
+      member_count: FieldValue.increment(-1),
       updated_at: nowIso,
     },
     { merge: true },
@@ -633,7 +634,7 @@ async function requestBolaoJoin({ db, bolaoId, actorId, nowIso, inviteCode, orig
     );
     await bolaoSnapshot.ref.set(
       {
-        member_count: admin.firestore.FieldValue.increment(1),
+        member_count: FieldValue.increment(1),
         updated_at: nowIso,
       },
       { merge: true },
@@ -722,7 +723,7 @@ async function approveBolaoJoin({ db, bolaoId, requestId, actorId, nowIso, reaso
   );
   await db.collection("boloes").doc(bolaoId).set(
     {
-      member_count: admin.firestore.FieldValue.increment(1),
+      member_count: FieldValue.increment(1),
       updated_at: nowIso,
     },
     { merge: true },

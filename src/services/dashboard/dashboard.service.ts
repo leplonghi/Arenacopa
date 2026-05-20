@@ -24,6 +24,7 @@ export interface DashboardBolaoSummary {
   myPoints: number;
   myRank: number;
   pendingCount: number;
+  createdAt: string;
 }
 
 export interface DashboardNewsItem {
@@ -96,12 +97,23 @@ export async function getDashboardData(userId: string) {
       profilePromise,
     ]);
 
-    const bolaoIds = membershipsSnap.docs.map((d) => d.data().bolao_id);
+    console.log("[Dashboard] memberships found:", membershipsSnap.docs.length,
+      membershipsSnap.docs.map(d => ({ id: d.id, bolao_id: d.data().bolao_id, status: d.data().membership_status })));
+
+    // Filter out inactive memberships to match the Boloes page behavior
+    const inactiveStatuses = new Set(["left", "removed", "withdrawn_by_owner"]);
+    const activeMemberships = membershipsSnap.docs.filter((d) => {
+      const status = String(d.data().membership_status || "active");
+      return !inactiveStatuses.has(status);
+    });
+    const bolaoIds = activeMemberships.map((d) => d.data().bolao_id as string).filter(Boolean);
+    console.log("[Dashboard] active bolaoIds:", bolaoIds);
     // IDs of every match still waiting to be played
     const scheduledMatchIds = scheduledMatchesSnap.docs.map((d) => d.id);
     const scheduledMatchesCount = scheduledMatchIds.length;
 
     if (!bolaoIds.length) {
+      console.warn("[Dashboard] No active bolão memberships found for user", userId);
       return {
         profile,
         favoriteTeam: profile?.favorite_team || null,
@@ -112,7 +124,7 @@ export async function getDashboardData(userId: string) {
 
     // 3. Fetch details for each bolão the user is in.
     //    All sub-queries per bolão run in parallel to avoid N+1 roundtrips.
-    const myBoloes = await Promise.all(
+    const myBoloesRaw = await Promise.all(
       bolaoIds.map(async (bolaoId) => {
         const [bolaoDoc, membersCountSnap, rankingDoc, predictedCount] =
           await Promise.all([
@@ -125,25 +137,34 @@ export async function getDashboardData(userId: string) {
             ),
             getDoc(doc(db, "bolao_rankings", `${userId}_${bolaoId}`)),
             // Count only predictions for STILL-SCHEDULED matches.
-            // This fixes the bug where predictions for finished matches were
-            // subtracted from scheduledMatchesCount, causing pendingCount to
-            // be underestimated as the Copa progressed.
             countPredictedScheduledMatches(userId, bolaoId, scheduledMatchIds),
           ]);
 
         const bolaoData = bolaoDoc.data() as BolaoData | undefined;
+        // Skip deleted/archived bolões — same filter as the Boloes page
+        const lifecycleStatus = String((bolaoData as Record<string, unknown> & { lifecycle?: { status?: string } } | undefined)?.lifecycle?.status || "");
+        const legacyStatus = String((bolaoData as Record<string, unknown> | undefined)?.status || "");
+        if (["deleted", "archived"].includes(lifecycleStatus) || legacyStatus === "deleted") {
+          return null;
+        }
+
         const rankingData = rankingDoc.data() as BolaoRankingDoc | undefined;
 
         return {
           id: bolaoId,
-          name: bolaoData?.name || "Bolão",
+          name: (bolaoData as Record<string, unknown> | undefined)?.name as string || "Bolão",
           memberCount: membersCountSnap.data().count,
           myPoints: rankingData?.total_points || 0,
           myRank: rankingData?.rank || 0,
           pendingCount: Math.max(scheduledMatchesCount - predictedCount, 0),
+          createdAt: String((bolaoData as any)?.lifecycle?.created_at || (bolaoData as any)?.created_at || ""),
         };
       })
     );
+
+    const myBoloes = myBoloesRaw
+      .filter((b): b is DashboardBolaoSummary => b !== null)
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 
     return {
       profile,

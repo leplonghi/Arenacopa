@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useLayoutEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { CreateBolaoCatalogStep } from "@/features/boloes/create/CreateBolaoCatalogStep";
 import { CreateBolaoContextStep } from "@/features/boloes/create/CreateBolaoContextStep";
@@ -8,6 +8,9 @@ import { CreateBolaoQuickStep } from "@/features/boloes/create/CreateBolaoQuickS
 import { CreateBolaoReviewStep } from "@/features/boloes/create/CreateBolaoReviewStep";
 import { useBolaoCreateFlow } from "@/features/boloes/create/useBolaoCreateFlow";
 import { trackSocialEvent } from "@/lib/analytics/social.telemetry";
+import { CreateBolaoStepRail } from "@/features/boloes/create/CreateBolaoStepRail";
+
+const STEPS_ORDER = ["quick", "catalog", "context", "type", "admission", "review"];
 
 export function BolaoCreateWizard() {
   const [searchParams] = useSearchParams();
@@ -33,6 +36,11 @@ export function BolaoCreateWizard() {
     stepRef.current = flow.step;
   }, [flow.step]);
 
+  // Always scroll to top when step changes
+  useLayoutEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, [flow.step]);
+
   useEffect(() => () => {
     if (!completedRef.current) {
       trackSocialEvent("step_abandoned", {
@@ -42,25 +50,23 @@ export function BolaoCreateWizard() {
     }
   }, []);
 
-  if (flow.step === "quick") {
-    return <CreateBolaoQuickStep flow={flow} />;
-  }
+  const activeStepIndex = STEPS_ORDER.indexOf(flow.step) + 1;
 
-  if (flow.step === "catalog") {
-    return <CreateBolaoCatalogStep flow={flow} />;
-  }
-
-  if (flow.step === "context") {
-    return <CreateBolaoContextStep flow={flow} />;
-  }
-
-  if (flow.step === "type") {
-    return <CreateBolaoRulesStep flow={flow} />;
-  }
-
-  if (flow.step === "admission") {
-    return <CreateBolaoAdmissionStep flow={flow} />;
-  }
-
-  return <CreateBolaoReviewStep flow={flow} />;
+  return (
+    <div className="flex flex-col min-h-screen">
+      <CreateBolaoStepRail 
+        activeStep={activeStepIndex} 
+        onStepClick={(index) => flow.setStep(STEPS_ORDER[index - 1] as StepsOrderType)} 
+      />
+      
+      <div className="flex-1 px-4 pb-6 pt-0 md:px-8">
+        {flow.step === "quick" && <CreateBolaoQuickStep flow={flow} />}
+        {flow.step === "catalog" && <CreateBolaoCatalogStep flow={flow} />}
+        {flow.step === "context" && <CreateBolaoContextStep flow={flow} />}
+        {flow.step === "type" && <CreateBolaoRulesStep flow={flow} />}
+        {flow.step === "admission" && <CreateBolaoAdmissionStep flow={flow} />}
+        {flow.step === "review" && <CreateBolaoReviewStep flow={flow} />}
+      </div>
+    </div>
+  );
 }

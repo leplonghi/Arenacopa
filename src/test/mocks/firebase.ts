@@ -44,10 +44,10 @@ export const mockQuery = vi.fn((...args: unknown[]) => args[0]);
 export const mockWhere = vi.fn();
 
 // writeBatch mock
-const mockBatchUpdate = vi.fn();
-const mockBatchSet = vi.fn();
-const mockBatchDelete = vi.fn();
-const mockBatchCommit = vi.fn(async () => undefined);
+export const mockBatchUpdate = vi.fn();
+export const mockBatchSet = vi.fn();
+export const mockBatchDelete = vi.fn();
+export const mockBatchCommit = vi.fn(async () => undefined);
 export const mockWriteBatch = vi.fn(() => ({
   update: mockBatchUpdate,
   set: mockBatchSet,
@@ -147,6 +147,11 @@ export function resetFirebaseMocks() {
   mockDeleteDoc.mockClear();
   mockAddDoc.mockClear();
   mockGetDocs.mockClear();
+  mockWriteBatch.mockClear();
+  mockBatchUpdate.mockClear();
+  mockBatchSet.mockClear();
+  mockBatchDelete.mockClear();
+  mockBatchCommit.mockClear();
   mockSignInWithEmailAndPassword.mockClear();
   mockCreateUserWithEmailAndPassword.mockClear();
   mockSignInWithPopup.mockClear();

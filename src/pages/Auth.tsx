@@ -10,6 +10,7 @@ import { BRAND_MARK_SRC } from "@/lib/brand-assets";
 import { acceptTerms, ensureProfile, updateProfile } from "@/services/profile/profile.service";
 import { sanitizeInternalRedirect } from "@/lib/security";
 import { BrandWordmark } from "@/components/BrandWordmark";
+import { getArenaAssetSrc } from "@/lib/arena-assets";
 
 const Auth = () => {
   const logoUrl = BRAND_MARK_SRC;
@@ -26,6 +27,7 @@ const Auth = () => {
   const { i18n, t } = useTranslation(['auth', 'common']);
   const brandName = t('common:brand.name');
   const redirectPath = sanitizeInternalRedirect(searchParams.get("redirect"));
+  const authHeroSrc = getArenaAssetSrc("generated/creator-cockpit.webp");
 
   const getSafeAuthError = (fallback: string, error: unknown) => {
     if (error instanceof Error) {
@@ -132,12 +134,42 @@ const Auth = () => {
 
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-6 py-12 relative overflow-hidden">
+    <div className="relative grid min-h-screen overflow-hidden px-6 py-10 md:grid-cols-[minmax(0,1.08fr)_minmax(420px,0.92fr)] md:items-center md:gap-10 md:px-10 lg:px-16">
       {/* Background is handled globally by FieldBackground component in App.tsx */}
 
+      <section className="relative z-10 hidden min-h-[720px] overflow-hidden rounded-[36px] border border-primary/18 bg-[#04140f] p-8 shadow-[0_28px_80px_-35px_rgba(0,0,0,0.92)] md:block">
+        {authHeroSrc ? (
+          <img
+            src={authHeroSrc}
+            alt=""
+            loading="eager"
+            decoding="async"
+            className="absolute inset-0 h-full w-full object-cover opacity-55"
+          />
+        ) : null}
+        <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(1,8,6,0.1),rgba(1,8,6,0.72)_58%,rgba(1,8,6,0.96)),radial-gradient(circle_at_20%_20%,rgba(145,255,59,0.18),transparent_30%)]" />
+        <div className="relative z-10 flex h-full max-w-xl flex-col justify-end">
+          <p className="arena-kicker text-primary">Arena de criadores</p>
+          <h2 className="mt-3 font-display text-[4.8rem] font-black uppercase leading-[0.82] text-white">
+            Comande sua liga.
+          </h2>
+          <p className="mt-5 max-w-md text-base font-semibold leading-7 text-zinc-300">
+            Crie bolões, convide sua turma, acompanhe palpites e transforme cada rodada em disputa.
+          </p>
+          <div className="mt-7 grid max-w-md grid-cols-3 gap-2">
+            {["Convites", "Ranking", "Palpites"].map((item) => (
+              <div key={item} className="rounded-2xl border border-white/10 bg-black/30 px-3 py-3 backdrop-blur-xl">
+                <p className="text-[10px] font-black uppercase tracking-[0.15em] text-primary">{item}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <div className="relative z-10 mx-auto flex w-full max-w-md flex-col items-center justify-center">
       {/* ── Content ── */}
-      <div className="relative z-10 mb-10 flex flex-col items-center">
-        <div className="mb-4 flex h-32 w-32 items-center justify-center">
+      <div className="mb-8 flex w-full flex-col items-center">
+        <div className="mb-4 flex h-28 w-28 items-center justify-center md:h-24 md:w-24">
           <img
             src={logoUrl}
             alt={brandName}
@@ -155,7 +187,7 @@ const Auth = () => {
         </p>
       </div>
 
-      <div className="relative z-10 w-full max-w-md animate-in fade-in zoom-in duration-500">
+      <div className="w-full animate-in fade-in zoom-in duration-500 md:rounded-[32px] md:border md:border-white/10 md:bg-black/22 md:p-6 md:backdrop-blur-xl">
         <div className="mx-auto mb-8 flex w-fit items-center justify-center gap-2 rounded-full border border-white/5 bg-black/20 p-1 backdrop-blur-sm">
           {(["login", "signup"] as const).map((m) => (
             <button
@@ -273,6 +305,7 @@ const Auth = () => {
         </form>
 
 
+      </div>
       </div>
     </div>
   );

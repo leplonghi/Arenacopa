@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import "./i18n/config";
-import { Suspense, lazy, useEffect } from "react";
+import React, { Suspense, lazy, useEffect } from "react";
 import type { ComponentType } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useNavigate, useLocation, useParams } from "react-router-dom";
@@ -20,6 +20,7 @@ import FieldBackground from "@/components/FieldBackground";
 import { useLanguage } from "@/i18n/useLanguage";
 import { BRAND_MARK_SRC } from "@/lib/brand-assets";
 import { sanitizeInternalRedirect } from "@/lib/security";
+
 function isLazyChunkError(error: unknown) {
   const message = error instanceof Error ? error.message : String(error);
   return /Failed to fetch dynamically imported module|Importing a module script failed|ChunkLoadError|Loading chunk/i.test(message);
@@ -84,7 +85,7 @@ const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       staleTime: 5 * 60 * 1000,   // 5 min — don't re-fetch while data is fresh
-      gcTime: 10 * 60 * 1000,  // 10 min — keep in cache after unmount
+      gcTime: 10 * 60 * 1000,     // 10 min — keep in cache after unmount
       retry: 1,
       refetchOnWindowFocus: false, // don't spam Firestore on tab switch
     },
@@ -160,11 +161,9 @@ function DeepLinkListener() {
   const navigate = useNavigate();
   useEffect(() => {
     const listener = CapacitorApp.addListener('appUrlOpen', data => {
-      console.warn('App opened with URL:', data);
       const url = new URL(data.url);
       const path = url.pathname;
-      // Sanitize against open redirect vulnerabilities and javascript injections
-      // Ensure path starts with / and is not an external URL (//)
+      // Sanitize against open redirect and javascript injection
       if (path && path.startsWith('/') && !path.startsWith('//')) {
         navigate(path);
       }
@@ -211,6 +210,9 @@ const LoadingScreen = () => (
       <div className="h-1 w-24 rounded-full bg-white/10 overflow-hidden">
         <div className="h-full w-full animate-[shimmer_1.4s_ease-in-out_infinite] bg-gradient-to-r from-transparent via-primary/60 to-transparent" />
       </div>
+      <p className="text-xs font-bold uppercase tracking-[0.18em] text-white/70">
+        Carregando ArenaCUP
+      </p>
     </div>
   </div>
 );
@@ -251,7 +253,6 @@ const AppRoutes = () => (
     <Route path="/privacidade" element={<Privacidade />} />
     <Route path="/termos" element={<Termos />} />
     <Route path="/excluir-conta" element={<ExcluirConta />} />
-    {/* Legacy English redirects removed — Play Store and all external links now use PT paths */}
     <Route path="/" element={<ProtectedRoute><Layout><Index /></Layout></ProtectedRoute>} />
     <Route path="/copa" element={<ProtectedRoute><Layout><Copa /></Layout></ProtectedRoute>} />
     <Route path="/copa/overview" element={<ProtectedRoute><LegacyRedirect to="/copa" /></ProtectedRoute>} />
@@ -262,12 +263,9 @@ const AppRoutes = () => (
     <Route path="/copa/:subtab" element={<ProtectedRoute><Layout><Copa /></Layout></ProtectedRoute>} />
     <Route path="/cup" element={<ProtectedRoute><LegacyRedirect to="/copa" /></ProtectedRoute>} />
     <Route path="/cup/:subtab" element={<ProtectedRoute><LegacyCopaRedirect /></ProtectedRoute>} />
-    {/* Championship hub — replaces the old /copa tab */}
     <Route path="/campeonatos" element={<ProtectedRoute><Layout><Campeonatos /></Layout></ProtectedRoute>} />
-    {/* Placeholder for individual championship pages (Phase 1 builds these) */}
     <Route path="/campeonato/:championshipId" element={<ProtectedRoute><Layout><CampeonatoHub /></Layout></ProtectedRoute>} />
     <Route path="/descobrir" element={<ProtectedRoute><Layout><Descobrir /></Layout></ProtectedRoute>} />
-    {/* Fake discover sub-routes removed — Descobrir uses internal state, not URL segments */}
     <Route path="/boloes" element={<ProtectedRoute><Layout><Boloes /></Layout></ProtectedRoute>} />
     <Route path="/boloes/creator" element={<ProtectedRoute><Layout><CreatorPro /></Layout></ProtectedRoute>} />
     <Route path="/boloes/rapido" element={<ProtectedRoute><Layout><BolaoRapido /></Layout></ProtectedRoute>} />
@@ -296,11 +294,9 @@ const AppRoutes = () => (
     <Route path="/team/:code" element={<ProtectedRoute><Layout><TeamDetails /></Layout></ProtectedRoute>} />
     <Route path="/menu" element={<ProtectedRoute><Layout><MenuPage /></Layout></ProtectedRoute>} />
     <Route path="/perfil" element={<ProtectedRoute><Layout><Perfil /></Layout></ProtectedRoute>} />
-    {/* Legacy profile/account redirects removed */}
     <Route path="/ranking" element={<ProtectedRoute><Layout><Ranking /></Layout></ProtectedRoute>} />
     <Route path="/noticias" element={<ProtectedRoute><Layout><Noticias /></Layout></ProtectedRoute>} />
     <Route path="/regras" element={<ProtectedRoute><Layout><Rules /></Layout></ProtectedRoute>} />
-    {/* Legacy /rules redirect removed */}
     <Route path="/premium" element={<ProtectedRoute><Layout><Premium /></Layout></ProtectedRoute>} />
     <Route path="*" element={<ProtectedRoute><NotFound /></ProtectedRoute>} />
   </Routes>
@@ -311,21 +307,25 @@ const App = () => (
     <TooltipProvider delayDuration={200} skipDelayDuration={0}>
       <Toaster />
       <Sonner />
+      {/*
+        FieldBackground is rendered OUTSIDE Suspense so the pitch background
+        appears instantly — before any lazy route bundle finishes loading.
+      */}
+      <FieldBackground />
       <AuthProvider>
         <MonetizationProvider>
           <ChampionshipProvider>
-            <Suspense fallback={<LoadingScreen />}>
-              <LanguageRuntime />
-              <FieldBackground />
-              <AppSplash />
-              <GlobalAchievementTracker />
-              <BrowserRouter>
+            <BrowserRouter>
+              <Suspense fallback={<LoadingScreen />}>
+                <LanguageRuntime />
+                <AppSplash />
+                <GlobalAchievementTracker />
                 <DeepLinkListener />
                 <PushNotificationListener />
                 <ScrollToTop />
                 <AppRoutes />
-              </BrowserRouter>
-            </Suspense>
+              </Suspense>
+            </BrowserRouter>
           </ChampionshipProvider>
         </MonetizationProvider>
       </AuthProvider>

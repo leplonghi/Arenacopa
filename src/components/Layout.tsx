@@ -107,8 +107,6 @@ function Header({ className }: { className?: string }) {
     if (path.startsWith("/boloes/")) return t('header.titles.bolao_detail');
     if (path === "/grupos") return t('header.titles.groups');
     if (path.startsWith("/grupos/")) return t('header.titles.group_detail');
-    if (path === "/comunidades") return t('header.titles.groups');
-    if (path.startsWith("/comunidades/")) return t('header.titles.group_detail');
     if (path === "/perfil") return t('header.titles.profile');
     return null;
   };
@@ -178,7 +176,7 @@ function Header({ className }: { className?: string }) {
           <NavLink to="/perfil" aria-label={t('actions.open_account')} className="md:hidden">
             <div className="relative transition-transform active:scale-95">
               <Avatar className="arena-glow-ring h-14 w-14 border-[3px] border-[#7dff48]/35 bg-[#05140d]">
-                <AvatarImage src={profile?.avatar} />
+                <AvatarImage src={profile?.avatar_url} />
                 <AvatarFallback className="bg-primary/10 text-primary text-sm font-black">
                   {profile?.name?.substring(0, 2).toUpperCase() || user?.email?.substring(0, 2).toUpperCase() || "?"}
                 </AvatarFallback>
@@ -193,7 +191,7 @@ function Header({ className }: { className?: string }) {
           <NavLink to="/perfil" aria-label={t('actions.open_account')} className="hidden md:block">
             <div className="flex items-center gap-2 rounded-full border border-white/10 bg-black/35 p-1 pr-3 transition-colors hover:bg-white/5">
               <Avatar className="arena-glow-ring h-10 w-10 border-[3px] border-[#7dff48]/35 bg-[#05140d]">
-                <AvatarImage src={profile?.avatar} />
+                <AvatarImage src={profile?.avatar_url} />
                 <AvatarFallback className="bg-primary/10 text-primary text-xs font-bold">
                   {profile?.name?.substring(0, 2).toUpperCase() || user?.email?.substring(0, 2).toUpperCase() || "?"}
                 </AvatarFallback>
@@ -358,7 +356,6 @@ import { CookieBanner } from "@/components/CookieBanner";
 export function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const mainScrollRef = useRef<HTMLElement | null>(null);
-  const hideBottomNav = location.pathname === "/boloes/criar";
   const { user } = useAuth();
   const { t } = useTranslation('common');
 
@@ -376,7 +373,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <SidebarInset className="bg-transparent flex flex-col h-svh w-full overflow-hidden">
           <Header className="w-full shrink-0" />
           <main ref={mainScrollRef} className={cn(
-            "flex-1 overflow-y-auto w-full max-w-7xl mx-auto scrollbar-hide flex flex-col pt-[calc(4.6rem+var(--safe-area-top,0px))] md:pt-20 pb-[calc(8.5rem+var(--safe-area-bottom,0px))] md:pb-12"
+            "flex-1 overflow-y-auto w-full max-w-7xl mx-auto scrollbar-hide flex flex-col pt-[calc(4.5rem+var(--safe-area-top,0px))] md:pt-[72px] pb-[calc(8.5rem+var(--safe-area-bottom,0px))] md:pb-12"
           )}>
             <div className="flex-1">
               {children}
@@ -395,7 +392,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
               </div>
             </footer>
           </main>
-          {!hideBottomNav && <BottomTabs className="md:hidden" />}
+          <BottomTabs className="md:hidden" />
         </SidebarInset>
       </div>
       <PWABanner />

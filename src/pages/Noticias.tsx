@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import {
+  BookOpen,
   ExternalLink,
   Globe,
   Newspaper,
@@ -10,11 +12,12 @@ import {
   X,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { getStoredFavoriteTeam, subscribeToFavoriteTeamUpdates } from "@/lib/favorite-team";
+import { getStoredFavoriteTeams, subscribeToFavoriteTeamUpdates } from "@/lib/favorite-team";
 import { useRealtimeNews, RealtimeNewsItem } from "@/hooks/useRealtimeNews";
 import { useExternalNews } from "@/hooks/useExternalNews";
 import { useTranslation } from "react-i18next";
 import { sanitizeExternalUrl } from "@/lib/security";
+import { FAVORITE_TEAM_CHOICES } from "@/data/favoriteTeams";
 
 // ── Category definitions ──────────────────────────────────────────────────────
 const HOME_PREFS_KEY = "arenacopa_home_news_prefs";
@@ -84,7 +87,7 @@ export default function Noticias() {
   const categories: NewsCategory[] = [
     { id: "all", label: t("news_page.categories.all", { defaultValue: "Todos" }), emoji: "📰" },
     { id: "copa", label: t("news_page.categories.copa", { defaultValue: "Copa 2026" }), emoji: "🏆" },
-    { id: "teams", label: t("news_page.categories.teams", { defaultValue: "Seleções" }), emoji: "🌍" },
+    { id: "teams", label: t("news_page.categories.teams", { defaultValue: "Times" }), emoji: "🌍" },
     { id: "general", label: t("news_page.categories.general", { defaultValue: "Futebol" }), emoji: "⚽" },
     { id: "matches", label: t("news_page.categories.matches", { defaultValue: "Partidas" }), emoji: "🎯" },
     { id: "travel", label: t("news_page.categories.travel", { defaultValue: "Viagem" }), emoji: "✈️" },
@@ -103,9 +106,7 @@ export default function Noticias() {
   } = useExternalNews();
 
   const [activeCategory, setActiveCategory] = useState("all");
-  const [favoriteTeam, setFavoriteTeam] = useState<string | null>(
-    () => getStoredFavoriteTeam()
-  );
+  const [favoriteTeams, setFavoriteTeams] = useState<string[]>(() => getStoredFavoriteTeams());
   const [homePrefs, setHomePrefs] = useState<string[]>(() => {
     try {
       return JSON.parse(localStorage.getItem(HOME_PREFS_KEY) || '["copa","teams"]');
@@ -128,8 +129,10 @@ export default function Noticias() {
   };
 
   useEffect(() => {
-    setFavoriteTeam(getStoredFavoriteTeam());
-    return subscribeToFavoriteTeamUpdates(setFavoriteTeam);
+    setFavoriteTeams(getStoredFavoriteTeams());
+    return subscribeToFavoriteTeamUpdates(() => {
+      setFavoriteTeams(getStoredFavoriteTeams());
+    });
   }, [user?.id]);
 
   // ── Merge + deduplicate both sources ────────────────────────────────────────
@@ -159,31 +162,53 @@ export default function Noticias() {
 
   // ── Filtered list ────────────────────────────────────────────────────────────
   const filteredNews = useMemo(() => {
-    const normalizedFav = favoriteTeam?.toUpperCase() ?? null;
+    const normalizedFavorites = favoriteTeams.map((code) => code.toUpperCase());
+    const favoriteChoices = FAVORITE_TEAM_CHOICES.filter((choice) =>
+      normalizedFavorites.includes(choice.code.toUpperCase())
+    );
     const base =
       activeCategory === "all"
         ? news
         : news.filter((item) => item.category === activeCategory);
 
-    // Bubble up favourite-team articles
+    // Favorite teams always define feed priority.
     return [...base].sort((a, b) => {
-      const aFav =
-        normalizedFav && a.teams.map((t) => t.toUpperCase()).includes(normalizedFav) ? 1 : 0;
-      const bFav =
-        normalizedFav && b.teams.map((t) => t.toUpperCase()).includes(normalizedFav) ? 1 : 0;
-      return bFav - aFav;
+      const score = (item: NewsItem) => {
+        const itemTeams = item.teams.map((team) => team.toUpperCase());
+        const text = `${item.title} ${item.summary ?? ""}`.toLowerCase();
+        return favoriteChoices.reduce((total, choice) => {
+          const code = choice.code.toUpperCase();
+          const name = choice.name.toLowerCase();
+          if (itemTeams.includes(code)) return total + 3;
+          if (text.includes(name) || text.includes(code.toLowerCase())) return total + 2;
+          if (choice.type === "national" && text.includes(choice.countryName.toLowerCase())) return total + 1;
+          return total;
+        }, 0);
+      };
+
+      const priorityDiff = score(b) - score(a);
+      if (priorityDiff !== 0) return priorityDiff;
+
+      const aTime = a.publishedAt ? new Date(a.publishedAt).getTime() : 0;
+      const bTime = b.publishedAt ? new Date(b.publishedAt).getTime() : 0;
+      return bTime - aTime;
     });
-  }, [activeCategory, favoriteTeam, news]);
+  }, [activeCategory, favoriteTeams, news]);
 
   // ── Personalised (favourite team) highlight ──────────────────────────────────
   const personalizedNews = useMemo(
     () =>
-      favoriteTeam
+      favoriteTeams.length > 0
         ? filteredNews.filter((item) =>
-            item.teams.map((t) => t.toUpperCase()).includes(favoriteTeam.toUpperCase())
+            favoriteTeams.some((favorite) => {
+              const choice = FAVORITE_TEAM_CHOICES.find((candidate) => candidate.code.toUpperCase() === favorite.toUpperCase());
+              const text = `${item.title} ${item.summary ?? ""}`.toLowerCase();
+              return item.teams.map((t) => t.toUpperCase()).includes(favorite.toUpperCase()) ||
+                Boolean(choice && (text.includes(choice.name.toLowerCase()) || text.includes(choice.code.toLowerCase())));
+            })
           )
         : [],
-    [favoriteTeam, filteredNews]
+    [favoriteTeams, filteredNews]
   );
 
   const toggleHomePref = (cat: string) => {
@@ -275,6 +300,24 @@ export default function Noticias() {
         </button>
       </div>
 
+      <div className="mx-4 mb-5">
+        <Link
+          to="/copa/guia"
+          className="flex items-center justify-between gap-3 rounded-[22px] border border-blue-400/20 bg-blue-500/[0.07] px-4 py-3 transition hover:border-blue-300/35 hover:bg-blue-500/[0.11]"
+        >
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[14px] bg-blue-400/12 text-blue-300">
+              <BookOpen className="h-5 w-5" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-sm font-black text-white">Guia da Copa</p>
+              <p className="truncate text-[11px] text-zinc-400">Cidades, estádios, grupos e calendário em um só lugar.</p>
+            </div>
+          </div>
+          <ExternalLink className="h-4 w-4 shrink-0 text-blue-300" />
+        </Link>
+      </div>
+
       {/* ── Feed loading progress bar ────────────────────────────────────────── */}
       {!allFeedsLoaded && (
         <div className="mx-4 mb-4 rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
@@ -346,7 +389,7 @@ export default function Noticias() {
       )}
 
       {/* ── Favourite-team highlight ─────────────────────────────────────────── */}
-      {favoriteTeam && personalizedNews.length > 0 && (
+      {favoriteTeams.length > 0 && personalizedNews.length > 0 && (
         <div className="mx-4 mb-5 overflow-hidden rounded-[28px] border border-primary/30 bg-gradient-to-br from-primary/15 to-primary/5">
           {personalizedNews[0].imageUrl && (
             <div className="h-36 w-full overflow-hidden">
@@ -364,7 +407,7 @@ export default function Noticias() {
             <div className="mb-3 flex items-center gap-2">
               <Sparkles className="h-4 w-4 text-primary" />
               <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">
-                {t("news_page.for_you", { team: favoriteTeam, defaultValue: `Para você · ${favoriteTeam}` })}
+                {t("news_page.for_you", { team: favoriteTeams.slice(0, 3).join(", "), defaultValue: `Para você · ${favoriteTeams.slice(0, 3).join(", ")}` })}
               </p>
             </div>
             <h2 className="text-xl font-black leading-snug">

@@ -1,5 +1,4 @@
-import { Trophy, Users, Info } from "lucide-react";
-import { ArenaMetric, ArenaPanel } from "@/components/arena/ArenaPrimitives";
+import { Trophy, Info, Zap } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 
@@ -19,58 +18,52 @@ export function BolaoActionCenter({
   completionPercent,
   onAction,
 }: BolaoActionCenterProps) {
-  const { t } = useTranslation('bolao');
+  const { t } = useTranslation("bolao");
+  const hasPending = pendingOverview.totalPending > 0;
 
   return (
-    <div className="mb-4 grid gap-3 lg:grid-cols-[1.2fr_0.8fr]">
-      <ArenaPanel className="p-4">
-        <p className="arena-kicker text-primary">
+    <div className="mb-4 flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] px-4 py-3 flex-wrap">
+      {/* Status / CTA */}
+      <div className="flex-1 min-w-0">
+        <p className="text-[10px] font-black uppercase tracking-widest text-zinc-500">
           {t("bolao_detail.next_play_kicker", { defaultValue: "Próxima jogada" })}
         </p>
-        <h2 className="mt-1 arena-title-lg">
-          {pendingOverview.totalPending > 0
-            ? `${pendingOverview.totalPending} jogos para resolver`
-            : "Você está em dia"}
-        </h2>
-        <p className="mt-1 max-w-xl text-xs leading-relaxed text-zinc-400">
-          {pendingOverview.totalPending > 0
-            ? pendingOverview.summary || "Abra os jogos e salve seus resultados antes do prazo."
-            : "Acompanhe ranking, participantes e escolhas já fechadas."}
+        <p className="mt-0.5 text-sm font-black text-white leading-tight">
+          {hasPending ? `${pendingOverview.totalPending} jogos para resolver` : "Você está em dia"}
         </p>
-        <div className="mt-3">
-          <button
-            onClick={() => onAction(pendingOverview.totalPending > 0 ? "palpites" : "ranking")}
-            className={cn(
-              "inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[11px] font-black uppercase tracking-[0.12em] transition",
-              pendingOverview.totalPending > 0
-                ? "bg-amber-500/15 text-amber-400 hover:bg-amber-500/25"
-                : "bg-primary/15 text-primary hover:bg-primary/25"
-            )}
-          >
-            {pendingOverview.totalPending > 0 ? "Marcar agora" : "Ver ranking"}
-          </button>
-        </div>
-      </ArenaPanel>
-
-      <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
-        <ArenaMetric
-          label={t("bolao_detail.progress_label", { defaultValue: "Progresso" })}
-          value={pendingOverview.totalOpen > 0 ? `${pendingOverview.completed}/${pendingOverview.totalOpen}` : "0/0"}
-          accent
-          icon={<Trophy className="h-5 w-5" />}
-        />
-        <ArenaMetric
-          label="Pendências"
-          value={pendingOverview.totalPending}
-          icon={<Info className="h-5 w-5" />}
-        />
-        <ArenaMetric
-          label="Cobertura"
-          value={`${completionPercent}%`}
-          icon={<Users className="h-5 w-5" />}
-          className="sm:col-span-3 lg:col-span-1"
-        />
       </div>
+
+      {/* Metrics — compact inline chips */}
+      <div className="flex items-center gap-2 shrink-0">
+        <span className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 text-[11px] font-black text-zinc-300">
+          <Trophy className="h-3.5 w-3.5 text-primary" />
+          {pendingOverview.completed}/{pendingOverview.totalOpen}
+        </span>
+        <span className={cn(
+          "flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-[11px] font-black",
+          hasPending ? "border-amber-500/20 bg-amber-500/10 text-amber-400" : "border-white/10 bg-white/5 text-zinc-300"
+        )}>
+          <Info className="h-3.5 w-3.5" />
+          {pendingOverview.totalPending}
+        </span>
+        <span className="flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 text-[11px] font-black text-zinc-300">
+          {completionPercent}%
+        </span>
+      </div>
+
+      {/* Action button */}
+      <button
+        onClick={() => onAction(hasPending ? "palpites" : "ranking")}
+        className={cn(
+          "shrink-0 inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-[11px] font-black uppercase tracking-[0.12em] transition",
+          hasPending
+            ? "bg-amber-500/15 text-amber-400 hover:bg-amber-500/25"
+            : "bg-primary/15 text-primary hover:bg-primary/25"
+        )}
+      >
+        <Zap className="h-3.5 w-3.5" />
+        {hasPending ? "Marcar" : "Ranking"}
+      </button>
     </div>
   );
 }

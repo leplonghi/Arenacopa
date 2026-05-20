@@ -52,7 +52,7 @@ export function AppSplash() {
             <motion.div
               className="absolute inset-0 bg-cover bg-[70%_center]"
               style={{ backgroundImage: `url(${heroBgSrc})` }}
-              initial={{ scale: 1.05, opacity: 0 }}
+              initial={{ scale: 1.02, opacity: 1 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ duration: 0.8, ease: "easeOut" }}
             />
@@ -64,19 +64,19 @@ export function AppSplash() {
           <div className="relative z-10 flex min-h-[420px] w-full max-w-[460px] flex-col items-center justify-center px-8 text-center">
             <motion.div
               className="relative mb-5 grid h-24 w-24 place-items-center sm:h-28 sm:w-28"
-              initial={{ scale: 0.84, opacity: 0, filter: "blur(8px)" }}
+              initial={{ scale: 0.96, opacity: 1, filter: "blur(0px)" }}
               animate={{ scale: 1, opacity: 1, filter: "blur(0px)" }}
               transition={{ delay: 0.18, duration: 0.62, ease: "backOut" }}
             >
               <motion.div
                 className="absolute inset-[-10px] rounded-full border border-[#FFC212]/30"
-                initial={{ scale: 0.9, opacity: 0 }}
+                initial={{ scale: 1, opacity: 1 }}
                 animate={{ scale: 1.05, opacity: 1 }}
                 transition={{ delay: 0.34, duration: 0.62, ease: "easeOut" }}
               />
               <motion.div
                 className="absolute inset-0 rounded-full bg-[#FFC212]/16 blur-xl"
-                initial={{ opacity: 0, scale: 0.9 }}
+                initial={{ opacity: 0.6, scale: 1 }}
                 animate={{ opacity: 0.85, scale: 1.18 }}
                 transition={{ delay: 0.42, duration: 0.62, ease: "easeOut" }}
               />
@@ -90,7 +90,7 @@ export function AppSplash() {
 
             <motion.div
               className="mb-3 inline-flex items-center gap-2 border border-white/12 bg-black/25 px-3 py-1 text-xs font-extrabold text-[#DFFFD7] backdrop-blur-md"
-              initial={{ y: 12, opacity: 0 }}
+              initial={{ y: 0, opacity: 1 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.58, duration: 0.38, ease: "easeOut" }}
             >
@@ -98,7 +98,7 @@ export function AppSplash() {
               Bolão em campo
             </motion.div>
             <motion.div
-              initial={{ y: 18, opacity: 0 }}
+              initial={{ y: 0, opacity: 1 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.72, duration: 0.5, ease: "circOut" }}
             >
@@ -109,7 +109,7 @@ export function AppSplash() {
             </motion.div>
             <motion.p
               className="mt-4 max-w-[320px] text-sm font-bold leading-5 text-white drop-shadow-[0_2px_14px_rgba(0,0,0,0.72)]"
-              initial={{ y: 14, opacity: 0 }}
+              initial={{ y: 0, opacity: 1 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.92, duration: 0.4, ease: "easeOut" }}
             >
@@ -117,7 +117,7 @@ export function AppSplash() {
             </motion.p>
             <motion.div
               className="mt-7 h-1 w-40 overflow-hidden bg-white/12"
-              initial={{ opacity: 0, scaleX: 0.6 }}
+              initial={{ opacity: 1, scaleX: 1 }}
               animate={{ opacity: 1, scaleX: 1 }}
               transition={{ delay: 1.06, duration: 0.3, ease: "easeOut" }}
             >

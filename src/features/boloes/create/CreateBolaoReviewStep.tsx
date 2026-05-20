@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
@@ -15,7 +16,7 @@ import { createGroup } from "@/services/groups/group-access.service";
 import { trackBolaoConfigEvent } from "@/lib/analytics/bolao-config.telemetry";
 import { trackSocialEvent } from "@/lib/analytics/social.telemetry";
 import { mapWizardStateToBolaoStructure } from "@/features/boloes/create/useBolaoCreateFlow";
-import { CreateBolaoStepRail } from "@/features/boloes/create/CreateBolaoStepRail";
+import { invalidateBolaoListingCache } from "@/services/boloes/bolao-listing.service";
 import { cn } from "@/lib/utils";
 import type { useBolaoCreateFlow } from "@/features/boloes/create/useBolaoCreateFlow";
 
@@ -27,8 +28,9 @@ export function CreateBolaoReviewStep({ flow }: { flow: Flow }) {
   const { t } = useTranslation("bolao");
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { session } = useAuth();
+  const { session, user } = useAuth();
   const { current: championship } = useChampionship();
+  const queryClient = useQueryClient();
   const [publishing, setPublishing] = useState(false);
 
   const structure = mapWizardStateToBolaoStructure(flow.state);
@@ -59,6 +61,16 @@ export function CreateBolaoReviewStep({ flow }: { flow: Flow }) {
     return t("creation.review.messages.error_generic");
   };
 
+  // Normalise match ids: empty array is valid for specific bolão types, 
+  // but "all" is the special flag for full championship access.
+  const resolveMatchIds = (ids: string[] | "all"): string[] | "all" => {
+    return ids;
+  };
+
+  // Strip payment method prefix tags like [pix], [beer] etc.
+  const resolvePaymentDetails = (raw: string): string =>
+    raw.replace(/^\[\w+\]\s*/, "").trim();
+
   const createOrUpdateDraft = async () => {
     const token = await getOperationToken();
     const configurationPatch = {
@@ -78,8 +90,8 @@ export function CreateBolaoReviewStep({ flow }: { flow: Flow }) {
       finance_rules: {
         finance_mode: flow.state.financeMode,
         entry_fee_amount: typeof flow.state.entryFee === "number" ? flow.state.entryFee : null,
-        distribution_custom_text: flow.state.prizeDistribution.trim(),
-        payment_details: flow.state.paymentDetails.trim(),
+        distribution_custom_text: flow.state.prizeDistribution.trim() || null,
+        payment_details: resolvePaymentDetails(flow.state.paymentDetails),
       },
     } as const;
 
@@ -94,7 +106,7 @@ export function CreateBolaoReviewStep({ flow }: { flow: Flow }) {
             emoji: flow.state.emoji,
           },
           championship_id: championship.id,
-            allowed_match_ids: flow.state.allowedMatchIds,
+          allowed_match_ids: resolveMatchIds(flow.state.allowedMatchIds),
         },
       });
       flow.setDraftId(draft.bolaoId);
@@ -108,7 +120,7 @@ export function CreateBolaoReviewStep({ flow }: { flow: Flow }) {
         bolao_id: flow.draftId,
         expected_config_version: flow.draftConfigVersion || 1,
         championship_id: championship.id,
-        allowed_match_ids: flow.state.allowedMatchIds,
+        allowed_match_ids: resolveMatchIds(flow.state.allowedMatchIds),
         patch: configurationPatch,
       },
     });
@@ -137,6 +149,10 @@ export function CreateBolaoReviewStep({ flow }: { flow: Flow }) {
         source: "create_wizard",
         group_binding_mode: structure.groupBindingMode,
       });
+      invalidateBolaoListingCache(user?.id);
+      if (user?.id) {
+        queryClient.invalidateQueries({ queryKey: ["dashboardData", user.id] });
+      }
       toast({
         title: t("creation.review.messages.draft_success_title"),
         description: t("creation.review.messages.draft_success_desc", { id: draft.bolaoId }),
@@ -161,13 +177,14 @@ export function CreateBolaoReviewStep({ flow }: { flow: Flow }) {
       });
 
       const token = await getOperationToken();
+      const matchIds = resolveMatchIds(flow.state.allowedMatchIds);
 
       if (!flow.draftId) {
         const published = await createAndPublishBolao({
           token,
           payload: {
             championship_id: championship.id,
-            allowed_match_ids: flow.state.allowedMatchIds,
+            allowed_match_ids: matchIds,
             context: {
               group_binding_mode: structure.groupBindingMode,
               grupo_id: structure.grupoId,
@@ -184,8 +201,8 @@ export function CreateBolaoReviewStep({ flow }: { flow: Flow }) {
             finance_rules: {
               finance_mode: flow.state.financeMode,
               entry_fee_amount: typeof flow.state.entryFee === "number" ? flow.state.entryFee : null,
-              distribution_custom_text: flow.state.prizeDistribution.trim(),
-              payment_details: flow.state.paymentDetails.trim(),
+              distribution_custom_text: flow.state.prizeDistribution.trim() || null,
+              payment_details: resolvePaymentDetails(flow.state.paymentDetails),
             },
             presentation: {
               name: flow.state.name.trim(),
@@ -218,6 +235,10 @@ export function CreateBolaoReviewStep({ flow }: { flow: Flow }) {
           group_binding_mode: structure.groupBindingMode,
           join_mode: structure.accessPolicy.join_mode,
         });
+        invalidateBolaoListingCache(user?.id);
+        if (user?.id) {
+          queryClient.invalidateQueries({ queryKey: ["dashboardData", user.id] });
+        }
         navigate(`/boloes/${published.bolaoId}?tab=turma&created=true`);
         return;
       }
@@ -262,8 +283,8 @@ export function CreateBolaoReviewStep({ flow }: { flow: Flow }) {
         finance_rules: {
           finance_mode: flow.state.financeMode,
           entry_fee_amount: typeof flow.state.entryFee === "number" ? flow.state.entryFee : null,
-          distribution_custom_text: flow.state.prizeDistribution.trim(),
-          payment_details: flow.state.paymentDetails.trim(),
+          distribution_custom_text: flow.state.prizeDistribution.trim() || null,
+          payment_details: resolvePaymentDetails(flow.state.paymentDetails),
         },
         presentation: {
           name: flow.state.name.trim(),
@@ -271,7 +292,7 @@ export function CreateBolaoReviewStep({ flow }: { flow: Flow }) {
           emoji: flow.state.emoji,
         },
         championship_id: championship.id,
-        allowed_match_ids: flow.state.allowedMatchIds,
+        allowed_match_ids: matchIds,
       };
 
       const draft =
@@ -282,7 +303,7 @@ export function CreateBolaoReviewStep({ flow }: { flow: Flow }) {
                 bolao_id: flow.draftId,
                 expected_config_version: flow.draftConfigVersion,
                 championship_id: championship.id,
-                allowed_match_ids: flow.state.allowedMatchIds,
+                allowed_match_ids: matchIds,
                 patch: {
                   context: basePayload.context,
                   access_policy: basePayload.access_policy,
@@ -335,6 +356,10 @@ export function CreateBolaoReviewStep({ flow }: { flow: Flow }) {
               : "linked_discovery",
         join_mode: structure.accessPolicy.join_mode,
       });
+      invalidateBolaoListingCache(user?.id);
+      if (user?.id) {
+        queryClient.invalidateQueries({ queryKey: ["dashboardData", user.id] });
+      }
       navigate(`/boloes/${published.bolaoId}?tab=palpites`);
     } catch (error) {
       console.error("Create bolao failed", error);
@@ -348,9 +373,8 @@ export function CreateBolaoReviewStep({ flow }: { flow: Flow }) {
   };
 
   return (
-    <div className="mx-auto max-w-3xl px-4 py-8 text-white">
-      <CreateBolaoStepRail activeStep={6} />
-      <p className="text-[11px] font-black uppercase tracking-[0.22em] text-primary">
+    <div className="mx-auto max-w-5xl pb-8 text-white">
+      <p className="break-words text-[11px] font-black uppercase leading-tight tracking-[0.2em] text-primary">
         {t("creation.review.step_label")}
       </p>
       <h1 className="mt-2 text-3xl font-black">{t("creation.review.title")}</h1>

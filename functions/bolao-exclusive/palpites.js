@@ -1,3 +1,5 @@
+const { FieldValue } = require("firebase-admin/firestore");
+
 function buildBolaoPalpiteId({ userId, bolaoId, matchId }) {
   return `${userId}_${bolaoId}_${matchId}`;
 }
@@ -202,7 +204,7 @@ async function saveExclusiveBolaoPalpite({ db, admin, actorId, input, nowIso }) 
       home_score: normalized.homeScore,
       away_score: normalized.awayScore,
       is_power_play: normalized.isPowerPlay,
-      updated_at: admin.firestore.FieldValue.serverTimestamp(),
+      updated_at: FieldValue.serverTimestamp(),
     };
 
     transaction.set(
@@ -226,7 +228,7 @@ async function saveExclusiveBolaoPalpite({ db, admin, actorId, input, nowIso }) 
         away_score: normalized.awayScore,
         user_id: actorId,
         palpite_id: palpiteId,
-        updated_at: admin.firestore.FieldValue.serverTimestamp(),
+        updated_at: FieldValue.serverTimestamp(),
         created_at: nowIso,
       },
       { merge: true }

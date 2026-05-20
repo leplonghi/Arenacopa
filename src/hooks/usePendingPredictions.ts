@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   collection,
   documentId,
@@ -70,6 +70,7 @@ export function usePendingPredictions() {
     }
 
     try {
+      // Step 1: fetch memberships (need bolao IDs first)
       const membershipsSnapshot = await getDocs(
         query(collection(db, "bolao_members"), where("user_id", "==", user.id))
       );
@@ -87,17 +88,27 @@ export function usePendingPredictions() {
         return;
       }
 
-      const bolaoDocs = await Promise.all(
-        chunkValues(uniqueBolaoIds, 30).map(async (ids) => {
-          const snapshot = await getDocs(
-            query(collection(db, "boloes"), where(documentId(), "in", ids))
-          );
-          return snapshot.docs;
-        })
-      );
+      // Step 2: fetch bolao docs AND predictions in parallel
+      const [bolaoDocs, predictionsSnapshot] = await Promise.all([
+        Promise.all(
+          chunkValues(uniqueBolaoIds, 30).map(async (ids) => {
+            const snapshot = await getDocs(
+              query(collection(db, "boloes"), where(documentId(), "in", ids))
+            );
+            return snapshot.docs;
+          })
+        ).then((chunks) => chunks.flat()),
+        getDocs(
+          query(
+            collection(db, "bolao_palpites"),
+            where("user_id", "==", user.id),
+            where("bolao_id", "in", uniqueBolaoIds.slice(0, 30))
+          )
+        ),
+      ]);
 
       const bolaoChampionshipMap = new Map<string, string>();
-      bolaoDocs.flat().forEach((docSnapshot) => {
+      bolaoDocs.forEach((docSnapshot) => {
         const data = docSnapshot.data() as BolaoRow;
         bolaoChampionshipMap.set(
           docSnapshot.id,
@@ -107,10 +118,6 @@ export function usePendingPredictions() {
 
       const championshipIds = new Set(
         uniqueBolaoIds.map((bolaoId) => bolaoChampionshipMap.get(bolaoId) || DEFAULT_CHAMPIONSHIP_ID)
-      );
-
-      const predictionsSnapshot = await getDocs(
-        query(collection(db, "bolao_palpites"), where("user_id", "==", user.id))
       );
 
       const now = Date.now();
@@ -200,15 +207,10 @@ export function usePendingPredictions() {
       refreshScheduler.request();
     });
 
-    const intervalId = window.setInterval(() => {
-      refreshScheduler.request();
-    }, 30000);
-
     return () => {
       refreshScheduler.dispose();
       unsubscribeMemberships();
       unsubscribePredictions();
-      window.clearInterval(intervalId);
     };
   }, [user?.id]);
 
@@ -218,5 +220,15 @@ export function usePendingPredictions() {
     }
   }, [dashboardMatches, user?.id]);
 
-  return pendingItems;
+  const pendingCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    pendingItems.forEach((item) => {
+      item.bolaoIds.forEach((id) => {
+        counts[id] = (counts[id] || 0) + 1;
+      });
+    });
+    return counts;
+  }, [pendingItems]);
+
+  return { pendingItems, pendingCounts };
 }

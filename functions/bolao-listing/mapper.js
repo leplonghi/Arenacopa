@@ -6,13 +6,14 @@ function isActiveMembership(data = {}) {
 function isVisibleBolao(data = {}) {
   const lifecycleStatus = String(data.lifecycle?.status || "");
   const status = String(data.status || "");
-  return !["deleted", "archived"].includes(lifecycleStatus) && status !== "deleted";
+  return !["deleted"].includes(lifecycleStatus) && status !== "deleted";
 }
 
 function toBolaoCard(id, data = {}, fallbackCategory = "private", actorId = null, marketMeta = {}) {
   const lifecycleStatus = String(data.lifecycle?.status || "");
   const status = String(data.status || "open");
   const isPast = Boolean(marketMeta.is_past) || lifecycleStatus === "finished" || status === "finished";
+  const isArchived = lifecycleStatus === "archived";
 
   return {
     id,
@@ -26,6 +27,7 @@ function toBolaoCard(id, data = {}, fallbackCategory = "private", actorId = null
     status,
     member_count: Number(data.member_count || 1),
     is_past: isPast,
+    is_archived: isArchived,
     latest_match_closes_at: marketMeta.latest_match_closes_at || null,
   };
 }
@@ -50,15 +52,23 @@ function buildUserBolaoListing({
     (request) => String(request.request_status || "pending") === "pending",
   );
 
-  const myBoloes = memberBolaoIds
-    .map((bolaoId) => {
-      const data = boloesById[bolaoId];
-      return data && isVisibleBolao(data)
-        ? toBolaoCard(bolaoId, data, "private", actorId, marketMetaByBolaoId[bolaoId])
-        : null;
-    })
-    .filter(Boolean)
-    .sort((left, right) => right.id.localeCompare(left.id));
+  const myBoloes = [];
+  const archivedBoloes = [];
+
+  memberBolaoIds.forEach((bolaoId) => {
+    const data = boloesById[bolaoId];
+    if (data && isVisibleBolao(data)) {
+      const card = toBolaoCard(bolaoId, data, "private", actorId, marketMetaByBolaoId[bolaoId]);
+      if (card.is_archived) {
+        archivedBoloes.push(card);
+      } else {
+        myBoloes.push(card);
+      }
+    }
+  });
+
+  myBoloes.sort((left, right) => right.id.localeCompare(left.id));
+  archivedBoloes.sort((left, right) => right.id.localeCompare(left.id));
 
   const pendingRequestCards = pendingRequests
     .map((request) => {
@@ -83,12 +93,13 @@ function buildUserBolaoListing({
     .filter((bolao) => bolao?.id && !memberBolaoSet.has(bolao.id))
     .filter((bolao) => isVisibleBolao(bolao))
     .map((bolao) => toBolaoCard(bolao.id, bolao, "public", actorId, marketMetaByBolaoId[bolao.id]))
-    .filter((bolao) => !bolao.is_past)
+    .filter((bolao) => !bolao.is_past && !bolao.is_archived)
     .slice(0, 12);
 
   return {
     discoverBoloes,
     myBoloes,
+    archivedBoloes,
     pendingRequests: pendingRequestCards,
   };
 }

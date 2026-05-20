@@ -51,7 +51,7 @@ function computeEditableSections({
 
   return {
     presentation: true,
-    context: structureEditable,
+    context: structureEditable || ["published", "live"].includes(lifecycleStatus),
     access_policy: structureEditable,
     competition_rules: structureEditable,
     finance_rules: structureEditable,

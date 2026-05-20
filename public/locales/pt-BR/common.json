@@ -8,7 +8,7 @@
     "championships": "Campeonatos",
     "news": "Notícias",
     "discover": "Arena",
-    "groups": "Comunidades",
+    "groups": "Grupos",
     "ranking": "Ranking",
     "profile": "Conta",
     "menu": "Menu"
@@ -18,14 +18,14 @@
       "boloes": "Bolões",
       "create_bolao": "Criar Bolão",
       "bolao_detail": "Bolão",
-      "groups": "Comunidades",
-      "group_detail": "Comunidade",
+      "groups": "Grupos",
+      "group_detail": "Grupo",
       "profile": "Conta",
       "menu": "Conta"
     }
   },
   "groups": {
-    "not_found_title": "Comunidade não encontrada",
+    "not_found_title": "Grupo não encontrado",
     "not_found_desc": "Verifique o link ou volte para a lista.",
     "featured_updated": "Bolão em destaque atualizado",
     "feature_update_error": "Não foi possível atualizar o destaque",
@@ -33,12 +33,12 @@
     "request_approve_error": "Não foi possível aprovar",
     "request_rejected": "Solicitação recusada",
     "request_reject_error": "Não foi possível recusar",
-    "left_success": "Você saiu da comunidade",
+    "left_success": "Você saiu do grupo",
     "left_error": "Não foi possível sair",
-    "left_error_desc": "Verifique se você não é o criador da comunidade.",
+    "left_error_desc": "Verifique se você não é o criador do grupo.",
     "member_removed": "Membro removido",
     "member_remove_error": "Não foi possível remover",
-    "load_error": "Não foi possível carregar a comunidade",
+    "load_error": "Não foi possível carregar o grupo",
     "load_error_desc": "Tente novamente em alguns instantes."
   },
   "common": {
@@ -197,7 +197,7 @@
     "copa_guide": "Guia da Copa",
     "premium": "Arena Premium",
     "groups": "Grupos",
-    "communities": "Comunidades",
+    "communities": "Grupos",
     "create_group": "Criar grupo",
     "business": "Negócios",
     "business_home": "ArenaCup para Negócios",
@@ -214,7 +214,7 @@
     "categories": {
       "all": "Todas",
       "copa": "Copa",
-      "teams": "Seleções",
+      "teams": "Times",
       "general": "Geral",
       "matches": "Jogos",
       "travel": "Viagem",

@@ -25,7 +25,7 @@ export function CreateBolaoModeStep({ onSelect }: Props) {
       </div>
 
       {/* Content */}
-      <div className="flex flex-col flex-1 px-4 pb-8 gap-6 justify-center max-w-md mx-auto w-full">
+      <div className="flex flex-col flex-1 px-4 pb-8 gap-6 justify-start max-w-md mx-auto w-full pt-6">
         {/* Title */}
         <div className="text-center space-y-2 mb-2">
           <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-4 py-1.5 text-xs text-white/60 font-medium tracking-wide uppercase mb-3">

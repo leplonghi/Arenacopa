@@ -41,7 +41,7 @@ export default function Menu() {
                 </button>
 
                 <button
-                    onClick={() => navigate("/comunidades")}
+                    onClick={() => navigate("/grupos")}
                     className="w-full p-4 glass-card-hover text-left flex items-center gap-3"
                 >
                     <Users2 className="w-5 h-5 text-primary" />
@@ -52,7 +52,7 @@ export default function Menu() {
                 </button>
 
                 <button
-                    onClick={() => navigate("/comunidades/criar")}
+                    onClick={() => navigate("/grupos/criar")}
                     className="w-full p-4 glass-card-hover text-left flex items-center gap-3"
                 >
                     <PlusCircle className="w-5 h-5 text-primary" />
