@@ -1,0 +1,194 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Helper functions ──────────────────────────────────────────────────
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    function isBolaoMember(bolaoId) {
+      return exists(/databases/$(database)/documents/bolao_members/$(request.auth.uid + '_' + bolaoId));
+    }
+
+    function isBolaoCreator(bolaoId) {
+      return get(/databases/$(database)/documents/boloes/$(bolaoId)).data.creator_id == request.auth.uid;
+    }
+
+    // ── profiles ──────────────────────────────────────────────────────────
+    match /profiles/{userId} {
+      allow read: if isSignedIn();
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId);
+      allow delete: if isOwner(userId);
+    }
+
+    // ── matches ───────────────────────────────────────────────────────────
+    // Public read. Only Cloud Functions (admin SDK) can write.
+    match /matches/{matchId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // ── copa_news ─────────────────────────────────────────────────────────
+    // Public read. Only Cloud Functions write.
+    match /copa_news/{newsId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    // ── boloes ────────────────────────────────────────────────────────────
+    match /boloes/{bolaoId} {
+      allow read: if isSignedIn() && (
+        resource.data.category == 'public' ||
+        isBolaoMember(bolaoId) ||
+        isOwner(resource.data.creator_id)
+      );
+      allow create: if isSignedIn() && isOwner(request.resource.data.creator_id);
+      allow update: if isSignedIn() && (
+        isOwner(resource.data.creator_id) ||
+        isBolaoMember(bolaoId)
+      );
+      allow delete: if isSignedIn() && isOwner(resource.data.creator_id);
+    }
+
+    // ── bolao_members ─────────────────────────────────────────────────────
+    match /bolao_members/{memberId} {
+      allow read: if isSignedIn() && (
+        isOwner(resource.data.user_id) ||
+        isBolaoMember(resource.data.bolao_id)
+      );
+      allow create: if isSignedIn() && (
+        isOwner(request.resource.data.user_id) ||
+        isBolaoCreator(request.resource.data.bolao_id)
+      );
+      allow update: if isSignedIn() && isBolaoCreator(resource.data.bolao_id);
+      allow delete: if isSignedIn() && (
+        isOwner(resource.data.user_id) ||
+        isBolaoCreator(resource.data.bolao_id)
+      );
+    }
+
+    // ── bolao_markets ─────────────────────────────────────────────────────
+    match /bolao_markets/{marketId} {
+      allow read: if isSignedIn() && isBolaoMember(resource.data.bolao_id);
+      // Fixed: CREATE must use request.resource (resource is null on create)
+      allow create: if isSignedIn() && isBolaoCreator(request.resource.data.bolao_id);
+      allow update, delete: if isSignedIn() && isBolaoCreator(resource.data.bolao_id);
+    }
+
+    // ── bolao_palpites (score predictions) ────────────────────────────────
+    match /bolao_palpites/{palpiteId} {
+      allow read: if isSignedIn() && (
+        isOwner(resource.data.user_id) ||
+        isBolaoMember(resource.data.bolao_id)
+      );
+      allow create: if isSignedIn() &&
+        isOwner(request.resource.data.user_id) &&
+        isBolaoMember(request.resource.data.bolao_id);
+      // Fixed: `== null` instead of `== false` — CEL null comparison
+      allow update: if isSignedIn() &&
+        isOwner(resource.data.user_id) &&
+        resource.data.points == null;
+      allow delete: if isSignedIn() && isOwner(resource.data.user_id);
+    }
+
+    // ── bolao_predictions (market predictions) ────────────────────────────
+    match /bolao_predictions/{predictionId} {
+      allow read: if isSignedIn() && isBolaoMember(resource.data.bolao_id);
+      allow create: if isSignedIn() &&
+        isOwner(request.resource.data.user_id) &&
+        isBolaoMember(request.resource.data.bolao_id);
+      // Fixed: `!= true` instead of `== false` — handles missing/null fields
+      allow update: if isSignedIn() &&
+        isOwner(resource.data.user_id) &&
+        resource.data.resolved != true;
+      allow delete: if isSignedIn() && isOwner(resource.data.user_id);
+    }
+
+    // ── bolao_champion_predictions ────────────────────────────────────────
+    match /bolao_champion_predictions/{predId} {
+      allow read: if isSignedIn() && isBolaoMember(resource.data.bolao_id);
+      allow create, update: if isSignedIn() &&
+        isOwner(request.resource.data.user_id) &&
+        isBolaoMember(request.resource.data.bolao_id);
+      allow delete: if isSignedIn() && isOwner(resource.data.user_id);
+    }
+
+    // ── bolao_rankings ────────────────────────────────────────────────────
+    match /bolao_rankings/{rankingId} {
+      allow read: if isSignedIn() && isBolaoMember(resource.data.bolao_id);
+      allow write: if false; // only Firebase Admin SDK
+    }
+
+    // ── bolao_onboarding_state ────────────────────────────────────────────
+    match /bolao_onboarding_state/{stateId} {
+      allow create: if isSignedIn() && isOwner(request.resource.data.user_id);
+      allow read, update, delete: if isSignedIn() && isOwner(resource.data.user_id);
+    }
+
+    // ── notifications ─────────────────────────────────────────────────────
+    match /notifications/{notifId} {
+      allow read, update: if isSignedIn() && isOwner(resource.data.user_id);
+      allow create: if false; // only Cloud Functions
+      allow delete: if isSignedIn() && isOwner(resource.data.user_id);
+    }
+
+    // ── push_subscriptions (Web Push VAPID) ───────────────────────────────
+    // Fixed: CREATE uses request.resource (resource is null on create)
+    match /push_subscriptions/{subId} {
+      allow read, update, delete: if isSignedIn() && isOwner(resource.data.user_id);
+      allow create: if isSignedIn() && isOwner(request.resource.data.user_id);
+    }
+
+    // ── native_push_tokens (Capacitor FCM) ───────────────────────────────
+    // Fixed: CREATE uses request.resource (resource is null on create)
+    match /native_push_tokens/{tokenId} {
+      allow read, update, delete: if isSignedIn() && isOwner(resource.data.user_id);
+      allow create: if isSignedIn() && isOwner(request.resource.data.user_id);
+    }
+
+    // ── subscriptions — B2C subscription status ────────────────────────────
+    // Written exclusively by Cloud Functions (Admin SDK).
+    // Read by the authenticated user (to check their own plan).
+    match /subscriptions/{userId} {
+      allow read: if isSignedIn() && isOwner(userId);
+      allow write: if false; // only Firebase Admin SDK (Stripe webhook)
+    }
+
+    // ── premium_subscriptions — legacy (keep for backward compat) ─────────
+    match /premium_subscriptions/{subId} {
+      allow read: if isSignedIn() && isOwner(resource.data.user_id);
+      allow write: if false; // only Firebase Admin SDK
+    }
+
+    // ── grupos ────────────────────────────────────────────────────────────
+    match /grupos/{grupoId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isOwner(request.resource.data.creator_id);
+      allow update, delete: if isSignedIn() && isOwner(resource.data.creator_id);
+    }
+
+    // ── businesses — B2B Parceiro accounts ────────────────────────────────
+    match /businesses/{businessId} {
+      allow read: if isSignedIn() && isOwner(resource.data.owner_id);
+      allow write: if false; // only Firebase Admin SDK (Stripe webhook)
+    }
+
+    // ── campaigns — B2B ad campaigns ──────────────────────────────────────
+    match /campaigns/{campaignId} {
+      allow read: if isSignedIn() && isOwner(resource.data.user_id);
+      allow write: if false; // only Firebase Admin SDK (Stripe webhook)
+    }
+
+    // ── Deny everything else ──────────────────────────────────────────────
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
