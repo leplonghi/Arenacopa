@@ -12,6 +12,22 @@ service cloud.firestore {
       return request.auth.uid == userId;
     }
 
+    // ── Campaign helpers (1 Firestore read each — used sparingly) ─────────
+    function isCampaignOwner(campaignId) {
+      return get(/databases/$(database)/documents/campaigns/$(campaignId))
+               .data.owner_uid == request.auth.uid;
+    }
+
+    function isWithinPalpiteWindow(gameId) {
+      return get(/databases/$(database)/documents/campaign_games/$(gameId))
+               .data.palpite_window_closes_at > request.time;
+    }
+
+    function isWithinQuizWindow(quizId) {
+      return get(/databases/$(database)/documents/quiz_rounds/$(quizId))
+               .data.question_deadline > request.time;
+    }
+
     function isBolaoMember(bolaoId) {
       return exists(/databases/$(database)/documents/bolao_members/$(request.auth.uid + '_' + bolaoId));
     }
@@ -174,16 +190,124 @@ service cloud.firestore {
       allow update, delete: if isSignedIn() && isOwner(resource.data.creator_id);
     }
 
-    // ── businesses — B2B Parceiro accounts ────────────────────────────────
+    // ── businesses — B2B Parceiro accounts (legacy — keep for compat) ─────
     match /businesses/{businessId} {
       allow read: if isSignedIn() && isOwner(resource.data.owner_id);
-      allow write: if false; // only Firebase Admin SDK (Stripe webhook)
+      allow write: if false; // only Firebase Admin SDK
     }
 
-    // ── campaigns — B2B ad campaigns ──────────────────────────────────────
+    // ── merchants — B2B merchant profiles (new system) ────────────────────
+    match /merchants/{merchantId} {
+      allow read: if isSignedIn() && isOwner(resource.data.owner_uid);
+      allow create: if isSignedIn() && isOwner(request.resource.data.owner_uid);
+      allow update: if isSignedIn() && isOwner(resource.data.owner_uid)
+        && !request.resource.data.diff(resource.data).affectedKeys()
+             .hasAny(["plan","plan_credits","plan_expires_at","status","stripe_customer_id"]);
+      allow delete: if false;
+    }
+
+    // ── campaigns — B2B campaign system (new, replaces old write:false) ───
     match /campaigns/{campaignId} {
-      allow read: if isSignedIn() && isOwner(resource.data.user_id);
-      allow write: if false; // only Firebase Admin SDK (Stripe webhook)
+      allow read: if isSignedIn() && isOwner(resource.data.owner_uid);
+      allow create: if isSignedIn()
+        && isOwner(request.resource.data.owner_uid)
+        && request.resource.data.status == "draft"
+        && request.resource.data.participant_count == 0
+        && request.resource.data.paid_at == null;
+      allow update: if isSignedIn() && isOwner(resource.data.owner_uid)
+        && resource.data.status == "draft"
+        && !request.resource.data.diff(resource.data).affectedKeys()
+             .hasAny(["participant_count","paid_at","stripe_order_id","status","share_code"]);
+      allow delete: if isSignedIn() && isOwner(resource.data.owner_uid)
+        && resource.data.status == "draft";
+    }
+
+    // ── campaign_games ────────────────────────────────────────────────────
+    match /campaign_games/{gameId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn()
+        && isOwner(request.resource.data.owner_uid)
+        && request.resource.data.status == "setup";
+      allow update, delete: if false; // Admin SDK only
+    }
+
+    // ── campaign_games/{gameId}/palpites ──────────────────────────────────
+    // submitPalpite callable (Admin SDK) owns all writes — no client writes.
+    match /campaign_games/{gameId}/palpites/{userId} {
+      allow read: if isSignedIn() && (
+        isOwner(userId) || isCampaignOwner(resource.data.campaign_id)
+      );
+      allow write: if false; // submitPalpite Cloud Function only
+    }
+
+    // ── campaign_games/{gameId}/score_quotas ──────────────────────────────
+    match /campaign_games/{gameId}/score_quotas/{scoreKey} {
+      allow read: if isSignedIn();
+      allow write: if false; // submitPalpite Cloud Function only
+    }
+
+    // ── campaign_games/{gameId}/rankings ─────────────────────────────────
+    match /campaign_games/{gameId}/rankings/{userId} {
+      allow read: if isSignedIn();
+      allow write: if false; // computeGameRanking Cloud Function only
+    }
+
+    // ── campaign_rankings (cumulative across games) ───────────────────────
+    match /campaign_rankings/{rankingId} {
+      allow read: if isSignedIn();
+      allow write: if false; // Cloud Function only
+    }
+
+    // ── campaign_participants ─────────────────────────────────────────────
+    match /campaign_participants/{participantId} {
+      allow read: if isSignedIn() && (
+        isOwner(resource.data.user_uid) ||
+        isCampaignOwner(resource.data.campaign_id)
+      );
+      allow create: if isSignedIn() && isOwner(request.resource.data.user_uid);
+      allow update: if isSignedIn()
+        && isCampaignOwner(resource.data.campaign_id)
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(["is_hidden","is_blocked"]);
+      allow delete: if false;
+    }
+
+    // ── quiz_rounds ───────────────────────────────────────────────────────
+    match /quiz_rounds/{quizId} {
+      allow read: if isSignedIn();
+      allow write: if false; // Cloud Functions only
+    }
+
+    // ── quiz_rounds/{quizId}/answers ──────────────────────────────────────
+    match /quiz_rounds/{quizId}/answers/{answerId} {
+      allow read: if isSignedIn() && isOwner(resource.data.user_uid);
+      allow create: if isSignedIn()
+        && isOwner(request.resource.data.user_uid)
+        && isWithinQuizWindow(quizId);
+      allow update, delete: if false;
+    }
+
+    // ── quiz_questions (global bank) ──────────────────────────────────────
+    match /quiz_questions/{questionId} {
+      allow read: if isSignedIn();
+      allow write: if false; // seeded via Admin SDK / console
+    }
+
+    // ── campaign_tv_state — PUBLIC, zero PII ─────────────────────────────
+    match /campaign_tv_state/{shareCode} {
+      allow read: if true; // intentionally public — TV screen, no login needed
+      allow write: if false; // updateCampaignTvState Cloud Function only
+    }
+
+    // ── prize_redemptions ─────────────────────────────────────────────────
+    match /prize_redemptions/{redemptionId} {
+      allow read: if isSignedIn() && isCampaignOwner(resource.data.campaign_id);
+      allow update: if isSignedIn()
+        && isCampaignOwner(resource.data.campaign_id)
+        && resource.data.redeemed_at == null
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(["redeemed_at","redeemed_by_uid"]);
+      allow create, delete: if false; // Cloud Function only
     }
 
     // ── Deny everything else ──────────────────────────────────────────────
