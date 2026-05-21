@@ -550,6 +550,21 @@ export const expireCopaPasses = functions.scheduler.onSchedule(
   }
 );
 
+// ─── CAMPAIGN SYSTEM V2 — exports ─────────────────────────────────────────────
+// Each campaign module is in its own file to keep concerns isolated.
+// All critical field writes (scores, rankings, prize redemptions) happen in
+// Cloud Functions via Admin SDK — never from the client.
+
+export { createCampaignDraft }      from "./campaign-draft";
+export { createCampaignCheckout, syncCampaignCheckout } from "./campaign-checkout";
+export { activateCampaignGame, submitPalpite }          from "./campaign-game";
+export { lockPalpiteWindow }        from "./campaign-palpite-window";
+export { computeGameRanking }       from "./campaign-ranking";
+export { updateCampaignTvState }    from "./campaign-tv";
+export { startQuizRound, advanceQuizQuestion } from "./campaign-quiz";
+export { validatePrizeRedemption }  from "./campaign-prize";
+export { expireCampaigns, sendRenewalReminders } from "./campaign-maintenance";
+
 // ─── 6. COMPUTE RANKINGS — Firestore trigger ──────────────────────────────────
 
 const BATCH_LIMIT = 490; // Firestore max is 500; leave headroom
