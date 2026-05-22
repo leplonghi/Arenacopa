@@ -2170,7 +2170,7 @@ Key changes:
 4. Show list of campaign games with status
 5. Show QR code and share link when active
 
-- [ ] In `CampanhaBarDetail.tsx`, update the status display:
+- [x] In `CampanhaBarDetail.tsx`, update the status display:
 
 ```tsx
 import { CAMPAIGN_STATUS_LABELS } from "@/types/campaign-v2";
@@ -2179,7 +2179,7 @@ import { CAMPAIGN_STATUS_LABELS } from "@/types/campaign-v2";
 <span>{CAMPAIGN_STATUS_LABELS[campaign.status as CampaignStatus] ?? campaign.status}</span>
 ```
 
-- [ ] Replace the payment button handler:
+- [x] Replace the payment button handler:
 
 ```tsx
 const handlePay = async () => {
@@ -2203,7 +2203,7 @@ const handlePay = async () => {
 };
 ```
 
-- [ ] Add useEffect to sync on return from Stripe:
+- [x] Add useEffect to sync on return from Stripe:
 
 ```tsx
 useEffect(() => {
@@ -2219,8 +2219,8 @@ useEffect(() => {
 }, [session]);
 ```
 
-- [ ] Run: `npm run build` — no errors.
-- [ ] Commit: `git add src/pages/CampanhaBarDetail.tsx && git commit -m "feat(campaign): CampanhaBarDetail — fix status labels, payment flow, sync on return"`
+- [x] Run: `npm run build` — no errors.
+- [x] Commit: `git add src/pages/CampanhaBarDetail.tsx && git commit -m "feat(campaign): CampanhaBarDetail — fix status labels, payment flow, sync on return"`
 
 ---
 
