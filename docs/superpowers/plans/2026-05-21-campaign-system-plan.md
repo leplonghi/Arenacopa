@@ -21,8 +21,8 @@
 | T7 — lockPalpiteWindow scheduler | ✅ DONE | 9536b32 |
 | T8 — computeGameRanking trigger | ✅ DONE | 9536b32 |
 | T9-11 — TV state + quiz + prize + maintenance | ✅ DONE | 9536b32 |
-| **T12 — Deploy backend functions** | **✅ 12/13 DONE** | 9536b32 |
-| **⚠️ createCampaignCheckout** | **BLOCKED — precisa Stripe Price IDs** | ver abaixo |
+| **T12 — Deploy backend functions** | **✅ DONE** | 9536b32 + deploy 2026-05-22 |
+| **createCampaignCheckout** | **✅ DONE — Stripe Price ID secrets configured and function deployed** | 2026-05-22 |
 | T13 — Frontend types + pricing | ✅ DONE | f63fa79 |
 | T14 — CriarCampanhaBar wizard | ✅ DONE | 2244127 |
 | T15-17 — Detail + PalpiteCard + ArenaTV | ⬜ TODO | — |
@@ -1429,7 +1429,7 @@ export const sendRenewalReminders = functions.scheduler.onSchedule(
 
 ### Task 12: Deploy all backend functions
 
-- [ ] Deploy the 8 new functions by name (avoids reconciling the ~50 v1 functions still in production):
+- [x] Deploy the 13 campaign functions by name (avoids reconciling the ~50 v1 functions still in production):
 
 ```bash
 # cwd: C:\Users\eduar\.antigravity\Arenacopa
@@ -1449,8 +1449,8 @@ functions:expireCampaigns,\
 functions:sendRenewalReminders"
 ```
 
-- [ ] Verify in Firebase console: all 13 functions appear with status "healthy".
-- [ ] Also deploy rules if not yet done: `firebase deploy --only firestore:rules`
+- [x] Verify all 13 campaign functions are ACTIVE in Firebase.
+- [x] Also deploy rules if not yet done: `firebase deploy --only firestore:rules`
 
 ---
 
