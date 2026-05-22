@@ -2389,7 +2389,7 @@ The existing ArenaTV.tsx needs a full redesign for the new `campaign_tv_state` s
 - Display logo, match, live rankings, participant count
 - Show quiz question when `quiz_active === true`
 
-- [ ] Rewrite `src/pages/ArenaTV.tsx`:
+- [x] Rewrite `src/pages/ArenaTV.tsx`:
 
 ```tsx
 import { useEffect, useState } from "react";
@@ -2522,9 +2522,9 @@ export default function ArenaTV() {
 }
 ```
 
-- [ ] Ensure router has a route for ArenaTV with shareCode param. In `src/App.tsx` (or router config), verify: `<Route path="/tv/:shareCode" element={<ArenaTV />} />`. If not present, add it.
-- [ ] Run: `npm run build` — no errors.
-- [ ] Commit: `git add src/pages/ArenaTV.tsx && git commit -m "feat(campaign): ArenaTV redesign — real-time rankings + quiz display"`
+- [x] Ensure router has a route for ArenaTV with shareCode param. In `src/App.tsx` (or router config), verify: `<Route path="/tv/:shareCode" element={<ArenaTV />} />`. If not present, add it.
+- [x] Run: `npm run build` — no errors.
+- [x] Commit: `git add src/pages/ArenaTV.tsx && git commit -m "feat(campaign): ArenaTV redesign — real-time rankings + quiz display"`
 
 ---
 
