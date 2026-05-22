@@ -2232,7 +2232,7 @@ useEffect(() => {
 - Create: `src/components/campaign/PalpiteCard.tsx`
 - Modify: `src/pages/PublicCommercialCampaign.tsx` (rename/replace with participante flow)
 
-- [ ] Write `src/components/campaign/PalpiteCard.tsx`:
+- [x] Write `src/components/campaign/PalpiteCard.tsx`:
 
 ```tsx
 import { useState } from "react";
@@ -2375,8 +2375,8 @@ export function PalpiteCard({ plan, homeTeam, awayTeam, onSubmit, loading, error
 }
 ```
 
-- [ ] Run: `npm run build` — no errors.
-- [ ] Commit: `git add src/components/campaign/PalpiteCard.tsx && git commit -m "feat(campaign): PalpiteCard component — placar + bonus fields"`
+- [x] Run: `npm run build` — no errors.
+- [x] Commit: `git add src/components/campaign/PalpiteCard.tsx && git commit -m "feat(campaign): PalpiteCard component — placar + bonus fields"`
 
 ---
 
