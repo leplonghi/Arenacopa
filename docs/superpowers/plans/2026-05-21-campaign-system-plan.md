@@ -8,6 +8,30 @@
 
 **Tech Stack:** Firebase Functions v2 Node 20 TypeScript strict, Firestore, Stripe, React 18 + Vite + Vitest, Radix UI, Recharts.
 
+## ✅ Resumo de Progresso (atualizado 2026-05-21)
+
+| Fase | Status | Commit |
+|---|---|---|
+| T1 — campaign-types.ts | ✅ DONE | 0bbf89f |
+| T2 — Scoring engine + 16 tests | ✅ DONE | f367794 |
+| T3 — Firestore security rules | ✅ DONE | 891e74c |
+| T4 — createCampaignDraft | ✅ DONE | 1175f61 |
+| T5 — createCampaignCheckout + sync | ✅ DONE | 9536b32 |
+| T6 — activateCampaignGame + submitPalpite | ✅ DONE | 9536b32 |
+| T7 — lockPalpiteWindow scheduler | ✅ DONE | 9536b32 |
+| T8 — computeGameRanking trigger | ✅ DONE | 9536b32 |
+| T9-11 — TV state + quiz + prize + maintenance | ✅ DONE | 9536b32 |
+| **T12 — Deploy backend functions** | **✅ 12/13 DONE** | 9536b32 |
+| **⚠️ createCampaignCheckout** | **BLOCKED — precisa Stripe Price IDs** | ver abaixo |
+| T13 — Frontend types + pricing | ⬜ TODO | — |
+| T14 — CriarCampanhaBar wizard | ⬜ TODO | — |
+| T15-17 — Detail + PalpiteCard + ArenaTV | ⬜ TODO | — |
+| T18 — Full deploy + smoke test | ⬜ TODO | — |
+
+**Para continuar (qualquer ambiente):** Leia este arquivo, execute o próximo ⏳ NEXT.
+
+---
+
 **Key paths:**
 - Backend: `C:\Users\eduar\.antigravity\Arenacopa\functions\src\`
 - Frontend: `C:\Users\eduar\OneDrive\Desktop\Antigravity\ArenaCopa\Arenacopa\src\`
