@@ -24,7 +24,7 @@
 | **T12 — Deploy backend functions** | **✅ 12/13 DONE** | 9536b32 |
 | **⚠️ createCampaignCheckout** | **BLOCKED — precisa Stripe Price IDs** | ver abaixo |
 | T13 — Frontend types + pricing | ✅ DONE | f63fa79 |
-| T14 — CriarCampanhaBar wizard | ⬜ TODO | — |
+| T14 — CriarCampanhaBar wizard | ⚠️ CODE DONE — smoke blocked by auth | 2244127 |
 | T15-17 — Detail + PalpiteCard + ArenaTV | ⬜ TODO | — |
 | T18 — Full deploy + smoke test | ⬜ TODO | — |
 
@@ -1766,7 +1766,7 @@ New structure: 4 steps
 3. Selecionar Jogo (game/match picker)
 4. Confirmar e Pagar
 
-- [ ] Write the full wizard. This is a large file — write it in sections. Start with Step 1 skeleton and state types:
+- [x] Write the full wizard. This is a large file — write it in sections. Start with Step 1 skeleton and state types:
 
 ```bash
 # cwd: OneDrive frontend dir
@@ -2153,9 +2153,9 @@ export default function CriarCampanhaBar() {
 }
 ```
 
-- [ ] Run: `npm run build` in frontend dir — expected: no TypeScript errors.
-- [ ] Smoke test manually: navigate to `/criar-campanha-bar`, verify 4-step wizard renders, plan selection works, benefit validates.
-- [ ] Commit: `git add src/pages/CriarCampanhaBar.tsx && git commit -m "feat(campaign): rewrite wizard Bar — 4-step plan+benefit+game+confirm"`
+- [x] Run: `npm run build` in frontend dir — expected: no TypeScript errors.
+- [ ] Smoke test manually: navigate to `/criar-campanha-bar`, verify 4-step wizard renders, plan selection works, benefit validates. **Blocked:** Playwright route check redirected to `/auth?redirect=%2Fcriar-campanha-bar` because no authenticated browser session was available.
+- [x] Commit: `git add src/pages/CriarCampanhaBar.tsx && git commit -m "feat(campaign): rewrite wizard Bar — 4-step plan+benefit+game+confirm"`
 
 ---
 
