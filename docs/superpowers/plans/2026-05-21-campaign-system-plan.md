@@ -21,12 +21,12 @@
 | T7 — lockPalpiteWindow scheduler | ✅ DONE | 9536b32 |
 | T8 — computeGameRanking trigger | ✅ DONE | 9536b32 |
 | T9-11 — TV state + quiz + prize + maintenance | ✅ DONE | 9536b32 |
-| **T12 — Deploy backend functions** | **✅ 12/13 DONE** | 9536b32 |
-| **⚠️ createCampaignCheckout** | **BLOCKED — precisa Stripe Price IDs** | ver abaixo |
-| T13 — Frontend types + pricing | ⬜ TODO | — |
-| T14 — CriarCampanhaBar wizard | ⬜ TODO | — |
-| T15-17 — Detail + PalpiteCard + ArenaTV | ⬜ TODO | — |
-| T18 — Full deploy + smoke test | ⬜ TODO | — |
+| **T12 — Deploy backend functions** | **✅ DONE** | 9536b32 + deploy 2026-05-22 |
+| **createCampaignCheckout** | **✅ DONE — Stripe products/prices created, secrets updated, function redeployed** | 2026-05-22 |
+| T13 — Frontend types + pricing | ✅ DONE | f63fa79 |
+| T14 — CriarCampanhaBar wizard | ✅ DONE | 2244127 |
+| T15-17 — Detail + PalpiteCard + ArenaTV | ✅ DONE | 0bfba9d / 8c66851 / 62ecdbe |
+| T18 — Full deploy + smoke test | ⚠️ DEPLOY DONE — manual checkout smoke pending | deploy 2026-05-22 |
 
 **Para continuar (qualquer ambiente):** Leia este arquivo, execute o próximo ⏳ NEXT.
 
@@ -45,7 +45,7 @@
 
 **Files:** Create `functions/src/campaign-types.ts`
 
-- [ ] Create the file:
+- [x] Create the file:
 
 ```bash
 # cwd: C:\Users\eduar\.antigravity\Arenacopa\functions
@@ -105,9 +105,9 @@ export type QuizQuestion = {
 };
 ```
 
-- [ ] Verify TypeScript compiles: `npm run build` — expected: no errors.
+- [x] Verify TypeScript compiles: `npm run build` — expected: no errors.
 
-- [ ] Commit: `git add functions/src/campaign-types.ts && git commit -m "feat(campaign): shared backend types v2"`
+- [x] Commit: `git add functions/src/campaign-types.ts && git commit -m "feat(campaign): shared backend types v2"`
 
 ---
 
@@ -115,7 +115,7 @@ export type QuizQuestion = {
 
 **Files:** Create `functions/src/campaign-scoring.ts`
 
-- [ ] Write `src/campaign-scoring.ts`:
+- [x] Write `src/campaign-scoring.ts`:
 
 ```typescript
 import type { MatchResult, ScoringResult } from "./campaign-types";
@@ -168,7 +168,7 @@ export function scoreOnePalpite(
 }
 ```
 
-- [ ] Write `src/__tests__/campaign-scoring.test.ts` (create `src/__tests__/` dir):
+- [x] Write `src/__tests__/campaign-scoring.test.ts` (create `src/__tests__/` dir):
 
 ```typescript
 import { scoreOnePalpite } from "../campaign-scoring";
@@ -198,11 +198,11 @@ test("exact diff + correct winner = 10 pts", () => {
 });
 ```
 
-- [ ] Add jest to functions: `npm install --save-dev jest @types/jest ts-jest`
+- [x] Add jest to functions: `npm install --save-dev jest @types/jest ts-jest`
 
-- [ ] Add to `functions/package.json` scripts: `"test": "jest --testPathPattern=src/__tests__"`
+- [x] Add to `functions/package.json` scripts: `"test": "jest --testPathPattern=src/__tests__"`
 
-- [ ] Add `functions/jest.config.js`:
+- [x] Add `functions/jest.config.js`:
 
 ```javascript
 module.exports = {
@@ -212,9 +212,9 @@ module.exports = {
 };
 ```
 
-- [ ] Run: `npm test` — expected: 4 tests pass.
+- [x] Run: `npm test` — expected: 4 tests pass.
 
-- [ ] Commit: `git add functions/src/campaign-scoring.ts functions/src/__tests__/ functions/jest.config.js functions/package.json && git commit -m "feat(campaign): scoring engine with tests"`
+- [x] Commit: `git add functions/src/campaign-scoring.ts functions/src/__tests__/ functions/jest.config.js functions/package.json && git commit -m "feat(campaign): scoring engine with tests"`
 
 ---
 
@@ -224,7 +224,7 @@ module.exports = {
 
 **Files:** Modify `firestore.rules`
 
-- [ ] Replace the existing `match /campaigns/{campaignId}` block and add new blocks. The full updated rules file must replace the old `campaigns` + `businesses` blocks and add new collections. Key change: old `campaigns` block used `user_id`; new one uses `owner_uid` with fine-grained field protection.
+- [x] Replace the existing `match /campaigns/{campaignId}` block and add new blocks. The full updated rules file must replace the old `campaigns` + `businesses` blocks and add new collections. Key change: old `campaigns` block used `user_id`; new one uses `owner_uid` with fine-grained field protection.
 
 Add these helper functions inside `service cloud.firestore { match /databases/{database}/documents {`:
 
@@ -242,7 +242,7 @@ function isWithinQuizWindow(quizId) {
 }
 ```
 
-- [ ] Replace the `match /campaigns/{campaignId}` block:
+- [x] Replace the `match /campaigns/{campaignId}` block:
 
 ```javascript
 match /campaigns/{campaignId} {
@@ -260,7 +260,7 @@ match /campaigns/{campaignId} {
 }
 ```
 
-- [ ] Add new blocks (after `campaigns`, before the catch-all `match /{document=**}`):
+- [x] Add new blocks (after `campaigns`, before the catch-all `match /{document=**}`):
 
 ```javascript
 match /merchants/{merchantId} {
@@ -340,9 +340,9 @@ match /prize_redemptions/{redemptionId} {
 }
 ```
 
-- [ ] Deploy rules: `firebase deploy --only firestore:rules`
-- [ ] Verify in Firebase console: rules deployed without errors.
-- [ ] Commit: `git add firestore.rules && git commit -m "feat(campaign): firestore security rules v2"`
+- [x] Deploy rules: `firebase deploy --only firestore:rules`
+- [x] Verify in Firebase console: rules deployed without errors.
+- [x] Commit: `git add firestore.rules && git commit -m "feat(campaign): firestore security rules v2"`
 
 ---
 
@@ -352,7 +352,7 @@ match /prize_redemptions/{redemptionId} {
 
 **Files:** Create `functions/src/campaign-draft.ts`, modify `functions/src/index.ts`
 
-- [ ] Write `src/campaign-draft.ts`:
+- [x] Write `src/campaign-draft.ts`:
 
 ```typescript
 import * as functions from "firebase-functions/v2";
@@ -452,14 +452,14 @@ export const createCampaignDraft = functions.https.onCall(
 );
 ```
 
-- [ ] In `functions/src/index.ts`, add at the bottom:
+- [x] In `functions/src/index.ts`, add at the bottom:
 
 ```typescript
 export { createCampaignDraft } from "./campaign-draft";
 ```
 
-- [ ] Build: `npm run build` — expected: no errors.
-- [ ] Commit: `git add functions/src/campaign-draft.ts functions/src/index.ts && git commit -m "feat(campaign): createCampaignDraft callable"`
+- [x] Build: `npm run build` — expected: no errors.
+- [x] Commit: `git add functions/src/campaign-draft.ts functions/src/index.ts && git commit -m "feat(campaign): createCampaignDraft callable"`
 
 ---
 
@@ -473,7 +473,7 @@ Stripe price secret names (must be set before deploy):
 - `STRIPE_PRICE_CAMPANHA_COPA` → Price for R$ 349,90 one-time
 - `STRIPE_PRICE_CAMPANHA_PARCEIRO` → Price for R$ 399,90 recurring/year
 
-- [ ] Create Stripe products + prices in Stripe dashboard for the 4 plans above, then set secrets:
+- [x] Create Stripe products + prices in Stripe dashboard for the 4 plans above, then set secrets:
 
 ```bash
 firebase functions:secrets:set STRIPE_PRICE_CAMPANHA_RODADA
@@ -482,7 +482,7 @@ firebase functions:secrets:set STRIPE_PRICE_CAMPANHA_COPA
 firebase functions:secrets:set STRIPE_PRICE_CAMPANHA_PARCEIRO
 ```
 
-- [ ] Write `src/campaign-checkout.ts`:
+- [x] Write `src/campaign-checkout.ts`:
 
 ```typescript
 import * as functions from "firebase-functions/v2";
@@ -602,9 +602,9 @@ export const syncCampaignCheckout = functions.https.onCall(
 );
 ```
 
-- [ ] Export from index.ts: `export { createCampaignCheckout, syncCampaignCheckout } from "./campaign-checkout";`
-- [ ] Build: `npm run build` — no errors.
-- [ ] Commit: `git add functions/src/campaign-checkout.ts functions/src/index.ts && git commit -m "feat(campaign): checkout + sync callables"`
+- [x] Export from index.ts: `export { createCampaignCheckout, syncCampaignCheckout } from "./campaign-checkout";`
+- [x] Build: `npm run build` — no errors.
+- [x] Commit: `git add functions/src/campaign-checkout.ts functions/src/index.ts && git commit -m "feat(campaign): checkout + sync callables"`
 
 ---
 
@@ -612,7 +612,7 @@ export const syncCampaignCheckout = functions.https.onCall(
 
 **Files:** Create `functions/src/campaign-game.ts`
 
-- [ ] Write `src/campaign-game.ts`:
+- [x] Write `src/campaign-game.ts`:
 
 ```typescript
 import * as functions from "firebase-functions/v2";
@@ -808,9 +808,9 @@ export const submitPalpite = functions.https.onCall(async (request) => {
 });
 ```
 
-- [ ] Export from index.ts: `export { activateCampaignGame, submitPalpite } from "./campaign-game";`
-- [ ] Build: `npm run build` — no errors.
-- [ ] Commit: `git add functions/src/campaign-game.ts functions/src/index.ts && git commit -m "feat(campaign): activateCampaignGame + submitPalpite callables"`
+- [x] Export from index.ts: `export { activateCampaignGame, submitPalpite } from "./campaign-game";`
+- [x] Build: `npm run build` — no errors.
+- [x] Commit: `git add functions/src/campaign-game.ts functions/src/index.ts && git commit -m "feat(campaign): activateCampaignGame + submitPalpite callables"`
 
 ---
 
@@ -818,7 +818,7 @@ export const submitPalpite = functions.https.onCall(async (request) => {
 
 **Files:** Create `functions/src/campaign-palpite-window.ts`
 
-- [ ] Write `src/campaign-palpite-window.ts`:
+- [x] Write `src/campaign-palpite-window.ts`:
 
 ```typescript
 import * as functions from "firebase-functions/v2";
@@ -851,9 +851,9 @@ export const lockPalpiteWindow = functions.scheduler.onSchedule(
 );
 ```
 
-- [ ] Export: `export { lockPalpiteWindow } from "./campaign-palpite-window";`
-- [ ] Build: `npm run build` — no errors.
-- [ ] Commit: `git add functions/src/campaign-palpite-window.ts functions/src/index.ts && git commit -m "feat(campaign): lockPalpiteWindow scheduler"`
+- [x] Export: `export { lockPalpiteWindow } from "./campaign-palpite-window";`
+- [x] Build: `npm run build` — no errors.
+- [x] Commit: `git add functions/src/campaign-palpite-window.ts functions/src/index.ts && git commit -m "feat(campaign): lockPalpiteWindow scheduler"`
 
 ---
 
@@ -863,7 +863,7 @@ export const lockPalpiteWindow = functions.scheduler.onSchedule(
 
 **Files:** Create `functions/src/campaign-ranking.ts`
 
-- [ ] Write `src/campaign-ranking.ts`:
+- [x] Write `src/campaign-ranking.ts`:
 
 ```typescript
 import * as functions from "firebase-functions/v2";
@@ -1048,9 +1048,9 @@ function generateRedemptionCode(): string {
 }
 ```
 
-- [ ] Export: `export { computeGameRanking } from "./campaign-ranking";`
-- [ ] Build: `npm run build` — no errors.
-- [ ] Commit: `git add functions/src/campaign-ranking.ts functions/src/index.ts && git commit -m "feat(campaign): computeGameRanking with scoring + prize redemption generation"`
+- [x] Export: `export { computeGameRanking } from "./campaign-ranking";`
+- [x] Build: `npm run build` — no errors.
+- [x] Commit: `git add functions/src/campaign-ranking.ts functions/src/index.ts && git commit -m "feat(campaign): computeGameRanking with scoring + prize redemption generation"`
 
 ---
 
@@ -1058,7 +1058,7 @@ function generateRedemptionCode(): string {
 
 **Files:** Create `functions/src/campaign-tv.ts`
 
-- [ ] Write `src/campaign-tv.ts`:
+- [x] Write `src/campaign-tv.ts`:
 
 ```typescript
 import * as functions from "firebase-functions/v2";
@@ -1101,9 +1101,9 @@ export const updateCampaignTvState = functions.firestore.onDocumentWritten(
 );
 ```
 
-- [ ] Export: `export { updateCampaignTvState } from "./campaign-tv";`
-- [ ] Build: `npm run build` — no errors.
-- [ ] Commit: `git add functions/src/campaign-tv.ts functions/src/index.ts && git commit -m "feat(campaign): updateCampaignTvState trigger"`
+- [x] Export: `export { updateCampaignTvState } from "./campaign-tv";`
+- [x] Build: `npm run build` — no errors.
+- [x] Commit: `git add functions/src/campaign-tv.ts functions/src/index.ts && git commit -m "feat(campaign): updateCampaignTvState trigger"`
 
 ---
 
@@ -1111,7 +1111,7 @@ export const updateCampaignTvState = functions.firestore.onDocumentWritten(
 
 **Files:** Create `functions/src/campaign-quiz.ts`
 
-- [ ] Write `src/campaign-quiz.ts`:
+- [x] Write `src/campaign-quiz.ts`:
 
 ```typescript
 import * as functions from "firebase-functions/v2";
@@ -1287,9 +1287,9 @@ async function finalizeQuiz(quizId: string, quiz: admin.firestore.DocumentData) 
 }
 ```
 
-- [ ] Export: `export { startQuizRound, advanceQuizQuestion } from "./campaign-quiz";`
-- [ ] Build: `npm run build` — no errors.
-- [ ] Commit: `git add functions/src/campaign-quiz.ts functions/src/index.ts && git commit -m "feat(campaign): quiz round functions"`
+- [x] Export: `export { startQuizRound, advanceQuizQuestion } from "./campaign-quiz";`
+- [x] Build: `npm run build` — no errors.
+- [x] Commit: `git add functions/src/campaign-quiz.ts functions/src/index.ts && git commit -m "feat(campaign): quiz round functions"`
 
 ---
 
@@ -1297,7 +1297,7 @@ async function finalizeQuiz(quizId: string, quiz: admin.firestore.DocumentData) 
 
 **Files:** Create `functions/src/campaign-prize.ts`, `functions/src/campaign-maintenance.ts`
 
-- [ ] Write `src/campaign-prize.ts`:
+- [x] Write `src/campaign-prize.ts`:
 
 ```typescript
 import * as functions from "firebase-functions/v2";
@@ -1345,7 +1345,7 @@ export const validatePrizeRedemption = functions.https.onCall(async (request) =>
 });
 ```
 
-- [ ] Write `src/campaign-maintenance.ts`:
+- [x] Write `src/campaign-maintenance.ts`:
 
 ```typescript
 import * as functions from "firebase-functions/v2";
@@ -1421,15 +1421,15 @@ export const sendRenewalReminders = functions.scheduler.onSchedule(
 );
 ```
 
-- [ ] Export: `export { validatePrizeRedemption } from "./campaign-prize"; export { expireCampaigns, sendRenewalReminders } from "./campaign-maintenance";`
-- [ ] Build: `npm run build` — no errors.
-- [ ] Commit: `git add functions/src/campaign-prize.ts functions/src/campaign-maintenance.ts functions/src/index.ts && git commit -m "feat(campaign): validatePrizeRedemption + maintenance schedulers"`
+- [x] Export: `export { validatePrizeRedemption } from "./campaign-prize"; export { expireCampaigns, sendRenewalReminders } from "./campaign-maintenance";`
+- [x] Build: `npm run build` — no errors.
+- [x] Commit: `git add functions/src/campaign-prize.ts functions/src/campaign-maintenance.ts functions/src/index.ts && git commit -m "feat(campaign): validatePrizeRedemption + maintenance schedulers"`
 
 ---
 
 ### Task 12: Deploy all backend functions
 
-- [ ] Deploy the 8 new functions by name (avoids reconciling the ~50 v1 functions still in production):
+- [x] Deploy the 13 campaign functions by name (avoids reconciling the ~50 v1 functions still in production):
 
 ```bash
 # cwd: C:\Users\eduar\.antigravity\Arenacopa
@@ -1449,8 +1449,8 @@ functions:expireCampaigns,\
 functions:sendRenewalReminders"
 ```
 
-- [ ] Verify in Firebase console: all 13 functions appear with status "healthy".
-- [ ] Also deploy rules if not yet done: `firebase deploy --only firestore:rules`
+- [x] Verify all 13 campaign functions are ACTIVE in Firebase.
+- [x] Also deploy rules if not yet done: `firebase deploy --only firestore:rules`
 
 ---
 
@@ -1462,7 +1462,7 @@ functions:sendRenewalReminders"
 - Create: `src/types/campaign-v2.ts`
 - Create: `src/lib/campaign-v2-pricing.ts`
 
-- [ ] Write `src/types/campaign-v2.ts`:
+- [x] Write `src/types/campaign-v2.ts`:
 
 ```typescript
 // Frontend mirror of backend campaign types (no correct_index, no admin-only fields)
@@ -1622,7 +1622,7 @@ export const PRIZE_TIER_LABELS: Record<PrizeTier, string> = {
 };
 ```
 
-- [ ] Write `src/lib/campaign-v2-pricing.ts`:
+- [x] Write `src/lib/campaign-v2-pricing.ts`:
 
 ```typescript
 import type { CampaignPlan } from "@/types/campaign-v2";
@@ -1728,7 +1728,7 @@ export function formatPrice(cents: number): string {
 }
 ```
 
-- [ ] Write tests at `src/lib/__tests__/campaign-v2-pricing.test.ts`:
+- [x] Write tests at `src/lib/__tests__/campaign-v2-pricing.test.ts`:
 
 ```typescript
 import { describe, it, expect } from "vitest";
@@ -1747,8 +1747,8 @@ describe("campaign-v2-pricing", () => {
 });
 ```
 
-- [ ] Run: `npm test` (in frontend dir) — expected: tests pass.
-- [ ] Commit: `git add src/types/campaign-v2.ts src/lib/campaign-v2-pricing.ts src/lib/__tests__/campaign-v2-pricing.test.ts && git commit -m "feat(campaign): frontend types v2 + pricing catalog"`
+- [x] Run: `npm test` (in frontend dir) — expected: tests pass.
+- [x] Commit: `git add src/types/campaign-v2.ts src/lib/campaign-v2-pricing.ts src/lib/__tests__/campaign-v2-pricing.test.ts && git commit -m "feat(campaign): frontend types v2 + pricing catalog"`
 
 ---
 
@@ -1766,7 +1766,7 @@ New structure: 4 steps
 3. Selecionar Jogo (game/match picker)
 4. Confirmar e Pagar
 
-- [ ] Write the full wizard. This is a large file — write it in sections. Start with Step 1 skeleton and state types:
+- [x] Write the full wizard. This is a large file — write it in sections. Start with Step 1 skeleton and state types:
 
 ```bash
 # cwd: OneDrive frontend dir
@@ -2153,9 +2153,9 @@ export default function CriarCampanhaBar() {
 }
 ```
 
-- [ ] Run: `npm run build` in frontend dir — expected: no TypeScript errors.
-- [ ] Smoke test manually: navigate to `/criar-campanha-bar`, verify 4-step wizard renders, plan selection works, benefit validates.
-- [ ] Commit: `git add src/pages/CriarCampanhaBar.tsx && git commit -m "feat(campaign): rewrite wizard Bar — 4-step plan+benefit+game+confirm"`
+- [x] Run: `npm run build` in frontend dir — expected: no TypeScript errors.
+- [x] Smoke test manually: navigate to `/criar-campanha-bar`, verify 4-step wizard renders, plan selection works, benefit validates. Verified in local-emulator mode with seeded owner `owner@arenacopa.local`: 4 labels render, plan selection expands features/enables Continue, blocked benefit language shows validation, valid benefit clears it, and the flow reaches Confirm.
+- [x] Commit: `git add src/pages/CriarCampanhaBar.tsx && git commit -m "feat(campaign): rewrite wizard Bar — 4-step plan+benefit+game+confirm"`
 
 ---
 
@@ -2170,7 +2170,7 @@ Key changes:
 4. Show list of campaign games with status
 5. Show QR code and share link when active
 
-- [ ] In `CampanhaBarDetail.tsx`, update the status display:
+- [x] In `CampanhaBarDetail.tsx`, update the status display:
 
 ```tsx
 import { CAMPAIGN_STATUS_LABELS } from "@/types/campaign-v2";
@@ -2179,7 +2179,7 @@ import { CAMPAIGN_STATUS_LABELS } from "@/types/campaign-v2";
 <span>{CAMPAIGN_STATUS_LABELS[campaign.status as CampaignStatus] ?? campaign.status}</span>
 ```
 
-- [ ] Replace the payment button handler:
+- [x] Replace the payment button handler:
 
 ```tsx
 const handlePay = async () => {
@@ -2203,7 +2203,7 @@ const handlePay = async () => {
 };
 ```
 
-- [ ] Add useEffect to sync on return from Stripe:
+- [x] Add useEffect to sync on return from Stripe:
 
 ```tsx
 useEffect(() => {
@@ -2219,8 +2219,8 @@ useEffect(() => {
 }, [session]);
 ```
 
-- [ ] Run: `npm run build` — no errors.
-- [ ] Commit: `git add src/pages/CampanhaBarDetail.tsx && git commit -m "feat(campaign): CampanhaBarDetail — fix status labels, payment flow, sync on return"`
+- [x] Run: `npm run build` — no errors.
+- [x] Commit: `git add src/pages/CampanhaBarDetail.tsx && git commit -m "feat(campaign): CampanhaBarDetail — fix status labels, payment flow, sync on return"`
 
 ---
 
@@ -2232,7 +2232,7 @@ useEffect(() => {
 - Create: `src/components/campaign/PalpiteCard.tsx`
 - Modify: `src/pages/PublicCommercialCampaign.tsx` (rename/replace with participante flow)
 
-- [ ] Write `src/components/campaign/PalpiteCard.tsx`:
+- [x] Write `src/components/campaign/PalpiteCard.tsx`:
 
 ```tsx
 import { useState } from "react";
@@ -2375,8 +2375,8 @@ export function PalpiteCard({ plan, homeTeam, awayTeam, onSubmit, loading, error
 }
 ```
 
-- [ ] Run: `npm run build` — no errors.
-- [ ] Commit: `git add src/components/campaign/PalpiteCard.tsx && git commit -m "feat(campaign): PalpiteCard component — placar + bonus fields"`
+- [x] Run: `npm run build` — no errors.
+- [x] Commit: `git add src/components/campaign/PalpiteCard.tsx && git commit -m "feat(campaign): PalpiteCard component — placar + bonus fields"`
 
 ---
 
@@ -2389,7 +2389,7 @@ The existing ArenaTV.tsx needs a full redesign for the new `campaign_tv_state` s
 - Display logo, match, live rankings, participant count
 - Show quiz question when `quiz_active === true`
 
-- [ ] Rewrite `src/pages/ArenaTV.tsx`:
+- [x] Rewrite `src/pages/ArenaTV.tsx`:
 
 ```tsx
 import { useEffect, useState } from "react";
@@ -2522,9 +2522,9 @@ export default function ArenaTV() {
 }
 ```
 
-- [ ] Ensure router has a route for ArenaTV with shareCode param. In `src/App.tsx` (or router config), verify: `<Route path="/tv/:shareCode" element={<ArenaTV />} />`. If not present, add it.
-- [ ] Run: `npm run build` — no errors.
-- [ ] Commit: `git add src/pages/ArenaTV.tsx && git commit -m "feat(campaign): ArenaTV redesign — real-time rankings + quiz display"`
+- [x] Ensure router has a route for ArenaTV with shareCode param. In `src/App.tsx` (or router config), verify: `<Route path="/tv/:shareCode" element={<ArenaTV />} />`. If not present, add it.
+- [x] Run: `npm run build` — no errors.
+- [x] Commit: `git add src/pages/ArenaTV.tsx && git commit -m "feat(campaign): ArenaTV redesign — real-time rankings + quiz display"`
 
 ---
 
@@ -2532,7 +2532,7 @@ export default function ArenaTV() {
 
 ### Task 18: Full deploy
 
-- [ ] Build frontend:
+- [x] Build frontend:
 
 ```bash
 # cwd: C:\Users\eduar\OneDrive\Desktop\Antigravity\ArenaCopa\Arenacopa
@@ -2541,20 +2541,23 @@ npm run build -- --outDir "C:/Users/eduar/.antigravity/Arenacopa/dist"
 
 Expected: build completes, dist/ populated.
 
-- [ ] Deploy hosting:
+- [x] Deploy hosting:
 
 ```bash
 # cwd: C:\Users\eduar\.antigravity\Arenacopa
 firebase deploy --only hosting
 ```
 
-- [ ] Deploy any remaining functions:
+- [x] Deploy any remaining functions:
 
 ```bash
 firebase deploy --only firestore:rules,firestore:indexes
 ```
 
 - [ ] Smoke test in production:
+  - [x] Automated public smoke: `/`, `/criar-campanha-bar`, and `/tv/SMOKE` return 200 with SPA root.
+  - [x] Verified 13 campaign Cloud Functions are ACTIVE after deploy.
+  - [ ] Manual authenticated checkout smoke is pending because it requires bar-owner credentials and completing Stripe Checkout.
   - [ ] Log in as bar owner → navigate to `/criar-campanha-bar` → wizard shows 4 steps
   - [ ] Select plan → proceed to benefit step → enter benefit → select prize model
   - [ ] Proceed to game step → see list of Copa 2026 matches
@@ -2565,7 +2568,7 @@ firebase deploy --only firestore:rules,firestore:indexes
   - [ ] Activate a game → game appears in campaign detail
   - [ ] Submit palpite via callable → appears in Firestore subcollection
 
-- [ ] Commit any final fixes: `git add -p && git commit -m "chore: final deploy fixes"`
+- [x] Commit any final fixes: no final code fixes required after deploy checks.
 
 ---
 
