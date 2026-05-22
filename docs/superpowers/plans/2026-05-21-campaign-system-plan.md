@@ -25,8 +25,8 @@
 | **createCampaignCheckout** | **✅ DONE — Stripe products/prices created, secrets updated, function redeployed** | 2026-05-22 |
 | T13 — Frontend types + pricing | ✅ DONE | f63fa79 |
 | T14 — CriarCampanhaBar wizard | ✅ DONE | 2244127 |
-| T15-17 — Detail + PalpiteCard + ArenaTV | ⬜ TODO | — |
-| T18 — Full deploy + smoke test | ⬜ TODO | — |
+| T15-17 — Detail + PalpiteCard + ArenaTV | ✅ DONE | 0bfba9d / 8c66851 / 62ecdbe |
+| T18 — Full deploy + smoke test | ⚠️ DEPLOY DONE — manual checkout smoke pending | deploy 2026-05-22 |
 
 **Para continuar (qualquer ambiente):** Leia este arquivo, execute o próximo ⏳ NEXT.
 
@@ -2532,7 +2532,7 @@ export default function ArenaTV() {
 
 ### Task 18: Full deploy
 
-- [ ] Build frontend:
+- [x] Build frontend:
 
 ```bash
 # cwd: C:\Users\eduar\OneDrive\Desktop\Antigravity\ArenaCopa\Arenacopa
@@ -2541,20 +2541,23 @@ npm run build -- --outDir "C:/Users/eduar/.antigravity/Arenacopa/dist"
 
 Expected: build completes, dist/ populated.
 
-- [ ] Deploy hosting:
+- [x] Deploy hosting:
 
 ```bash
 # cwd: C:\Users\eduar\.antigravity\Arenacopa
 firebase deploy --only hosting
 ```
 
-- [ ] Deploy any remaining functions:
+- [x] Deploy any remaining functions:
 
 ```bash
 firebase deploy --only firestore:rules,firestore:indexes
 ```
 
 - [ ] Smoke test in production:
+  - [x] Automated public smoke: `/`, `/criar-campanha-bar`, and `/tv/SMOKE` return 200 with SPA root.
+  - [x] Verified 13 campaign Cloud Functions are ACTIVE after deploy.
+  - [ ] Manual authenticated checkout smoke is pending because it requires bar-owner credentials and completing Stripe Checkout.
   - [ ] Log in as bar owner → navigate to `/criar-campanha-bar` → wizard shows 4 steps
   - [ ] Select plan → proceed to benefit step → enter benefit → select prize model
   - [ ] Proceed to game step → see list of Copa 2026 matches
@@ -2565,7 +2568,7 @@ firebase deploy --only firestore:rules,firestore:indexes
   - [ ] Activate a game → game appears in campaign detail
   - [ ] Submit palpite via callable → appears in Firestore subcollection
 
-- [ ] Commit any final fixes: `git add -p && git commit -m "chore: final deploy fixes"`
+- [x] Commit any final fixes: no final code fixes required after deploy checks.
 
 ---
 
