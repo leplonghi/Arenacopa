@@ -24,7 +24,7 @@
 | **T12 — Deploy backend functions** | **✅ 12/13 DONE** | 9536b32 |
 | **⚠️ createCampaignCheckout** | **BLOCKED — precisa Stripe Price IDs** | ver abaixo |
 | T13 — Frontend types + pricing | ✅ DONE | f63fa79 |
-| T14 — CriarCampanhaBar wizard | ⚠️ CODE DONE — smoke blocked by auth | 2244127 |
+| T14 — CriarCampanhaBar wizard | ✅ DONE | 2244127 |
 | T15-17 — Detail + PalpiteCard + ArenaTV | ⬜ TODO | — |
 | T18 — Full deploy + smoke test | ⬜ TODO | — |
 
@@ -2154,7 +2154,7 @@ export default function CriarCampanhaBar() {
 ```
 
 - [x] Run: `npm run build` in frontend dir — expected: no TypeScript errors.
-- [ ] Smoke test manually: navigate to `/criar-campanha-bar`, verify 4-step wizard renders, plan selection works, benefit validates. **Blocked:** Playwright route check redirected to `/auth?redirect=%2Fcriar-campanha-bar` because no authenticated browser session was available.
+- [x] Smoke test manually: navigate to `/criar-campanha-bar`, verify 4-step wizard renders, plan selection works, benefit validates. Verified in local-emulator mode with seeded owner `owner@arenacopa.local`: 4 labels render, plan selection expands features/enables Continue, blocked benefit language shows validation, valid benefit clears it, and the flow reaches Confirm.
 - [x] Commit: `git add src/pages/CriarCampanhaBar.tsx && git commit -m "feat(campaign): rewrite wizard Bar — 4-step plan+benefit+game+confirm"`
 
 ---
