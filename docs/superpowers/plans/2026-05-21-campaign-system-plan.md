@@ -22,7 +22,7 @@
 | T8 — computeGameRanking trigger | ✅ DONE | 9536b32 |
 | T9-11 — TV state + quiz + prize + maintenance | ✅ DONE | 9536b32 |
 | **T12 — Deploy backend functions** | **✅ DONE** | 9536b32 + deploy 2026-05-22 |
-| **createCampaignCheckout** | **✅ DONE — Stripe Price ID secrets configured and function deployed** | 2026-05-22 |
+| **createCampaignCheckout** | **✅ DONE — Stripe products/prices created, secrets updated, function redeployed** | 2026-05-22 |
 | T13 — Frontend types + pricing | ✅ DONE | f63fa79 |
 | T14 — CriarCampanhaBar wizard | ✅ DONE | 2244127 |
 | T15-17 — Detail + PalpiteCard + ArenaTV | ⬜ TODO | — |
@@ -473,7 +473,7 @@ Stripe price secret names (must be set before deploy):
 - `STRIPE_PRICE_CAMPANHA_COPA` → Price for R$ 349,90 one-time
 - `STRIPE_PRICE_CAMPANHA_PARCEIRO` → Price for R$ 399,90 recurring/year
 
-- [ ] Create Stripe products + prices in Stripe dashboard for the 4 plans above, then set secrets:
+- [x] Create Stripe products + prices in Stripe dashboard for the 4 plans above, then set secrets:
 
 ```bash
 firebase functions:secrets:set STRIPE_PRICE_CAMPANHA_RODADA
@@ -482,7 +482,7 @@ firebase functions:secrets:set STRIPE_PRICE_CAMPANHA_COPA
 firebase functions:secrets:set STRIPE_PRICE_CAMPANHA_PARCEIRO
 ```
 
-- [ ] Write `src/campaign-checkout.ts`:
+- [x] Write `src/campaign-checkout.ts`:
 
 ```typescript
 import * as functions from "firebase-functions/v2";
@@ -602,9 +602,9 @@ export const syncCampaignCheckout = functions.https.onCall(
 );
 ```
 
-- [ ] Export from index.ts: `export { createCampaignCheckout, syncCampaignCheckout } from "./campaign-checkout";`
-- [ ] Build: `npm run build` — no errors.
-- [ ] Commit: `git add functions/src/campaign-checkout.ts functions/src/index.ts && git commit -m "feat(campaign): checkout + sync callables"`
+- [x] Export from index.ts: `export { createCampaignCheckout, syncCampaignCheckout } from "./campaign-checkout";`
+- [x] Build: `npm run build` — no errors.
+- [x] Commit: `git add functions/src/campaign-checkout.ts functions/src/index.ts && git commit -m "feat(campaign): checkout + sync callables"`
 
 ---
 
