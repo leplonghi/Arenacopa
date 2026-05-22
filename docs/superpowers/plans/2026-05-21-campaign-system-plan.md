@@ -23,7 +23,7 @@
 | T9-11 — TV state + quiz + prize + maintenance | ✅ DONE | 9536b32 |
 | **T12 — Deploy backend functions** | **✅ 12/13 DONE** | 9536b32 |
 | **⚠️ createCampaignCheckout** | **BLOCKED — precisa Stripe Price IDs** | ver abaixo |
-| T13 — Frontend types + pricing | ⬜ TODO | — |
+| T13 — Frontend types + pricing | ✅ DONE | f63fa79 |
 | T14 — CriarCampanhaBar wizard | ⬜ TODO | — |
 | T15-17 — Detail + PalpiteCard + ArenaTV | ⬜ TODO | — |
 | T18 — Full deploy + smoke test | ⬜ TODO | — |
@@ -1462,7 +1462,7 @@ functions:sendRenewalReminders"
 - Create: `src/types/campaign-v2.ts`
 - Create: `src/lib/campaign-v2-pricing.ts`
 
-- [ ] Write `src/types/campaign-v2.ts`:
+- [x] Write `src/types/campaign-v2.ts`:
 
 ```typescript
 // Frontend mirror of backend campaign types (no correct_index, no admin-only fields)
@@ -1622,7 +1622,7 @@ export const PRIZE_TIER_LABELS: Record<PrizeTier, string> = {
 };
 ```
 
-- [ ] Write `src/lib/campaign-v2-pricing.ts`:
+- [x] Write `src/lib/campaign-v2-pricing.ts`:
 
 ```typescript
 import type { CampaignPlan } from "@/types/campaign-v2";
@@ -1728,7 +1728,7 @@ export function formatPrice(cents: number): string {
 }
 ```
 
-- [ ] Write tests at `src/lib/__tests__/campaign-v2-pricing.test.ts`:
+- [x] Write tests at `src/lib/__tests__/campaign-v2-pricing.test.ts`:
 
 ```typescript
 import { describe, it, expect } from "vitest";
@@ -1747,8 +1747,8 @@ describe("campaign-v2-pricing", () => {
 });
 ```
 
-- [ ] Run: `npm test` (in frontend dir) — expected: tests pass.
-- [ ] Commit: `git add src/types/campaign-v2.ts src/lib/campaign-v2-pricing.ts src/lib/__tests__/campaign-v2-pricing.test.ts && git commit -m "feat(campaign): frontend types v2 + pricing catalog"`
+- [x] Run: `npm test` (in frontend dir) — expected: tests pass.
+- [x] Commit: `git add src/types/campaign-v2.ts src/lib/campaign-v2-pricing.ts src/lib/__tests__/campaign-v2-pricing.test.ts && git commit -m "feat(campaign): frontend types v2 + pricing catalog"`
 
 ---
 
