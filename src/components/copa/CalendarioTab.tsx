@@ -79,7 +79,8 @@ function CopaCounting() {
 
 export function CalendarioTab() {
   const { t, i18n } = useTranslation('copa');
-  const { data: matchesData = [], isLoading } = useMatches();
+  const { data: matchesDataRaw, isLoading } = useMatches();
+  const matchesData = useMemo(() => matchesDataRaw ?? [], [matchesDataRaw]);
 
   // Group matches by date
   const matchDays = useMemo(() => {

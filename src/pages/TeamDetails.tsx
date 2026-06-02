@@ -11,7 +11,8 @@ import { useTranslation } from "react-i18next";
 const TeamDetails = () => {
     const { code } = useParams<{ code: string }>();
     const navigate = useNavigate();
-    const { data: matches = [], isLoading } = useMatches();
+    const { data: matchesRaw, isLoading } = useMatches();
+    const matches = matchesRaw ?? [];
     const { t } = useTranslation("copa");
 
     const team = code ? getTeam(code) : undefined;

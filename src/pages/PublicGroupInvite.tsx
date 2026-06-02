@@ -80,7 +80,11 @@ export default function PublicGroupInvite() {
         });
 
         if (result.status === "joined" || result.status === "already_member") {
-          navigate(`/grupos/${result.group_id}`, { replace: true });
+          if ("group_id" in result) {
+            navigate(`/grupos/${result.group_id}`, { replace: true });
+          } else if ("bolao_id" in result) {
+            navigate(`/boloes/${result.bolao_id}`, { replace: true });
+          }
           return;
         }
 
