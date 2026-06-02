@@ -9,6 +9,7 @@ import {
   Plus,
   Search,
   Store,
+  Trophy,
   Users,
   Trash2,
   CheckSquare,

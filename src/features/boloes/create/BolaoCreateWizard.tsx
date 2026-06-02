@@ -6,11 +6,11 @@ import { CreateBolaoRulesStep } from "@/features/boloes/create/CreateBolaoRulesS
 import { CreateBolaoAdmissionStep } from "@/features/boloes/create/CreateBolaoAdmissionStep";
 import { CreateBolaoQuickStep } from "@/features/boloes/create/CreateBolaoQuickStep";
 import { CreateBolaoReviewStep } from "@/features/boloes/create/CreateBolaoReviewStep";
-import { useBolaoCreateFlow } from "@/features/boloes/create/useBolaoCreateFlow";
+import { useBolaoCreateFlow, type CreateStep } from "@/features/boloes/create/useBolaoCreateFlow";
 import { trackSocialEvent } from "@/lib/analytics/social.telemetry";
 import { CreateBolaoStepRail } from "@/features/boloes/create/CreateBolaoStepRail";
 
-const STEPS_ORDER = ["quick", "catalog", "context", "type", "admission", "review"];
+const STEPS_ORDER: CreateStep[] = ["quick", "catalog", "context", "type", "admission", "review"];
 
 export function BolaoCreateWizard() {
   const [searchParams] = useSearchParams();
@@ -56,7 +56,7 @@ export function BolaoCreateWizard() {
     <div className="flex flex-col min-h-screen">
       <CreateBolaoStepRail 
         activeStep={activeStepIndex} 
-        onStepClick={(index) => flow.setStep(STEPS_ORDER[index - 1] as StepsOrderType)} 
+        onStepClick={(index) => flow.setStep(STEPS_ORDER[index - 1])}
       />
       
       <div className="flex-1 px-4 pb-6 pt-0 md:px-8">

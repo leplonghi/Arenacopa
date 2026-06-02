@@ -1,6 +1,7 @@
 import React from "react";
-import { Trophy, Users, ShieldCheck, Sparkles as SparklesIcon, Ticket } from "lucide-react";
+import { Trophy, Users, ShieldCheck, Ticket } from "lucide-react";
 import { BolaoAvatar } from "@/components/BolaoAvatar";
+import { cn } from "@/lib/utils";
 import { tStatic } from "@/i18n/staticText";
 import { BRAND_MARK_SRC } from "@/lib/brand-assets";
 

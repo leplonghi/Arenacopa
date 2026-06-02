@@ -354,6 +354,7 @@ export function StadiumDetailModal({
     onClose: () => void;
     onViewOnMap?: (cityId: string) => void;
 }) {
+    const { t } = useTranslation("sedes");
     const [distance, setDistance] = useState<number | null>(null);
 
     useEffect(() => {

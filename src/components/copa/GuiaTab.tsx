@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
     Users, Trophy, Globe, TrendingUp, X,
     Thermometer, DollarSign, Star, Building2,
-    Camera, AlertTriangle, Zap, Search
+    Camera, AlertTriangle, Zap, Search, Plane
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
@@ -540,7 +540,7 @@ export function CityDetailsModal({ city, dynamicStatus, onClose, t }: { city: Ho
                                 </div>
                             </div>
 
-                            {city.travelGuide?.tourism.hiddenGems?.length > 0 && (
+                            {(city.travelGuide?.tourism.hiddenGems?.length ?? 0) > 0 && (
                                 <div>
                                     <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-500 mb-3">{t("ui.modal.hiddenGems")}</h3>
                                     <div className="space-y-2">

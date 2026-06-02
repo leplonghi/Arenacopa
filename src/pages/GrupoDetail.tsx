@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Loader2, LogOut, MessageCircle, Share2, Star, UserMinus } from "lucide-react";
+import { ArrowLeft, Loader2, LogOut, Share2, Star, UserMinus } from "lucide-react";
 import { collection, doc, getDoc, getDocs, query, where } from "firebase/firestore";
 import { db } from "@/integrations/firebase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -164,7 +164,7 @@ export default function GrupoDetail() {
     } finally {
       setLoading(false);
     }
-  }, [grupoId, toast]);
+  }, [grupoId, toast, t]);
 
   useEffect(() => {
     void loadData();
@@ -248,7 +248,7 @@ export default function GrupoDetail() {
             }
           })(),
       })),
-    [grupoId, loadData, requests, toast],
+    [grupoId, loadData, requests, toast, t],
   );
 
   const handleShare = async () => {
@@ -394,7 +394,7 @@ export default function GrupoDetail() {
 
       <div className="mt-6 grid gap-6">
         {activeTab === 'feed' && (
-          <CommunityFeed groupId={grupoId!} />
+          <CommunityFeed groupId={grupoId ?? ""} />
         )}
 
         {activeTab === 'boloes' && (

@@ -16,6 +16,7 @@ import type { KnockoutData, KnockoutMatchFull, KnockoutRound, KnockoutScore } fr
 type ViewMode = "bracket" | "list";
 
 export function ChavesTab() {
+  const { t } = useTranslation('copa');
   const { knockoutData, isGroupsComplete, filledCount, updateKnockoutScore } = useSimulacao();
   const [viewMode, setViewMode] = useState<ViewMode>("bracket");
   const bracketRef = useRef<HTMLDivElement>(null);

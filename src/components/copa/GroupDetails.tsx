@@ -17,7 +17,7 @@ interface GroupDetailsProps {
 
 export function GroupDetails({
   groupId, onClose, viewMode = "real" }: GroupDetailsProps) {
-    const { t: _t } = useTranslation('copa');
+    const { t } = useTranslation('copa');
     const { standings: simStandings } = useSimulacao();
     const { data: firebaseMatches, isLoading } = useMatches();
 
