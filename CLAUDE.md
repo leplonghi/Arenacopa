@@ -49,8 +49,20 @@ git checkout main && git pull origin main
 # Criar branch de feature
 git checkout -b feat/minha-feature
 
-# Rodar app localmente
+# Instalar dependências (DOIS package.json: raiz E functions)
+npm install
+cd functions && npm install   # OBRIGATÓRIO — senão o emulador de functions
+                              # falha ao carregar (ex: módulo isbot) e a
+                              # listagem de bolões não funciona localmente
+
+# Rodar app localmente (produção/staging — exige .env com chaves Firebase reais)
 npm run dev
+
+# Rodar app local COM emuladores (recomendado p/ dev de bolões/grupos)
+npm run emulators:start       # terminal 1: auth+firestore+functions+storage
+npm run seed:local            # terminal 2: cria owner@arenacopa.local / Dev123456!
+npm run dev:local             # terminal 2: Vite apontando p/ emuladores (porta 8080)
+# ou tudo junto: npm run dev:full
 
 # Rodar testes frontend
 npx vitest run
