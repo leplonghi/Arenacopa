@@ -33,7 +33,8 @@ export function PalpitesTab({ bolaoId, palpites, setPalpites, userId }: Palpites
     const [localScores, setLocalScores] = useState<Record<string, { home: number | null; away: number | null; isPowerPlay: boolean }>>({});
     const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
     const navigate = useNavigate();
-    const { data: matches = [], isLoading } = useMatches();
+    const { data: matchesRaw, isLoading } = useMatches();
+    const matches = useMemo(() => matchesRaw ?? [], [matchesRaw]);
 
     const groups = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"];
     const groupMatches = useMemo(() => matches.filter(m => m.phase === "groups" && m.group === selectedGroup), [selectedGroup, matches]);

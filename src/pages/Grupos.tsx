@@ -172,7 +172,11 @@ export default function Grupos() {
 
       if (result.status === "joined" || result.status === "already_member") {
         trackSocialEvent("join_direct_success", { kind: "group" });
-        navigate(`/grupos/${result.group_id}`);
+        if ("group_id" in result) {
+          navigate(`/grupos/${result.group_id}`);
+        } else if ("bolao_id" in result) {
+          navigate(`/boloes/${result.bolao_id}`);
+        }
         return;
       }
 
