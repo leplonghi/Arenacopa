@@ -10,7 +10,12 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+dev-dist
 *.local
+
+# Compiled function output
+functions/lib
+functions/*.js.map
 .env
 .env.*
 !.env.example
