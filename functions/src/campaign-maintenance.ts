@@ -1,8 +1,10 @@
-// campaign-maintenance.ts — expireCampaigns + sendRenewalReminders schedulers
+// campaign-maintenance.ts — expireCampaigns + sendRenewalReminders + checkStaleBoloes schedulers
 // expireCampaigns: runs daily after the Copa ends (19/07/2026),
 //   marks copa/torcida campaigns as "finished".
 // sendRenewalReminders: runs daily, sends in-app notifications to merchants
 //   about low credits or plan expiry.
+// checkStaleBoloes: runs daily, marks bolões as "finished" when all their
+//   bolao_markets are resolved (safety net in case the realtime trigger missed one).
 
 import * as functions from "firebase-functions/v2";
 import * as admin from "firebase-admin";
@@ -99,5 +101,68 @@ export const sendRenewalReminders = functions.scheduler.onSchedule(
       await batch.commit();
     }
     console.log(`sendRenewalReminders: ${count} notificação(ões) enviada(s)`);
+  },
+);
+
+// ── checkStaleBoloes — safety net para bolões não finalizados ─────────────────
+// Runs daily. For every active bolão, checks if every referenced match
+// (bolao_markets → match_id → matches.status) is finished. If so, moves
+// the bolão to "finished". Catches anything the realtime trigger missed.
+
+const BOLAO_FINISHED_STATUSES = new Set(["finished", "FT", "AET", "PEN"]);
+
+export const checkStaleBoloes = functions.scheduler.onSchedule(
+  {
+    schedule: "0 4 * * *", // 4am BRT daily
+    timeZone: "America/Sao_Paulo",
+  },
+  async () => {
+    const boeloesSnap = await db
+      .collection("boloes")
+      .where("status", "==", "active")
+      .get();
+
+    if (boeloesSnap.empty) {
+      console.log("checkStaleBoloes: nenhum bolão ativo");
+      return;
+    }
+
+    let finalized = 0;
+
+    for (const bolaoDoc of boeloesSnap.docs) {
+      const bolaoId = bolaoDoc.id;
+
+      const marketsSnap = await db
+        .collection("bolao_markets")
+        .where("bolao_id", "==", bolaoId)
+        .get();
+
+      if (marketsSnap.empty) continue;
+
+      const matchIds = marketsSnap.docs
+        .map((doc) => doc.data().match_id as string)
+        .filter(Boolean);
+
+      if (matchIds.length === 0) continue;
+
+      const matchDocs = await Promise.all(
+        matchIds.map((id) => db.collection("matches").doc(id).get()),
+      );
+
+      const allFinished = matchDocs.every((doc) =>
+        BOLAO_FINISHED_STATUSES.has(doc.data()?.status ?? ""),
+      );
+
+      if (allFinished) {
+        await bolaoDoc.ref.update({
+          status: "finished",
+          finished_at: admin.firestore.FieldValue.serverTimestamp(),
+        });
+        finalized++;
+        console.log(`checkStaleBoloes: bolão ${bolaoId} finalizado`);
+      }
+    }
+
+    console.log(`checkStaleBoloes: ${finalized} bolão(ões) finalizado(s)`);
   },
 );

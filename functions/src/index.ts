@@ -563,7 +563,7 @@ export { computeGameRanking }       from "./campaign-ranking";
 export { updateCampaignTvState }    from "./campaign-tv";
 export { startQuizRound, advanceQuizQuestion } from "./campaign-quiz";
 export { validatePrizeRedemption }  from "./campaign-prize";
-export { expireCampaigns, sendRenewalReminders } from "./campaign-maintenance";
+export { expireCampaigns, sendRenewalReminders, checkStaleBoloes } from "./campaign-maintenance";
 
 // ─── 6. COMPUTE RANKINGS — Firestore trigger ──────────────────────────────────
 

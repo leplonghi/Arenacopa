@@ -3,6 +3,8 @@
 // Finds all campaign_games linked to that match, scores every palpite,
 // writes the rankings subcollection, generates prize_redemptions,
 // and creates a quiz_round document if the winner model requires it.
+//
+// Also finalizes bolões whose every bolao_market now points to a finished match.
 
 import * as functions from "firebase-functions/v2";
 import * as admin from "firebase-admin";
@@ -61,6 +63,11 @@ export const computeGameRanking = functions.firestore.onDocumentUpdated(
         console.error(`computeGameRanking: error on game ${gameDoc.id}`, err);
       });
     }
+
+    // Finalize bolões whose every market now points to a finished match
+    await finalizeBoloesByMatch(matchId).catch(
+      (err) => console.error(`computeGameRanking: finalização de bolões falhou para ${matchId}`, err),
+    );
   },
 );
 
@@ -272,4 +279,60 @@ function newRedemptionCode(): string {
     { length: 10 },
     () => chars[Math.floor(Math.random() * chars.length)],
   ).join("");
+}
+
+// ── Bolão finalization ────────────────────────────────────────────────────────
+// When a match finishes, find every bolão that has that match as one of its
+// markets. If ALL markets of that bolão now point to finished matches,
+// transition the bolão from "active" → "finished".
+
+const FINISHED_STATUSES = new Set(["finished", "FT", "AET", "PEN"]);
+
+async function finalizeBoloesByMatch(matchId: string): Promise<void> {
+  // Find bolão markets that reference this match
+  const marketsSnap = await db
+    .collection("bolao_markets")
+    .where("match_id", "==", matchId)
+    .get();
+
+  if (marketsSnap.empty) return;
+
+  // Collect unique bolão IDs that contain this match
+  const bolaoIds = [...new Set(
+    marketsSnap.docs.map((doc) => doc.data().bolao_id as string).filter(Boolean),
+  )];
+
+  for (const bolaoId of bolaoIds) {
+    // Get all markets for this bolão
+    const allMarketsSnap = await db
+      .collection("bolao_markets")
+      .where("bolao_id", "==", bolaoId)
+      .get();
+
+    if (allMarketsSnap.empty) continue;
+
+    // Collect all match IDs referenced by this bolão's markets
+    const matchIds = allMarketsSnap.docs
+      .map((doc) => doc.data().match_id as string)
+      .filter(Boolean);
+
+    if (matchIds.length === 0) continue;
+
+    // Fetch every referenced match in parallel
+    const matchDocs = await Promise.all(
+      matchIds.map((id) => db.collection("matches").doc(id).get()),
+    );
+
+    const allFinished = matchDocs.every((doc) =>
+      FINISHED_STATUSES.has(doc.data()?.status ?? ""),
+    );
+
+    if (allFinished) {
+      await db.collection("boloes").doc(bolaoId).update({
+        status: "finished",
+        finished_at: admin.firestore.FieldValue.serverTimestamp(),
+      });
+      console.log(`finalizeBoloesByMatch: bolão ${bolaoId} finalizado`);
+    }
+  }
 }
