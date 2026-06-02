@@ -56,12 +56,28 @@ export function invalidateBolaoListingCache(userId?: string) {
   }
 }
 
+const PAST_BUFFER_MS = 3 * 60 * 60 * 1000; // 3h — matches backend repository logic
+
+function enrichIsPast(boloes: BolaoListingCard[]): BolaoListingCard[] {
+  const now = Date.now();
+  return boloes.map((b) => {
+    if (b.is_past) return b;
+    const closesMs = Date.parse(String(b.latest_match_closes_at ?? ""));
+    if (Number.isFinite(closesMs) && closesMs + PAST_BUFFER_MS <= now) {
+      return { ...b, is_past: true };
+    }
+    return b;
+  });
+}
+
 async function fetchFromNetwork(token?: string): Promise<UserBolaoListingResponse> {
   const raw = await postAuthedFunction<UserBolaoListingResponse>("listUserBoloes", {}, token);
   // Guarantee archivedBoloes is always an array (older backend deployments won't have it)
+  const archivedBoloes = Array.isArray(raw.archivedBoloes) ? raw.archivedBoloes : [];
   return {
     ...raw,
-    archivedBoloes: Array.isArray(raw.archivedBoloes) ? raw.archivedBoloes : [],
+    myBoloes: enrichIsPast(raw.myBoloes ?? []),
+    archivedBoloes: enrichIsPast(archivedBoloes),
   };
 }
 

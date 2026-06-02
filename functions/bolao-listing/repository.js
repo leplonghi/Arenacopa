@@ -53,7 +53,8 @@ function computeMarketMeta(markets = [], nowMs = Date.now()) {
     }
 
     const status = String(market.status || "open");
-    return ["closed", "resolved"].includes(status) || (Number.isFinite(closesMs) && closesMs <= nowMs);
+    const terminalMs = Number.isFinite(closesMs) ? closesMs + 3 * 60 * 60 * 1000 : NaN;
+    return ["closed", "resolved"].includes(status) || (Number.isFinite(terminalMs) && terminalMs <= nowMs);
   });
 
   return {
