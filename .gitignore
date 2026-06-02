@@ -12,6 +12,7 @@ dist
 dist-ssr
 dev-dist
 *.local
+*.tsbuildinfo
 
 # Compiled function output
 functions/lib
