@@ -36,6 +36,11 @@ async function loadBoloesById({ db, bolaoIds }) {
   return result;
 }
 
+// Um jogo só é considerado "passado" 3h após o kickoff/fechamento — tempo de
+// uma partida acabar. Evita marcar como encerrado um bolão cujo último jogo
+// ainda está em andamento.
+const MATCH_OVER_BUFFER_MS = 3 * 60 * 60 * 1000;
+
 function computeMarketMeta(markets = [], nowMs = Date.now()) {
   const matchMarkets = markets.filter((market) => String(market.scope || "") === "match");
   if (!matchMarkets.length) {
@@ -53,7 +58,35 @@ function computeMarketMeta(markets = [], nowMs = Date.now()) {
     }
 
     const status = String(market.status || "open");
-    return ["closed", "resolved"].includes(status) || (Number.isFinite(closesMs) && closesMs <= nowMs);
+    const terminalMs = Number.isFinite(closesMs) ? closesMs + MATCH_OVER_BUFFER_MS : NaN;
+    return ["closed", "resolved"].includes(status) || (Number.isFinite(terminalMs) && terminalMs <= nowMs);
+  });
+
+  return {
+    is_past: isPast,
+    latest_match_closes_at: latestMs == null ? null : new Date(latestMs).toISOString(),
+  };
+}
+
+// Fonte única de timing dos jogos (coleção `matches`), usada como fallback para
+// bolões SEM bolao_markets (legacy/sistema antigo de palpites). Um bolão é
+// passado quando TODAS as suas partidas terminaram (status FINISHED ou
+// kickoff + 3h <= agora).
+function computeMatchMeta(matches = [], nowMs = Date.now()) {
+  if (!matches.length) {
+    return { is_past: false, latest_match_closes_at: null };
+  }
+
+  let latestMs = null;
+  const isPast = matches.every((match) => {
+    const kickoffMs = Date.parse(String(match.match_date || ""));
+    if (Number.isFinite(kickoffMs)) {
+      latestMs = latestMs == null ? kickoffMs : Math.max(latestMs, kickoffMs);
+    }
+
+    const status = String(match.status || "").toUpperCase();
+    const terminalMs = Number.isFinite(kickoffMs) ? kickoffMs + MATCH_OVER_BUFFER_MS : NaN;
+    return status === "FINISHED" || (Number.isFinite(terminalMs) && terminalMs <= nowMs);
   });
 
   return {
@@ -96,6 +129,66 @@ async function loadMarketMetaByBolaoId({ db, bolaoIds, nowIso }) {
     result[bolaoId] = computeMarketMeta(marketsByBolaoId[bolaoId] || [], effectiveNowMs);
     return result;
   }, {});
+}
+
+// Fallback para bolões sem bolao_markets: resolve as partidas do bolão a partir
+// do doc (championship_id + allowed_match_ids) na coleção `matches` e calcula
+// is_past. Cobre bolões legacy que nunca migrariam para "passado" de outra forma.
+async function loadMatchMetaByBolaoId({ db, boloesById, bolaoIds, nowMs = Date.now() }) {
+  const targets = (bolaoIds || [])
+    .map((id) => ({ id, bolao: boloesById[id] }))
+    .filter((entry) => entry.bolao);
+  if (!targets.length) {
+    return {};
+  }
+
+  const explicitMatchIds = new Set();
+  const championshipIds = new Set();
+  for (const { bolao } of targets) {
+    const allowed = bolao.allowed_match_ids;
+    if (Array.isArray(allowed)) {
+      allowed.forEach((mid) => mid && explicitMatchIds.add(String(mid)));
+    } else if (bolao.championship_id) {
+      championshipIds.add(String(bolao.championship_id));
+    }
+  }
+
+  const matchesById = {};
+  const matchesByChampionship = {};
+
+  await Promise.all([
+    ...chunkValues(Array.from(explicitMatchIds)).map((ids) =>
+      db
+        .collection("matches")
+        .where(FieldPath.documentId(), "in", ids)
+        .select("championship_id", "match_date", "status")
+        .get()
+        .then((snap) => snap.docs.forEach((doc) => { matchesById[doc.id] = { id: doc.id, ...doc.data() }; }))
+        .catch((err) => { console.warn("[ListingRepo] matches by id failed:", err.message); }),
+    ),
+    ...chunkValues(Array.from(championshipIds)).map((ids) =>
+      db
+        .collection("matches")
+        .where("championship_id", "in", ids)
+        .select("championship_id", "match_date", "status")
+        .get()
+        .then((snap) => snap.docs.forEach((doc) => {
+          const champ = String(doc.data().championship_id || "");
+          (matchesByChampionship[champ] = matchesByChampionship[champ] || []).push({ id: doc.id, ...doc.data() });
+        }))
+        .catch((err) => { console.warn("[ListingRepo] matches by championship failed:", err.message); }),
+    ),
+  ]);
+
+  const result = {};
+  for (const { id, bolao } of targets) {
+    const allowed = bolao.allowed_match_ids;
+    const matches = Array.isArray(allowed)
+      ? allowed.map((mid) => matchesById[String(mid)]).filter(Boolean)
+      : (matchesByChampionship[String(bolao.championship_id || "")] || []);
+    result[id] = computeMatchMeta(matches, nowMs);
+  }
+  return result;
 }
 
 async function listUserBoloes({ db, actorId }) {
@@ -149,8 +242,31 @@ async function listUserBoloes({ db, actorId }) {
     }),
   ]);
 
+  // Fallback legacy: para bolões SEM nenhum bolao_market de partida
+  // (latest_match_closes_at == null), o is_past via markets nunca dispara.
+  // Recalcula a partir da coleção `matches` para que esses bolões também
+  // migrem corretamente para "passado". Caminho moderno (com markets) intacto.
+  const marketlessIds = bolaoIdsForMeta.filter((id) => {
+    const meta = marketMetaByBolaoId[id];
+    return meta && meta.is_past === false && meta.latest_match_closes_at == null;
+  });
+  if (marketlessIds.length) {
+    const matchMetaByBolaoId = await Promise.race([
+      loadMatchMetaByBolaoId({ db, boloesById, bolaoIds: marketlessIds, nowMs: Date.now() }),
+      new Promise((resolve) => setTimeout(() => resolve({}), 6000)),
+    ]).catch((error) => {
+      console.warn("[ListingRepo] Match meta fallback skipped:", error.message);
+      return {};
+    });
+    for (const id of marketlessIds) {
+      if (matchMetaByBolaoId[id]) {
+        marketMetaByBolaoId[id] = matchMetaByBolaoId[id];
+      }
+    }
+  }
+
   const mid2 = Date.now();
-  console.log(`[ListingRepo] actor=${actorId} second_fetch=${mid2 - mid1}ms boloesLoaded=${Object.keys(boloesById).length}`);
+  console.log(`[ListingRepo] actor=${actorId} second_fetch=${mid2 - mid1}ms boloesLoaded=${Object.keys(boloesById).length} marketless=${marketlessIds.length}`);
 
   const result = buildUserBolaoListing({
     memberships,
@@ -168,7 +284,9 @@ async function listUserBoloes({ db, actorId }) {
 
 module.exports = {
   computeMarketMeta,
+  computeMatchMeta,
   listUserBoloes,
   loadBoloesById,
   loadMarketMetaByBolaoId,
+  loadMatchMetaByBolaoId,
 };
