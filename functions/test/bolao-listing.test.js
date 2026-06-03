@@ -1,7 +1,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const { buildUserBolaoListing } = require("../bolao-listing/mapper");
-const { computeMarketMeta } = require("../bolao-listing/repository");
+const { computeMarketMeta, computeMatchMeta } = require("../bolao-listing/repository");
 
 test("buildUserBolaoListing filters removed and deleted pools without failing the whole page", () => {
   const result = buildUserBolaoListing({
@@ -79,4 +79,50 @@ test("computeMarketMeta keeps a pool current while any selected match is still o
   );
 
   assert.equal(meta.is_past, false);
+});
+
+test("computeMarketMeta keeps a pool current within 3h of the last kickoff (match still in progress)", () => {
+  const kickoff = "2026-04-22T19:00:00.000Z";
+  const meta = computeMarketMeta(
+    [{ scope: "match", status: "open", closes_at: kickoff }],
+    Date.parse("2026-04-22T20:30:00.000Z"), // 1h30 após o kickoff — jogo ainda rolando
+  );
+  assert.equal(meta.is_past, false);
+});
+
+test("computeMatchMeta (legacy fallback) marks past once all matches are over by date + buffer", () => {
+  const meta = computeMatchMeta(
+    [
+      { match_date: "2026-04-20T19:00:00.000Z", status: "scheduled" },
+      { match_date: "2026-04-21T21:00:00.000Z", status: "scheduled" },
+    ],
+    Date.parse("2026-04-22T00:00:00.000Z"),
+  );
+  assert.equal(meta.is_past, true);
+  assert.equal(meta.latest_match_closes_at, "2026-04-21T21:00:00.000Z");
+});
+
+test("computeMatchMeta keeps current while any match is still upcoming", () => {
+  const meta = computeMatchMeta(
+    [
+      { match_date: "2026-04-20T19:00:00.000Z", status: "scheduled" },
+      { match_date: "2026-04-25T19:00:00.000Z", status: "scheduled" },
+    ],
+    Date.parse("2026-04-22T00:00:00.000Z"),
+  );
+  assert.equal(meta.is_past, false);
+});
+
+test("computeMatchMeta treats FINISHED status as past regardless of date", () => {
+  const meta = computeMatchMeta(
+    [{ match_date: "2026-12-01T19:00:00.000Z", status: "FINISHED" }],
+    Date.parse("2026-04-22T00:00:00.000Z"),
+  );
+  assert.equal(meta.is_past, true);
+});
+
+test("computeMatchMeta returns not-past when there are no matches to evaluate", () => {
+  const meta = computeMatchMeta([], Date.parse("2026-04-22T00:00:00.000Z"));
+  assert.equal(meta.is_past, false);
+  assert.equal(meta.latest_match_closes_at, null);
 });
