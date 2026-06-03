@@ -1102,7 +1102,8 @@ export function JogosTab({
                         )}
 
                         {isPending && (
-                            <div className="mb-2 rounded-[12px] border border-primary/20 bg-primary/10 px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.18em] text-primary">
+                            <div className="mb-2 inline-flex items-center gap-1.5 text-[9px] font-black uppercase tracking-[0.18em] text-primary/70">
+                                <span className="h-1.5 w-1.5 rounded-full bg-primary/70 animate-pulse" />
                                 {isHighlighted
                                     ? t('palpites.highlighted_pending')
                                     : t('palpites.queue_pending')}
