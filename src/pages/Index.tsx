@@ -72,7 +72,7 @@ function isCurrentOrUpcomingMatch(matchDate: string) {
 /* ─── Zone Label ─── */
 const ZoneLabel = memo(function ZoneLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="mb-3 text-[10px] font-black uppercase tracking-[0.22em] text-zinc-600">
+    <p className="mb-3 text-[11px] font-black uppercase tracking-[0.18em] text-zinc-500">
       {children}
     </p>
   );
@@ -126,6 +126,24 @@ const JoinRequestBanner = memo(function JoinRequestBanner({ count, bolaoId }: { 
   );
 });
 
+function useAnimatedNumber(target: number, duration = 600) {
+  const [display, setDisplay] = useState(0);
+  useEffect(() => {
+    if (target === 0) { setDisplay(0); return; }
+    const start = Date.now();
+    const tick = () => {
+      const elapsed = Date.now() - start;
+      const progress = Math.min(elapsed / duration, 1);
+      // ease-out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setDisplay(Math.round(eased * target));
+      if (progress < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }, [target, duration]);
+  return display;
+}
+
 /* ─── Quick Stats Row ─── */
 const QuickStats = memo(function QuickStats({
   pending,
@@ -137,10 +155,13 @@ const QuickStats = memo(function QuickStats({
   poolCount: number;
 }) {
   const { t } = useTranslation("home");
+  const animPending = useAnimatedNumber(pending);
+  const animToday = useAnimatedNumber(todayCount);
+  const animPools = useAnimatedNumber(poolCount);
   const stats = [
-    { icon: Target, value: pending, label: t("quick_stats.pending"), to: "/boloes", accent: pending > 0 },
-    { icon: CalendarDays, value: todayCount, label: t("quick_stats.today"), to: "/campeonatos", accent: false },
-    { icon: Trophy, value: poolCount, label: t("quick_stats.pools"), to: "/boloes", accent: poolCount > 0 },
+    { icon: Target, value: animPending, label: t("quick_stats.pending"), to: "/boloes", accent: pending > 0 },
+    { icon: CalendarDays, value: animToday, label: t("quick_stats.today"), to: "/campeonatos", accent: false },
+    { icon: Trophy, value: animPools, label: t("quick_stats.pools"), to: "/boloes", accent: poolCount > 0 },
   ];
 
   return (
@@ -157,7 +178,7 @@ const QuickStats = memo(function QuickStats({
             )}
           >
             <Icon className={cn("h-4 w-4", accent ? "text-primary" : "text-zinc-500")} />
-            <p className={cn("text-xl font-black leading-none", accent ? "text-primary" : "text-white")}>
+            <p className={cn("text-xl font-black leading-none tabular-nums", accent ? "text-primary" : "text-white")}>
               {value}
             </p>
             <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-zinc-600 leading-tight">
@@ -400,23 +421,33 @@ const Index = () => {
       >
         <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/80 to-transparent" />
         <div className="relative z-10 flex min-h-[220px] max-w-[600px] flex-col justify-end px-5 pb-6 pt-[calc(6rem+var(--safe-area-top,0px))] sm:px-8">
-          <p className="text-[10px] font-black uppercase tracking-[0.22em] text-zinc-400">
-            Olá, {displayName.split(" ")[0]}
-          </p>
-          <h1 className="mt-1 font-display text-[2.4rem] font-extrabold uppercase leading-[0.9] tracking-tight text-white sm:text-[3rem]">
-            {hasPending
-              ? "Hora de palpitar!"
-              : hasBoloes
-              ? "Tudo em dia 🎯"
-              : "Bem-vindo à Arena"}
-          </h1>
-          <p className="mt-1.5 text-sm text-zinc-400 leading-snug max-w-xs">
-            {hasPending
-              ? `${pendingMatchCount} jogo${pendingMatchCount > 1 ? "s" : ""} esperando seu palpite.`
-              : hasBoloes
-              ? "Nenhum chute pendente por enquanto."
-              : "Crie ou entre em um bolão para começar."}
-          </p>
+          {loading ? (
+            <div className="space-y-2.5">
+              <div className="h-3 w-24 rounded-full bg-white/10 animate-pulse" />
+              <div className="h-10 w-56 rounded-xl bg-white/10 animate-pulse" />
+              <div className="h-4 w-48 rounded-full bg-white/[0.06] animate-pulse" />
+            </div>
+          ) : (
+            <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+              <p className="text-[11px] font-black uppercase tracking-[0.2em] text-zinc-400">
+                Olá, {displayName.split(" ")[0]}
+              </p>
+              <h1 className="mt-1 font-display text-[2.4rem] font-extrabold uppercase leading-[0.9] tracking-tight text-white sm:text-[3rem]">
+                {hasPending
+                  ? "Hora de palpitar!"
+                  : hasBoloes
+                  ? "Tudo em dia 🎯"
+                  : "Bem-vindo à Arena"}
+              </h1>
+              <p className="mt-1.5 text-sm text-zinc-400 leading-snug max-w-xs">
+                {hasPending
+                  ? `${pendingMatchCount} jogo${pendingMatchCount > 1 ? "s" : ""} esperando seu palpite.`
+                  : hasBoloes
+                  ? "Nenhum chute pendente por enquanto."
+                  : "Crie ou entre em um bolão para começar."}
+              </p>
+            </motion.div>
+          )}
         </div>
       </section>
 

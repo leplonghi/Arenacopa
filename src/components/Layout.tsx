@@ -2,7 +2,8 @@ import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { Bell, ChevronLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/contexts/AuthContext";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { NotificationsSheet } from "@/components/NotificationsSheet";
 import { OnboardingModal } from "@/components/OnboardingModal";
@@ -33,9 +34,9 @@ import {
   SidebarProvider,
   SidebarInset,
 } from "@/components/ui/sidebar";
+import { Haptics, ImpactStyle } from "@capacitor/haptics";
 
 import { useTranslation } from "react-i18next";
-import { getProfile } from "@/services/profile/profile.service";
 import { useCurrentProfile } from "@/hooks/useCurrentProfile";
 import { useQuery } from "@tanstack/react-query";
 import { listNotifications } from "@/services/notifications/notifications.service";
@@ -208,6 +209,14 @@ function Header({ className }: { className?: string }) {
   );
 }
 
+async function triggerNavHaptic() {
+  try {
+    await Haptics.impact({ style: ImpactStyle.Light });
+  } catch {
+    // not native — ignore
+  }
+}
+
 function BottomTabs({ className }: { className?: string }) {
   const { t } = useTranslation('common');
   const location = useLocation();
@@ -231,9 +240,10 @@ function BottomTabs({ className }: { className?: string }) {
           if (tab.path === "#menu") {
             return (
               <MobileMenuSheet key={tab.path}>
-                <button 
+                <button
                   className={cn(itemBaseClass, "text-zinc-300 hover:text-white focus-visible:ring-2 focus-visible:ring-primary/70")}
                   aria-label={t(tab.labelKey)}
+                  onClick={() => void triggerNavHaptic()}
                 >
                   <span className={cn(iconShellClass, "scale-[0.98] border border-transparent bg-white/[0.025] group-hover:border-white/10 group-hover:bg-white/[0.06]")}>
                     <span className="absolute inset-1 rounded-[15px] bg-[radial-gradient(circle_at_50%_20%,rgba(255,255,255,0.08),transparent_58%)]" />
@@ -250,6 +260,7 @@ function BottomTabs({ className }: { className?: string }) {
               to={tab.path}
               end={tab.path === "/"}
               aria-label={t(tab.labelKey)}
+              onClick={() => void triggerNavHaptic()}
               className={({ isActive }) =>
                 cn(
                   itemBaseClass,
@@ -356,7 +367,7 @@ import { CookieBanner } from "@/components/CookieBanner";
 export function Layout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
   const mainScrollRef = useRef<HTMLElement | null>(null);
-  const { user } = useAuth();
+  useAuth();
   const { t } = useTranslation('common');
 
   useEffect(() => {
@@ -375,9 +386,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
           <main ref={mainScrollRef} className={cn(
             "flex-1 overflow-y-auto w-full max-w-7xl mx-auto scrollbar-hide flex flex-col pt-[calc(4.5rem+var(--safe-area-top,0px))] md:pt-[72px] pb-[calc(8.5rem+var(--safe-area-bottom,0px))] md:pb-12"
           )}>
-            <div className="flex-1">
-              {children}
-            </div>
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div
+                key={location.pathname}
+                className="flex-1"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.18, ease: [0.25, 0.46, 0.45, 0.94] }}
+              >
+                {children}
+              </motion.div>
+            </AnimatePresence>
             <footer className="mt-12 w-full shrink-0 border-t border-white/10 px-4 py-8">
               <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 text-xs text-muted-foreground md:flex-row md:gap-4">
                 <div className="flex max-w-full items-center justify-center gap-2 text-center leading-relaxed">
