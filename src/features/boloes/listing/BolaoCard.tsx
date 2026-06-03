@@ -150,8 +150,12 @@ function BolaoCardInner({
   const [deleteConfirm, setDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const { t } = useTranslation("bolao");
-  const statusCfg = getStatusConfig(bolao.status);
-  const isActive = ["active", "open", "published", "live"].includes(bolao.status);
+  // Um bolão cujos jogos já passaram não pode aparecer como "ATIVO": is_past
+  // (jogos encerrados) tem prioridade sobre o status bruto open/published.
+  const statusIsActive = ["active", "open", "published", "live"].includes(bolao.status);
+  const showAsPast = bolao.is_past && statusIsActive;
+  const statusCfg = showAsPast ? getStatusConfig("finished") : getStatusConfig(bolao.status);
+  const isActive = statusIsActive && !showAsPast;
   const tone = getBolaoTone(bolao);
 
   const cardContent = (

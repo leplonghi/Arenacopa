@@ -347,7 +347,7 @@
 
   .arena-header-shell {
     background:
-      linear-gradient(180deg, rgba(3, 16, 12, 0.96) 0%, rgba(3, 16, 12, 0.88) 68%, rgba(3, 16, 12, 0.38) 100%);
+      linear-gradient(180deg, rgba(3, 16, 12, 0.99) 0%, rgba(3, 16, 12, 0.97) 72%, rgba(3, 16, 12, 0.93) 100%);
     border-bottom: 1px solid rgba(145, 255, 59, 0.12);
     backdrop-filter: blur(22px);
     box-shadow:
