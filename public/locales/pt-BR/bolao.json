@@ -611,6 +611,7 @@
           "error_auth": "Sua sessão expirou. Entre novamente e publique o bolão.",
           "error_conflict": "Esse rascunho mudou em outro lugar. Atualize a página e tente de novo.",
           "error_validation": "Confira nome, entrada e regras antes de publicar.",
+          "error_payment": "Você atingiu o limite de bolões ativos do plano grátis. Encerre ou arquive um bolão, ou assine o Premium para criar ilimitados.",
           "error_generic": "Revise os dados e tente novamente."
         }
       }
@@ -664,6 +665,7 @@
         "error_auth": "Sua sessão expirou. Entre novamente e publique o bolão.",
         "error_conflict": "Esse rascunho mudou em outro lugar. Atualize a página e tente de novo.",
         "error_validation": "Confira nome, entrada e regras antes de publicar.",
+        "error_payment": "Você atingiu o limite de bolões ativos do plano grátis. Encerre ou arquive um bolão, ou assine o Premium para criar ilimitados.",
         "error_generic": "Revise os dados e tente novamente."
       }
     },

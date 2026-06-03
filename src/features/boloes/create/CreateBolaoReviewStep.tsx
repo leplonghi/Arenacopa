@@ -58,6 +58,10 @@ export function CreateBolaoReviewStep({ flow }: { flow: Flow }) {
       return t("creation.review.messages.error_validation");
     }
 
+    if (message === "payment_required") {
+      return t("creation.review.messages.error_payment");
+    }
+
     return t("creation.review.messages.error_generic");
   };
 
