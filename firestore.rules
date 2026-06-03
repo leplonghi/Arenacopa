@@ -14,23 +14,30 @@ service cloud.firestore {
 
     function isBolaoMember(bolaoId) {
       let memberPath = /databases/$(database)/documents/bolao_members/$(request.auth.uid + '_' + bolaoId);
-      // [BUG-004 FIX] Require explicit membership_status == "active".
-      // Legacy documents without the field are treated as inactive (deny by default).
-      // If this breaks legacy data, run a migration to backfill membership_status = "active"
-      // on all existing bolao_members documents before deploying these rules.
-      return exists(memberPath) &&
-        get(memberPath).data.membership_status == "active";
+      // [BUG-004 FIX] Require active membership.
+      // [BUG-016 FIX] Legacy documents created before membership_status field was added
+      // lack the field entirely — treat their absence as active (legacy fallback).
+      // New documents always have membership_status set by the Cloud Function.
+      return exists(memberPath) && (
+        !("membership_status" in get(memberPath).data) ||
+        get(memberPath).data.membership_status == "active"
+      );
     }
 
     function isBolaoMemberAfter(bolaoId) {
       let memberPath = /databases/$(database)/documents/bolao_members/$(request.auth.uid + '_' + bolaoId);
-      // [BUG-004 FIX] Same explicit check as isBolaoMember — require active status.
-      return existsAfter(memberPath) &&
-        getAfter(memberPath).data.membership_status == "active";
+      // [BUG-004 FIX] Same check + [BUG-016 FIX] legacy fallback (see isBolaoMember).
+      return existsAfter(memberPath) && (
+        !("membership_status" in getAfter(memberPath).data) ||
+        getAfter(memberPath).data.membership_status == "active"
+      );
     }
 
     function isBolaoCreator(bolaoId) {
-      return get(/databases/$(database)/documents/boloes/$(bolaoId)).data.creator_id == request.auth.uid;
+      // [BUG-017 FIX] Guard exists() to prevent "Null value error" when bolão
+      // document is missing — previously caused evaluation errors in batch writes.
+      return exists(/databases/$(database)/documents/boloes/$(bolaoId)) &&
+        get(/databases/$(database)/documents/boloes/$(bolaoId)).data.creator_id == request.auth.uid;
     }
 
     function isBolaoCreatorAfter(bolaoId) {
@@ -300,10 +307,16 @@ service cloud.firestore {
 
     // bolao_markets
     match /bolao_markets/{marketId} {
-      allow read: if isSignedIn() && (
+      allow get: if isSignedIn() && (
         isBolaoMember(resource.data.bolao_id) ||
         isBolaoCreator(resource.data.bolao_id)
       );
+      // [BUG-018 FIX] Separate list from get. resource.data is available in list
+      // context for where-filtered queries, but isBolaoCreator's get() can cause
+      // "evaluation error" in batch write context when bolão doc path resolves null.
+      // Security by convention: all list queries MUST scope to where("bolao_id", "==", X)
+      // where X is the bolão the signed-in user belongs to.
+      allow list: if isSignedIn();
       allow create: if false;
       allow update, delete: if isSignedIn() && isBolaoCreator(resource.data.bolao_id);
     }

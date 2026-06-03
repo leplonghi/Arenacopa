@@ -106,7 +106,9 @@
       "first_team_to_score": "First goal"
     },
     "filter_kicker": "Filters",
-    "filter_title": "Refine matches"
+    "filter_title": "Refine matches",
+    "view_public_picks": "See the Gang's Picks",
+    "view_public_picks_short": "Gang's Picks"
   },
   "news": {
     "general_category": "General",

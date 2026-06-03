@@ -107,7 +107,9 @@
       "first_team_to_score": "Primer gol"
     },
     "filter_kicker": "Filtros",
-    "filter_title": "Refine os jogos"
+    "filter_title": "Refinar partidos",
+    "view_public_picks": "Ver Picks del Grupo",
+    "view_public_picks_short": "Picks del Grupo"
   },
   "news": {
     "general_category": "General",

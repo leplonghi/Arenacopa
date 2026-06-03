@@ -107,7 +107,9 @@
       "first_team_to_score": "Primeiro gol"
     },
     "filter_kicker": "Filtros",
-    "filter_title": "Refine os jogos"
+    "filter_title": "Refine os jogos",
+    "view_public_picks": "Ver Palpites da Galera",
+    "view_public_picks_short": "Palpites da Galera"
   },
   "news": {
     "general_category": "Geral",
