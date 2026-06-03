@@ -55,7 +55,7 @@ function normalizeBolaoTab(tab: string | null): BolaoDetailTab | null {
 
 export function useBolaoDetail(id: string | undefined) {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { t } = useTranslation('bolao');
   const { user } = useAuth();
   const { toast } = useToast();
@@ -82,10 +82,22 @@ export function useBolaoDetail(id: string | undefined) {
   const [championSelection, setChampionSelection] = useState("");
   const [myChampion, setMyChampion] = useState<string | null>(null);
   const [memberPredictionCounts, setMemberPredictionCounts] = useState<Record<string, number>>({});
-  const [activeTab, setActiveTab] = useState<BolaoDetailTab>(requestedTab ?? (highlightedMatch ? "palpites" : "turma"));
   const [showEditPanel, setShowEditPanel] = useState(false);
   const initialTabHydratedRef = useRef(false);
   const mountedRef = useRef(true);
+
+  // Derive activeTab from URL — URL is the source of truth.
+  // Fallback chain: ?tab param → ?match presence → "turma"
+  const activeTab: BolaoDetailTab = requestedTab ?? (highlightedMatch ? "palpites" : "turma");
+
+  // Sync tab changes to URL with replace:true so tab switches don't pollute history.
+  const setActiveTab = useCallback((tab: BolaoDetailTab) => {
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      next.set("tab", tab);
+      return next;
+    }, { replace: true });
+  }, [setSearchParams]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -473,6 +485,7 @@ export function useBolaoDetail(id: string | undefined) {
     };
 
     fetchMatchCounts();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, id, bolaoMarkets.length, myPalpites.length, myMarketPredictions.length, activityFeed]);
 
   useEffect(() => {
@@ -497,6 +510,7 @@ export function useBolaoDetail(id: string | undefined) {
     };
 
     fetchCounts();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, id, members.length, myPalpites.length, myMarketPredictions.length, activityFeed]);
 
   useEffect(() => {
@@ -568,10 +582,6 @@ export function useBolaoDetail(id: string | undefined) {
   }, [activeTourTab, persistBolaoIntroState]);
 
   useEffect(() => {
-    if (highlightedMatch) setActiveTab("palpites");
-  }, [highlightedMatch]);
-
-  useEffect(() => {
     // Bolão com jogos selecionados explicitamente → vai direto para palpites
     const hasSelectedMatches = Array.isArray(bolao?.allowed_match_ids) && bolao.allowed_match_ids.length > 0;
     const fallbackTab: BolaoDetailTab =
@@ -583,7 +593,8 @@ export function useBolaoDetail(id: string | undefined) {
       setActiveTab(nextTab);
       initialTabHydratedRef.current = true;
     }
-  }, [bolao?.allowed_match_ids, highlightedMatch, pendingOverview.totalPending, requestedTab]);
+   
+  }, [bolao?.allowed_match_ids, highlightedMatch, pendingOverview.totalPending, requestedTab, setActiveTab]);
 
   return {
     bolao, members, memberCount, joinRequests, myPalpites, bolaoMarkets, myMarketPredictions,
