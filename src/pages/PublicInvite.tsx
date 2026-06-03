@@ -54,6 +54,7 @@ export default function PublicInvite() {
   const { toast } = useToast();
   const [bolao, setBolao] = useState<PublicInviteBolao>(null);
   const [loading, setLoading] = useState(true);
+  const [autoJoining, setAutoJoining] = useState(false);
 
   const loadBolao = useCallback(async () => {
     if (!inviteCode) {
@@ -104,6 +105,7 @@ export default function PublicInvite() {
       }
 
       try {
+        setAutoJoining(true);
         const result = await joinViaInvite({
           payload: {
             kind: "bolao",
@@ -118,11 +120,13 @@ export default function PublicInvite() {
           return;
         }
 
+        setAutoJoining(false);
         toast({
           title: "Solicitação enviada",
           description: "Agora é só aguardar a aprovação.",
         });
       } catch (error) {
+        setAutoJoining(false);
         if (error instanceof Error && error.message === "join_requires_group" && bolao.required_group_invite_code) {
           navigate(`/grupos/entrar/${bolao.required_group_invite_code}`, { replace: true });
           return;
@@ -146,6 +150,25 @@ export default function PublicInvite() {
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="h-10 w-10 animate-spin text-primary" />
           <p className="text-sm font-medium text-gray-500">{tStatic("Carregando convite...")}</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Auto-join feedback after returning from signup (?action=join) — avoids the
+  // confusing flash of the invite page re-rendering before the redirect lands.
+  if (autoJoining) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#050505] p-6">
+        <div className="flex flex-col items-center gap-5 text-center">
+          <div className="relative">
+            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+            <Trophy className="absolute inset-0 m-auto h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <p className="text-lg font-black text-white">Entrando no bolão…</p>
+            <p className="mt-1 text-sm text-gray-500">Liberando seu acesso, aguarde um instante.</p>
+          </div>
         </div>
       </div>
     );
@@ -274,13 +297,17 @@ export default function PublicInvite() {
                 }}
               />
 
-              {/* Contextual helper text */}
+              {/* Contextual helper text — account-aware so users know what the tap does */}
               <p className="mt-4 text-xs font-medium text-gray-500">
                 {requiresGroup
                   ? "Você precisa entrar no grupo primeiro para acessar este bolão."
-                  : requiresApproval
-                    ? "Sua solicitação será enviada ao criador do bolão para aprovação."
-                    : "Entrada imediata. Basta ter uma conta no ArenaCopa."}
+                  : !user
+                    ? requiresApproval
+                      ? "Crie sua conta grátis (e-mail, Google ou Apple) e enviamos sua solicitação automaticamente."
+                      : "Crie sua conta grátis (e-mail, Google ou Apple) e você entra na hora — sem mais etapas."
+                    : requiresApproval
+                      ? "Sua solicitação será enviada ao criador do bolão para aprovação."
+                      : "Entrada imediata. Toque para participar agora."}
               </p>
             </div>
           </div>
