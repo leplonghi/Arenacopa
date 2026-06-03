@@ -1,7 +1,7 @@
-import { NavLink } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { getArenaAssetSrc } from "@/lib/arena-assets";
+import { BolaoFabSheet } from "@/components/BolaoFabSheet";
 
 const fallbackBallImageUrl = "/images/bola-nav-real.png";
 const realBallImageUrl = getArenaAssetSrc("bola-nav-fit.png") ?? fallbackBallImageUrl;
@@ -56,16 +56,18 @@ export function FabWithPending({
   );
 
   return (
-    <NavLink
-      to="/boloes"
-      aria-label={t('page.kicker')}
-      className={cn(
-        "inline-flex h-full items-center justify-center",
-        isActive ? "opacity-100" : "opacity-95",
-        className
-      )}
-    >
-      {fabButton}
-    </NavLink>
+    <BolaoFabSheet>
+      <button
+        type="button"
+        aria-label={t('page.kicker')}
+        className={cn(
+          "inline-flex h-full items-center justify-center outline-none",
+          isActive ? "opacity-100" : "opacity-95",
+          className
+        )}
+      >
+        {fabButton}
+      </button>
+    </BolaoFabSheet>
   );
 }

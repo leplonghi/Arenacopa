@@ -108,7 +108,12 @@
     "filter_kicker": "Filters",
     "filter_title": "Refine matches",
     "view_public_picks": "See the Gang's Picks",
-    "view_public_picks_short": "Gang's Picks"
+    "view_public_picks_short": "Gang's Picks",
+    "quick_score_aria": "Fill {{score}}",
+    "batch_save_cta": "Save {{count}} picks",
+    "batch_saved_desc": "{{count}} picks saved",
+    "batch_partial_title": "Partial save",
+    "batch_partial_desc": "{{ok}} saved, {{failed}} failed"
   },
   "news": {
     "general_category": "General",

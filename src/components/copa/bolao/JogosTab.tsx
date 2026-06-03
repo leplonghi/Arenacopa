@@ -506,11 +506,12 @@ export function JogosTab({
         [matchMarketsByMatchId, nowMs, predictionCutoffMinutes]
     );
 
-    const handleSave = async (matchId: string, homeTeam: string, awayTeam: string) => {
+    const handleSave = async (matchId: string, homeTeam: string, awayTeam: string, options?: { silent?: boolean }) => {
         if (!user) return;
+        const silent = options?.silent ?? false;
         const match = matches.find((item) => item.id === matchId);
         if (match && getMatchPredictionState(match).isClosed) {
-            toast({
+            if (!silent) toast({
                 title: "Palpites encerrados",
                 description: "Nao e mais possivel palpitar neste jogo.",
                 variant: "destructive",
@@ -594,13 +595,13 @@ export function JogosTab({
                 return nextDrafts;
             });
 
-            toast({
+            if (!silent) toast({
                 title: t('palpites.saved'),
                 description: hasScoreInput
                     ? `${homeTeam} ${hs} x ${as} ${awayTeam}`
                     : t("palpites.market_updated_desc", { home: homeTeam, away: awayTeam }),
                 action: (
-                    <button 
+                    <button
                         onClick={() => {
                             setPublicPicksMatchId(matchId);
                             setPublicPicksDialogOpen(true);
@@ -614,6 +615,8 @@ export function JogosTab({
             });
         } catch (error) {
             console.error(error);
+            // In batch (silent) mode let the caller count failures and show one summary.
+            if (silent) throw error;
             const isClosedError =
                 error instanceof Error && (error.message === "prediction_closed" || error.message === "match_finished") ||
                 (error as { code?: string })?.code === "BOLAO_PREDICTION_CLOSED";
@@ -632,6 +635,38 @@ export function JogosTab({
             });
         } finally {
             setSavingMatchId(null);
+        }
+    };
+
+    const [savingAll, setSavingAll] = useState(false);
+
+    const handleSaveAll = async () => {
+        // enrichedMatches is in scope at call-time (defined later in the component body).
+        const saveableMatches = enrichedMatches.filter((item) => item.canSave);
+        if (savingAll || saveableMatches.length === 0) return;
+        setSavingAll(true);
+        let ok = 0;
+        let failed = 0;
+        for (const item of saveableMatches) {
+            try {
+                await handleSave(item.match.id, item.match.home_team_code, item.match.away_team_code, { silent: true });
+                ok += 1;
+            } catch {
+                failed += 1;
+            }
+        }
+        setSavingAll(false);
+        if (failed === 0) {
+            toast({
+                title: t('palpites.saved'),
+                description: t('palpites.batch_saved_desc', { count: ok, defaultValue: `${ok} palpites salvos` }),
+            });
+        } else {
+            toast({
+                title: ok > 0 ? t('palpites.batch_partial_title', { defaultValue: 'Salvamento parcial' }) : t('palpites.error_save'),
+                description: t('palpites.batch_partial_desc', { ok, failed, defaultValue: `${ok} salvos, ${failed} falharam` }),
+                variant: 'destructive',
+            });
         }
     };
 
@@ -874,6 +909,7 @@ export function JogosTab({
     const pendingMatchesCount = enrichedMatches.filter((item) => item.isPending).length;
     const lockedMatchesCount = enrichedMatches.filter((item) => item.isStarted).length;
     const completedMatchesCount = enrichedMatches.filter((item) => !item.isStarted && !item.isPending).length;
+    const saveableCount = enrichedMatches.filter((item) => item.canSave).length;
 
     // Show skeleton while loading
     if (isLoading) {
@@ -940,31 +976,35 @@ export function JogosTab({
                 </div>
             </ArenaPanel>
 
-            <ArenaPanel className="p-3">
-                <ArenaSectionHeader
-                    eyebrow={t('palpites.filter_kicker', 'Filtro rápido')}
-                    title={t('palpites.filter_title', 'Refinar jogos')}
-                    action={<div className="arena-badge">{enrichedMatches.length} jogos</div>}
-                />
-                <div className="mt-3 flex flex-col gap-2 sm:flex-row">
-                    <select 
-                        value={filterTeam} 
-                        onChange={e => setFilterTeam(e.target.value)}
-                        className="flex-1 rounded-[14px] border border-white/10 bg-white/[0.05] px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.16em] text-white outline-none focus:border-primary/50"
-                    >
-                        <option value="all" className="bg-zinc-900">{t('palpites.filter_all_teams')}</option>
-                        {uniqueTeams.map(t => <option key={t} value={t} className="bg-zinc-900">{t}</option>)}
-                    </select>
-                    <select 
-                        value={filterStage} 
-                        onChange={e => setFilterStage(e.target.value)}
-                        className="flex-1 rounded-[14px] border border-white/10 bg-white/[0.05] px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.16em] text-white outline-none focus:border-primary/50"
-                    >
-                        <option value="all" className="bg-zinc-900">{t('palpites.filter_all_stages')}</option>
-                        {uniqueStages.map(s => <option key={s} value={s} className="bg-zinc-900">{s}</option>)}
-                    </select>
-                </div>
-            </ArenaPanel>
+            {/* Filters auto-hide when there are few matches and no filter is active —
+                no point in showing two dropdowns above a 1–3 game list. */}
+            {(allowedMatches.length > 3 || filterTeam !== "all" || filterStage !== "all") && (
+                <ArenaPanel className="p-3">
+                    <ArenaSectionHeader
+                        eyebrow={t('palpites.filter_kicker', 'Filtro rápido')}
+                        title={t('palpites.filter_title', 'Refinar jogos')}
+                        action={<div className="arena-badge">{enrichedMatches.length} jogos</div>}
+                    />
+                    <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                        <select
+                            value={filterTeam}
+                            onChange={e => setFilterTeam(e.target.value)}
+                            className="flex-1 rounded-[14px] border border-white/10 bg-white/[0.05] px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.16em] text-white outline-none focus:border-primary/50"
+                        >
+                            <option value="all" className="bg-zinc-900">{t('palpites.filter_all_teams')}</option>
+                            {uniqueTeams.map(t => <option key={t} value={t} className="bg-zinc-900">{t}</option>)}
+                        </select>
+                        <select
+                            value={filterStage}
+                            onChange={e => setFilterStage(e.target.value)}
+                            className="flex-1 rounded-[14px] border border-white/10 bg-white/[0.05] px-3 py-1.5 text-[9px] font-black uppercase tracking-[0.16em] text-white outline-none focus:border-primary/50"
+                        >
+                            <option value="all" className="bg-zinc-900">{t('palpites.filter_all_stages')}</option>
+                            {uniqueStages.map(s => <option key={s} value={s} className="bg-zinc-900">{s}</option>)}
+                        </select>
+                    </div>
+                </ArenaPanel>
+            )}
 
             {enrichedMatches.map(({ match: m, isStarted, marketsForMatch, firstScorerMarket, savedFirstScorer, currentFirstScorer, p, hasSavedPrediction, isDirty, canSave, isHighlighted, isPending, isUpcoming }) => {
                 return (
@@ -1154,6 +1194,32 @@ export function JogosTab({
                                             </div>
                                         </div>
                                     </div>
+
+                                    {/* Tap-to-fill common scorelines — cuts taps for the most frequent results */}
+                                    {!isStarted && (
+                                        <div className="mt-2.5 flex items-center justify-center gap-1.5 border-t border-white/5 pt-2.5">
+                                            {(["1-0", "2-1", "1-1", "0-0", "2-0"] as const).map((preset) => {
+                                                const [ph, pa] = preset.split("-");
+                                                const isSelected = p.home === ph && p.away === pa;
+                                                return (
+                                                    <button
+                                                        key={preset}
+                                                        type="button"
+                                                        onClick={() => setDraftScoreBoth(m.id, ph, pa)}
+                                                        aria-label={t('palpites.quick_score_aria', { score: `${ph} a ${pa}`, defaultValue: `Preencher ${ph} a ${pa}` })}
+                                                        className={cn(
+                                                            "h-7 min-w-[40px] rounded-lg px-2 text-[11px] font-black tabular-nums transition-all active:scale-95",
+                                                            isSelected
+                                                                ? "bg-primary text-black"
+                                                                : "bg-white/[0.06] text-zinc-300 hover:bg-white/[0.12] hover:text-white"
+                                                        )}
+                                                    >
+                                                        {ph}<span className="mx-0.5 text-current/50">×</span>{pa}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
                                 </div>
                             )}
 
@@ -1298,6 +1364,38 @@ export function JogosTab({
                     matchAwayCode={matches.find(m => m.id === publicPicksMatchId)?.away_team_code || ""}
                 />
             )}
+
+            {/* Batch save — floats once 2+ matches have unsaved valid scores,
+                so users send all picks in one tap instead of saving game-by-game. */}
+            <AnimatePresence>
+                {saveableCount >= 2 && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 24 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 24 }}
+                        transition={{ duration: 0.2 }}
+                        className="sticky bottom-3 z-30 mx-auto flex w-full max-w-md justify-center px-2"
+                    >
+                        <button
+                            onClick={() => void handleSaveAll()}
+                            disabled={savingAll}
+                            className="arena-button-gold flex w-full items-center justify-center gap-2 rounded-[16px] py-3.5 text-[0.95rem] font-black uppercase tracking-wider shadow-[0_12px_32px_-8px_rgba(0,0,0,0.7)] disabled:opacity-60"
+                        >
+                            {savingAll ? (
+                                <>
+                                    <span className="h-4 w-4 animate-spin rounded-full border-2 border-black/25 border-t-black" />
+                                    {t('palpites.saving_cta', 'Salvando...')}
+                                </>
+                            ) : (
+                                <>
+                                    <CheckCircle2 className="h-5 w-5" />
+                                    {t('palpites.batch_save_cta', { count: saveableCount, defaultValue: `Salvar ${saveableCount} palpites` })}
+                                </>
+                            )}
+                        </button>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }
