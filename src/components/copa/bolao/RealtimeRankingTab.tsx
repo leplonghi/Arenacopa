@@ -1,18 +1,17 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { db } from "@/integrations/firebase/client";
-import { 
-    collection, 
-    query, 
-    where, 
-    orderBy, 
-    onSnapshot, 
-    getDocs
+import {
+    collection,
+    query,
+    where,
+    orderBy,
+    onSnapshot
 } from "firebase/firestore";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
-import { motion, AnimatePresence } from "framer-motion";
-import { Trophy, Target, Award, Crown, TrendingUp, Minus, Check, Share2, Users } from "lucide-react";
+import { motion } from "framer-motion";
+import { Trophy, Target, Award, Crown, Check, Share2, Users } from "lucide-react";
 import { staggerContainer, staggerItem } from "../animations";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -206,7 +205,7 @@ export function RealtimeRankingTab({ bolaoId, rules, variant = "default" }: { bo
                             <div className="relative group">
                                 <div className="w-16 h-16 rounded-2xl p-0.5 bg-gradient-to-br from-gray-300 via-gray-400 to-gray-600 shadow-2xl transition-transform">
                                     <div className="w-full h-full rounded-[14px] bg-zinc-950 flex items-center justify-center text-xs font-black overflow-hidden border border-white/5 relative">
-                                        <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
+                                        <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-noise" />
                                         {filteredRankings[1].profile?.avatar_url ?
                                             <img src={filteredRankings[1].profile.avatar_url} alt="" className="w-full h-full object-cover" /> :
                                             <span className="text-gray-400">{(filteredRankings[1].profile?.name || "??").slice(0, 2).toUpperCase()}</span>}
@@ -248,7 +247,7 @@ export function RealtimeRankingTab({ bolaoId, rules, variant = "default" }: { bo
                                 <div className="w-24 h-24 rounded-3xl p-1 bg-gradient-to-br from-copa-gold via-yellow-400 to-amber-600 shadow-[0_20px_40px_rgba(234,179,8,0.25)] relative overflow-hidden">
                                     <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/10 to-transparent h-1/2 w-full animate-pulse-slow pointer-events-none" />
                                     <div className="w-full h-full rounded-[22px] bg-zinc-950 flex items-center justify-center text-sm font-black overflow-hidden border border-white/10 relative">
-                                        <div className="absolute inset-0 opacity-[0.05] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
+                                        <div className="absolute inset-0 opacity-[0.05] pointer-events-none bg-noise" />
                                         {filteredRankings[0].profile?.avatar_url ?
                                             <img src={filteredRankings[0].profile.avatar_url} alt="" className="w-full h-full object-cover" /> :
                                             <span className="text-copa-gold text-lg">{(filteredRankings[0].profile?.name || "??").slice(0, 2).toUpperCase()}</span>}
@@ -283,7 +282,7 @@ export function RealtimeRankingTab({ bolaoId, rules, variant = "default" }: { bo
                             <div className="relative group">
                                 <div className="w-16 h-16 rounded-2xl p-0.5 bg-gradient-to-br from-amber-600 via-amber-700 to-orange-900 shadow-2xl transition-transform">
                                     <div className="w-full h-full rounded-[14px] bg-zinc-950 flex items-center justify-center text-xs font-black overflow-hidden border border-white/5 relative">
-                                        <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
+                                        <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-noise" />
                                         {filteredRankings[2].profile?.avatar_url ?
                                             <img src={filteredRankings[2].profile.avatar_url} alt="" className="w-full h-full object-cover" /> :
                                             <span className="text-amber-700">{(filteredRankings[2].profile?.name || "??").slice(0, 2).toUpperCase()}</span>}
@@ -385,7 +384,7 @@ export function RealtimeRankingTab({ bolaoId, rules, variant = "default" }: { bo
                                     (isTop3 && filteredRankings.length >= 3) ? (i === 0 ? "bg-copa-gold/50" : i === 1 ? "bg-zinc-400/50" : "bg-amber-700/50") : isMe ? "bg-copa-green-light/50" : "bg-white/10"
                                 )}>
                                     <div className="w-full h-full rounded-[14px] bg-zinc-950 flex items-center justify-center text-[10px] font-black overflow-hidden border border-zinc-800 relative">
-                                        <div className="absolute inset-0 opacity-[0.05] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
+                                        <div className="absolute inset-0 opacity-[0.05] pointer-events-none bg-noise" />
                                         {r.profile?.avatar_url ?
                                             <img src={r.profile.avatar_url} alt="" className="w-full h-full object-cover" /> :
                                             <span className="text-zinc-500">{name.slice(0, 2).toUpperCase()}</span>
