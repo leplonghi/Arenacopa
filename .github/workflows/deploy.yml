@@ -1,0 +1,62 @@
+name: Deploy to Firebase Hosting
+
+# Auto-deploys the web app to Firebase Hosting on every push to main.
+# Prevents the keyless-build outage: the Firebase WEB config below is baked
+# into the build step, so CI can NEVER ship a bundle without Firebase keys.
+# (The Firebase web config is PUBLIC — it ships to every browser — so it is
+# safe to keep in the workflow. The only real secret is the deploy credential.)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
+jobs:
+  build_and_deploy:
+    runs-on: ubuntu-latest
+    env:
+      # The single secret you must add (repo Settings → Secrets and variables →
+      # Actions): a Firebase service-account JSON. Generate it with
+      # `firebase init hosting:github` or in the Firebase/GCP console.
+      FIREBASE_SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build (Firebase web config baked in — public values)
+        env:
+          VITE_FIREBASE_API_KEY: AIzaSyBDGM-km8sVo-IYVPtCGcTCV2uwzBAYdrk
+          VITE_FIREBASE_AUTH_DOMAIN: arenacopa-web-2026.firebaseapp.com
+          VITE_FIREBASE_PROJECT_ID: arenacopa-web-2026
+          VITE_FIREBASE_STORAGE_BUCKET: arenacopa-web-2026.firebasestorage.app
+          VITE_FIREBASE_MESSAGING_SENDER_ID: "388695676084"
+          VITE_FIREBASE_APP_ID: "1:388695676084:web:e43e4a73b3645e0b68b3e1"
+        run: npm run build
+
+      - name: Deploy to Firebase Hosting (live)
+        if: ${{ env.FIREBASE_SA != '' }}
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          projectId: arenacopa-web-2026
+          channelId: live
+
+      - name: Skip deploy notice
+        if: ${{ env.FIREBASE_SA == '' }}
+        run: |
+          echo "::warning title=Deploy skipped::FIREBASE_SERVICE_ACCOUNT secret is not set."
+          echo "Add it in Settings → Secrets and variables → Actions to enable auto-deploy."
+          echo "The build above succeeded, so the bundle is valid — only the upload step is gated."
