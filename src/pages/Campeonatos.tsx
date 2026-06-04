@@ -347,7 +347,7 @@ export default function Campeonatos() {
   const { user } = useAuth();
   const { t } = useTranslation("championships");
 
-  const copa = all.find((championship) => championship.id === "wc2026")!;
+  const copa = all.find((championship) => championship.id === "wc2026");
   const leagueCards = useMemo(() => {
     const others = all.filter((championship) => championship.id !== "wc2026");
     return [...others].sort((left, right) => {
@@ -420,24 +420,26 @@ export default function Campeonatos() {
           transition={{ duration: 0.28 }}
           className="mb-5"
         >
-          <p className="font-display text-[1.1rem] font-semibold uppercase tracking-[0.22em] text-primary">
+          <p className="font-display text-[11px] font-black uppercase tracking-[0.22em] text-primary">
             {t("header.kicker")}
           </p>
-          <h1 className="mt-1 font-display text-[3.2rem] font-semibold uppercase leading-[0.88] tracking-[0.03em] text-white sm:text-[4rem]">
+          <h1 className="mt-0.5 font-display text-[2.4rem] font-semibold uppercase leading-[0.9] tracking-[0.03em] text-white sm:text-[3.2rem]">
             {t("header.title")}
           </h1>
-          <p className="mt-2 font-sans text-[1.1rem] font-medium text-zinc-400">
+          <p className="mt-1 font-sans text-sm font-medium text-zinc-400">
             Escolha seu campeonato
           </p>
         </motion.section>
 
-        <FeaturedCompetitionCard
-          championship={copa}
-          bolaoCount={bolaoCountsMap[copa.id] ?? 0}
-          isSelected={current.id === copa.id}
-          onSelect={() => handleSelect(copa)}
-          nextMatch={getNextMatch(copa.id)}
-        />
+        {copa && (
+          <FeaturedCompetitionCard
+            championship={copa}
+            bolaoCount={bolaoCountsMap[copa.id] ?? 0}
+            isSelected={current.id === copa.id}
+            onSelect={() => handleSelect(copa)}
+            nextMatch={getNextMatch(copa.id)}
+          />
+        )}
 
         <motion.section
           initial={{ opacity: 0, y: 18 }}
