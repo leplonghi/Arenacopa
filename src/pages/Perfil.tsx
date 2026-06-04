@@ -13,6 +13,7 @@ import { useProfileStats } from "@/hooks/useProfileStats";
 import { deleteDoc, doc, setDoc } from "firebase/firestore";
 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -516,72 +517,82 @@ const Perfil = () => {
           </div>
         </div>
 
-        {showTeamPicker && (
-          <div className="mt-3 rounded-[26px] border border-white/10 bg-white/[0.03] p-3">
-            <div className="grid gap-2 sm:grid-cols-[1fr_auto_auto]">
-              <Input
-                value={teamSearch}
-                onChange={(event) => setTeamSearch(event.target.value)}
-                placeholder="Buscar país, clube ou campeonato"
-                className="border-white/10 bg-black/25 text-white placeholder:text-zinc-600"
-              />
-              <Select value={teamTypeFilter} onValueChange={(value) => setTeamTypeFilter(value as "all" | FavoriteTeamType)}>
-                <SelectTrigger className="border-white/10 bg-black/25 text-white sm:w-36">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="national">Países</SelectItem>
-                  <SelectItem value="club">Clubes</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={teamCountryFilter} onValueChange={setTeamCountryFilter}>
-                <SelectTrigger className="border-white/10 bg-black/25 text-white sm:w-44">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os países</SelectItem>
-                  {teamCountryOptions.map(([countryCode, countryName]) => (
-                    <SelectItem key={countryCode} value={countryCode}>{countryName}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <p className="mt-3 text-[11px] leading-relaxed text-zinc-500">
-              Você pode marcar mais de um favorito. As notícias aparecem priorizando esses times.
-            </p>
-            <div className="mt-3 max-h-72 overflow-y-auto pr-1">
-              <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
-              {filteredTeamChoices.map((teamOption) => {
-                const selected = selectedFavoriteTeams.some((code) => code.toUpperCase() === teamOption.code.toUpperCase());
-                return (
-                <button
-                  key={teamOption.code}
-                  onClick={() => {
-                    void toggleFavoriteTeam(teamOption.code);
-                  }}
-                  className={cn(
-                    "flex min-h-[86px] flex-col items-center justify-center gap-1 rounded-[14px] border p-2 text-center transition-colors",
-                    selected ? "border-primary/40 bg-primary/12" : "border-white/10 hover:bg-white/[0.05]"
-                  )}
-                >
-                  {teamOption.type === "national" ? (
-                    <Flag code={teamOption.code} size="sm" />
-                  ) : (
-                    <span className="rounded-lg border border-white/10 bg-white/5 px-2 py-1 font-display text-sm font-black text-primary">{teamOption.code}</span>
-                  )}
-                  <span className="text-[10px] font-black uppercase tracking-[0.08em] text-white">{teamOption.code}</span>
-                  <span className="line-clamp-1 max-w-full text-[10px] text-zinc-500">{teamOption.name}</span>
-                  <span className="line-clamp-1 max-w-full text-[9px] uppercase tracking-[0.08em] text-zinc-600">
-                    {teamOption.type === "club" ? teamOption.category : teamOption.countryName}
-                  </span>
-                </button>
-                );
-              })}
+        <Sheet open={showTeamPicker} onOpenChange={setShowTeamPicker}>
+          <SheetContent
+            side="bottom"
+            className="rounded-t-[28px] border-t border-white/10 bg-[#07130d] px-0 pb-safe pt-0 max-h-[85dvh] flex flex-col"
+          >
+            <SheetHeader className="px-5 pb-3 pt-5 shrink-0">
+              <SheetTitle className="font-display text-2xl font-black uppercase tracking-tight text-white">
+                Times favoritos
+              </SheetTitle>
+              <p className="text-[11px] leading-relaxed text-zinc-500">
+                Marque mais de um favorito. As notícias aparecem priorizando esses times.
+              </p>
+            </SheetHeader>
+
+            <div className="shrink-0 px-5 pb-3">
+              <div className="grid gap-2 sm:grid-cols-[1fr_auto_auto]">
+                <Input
+                  value={teamSearch}
+                  onChange={(event) => setTeamSearch(event.target.value)}
+                  placeholder="Buscar país, clube ou campeonato"
+                  className="border-white/10 bg-black/25 text-white placeholder:text-zinc-600"
+                />
+                <Select value={teamTypeFilter} onValueChange={(value) => setTeamTypeFilter(value as "all" | FavoriteTeamType)}>
+                  <SelectTrigger className="border-white/10 bg-black/25 text-white sm:w-36">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="national">Países</SelectItem>
+                    <SelectItem value="club">Clubes</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={teamCountryFilter} onValueChange={setTeamCountryFilter}>
+                  <SelectTrigger className="border-white/10 bg-black/25 text-white sm:w-44">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os países</SelectItem>
+                    {teamCountryOptions.map(([countryCode, countryName]) => (
+                      <SelectItem key={countryCode} value={countryCode}>{countryName}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
-          </div>
-        )}
+
+            <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-6">
+              <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+                {filteredTeamChoices.map((teamOption) => {
+                  const selected = selectedFavoriteTeams.some((code) => code.toUpperCase() === teamOption.code.toUpperCase());
+                  return (
+                    <button
+                      key={teamOption.code}
+                      onClick={() => { void toggleFavoriteTeam(teamOption.code); }}
+                      className={cn(
+                        "flex min-h-[86px] flex-col items-center justify-center gap-1 rounded-[14px] border p-2 text-center transition-colors",
+                        selected ? "border-primary/40 bg-primary/12" : "border-white/10 hover:bg-white/[0.05]"
+                      )}
+                    >
+                      {teamOption.type === "national" ? (
+                        <Flag code={teamOption.code} size="sm" />
+                      ) : (
+                        <span className="rounded-lg border border-white/10 bg-white/5 px-2 py-1 font-display text-sm font-black text-primary">{teamOption.code}</span>
+                      )}
+                      <span className="text-[10px] font-black uppercase tracking-[0.08em] text-white">{teamOption.code}</span>
+                      <span className="line-clamp-1 max-w-full text-[10px] text-zinc-500">{teamOption.name}</span>
+                      <span className="line-clamp-1 max-w-full text-[9px] uppercase tracking-[0.08em] text-zinc-600">
+                        {teamOption.type === "club" ? teamOption.category : teamOption.countryName}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </SheetContent>
+        </Sheet>
       </ArenaPanel>
 
       <ArenaPanel className="p-5">
