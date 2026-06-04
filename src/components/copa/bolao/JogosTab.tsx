@@ -934,44 +934,33 @@ export function JogosTab({
     }
 
     return (
-        <div className="space-y-4">
-            <ArenaPanel tone="strong" className="p-4">
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-                    <div>
+        <div className="space-y-3">
+            {/* Compact header: title + inline stat pills, no filler paragraph —
+                gets the user to the matches with far less scroll. */}
+            <ArenaPanel tone="strong" className="p-3">
+                <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
                         <p className="arena-kicker text-primary">
                             {t('palpites.header_kicker')}
                         </p>
-                        <h3 className="mt-1 font-display text-[2rem] font-semibold uppercase leading-[0.88] tracking-[0.02em] text-white sm:text-[2.5rem]">
+                        <h3 className="mt-0.5 font-display text-[1.5rem] font-semibold uppercase leading-none tracking-[0.02em] text-white sm:text-[1.9rem]">
                             {pendingMatchesCount > 0
                                 ? t('palpites.pending_title', { count: pendingMatchesCount })
                                 : t('palpites.pending_title_done')}
                         </h3>
-                        <p className="mt-2 max-w-2xl text-sm text-zinc-300">
-                            {pendingMatchesCount > 0
-                                ? t('palpites.pending_desc')
-                                : t('palpites.pending_desc_done')}
-                        </p>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-2 sm:min-w-[300px]">
-                        <div className="rounded-[16px] border border-white/10 bg-black/20 px-3 py-2 text-center">
-                            <p className="text-[9px] font-black uppercase tracking-[0.16em] text-zinc-500">
-                                {t('palpites.stats_pending')}
-                            </p>
-                            <p className="mt-0.5 text-xl font-black text-white">{pendingMatchesCount}</p>
-                        </div>
-                        <div className="rounded-[16px] border border-white/10 bg-black/20 px-3 py-2 text-center">
-                            <p className="text-[9px] font-black uppercase tracking-[0.16em] text-zinc-500">
-                                {t('palpites.stats_saved')}
-                            </p>
-                            <p className="mt-0.5 text-xl font-black text-white">{completedMatchesCount}</p>
-                        </div>
-                        <div className="rounded-[16px] border border-white/10 bg-black/20 px-3 py-2 text-center">
-                            <p className="text-[9px] font-black uppercase tracking-[0.16em] text-zinc-500">
-                                {t('palpites.stats_closed')}
-                            </p>
-                            <p className="mt-0.5 text-xl font-black text-white">{lockedMatchesCount}</p>
-                        </div>
+                    <div className="flex shrink-0 items-stretch gap-1.5">
+                        {[
+                            { label: t('palpites.stats_pending'), value: pendingMatchesCount, accent: pendingMatchesCount > 0 },
+                            { label: t('palpites.stats_saved'), value: completedMatchesCount, accent: false },
+                            { label: t('palpites.stats_closed'), value: lockedMatchesCount, accent: false },
+                        ].map((s) => (
+                            <div key={s.label} className="flex min-w-[44px] flex-col items-center justify-center rounded-[12px] border border-white/10 bg-black/20 px-2 py-1.5">
+                                <p className={cn("text-lg font-black leading-none tabular-nums", s.accent ? "text-primary" : "text-white")}>{s.value}</p>
+                                <p className="mt-0.5 text-[8px] font-black uppercase tracking-[0.12em] text-zinc-500 leading-tight">{s.label}</p>
+                            </div>
+                        ))}
                     </div>
                 </div>
             </ArenaPanel>
