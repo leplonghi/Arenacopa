@@ -1,17 +1,31 @@
-import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useEffect, useCallback } from "react";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useChampionship } from "@/contexts/ChampionshipContext";
 import { getChampionshipById } from "@/data/championships/definitions";
 
 export type HubTab = "jogos" | "classificacao" | "noticias" | "boloes";
 
+const VALID_HUB_TABS: HubTab[] = ["jogos", "classificacao", "noticias", "boloes"];
+
 export function useChampionshipHub() {
   const { championshipId } = useParams<{ championshipId: string }>();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { setChampionship } = useChampionship();
   const { t } = useTranslation(["championships", "common"]);
-  const [tab, setTab] = useState<HubTab>("jogos");
+
+  // URL is the source of truth for the active tab — enables deep links,
+  // back/forward, and reload persistence (consistent with BolaoDetail/Copa).
+  const rawTab = searchParams.get("tab");
+  const tab: HubTab = VALID_HUB_TABS.includes(rawTab as HubTab) ? (rawTab as HubTab) : "jogos";
+  const setTab = useCallback((next: HubTab) => {
+    setSearchParams((prev) => {
+      const params = new URLSearchParams(prev);
+      params.set("tab", next);
+      return params;
+    }, { replace: true });
+  }, [setSearchParams]);
 
   const championship = championshipId ? getChampionshipById(championshipId) : null;
 
