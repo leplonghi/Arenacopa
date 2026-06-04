@@ -39,7 +39,6 @@ import {
   type BolaoListingCard,
   type BolaoListingRequestCard,
 } from "@/services/boloes/bolao-listing.service";
-import { ModeChoiceCard } from "@/features/boloes/components/ModeChoiceCard";
 import { CreateGroupDialog } from "@/features/groups/create/CreateGroupDialog";
 import { tStatic } from "@/i18n/staticText";
 import { ArenaImageButton, ArenaPageHeader, ArenaSegmentedTabs, ArenaStateBlock } from "@/components/arena/ArenaExperience";
@@ -377,7 +376,7 @@ export default function Boloes() {
   ];
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-3">
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
@@ -387,7 +386,7 @@ export default function Boloes() {
         <ArenaPageHeader
           eyebrow="Cockpit do criador"
           title={myBoloes.length > 0 ? "Meus Bolões" : "Comece a jogar"}
-          description="Gerencie convites, acompanhe pendências e mantenha suas ligas prontas para a próxima rodada."
+          description="Acompanhe pendências e convites das suas ligas."
           image={{ src: cockpitSrc, alt: "", eager: true, position: "center" }}
           actions={
             <>
@@ -710,59 +709,31 @@ export default function Boloes() {
         )}
       </AnimatePresence>
 
-      {/* Novo Bolão / Criação - Seção Inferior */}
-      <motion.div
-        custom={5}
-        variants={fadeUp}
-        initial="hidden"
-        animate="visible"
-        className="mt-4 space-y-3 pb-12"
-      >
-        <div className="flex items-center justify-between px-1">
-          <h2 className="text-[11px] font-black uppercase tracking-[0.2em] text-zinc-500">
-            Novo Bolão
-          </h2>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
-          <ModeChoiceCard
-            variant="traditional"
-            title="Pessoal"
-            description="Bolão clássico para amigos"
-            icon={Plus}
-            tags={["Grátis"]}
-            tooltipTitle="Bolão Tradicional"
-            tooltipDescription="Crie seu próprio bolão, escolha as partidas e convide seus amigos por código ou link."
-            onClick={() => navigate("/boloes/criar?mode=traditional")}
-          />
-          <ModeChoiceCard
-            variant="business"
-            title="Business"
-            description="Bolão para sua marca"
-            icon={Store}
-            tags={["Marketing"]}
-            tooltipTitle="Soluções Corporativas"
-            tooltipDescription="Ideal para empresas, bares e influenciadores que querem engajar sua audiência."
-            onClick={() => navigate("/boloes/criar?mode=business")}
-          />
-        </div>
-
+      {/* Secondary create paths — compact. Personal create lives in the header
+          button + the central FAB sheet, so this only surfaces the two unique
+          entries (Business, Grupo) without the tall duplicate section. */}
+      <div className="mt-1 grid grid-cols-2 gap-2 pb-8">
+        <button
+          onClick={() => navigate("/boloes/criar?mode=business")}
+          className="flex items-center gap-2.5 rounded-xl border border-white/10 bg-white/[0.02] px-3 py-2.5 text-left transition hover:border-white/20 hover:bg-white/[0.05]"
+        >
+          <Store className="h-4 w-4 shrink-0 text-amber-400" />
+          <div className="min-w-0">
+            <p className="text-xs font-bold text-white">Bolão Business</p>
+            <p className="truncate text-[10px] text-zinc-500">Para marcas e empresas</p>
+          </div>
+        </button>
         <button
           onClick={() => setIsCreateGroupOpen(true)}
-          className="group relative flex w-full items-center justify-between overflow-hidden rounded-2xl border border-white/10 bg-white/[0.03] p-4 transition-all hover:border-white/20 hover:bg-white/[0.05]"
+          className="flex items-center gap-2.5 rounded-xl border border-white/10 bg-white/[0.02] px-3 py-2.5 text-left transition hover:border-white/20 hover:bg-white/[0.05]"
         >
-          <div className="flex items-center gap-4">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-500/10 text-blue-400">
-              <Users className="h-5 w-5" />
-            </div>
-            <div className="text-left">
-              <h3 className="text-sm font-bold text-white">Criar Grupo</h3>
-              <p className="text-[11px] text-zinc-500">Gerencie múltiplos bolões com a mesma turma</p>
-            </div>
+          <Users className="h-4 w-4 shrink-0 text-blue-400" />
+          <div className="min-w-0">
+            <p className="text-xs font-bold text-white">Criar Grupo</p>
+            <p className="truncate text-[10px] text-zinc-500">Gerencie várias ligas</p>
           </div>
-          <Plus className="h-5 w-5 text-zinc-600 transition-transform group-hover:scale-110 group-hover:text-zinc-400" />
         </button>
-      </motion.div>
+      </div>
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent className="border-white/10 bg-zinc-950 text-white">
           <AlertDialogHeader>
