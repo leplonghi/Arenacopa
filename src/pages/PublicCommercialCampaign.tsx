@@ -67,7 +67,7 @@ export default function PublicCommercialCampaign() {
           />
           
           {/* Background Noise */}
-          <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-[url('https://grainy-gradients.vercel.app/noise.svg')]" />
+          <div className="absolute inset-0 opacity-[0.03] pointer-events-none bg-noise" />
 
           <div className="relative z-10">
             <div className="flex items-center justify-between mb-4">

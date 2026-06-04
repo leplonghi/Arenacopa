@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   ArrowRight,
   BookOpen,
@@ -9,12 +9,15 @@ import {
   MapPinned,
   Share2,
   Trophy,
+  Target,
+  Rocket,
 } from "lucide-react";
 import { Flag } from "@/components/Flag";
 import { MatchDetailsModal } from "./MatchDetailsModal";
 import { ArenaAssetSlot } from "@/components/arena/ArenaAssetSlot";
 import { ArenaMetric, ArenaPanel, ArenaSectionHeader } from "@/components/arena/ArenaPrimitives";
 import { useMatches } from "@/hooks/useMatches";
+import { usePendingPredictions } from "@/hooks/usePendingPredictions";
 import { getTeam, groupStandings, groups, type Match } from "@/data/mockData";
 import { cn } from "@/lib/utils";
 import { getArenaAssetSrc } from "@/lib/arena-assets";
@@ -147,8 +150,30 @@ export function CopaOverview() {
   const navigate = useNavigate();
   const { data: matchesData = [], isLoading } = useMatches();
   const matches = useMemo(() => matchesData ?? [], [matchesData]);
+  const { pendingItems } = usePendingPredictions();
   const [selectedMatch, setSelectedMatch] = useState<Match | null>(null);
   const [nowTick, setNowTick] = useState(() => Date.now());
+
+  // Personal shortcut: jump straight to the most urgent pending prediction.
+  const mostUrgentPending = useMemo(() => {
+    if (pendingItems.length === 0) return null;
+    return [...pendingItems].sort(
+      (a, b) => new Date(a.match.match_date).getTime() - new Date(b.match.match_date).getTime(),
+    )[0];
+  }, [pendingItems]);
+
+  // Today's matches — surfaced at the top when the day actually has games.
+  const todayMatches = useMemo(() => {
+    const today = new Date();
+    return matches.filter((match) => {
+      const d = new Date(match.date);
+      return (
+        d.getFullYear() === today.getFullYear() &&
+        d.getMonth() === today.getMonth() &&
+        d.getDate() === today.getDate()
+      );
+    });
+  }, [matches]);
 
   const tournamentStart = useMemo(() => new Date("2026-06-11T15:00:00-03:00"), []);
   const countdownParts = useMemo(() => formatCountdownParts(tournamentStart, nowTick), [tournamentStart, nowTick]);
@@ -184,6 +209,89 @@ export function CopaOverview() {
 
   return (
     <div className="space-y-5 pb-20">
+      {/* Personal CTA — adapts to whether the user has pending Copa predictions */}
+      {mostUrgentPending ? (
+        <Link
+          to={`/boloes/${mostUrgentPending.bolaoIds[0]}?tab=jogos&match=${mostUrgentPending.match.id}`}
+          className="group flex items-center gap-4 rounded-[22px] border border-primary/45 bg-[linear-gradient(120deg,rgba(145,255,59,0.14),rgba(145,255,59,0.04))] p-4 transition hover:border-primary/60"
+        >
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[16px] border border-primary/30 bg-primary/20">
+            <Target className="h-6 w-6 text-primary" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">Seus palpites</p>
+            <p className="mt-0.5 text-base font-black text-white">
+              Você tem {pendingItems.length} {pendingItems.length === 1 ? "jogo pendente" : "jogos pendentes"}
+            </p>
+            <p className="text-[11px] text-zinc-500">Toque para palpitar agora.</p>
+          </div>
+          <ArrowRight className="h-5 w-5 shrink-0 text-primary transition group-hover:translate-x-1" />
+        </Link>
+      ) : (
+        <Link
+          to="/boloes/criar"
+          className="group flex items-center gap-4 rounded-[22px] border border-amber-400/35 bg-amber-500/[0.08] p-4 transition hover:bg-amber-500/[0.14]"
+        >
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[16px] border border-amber-400/30 bg-amber-500/15">
+            <Rocket className="h-6 w-6 text-amber-400" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-amber-400">Comece agora</p>
+            <p className="mt-0.5 text-base font-black text-white">Crie seu bolão da Copa</p>
+            <p className="text-[11px] text-zinc-500">Convide a turma e dispute cada jogo.</p>
+          </div>
+          <ArrowRight className="h-5 w-5 shrink-0 text-amber-400 transition group-hover:translate-x-1" />
+        </Link>
+      )}
+
+      {/* Today's games — only when the day actually has matches */}
+      {todayMatches.length > 0 && (
+        <ArenaPanel className="p-4">
+          <ArenaSectionHeader
+            eyebrow="Hoje"
+            title={todayMatches.length === 1 ? "Jogo de hoje" : "Jogos de hoje"}
+            action={<button onClick={() => navigate("/copa/calendario")} className="arena-badge">Ver tudo</button>}
+          />
+          <div className="mt-3 space-y-2">
+            {todayMatches.slice(0, 3).map((match) => {
+              const home = getTeam(match.homeTeam);
+              const away = getTeam(match.awayTeam);
+              const isLive = match.status === "live";
+              return (
+                <button
+                  key={match.id}
+                  onClick={() => setSelectedMatch(match)}
+                  className="flex w-full items-center gap-3 rounded-[16px] border border-white/10 bg-white/[0.02] p-3 text-left transition hover:bg-white/[0.05]"
+                >
+                  <div className="flex flex-1 items-center justify-end gap-2 min-w-0">
+                    <span className="truncate font-display text-base font-bold uppercase text-white">{home.code}</span>
+                    <Flag code={home.code} size="sm" />
+                  </div>
+                  <div className="shrink-0 text-center">
+                    {isLive || match.status === "finished" ? (
+                      <span className="font-display text-xl font-black text-white tabular-nums">
+                        {match.homeScore ?? 0}<span className="mx-1 text-white/30">×</span>{match.awayScore ?? 0}
+                      </span>
+                    ) : (
+                      <span className="font-display text-sm font-black text-zinc-400">
+                        {new Date(match.date).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                    )}
+                    {isLive && (
+                      <span className="mt-0.5 block text-[8px] font-black uppercase tracking-wider text-emerald-400">Ao vivo</span>
+                    )}
+                  </div>
+                  <div className="flex flex-1 items-center gap-2 min-w-0">
+                    <Flag code={away.code} size="sm" />
+                    <span className="truncate font-display text-base font-bold uppercase text-white">{away.code}</span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </ArenaPanel>
+      )}
+
       <ArenaPanel tone="strong" className="overflow-hidden p-4 sm:p-5">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_78%_22%,rgba(255,194,0,0.18),transparent_24%),radial-gradient(circle_at_15%_5%,rgba(145,255,59,0.09),transparent_30%)]" />
         <div className="relative grid gap-4 lg:grid-cols-[1fr_auto] lg:items-center">

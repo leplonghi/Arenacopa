@@ -230,6 +230,13 @@
     @apply bg-gradient-to-r from-[hsl(var(--copa-gold))] to-[hsl(var(--copa-gold-light))] bg-clip-text text-transparent;
   }
 
+  /* Inline noise texture (browser-generated via feTurbulence) — replaces a
+     third-party https://grainy-gradients.vercel.app/noise.svg dependency that
+     was hit on core screens (ranking, campaign). Decorative; pair with low opacity. */
+  .bg-noise {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
   .arena-screen {
     @apply relative mx-auto w-full max-w-6xl px-4 pb-28 pt-0 text-white sm:px-6 md:pb-14;
   }

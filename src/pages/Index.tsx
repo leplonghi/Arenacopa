@@ -15,6 +15,10 @@ import {
   Shield,
   ListChecks,
   RefreshCw,
+  Clock,
+  Crosshair,
+  Award,
+  Rocket,
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/contexts/AuthContext";
@@ -24,6 +28,7 @@ import { useTranslation } from "react-i18next";
 import { ElitePassModal } from "@/components/ElitePassModal";
 import { usePendingPredictions } from "@/hooks/usePendingPredictions";
 import { usePendingJoinRequests } from "@/hooks/usePendingJoinRequests";
+import { useProfileStats } from "@/hooks/useProfileStats";
 import { listUserBoloes } from "@/services/boloes/bolao-listing.service";
 import { getProfile } from "@/services/profile/profile.service";
 import { getArenaLevel } from "@/lib/profile-level";
@@ -72,7 +77,7 @@ function isCurrentOrUpcomingMatch(matchDate: string) {
 /* ─── Zone Label ─── */
 const ZoneLabel = memo(function ZoneLabel({ children }: { children: React.ReactNode }) {
   return (
-    <p className="mb-3 text-[10px] font-black uppercase tracking-[0.22em] text-zinc-600">
+    <p className="mb-3 text-[11px] font-black uppercase tracking-[0.18em] text-zinc-500">
       {children}
     </p>
   );
@@ -103,6 +108,137 @@ const PendingBanner = memo(function PendingBanner({ count, ctaTo }: { count: num
   );
 });
 
+/* ─── Continue Card — jumps straight to the most urgent pending prediction ─── */
+function formatShortCountdown(matchDate: string, nowMs: number): { text: string; urgent: boolean } {
+  const diff = new Date(matchDate).getTime() - nowMs;
+  if (diff <= 0) return { text: "agora", urgent: true };
+  const h = Math.floor(diff / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  if (h >= 24) return { text: `em ${Math.floor(h / 24)}d`, urgent: false };
+  if (h >= 1) return { text: `em ${h}h ${m}m`, urgent: h < 3 };
+  return { text: `em ${m}m`, urgent: true };
+}
+
+const ContinueCard = memo(function ContinueCard({
+  homeCode,
+  awayCode,
+  matchDate,
+  ctaTo,
+}: {
+  homeCode: string | null;
+  awayCode: string | null;
+  matchDate: string;
+  ctaTo: string;
+}) {
+  const [nowMs, setNowMs] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNowMs(Date.now()), 30000);
+    return () => clearInterval(id);
+  }, []);
+  const { text, urgent } = formatShortCountdown(matchDate, nowMs);
+
+  return (
+    <Link
+      to={ctaTo}
+      className="group relative flex items-center gap-4 overflow-hidden rounded-[22px] border border-primary/45 bg-[linear-gradient(120deg,rgba(145,255,59,0.14),rgba(145,255,59,0.04))] p-4 transition-all hover:border-primary/60"
+    >
+      <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-primary/70 to-transparent" />
+      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[16px] border border-primary/30 bg-primary/20">
+        <Rocket className="h-6 w-6 text-primary" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-[10px] font-black uppercase tracking-[0.18em] text-primary">Continuar de onde parou</p>
+        <p className="mt-0.5 truncate text-base font-black text-white">
+          {homeCode ?? "?"} <span className="text-white/40">×</span> {awayCode ?? "?"}
+        </p>
+        <p className={cn("flex items-center gap-1 text-[11px] font-bold", urgent ? "text-amber-400" : "text-zinc-500")}>
+          <Clock className="h-3 w-3" />
+          Palpite fecha {text}
+        </p>
+      </div>
+      <ArrowRight className="h-5 w-5 shrink-0 text-primary transition group-hover:translate-x-1" />
+    </Link>
+  );
+});
+
+/* ─── Performance Band — real cross-pool stats for a sense of progress ─── */
+const PerformanceBand = memo(function PerformanceBand({
+  points,
+  exacts,
+  titles,
+}: {
+  points: number;
+  exacts: number;
+  titles: number;
+}) {
+  const { i18n } = useTranslation("home");
+  const items = [
+    { icon: Zap, label: "Pontos", value: points.toLocaleString(i18n.language), accent: true },
+    { icon: Crosshair, label: "Placares exatos", value: String(exacts), accent: false },
+    { icon: Award, label: "Títulos", value: String(titles), accent: false },
+  ];
+  return (
+    <div className="grid grid-cols-3 gap-2 rounded-[18px] border border-white/[0.07] bg-white/[0.02] p-3">
+      {items.map(({ icon: Icon, label, value, accent }) => (
+        <div key={label} className="flex flex-col items-center gap-1 text-center">
+          <Icon className={cn("h-4 w-4", accent ? "text-primary" : "text-zinc-500")} />
+          <p className={cn("text-lg font-black leading-none tabular-nums", accent ? "text-primary" : "text-white")}>
+            {value}
+          </p>
+          <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-zinc-600 leading-tight">{label}</p>
+        </div>
+      ))}
+    </div>
+  );
+});
+
+/* ─── Onboarding Guide — friendly 1·2·3 for first-time users ─── */
+const OnboardingGuide = memo(function OnboardingGuide() {
+  const steps = [
+    { icon: Plus, title: "Crie ou entre", desc: "Monte um bolão ou entre por código/link." },
+    { icon: Target, title: "Dê seus palpites", desc: "Acerte os placares de cada jogo." },
+    { icon: Trophy, title: "Suba no ranking", desc: "Dispute pontos com a galera." },
+  ];
+  return (
+    <div className="space-y-3 rounded-[22px] border border-primary/25 bg-primary/[0.04] p-4">
+      <div className="flex items-center gap-2">
+        <Rocket className="h-4 w-4 text-primary" />
+        <p className="text-[11px] font-black uppercase tracking-[0.18em] text-primary">Comece em 3 passos</p>
+      </div>
+      <div className="grid gap-2.5 sm:grid-cols-3">
+        {steps.map((step, i) => (
+          <div key={step.title} className="flex items-start gap-3 rounded-[16px] border border-white/[0.06] bg-white/[0.02] p-3 sm:flex-col sm:gap-2">
+            <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-[12px] border border-primary/25 bg-primary/10">
+              <step.icon className="h-5 w-5 text-primary" />
+              <span className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[9px] font-black text-black">
+                {i + 1}
+              </span>
+            </div>
+            <div className="min-w-0">
+              <p className="text-sm font-black text-white">{step.title}</p>
+              <p className="text-[11px] leading-snug text-zinc-500">{step.desc}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+      <div className="grid grid-cols-2 gap-2 pt-1">
+        <Link
+          to="/boloes/criar"
+          className="flex items-center justify-center gap-2 rounded-[14px] bg-primary py-3 text-[11px] font-black uppercase tracking-wider text-black transition hover:brightness-110"
+        >
+          <Plus className="h-4 w-4" /> Criar bolão
+        </Link>
+        <Link
+          to="/boloes?tab=descobrir"
+          className="flex items-center justify-center gap-2 rounded-[14px] border border-white/10 bg-white/[0.03] py-3 text-[11px] font-black uppercase tracking-wider text-zinc-300 transition hover:bg-white/[0.06]"
+        >
+          <Flame className="h-4 w-4" /> Explorar
+        </Link>
+      </div>
+    </div>
+  );
+});
+
 /* ─── Join Request Banner ─── */
 const JoinRequestBanner = memo(function JoinRequestBanner({ count, bolaoId }: { count: number; bolaoId: string | null }) {
   const { t } = useTranslation("home");
@@ -126,6 +262,24 @@ const JoinRequestBanner = memo(function JoinRequestBanner({ count, bolaoId }: { 
   );
 });
 
+function useAnimatedNumber(target: number, duration = 600) {
+  const [display, setDisplay] = useState(0);
+  useEffect(() => {
+    if (target === 0) { setDisplay(0); return; }
+    const start = Date.now();
+    const tick = () => {
+      const elapsed = Date.now() - start;
+      const progress = Math.min(elapsed / duration, 1);
+      // ease-out cubic
+      const eased = 1 - Math.pow(1 - progress, 3);
+      setDisplay(Math.round(eased * target));
+      if (progress < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }, [target, duration]);
+  return display;
+}
+
 /* ─── Quick Stats Row ─── */
 const QuickStats = memo(function QuickStats({
   pending,
@@ -137,10 +291,13 @@ const QuickStats = memo(function QuickStats({
   poolCount: number;
 }) {
   const { t } = useTranslation("home");
+  const animPending = useAnimatedNumber(pending);
+  const animToday = useAnimatedNumber(todayCount);
+  const animPools = useAnimatedNumber(poolCount);
   const stats = [
-    { icon: Target, value: pending, label: t("quick_stats.pending"), to: "/boloes", accent: pending > 0 },
-    { icon: CalendarDays, value: todayCount, label: t("quick_stats.today"), to: "/campeonatos", accent: false },
-    { icon: Trophy, value: poolCount, label: t("quick_stats.pools"), to: "/boloes", accent: poolCount > 0 },
+    { icon: Target, value: animPending, label: t("quick_stats.pending"), to: "/boloes", accent: pending > 0 },
+    { icon: CalendarDays, value: animToday, label: t("quick_stats.today"), to: "/campeonatos", accent: false },
+    { icon: Trophy, value: animPools, label: t("quick_stats.pools"), to: "/boloes", accent: poolCount > 0 },
   ];
 
   return (
@@ -157,7 +314,7 @@ const QuickStats = memo(function QuickStats({
             )}
           >
             <Icon className={cn("h-4 w-4", accent ? "text-primary" : "text-zinc-500")} />
-            <p className={cn("text-xl font-black leading-none", accent ? "text-primary" : "text-white")}>
+            <p className={cn("text-xl font-black leading-none tabular-nums", accent ? "text-primary" : "text-white")}>
               {value}
             </p>
             <p className="text-[9px] font-bold uppercase tracking-[0.08em] text-zinc-600 leading-tight">
@@ -297,6 +454,7 @@ const Index = () => {
   const { i18n, t } = useTranslation("home");
   const { pendingItems: pendingPredictionItems } = usePendingPredictions();
   const pendingJoinInfo = usePendingJoinRequests(user?.id);
+  const { data: profileStats } = useProfileStats(user?.id);
 
   const [myBoloes, setMyBoloes] = useState<DashboardBolaoSummary[]>([]);
   const [loading, setLoading] = useState(true);
@@ -352,13 +510,24 @@ const Index = () => {
   const { data: allMatches = [] } = useDashboardMatches();
 
   const displayName = profile?.name || user?.email?.split("@")[0] || t("hero.default_name");
-  const totalPoints = myBoloes.reduce((acc, b) => acc + (b.myPoints || 0), 0);
+  // Real cross-pool points (profileStats), falling back to per-pool sum while loading.
+  const totalPoints = profileStats?.points ?? myBoloes.reduce((acc, b) => acc + (b.myPoints || 0), 0);
   const bestRank = myBoloes.length > 0
     ? Math.min(...myBoloes.map((b) => b.myRank || 999).filter((r) => r > 0))
     : 999;
   const pendingMatchCount = pendingPredictionItems.length;
   const firstBolaoWithPending = pendingPredictionItems[0]?.bolaoIds[0];
   const levelInfo = getArenaLevel(totalPoints);
+
+  // Most urgent pending prediction — closest kickoff — for the "continue" shortcut.
+  const mostUrgentPending = pendingPredictionItems.length > 0
+    ? [...pendingPredictionItems].sort(
+        (a, b) => new Date(a.match.match_date).getTime() - new Date(b.match.match_date).getTime()
+      )[0]
+    : null;
+  const continueCtaTo = mostUrgentPending
+    ? `/boloes/${mostUrgentPending.bolaoIds[0]}?tab=jogos&match=${mostUrgentPending.match.id}`
+    : null;
 
   const liveMatch = allMatches.find((m) => m.status === "live");
   const nextMatch = allMatches.find((m) => m.status === "scheduled" && isCurrentOrUpcomingMatch(m.matchDate));
@@ -400,23 +569,33 @@ const Index = () => {
       >
         <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/80 to-transparent" />
         <div className="relative z-10 flex min-h-[220px] max-w-[600px] flex-col justify-end px-5 pb-6 pt-[calc(6rem+var(--safe-area-top,0px))] sm:px-8">
-          <p className="text-[10px] font-black uppercase tracking-[0.22em] text-zinc-400">
-            Olá, {displayName.split(" ")[0]}
-          </p>
-          <h1 className="mt-1 font-display text-[2.4rem] font-extrabold uppercase leading-[0.9] tracking-tight text-white sm:text-[3rem]">
-            {hasPending
-              ? "Hora de palpitar!"
-              : hasBoloes
-              ? "Tudo em dia 🎯"
-              : "Bem-vindo à Arena"}
-          </h1>
-          <p className="mt-1.5 text-sm text-zinc-400 leading-snug max-w-xs">
-            {hasPending
-              ? `${pendingMatchCount} jogo${pendingMatchCount > 1 ? "s" : ""} esperando seu palpite.`
-              : hasBoloes
-              ? "Nenhum chute pendente por enquanto."
-              : "Crie ou entre em um bolão para começar."}
-          </p>
+          {loading ? (
+            <div className="space-y-2.5">
+              <div className="h-3 w-24 rounded-full bg-white/10 animate-pulse" />
+              <div className="h-10 w-56 rounded-xl bg-white/10 animate-pulse" />
+              <div className="h-4 w-48 rounded-full bg-white/[0.06] animate-pulse" />
+            </div>
+          ) : (
+            <motion.div initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
+              <p className="text-[11px] font-black uppercase tracking-[0.2em] text-zinc-400">
+                Olá, {displayName.split(" ")[0]}
+              </p>
+              <h1 className="mt-1 font-display text-[2.4rem] font-extrabold uppercase leading-[0.9] tracking-tight text-white sm:text-[3rem]">
+                {hasPending
+                  ? "Hora de palpitar!"
+                  : hasBoloes
+                  ? "Tudo em dia 🎯"
+                  : "Bem-vindo à Arena"}
+              </h1>
+              <p className="mt-1.5 text-sm text-zinc-400 leading-snug max-w-xs">
+                {hasPending
+                  ? `${pendingMatchCount} jogo${pendingMatchCount > 1 ? "s" : ""} esperando seu palpite.`
+                  : hasBoloes
+                  ? "Nenhum chute pendente por enquanto."
+                  : "Crie ou entre em um bolão para começar."}
+              </p>
+            </motion.div>
+          )}
         </div>
       </section>
 
@@ -437,13 +616,29 @@ const Index = () => {
             poolCount={myBoloes.length}
           />
 
-          {/* Palpites urgentes */}
-          {hasPending && (
+          {/* Resumo de desempenho — só quando há atividade real */}
+          {hasBoloes && (profileStats?.points ?? 0) >= 0 && (
+            <PerformanceBand
+              points={profileStats?.points ?? 0}
+              exacts={profileStats?.exactScores ?? 0}
+              titles={profileStats?.titles ?? 0}
+            />
+          )}
+
+          {/* Continuar — atalho direto ao palpite mais urgente */}
+          {mostUrgentPending && continueCtaTo ? (
+            <ContinueCard
+              homeCode={mostUrgentPending.match.home_team_code}
+              awayCode={mostUrgentPending.match.away_team_code}
+              matchDate={mostUrgentPending.match.match_date}
+              ctaTo={continueCtaTo}
+            />
+          ) : hasPending ? (
             <PendingBanner
               count={pendingMatchCount}
               ctaTo={firstBolaoWithPending ? `/boloes/${firstBolaoWithPending}` : "/boloes"}
             />
-          )}
+          ) : null}
 
           {/* Solicitações de entrada */}
           {hasJoinRequests && (
@@ -521,39 +716,7 @@ const Index = () => {
               <Skeleton className="h-16 w-full rounded-[16px] bg-white/5" />
             </div>
           ) : myBoloes.length === 0 ? (
-            <div className="space-y-2">
-              {/* Explicação didática para novo usuário */}
-              <div className="rounded-[20px] border border-white/[0.07] bg-white/[0.02] p-4">
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">{t("empty_pools.title")}</p>
-                <p className="mt-1 text-sm font-bold text-white">{t("empty_pools.desc")}</p>
-                <p className="mt-1 text-[11px] leading-snug text-zinc-500">
-                  {t("empty_pools.body")}
-                </p>
-              </div>
-              {/* CTA criar ou entrar */}
-              <div className="grid grid-cols-2 gap-2">
-                <Link
-                  to="/boloes/criar"
-                  className="group flex flex-col items-start gap-2 rounded-[18px] border border-primary/30 bg-primary/[0.07] p-3.5 transition hover:bg-primary/[0.12]"
-                >
-                  <Plus className="h-5 w-5 text-primary" />
-                  <div>
-                    <p className="text-sm font-black text-white">{t("empty_pools.create")}</p>
-                    <p className="text-[10px] text-zinc-500">{t("empty_pools.create_desc")}</p>
-                  </div>
-                </Link>
-                <Link
-                  to="/boloes"
-                  className="group flex flex-col items-start gap-2 rounded-[18px] border border-white/[0.07] bg-white/[0.02] p-3.5 transition hover:border-white/[0.14] hover:bg-white/[0.05]"
-                >
-                  <Flame className="h-5 w-5 text-zinc-400" />
-                  <div>
-                    <p className="text-sm font-black text-white">{t("empty_pools.explore")}</p>
-                    <p className="text-[10px] text-zinc-500">{t("empty_pools.explore_desc")}</p>
-                  </div>
-                </Link>
-              </div>
-            </div>
+            <OnboardingGuide />
           ) : (
             <div className="space-y-2">
               {myBoloes.slice(0, 3).map((b) => {

@@ -45,9 +45,12 @@ export function JoinCTA({
   const label =
     mode === "group_first"
       ? "Entrar no grupo primeiro"
-      : mode === "direct"
-        ? "Entrar agora"
-        : "Solicitar entrada";
+      : !user
+        // Honest label: an unauthenticated tap goes to signup first, then auto-joins.
+        ? "Criar conta e entrar"
+        : mode === "direct"
+          ? "Entrar agora"
+          : "Solicitar entrada";
 
   const handleClick = async () => {
     if (mode === "group_first") {
