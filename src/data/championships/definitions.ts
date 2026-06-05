@@ -8,6 +8,30 @@ const CHAMPIONSHIP_LOGO_VERSION = "20260405b";
 // ============================================================
 
 export const CHAMPIONSHIPS: Championship[] = [
+  // ── 0. Amistosos Pré-Copa 2026 ──────────────────────────────────────
+  {
+    id: "amistosos2026",
+    name: "Amistosos Pré-Copa 2026",
+    shortName: "Amistosos Copa",
+    logo: "🌐",
+    logoUrl: `/images/championships/wc2026.svg?v=${CHAMPIONSHIP_LOGO_VERSION}`,
+    color: "#a78bfa",
+    gradient: ["#1a0a3a", "#2e1065"],
+    confederation: "FIFA",
+    season: "2026",
+    format: "knockout",
+    teamType: "national",
+    maxTeams: 48,
+    dateStart: "2026-06-01",
+    dateEnd: "2026-06-10",
+    status: "live",
+    isActive: true,
+    isComingSoon: false,
+    isPremium: false,
+    fdoCode: null,
+    fdoId: null,
+  },
+
   // ── 1. Copa do Mundo 2026 (existing, highest priority) ─────────────
   {
     id: "wc2026",
@@ -289,6 +313,10 @@ for (const championship of CHAMPIONSHIPS) {
   registerChampionshipAlias(championship.fdoId, championship.id);
 }
 
+registerChampionshipAlias("amistosos", "amistosos2026");
+registerChampionshipAlias("amistosos 2026", "amistosos2026");
+registerChampionshipAlias("amistosos pre copa", "amistosos2026");
+registerChampionshipAlias("friendlies 2026", "amistosos2026");
 registerChampionshipAlias("world cup 2026", "wc2026");
 registerChampionshipAlias("copa do mundo 2026", "wc2026");
 registerChampionshipAlias("worldcup2026", "wc2026");
